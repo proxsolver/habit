@@ -184,11 +184,247 @@
     </div>
 
     <!-- Firebase SDKs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <!-- 메인 스크립트 -->
-    <script src="script.js"></script>
+    <!-- 모든 스크립트를 하나로 합치기 -->
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
+            authDomain: "habit-dc62a.firebaseapp.com",
+            projectId: "habit-dc62a",
+            storageBucket: "habit-dc62a.firebasestorage.app",
+            messagingSenderId: "668374525477",
+            appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc"
+        };
+
+        // 전역 변수
+        let currentUser = null;
+        let userRole = 'parent';
+        let familyId = null;
+        let routines = [];
+        let familyMembers = [];
+        let auth, db;
+
+        // 기본 명언들
+        const quotes = [
+            "성공은 매일의 작은 노력들이 쌓여서 만들어진다.",
+            "오늘 하루도 최선을 다하는 하루가 되길.",
+            "작은 습관이 큰 변화를 만든다.",
+            "꾸준함이 천재를 이긴다.",
+            "매일 조금씩 나아지는 것이 중요하다."
+        ];
+
+        // Firebase 초기화
+        function initializeFirebase() {
+            try {
+                console.log('🔥 Firebase 초기화 시작...');
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                console.log('✅ Firebase 초기화 성공!');
+                console.log('🔥 Auth:', auth);
+                console.log('🗃️ DB:', db);
+                
+                // 인증 상태 변경 감지
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        currentUser = user;
+                        await loadUserProfile();
+                        showMainApp();
+                        startRealtimeListeners();
+                    } else {
+                        currentUser = null;
+                        showLoginPage();
+                    }
+                });
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase 초기화 실패:', error);
+                return false;
+            }
+        }
+
+        // 역할 선택
+        function selectRole(role) {
+            userRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const familyCodeInput = document.getElementById('familyCodeInput');
+            if (role === 'child') {
+                familyCodeInput.style.display = 'block';
+            } else {
+                familyCodeInput.style.display = 'none';
+            }
+        }
+
+        // Google 로그인
+        async function signInWithGoogle() {
+            const familyCode = document.getElementById('familyCode').value;
+            
+            if (userRole === 'child' && !familyCode) {
+                showNotification('자녀는 가족 코드를 먼저 입력해주세요.', 'error');
+                return;
+            }
+
+            if (!auth) {
+                showNotification('Firebase가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
+                return;
+            }
+
+            setLoading(true, 'google');
+            
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                
+                // 기존 사용자인지 확인
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // 새 사용자라면 프로필 생성
+                    await createUserProfileFromGoogle(user, familyCode);
+                    showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
+                } else {
+                    // 기존 사용자라면 로그인
+                    showNotification('Google 계정으로 로그인되었습니다! 👋');
+                }
+                
+            } catch (error) {
+                console.error('Google 로그인 오류:', error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showNotification('로그인이 취소되었습니다.', 'error');
+                } else if (error.code === 'auth/popup-blocked') {
+                    showNotification('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+                } else {
+                    showNotification('Google 로그인에 실패했습니다.', 'error');
+                }
+            } finally {
+                setLoading(false, 'google');
+            }
+        }
+
+        // 이메일 로그인 토글
+        function toggleEmailLogin() {
+            const section = document.getElementById('emailLoginSection');
+            const button = event.target;
+            
+            if (section.classList.contains('collapsed')) {
+                section.classList.remove('collapsed');
+                button.textContent = '간편 로그인으로 돌아가기';
+            } else {
+                section.classList.add('collapsed');
+                button.textContent = '이메일로 로그인';
+            }
+        }
+
+        // 유틸리티 함수들
+        function generateFamilyCode() {
+            return Math.random().toString(36).substr(2, 8).toUpperCase();
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function setLoading(loading, type = 'email') {
+            if (type === 'google') {
+                const googleBtn = document.querySelector('.google-btn');
+                if (googleBtn) {
+                    if (loading) {
+                        googleBtn.disabled = true;
+                        googleBtn.innerHTML = `
+                            <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            Google 로그인 중...
+                        `;
+                    } else {
+                        googleBtn.disabled = false;
+                        googleBtn.innerHTML = `
+                            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                            Google로 시작하기
+                        `;
+                    }
+                }
+            }
+        }
+
+        function showLoginPage() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+        }
+
+        // 현재 날짜 업데이트
+        function updateCurrentDate() {
+            const today = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            document.getElementById('currentDate').textContent = 
+                today.toLocaleDateString('ko-KR', options);
+        }
+
+        // 일일 명언 업데이트
+        function updateDailyQuote() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+            const quoteIndex = dayOfYear % quotes.length;
+            document.getElementById('dailyQuote').textContent = quotes[quoteIndex];
+        }
+
+        // 임시 함수들 (기본 동작을 위해)
+        async function createUserProfileFromGoogle(user, familyCode) {
+            console.log('프로필 생성:', user.email);
+            // 임시로 간단한 프로필 생성
+        }
+
+        async function loadUserProfile() {
+            console.log('사용자 프로필 로드');
+        }
+
+        function startRealtimeListeners() {
+            console.log('실시간 리스너 시작');
+        }
+
+        // DOM 로드 완료 후 Firebase 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM 로드 완료');
+            updateCurrentDate();
+            updateDailyQuote();
+            
+            // Firebase 초기화 시도
+            setTimeout(() => {
+                if (typeof firebase !== 'undefined') {
+                    initializeFirebase();
+                } else {
+                    console.error('❌ Firebase SDK가 로드되지 않았습니다.');
+                    setTimeout(initializeFirebase, 1000);
+                }
+            }, 100);
+        });
+    </script>
 </body>
 </html>
