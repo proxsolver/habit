@@ -1,4 +1,4 @@
-// Firebase 설정은 firebase-config.js에서 처리됩니다
+// Firebase 객체들 (HTML에서 이미 초기화됨)
 const auth = window.auth;
 const db = window.db;
 
@@ -23,11 +23,14 @@ function init() {
     updateCurrentDate();
     updateDailyQuote();
     
-    // Firebase가 로드될 때까지 기다리기
-    if (typeof firebase === 'undefined' || !window.auth) {
-        setTimeout(init, 100);
+    // Firebase 객체 확인
+    if (!window.auth || !window.db) {
+        console.error('❌ Firebase 객체가 없습니다. 잠시 후 다시 시도합니다.');
+        setTimeout(init, 500);
         return;
     }
+    
+    console.log('✅ Firebase 객체 확인 완료');
     
     // 인증 상태 변경 감지
     auth.onAuthStateChanged(async (user) => {
