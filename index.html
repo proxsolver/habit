@@ -552,25 +552,48 @@
         // 루틴 추가
         async function addRoutine() {
             console.log('🔧 루틴 추가 시작');
+            console.log('현재 사용자:', currentUser);
+            console.log('가족 ID:', familyId);
             
-            const name = document.getElementById('routineName').value;
-            const type = document.getElementById('routineType').value;
-            const time = document.getElementById('routineTime').value;
-            const frequency = document.getElementById('routineFreq').value;
+            const nameInput = document.getElementById('routineName');
+            const typeInput = document.getElementById('routineType');
+            const timeInput = document.getElementById('routineTime');
+            const freqInput = document.getElementById('routineFreq');
+            
+            console.log('📋 폼 요소들:', {
+                nameInput: nameInput ? 'OK' : 'NULL',
+                typeInput: typeInput ? 'OK' : 'NULL',
+                timeInput: timeInput ? 'OK' : 'NULL',
+                freqInput: freqInput ? 'OK' : 'NULL'
+            });
+            
+            if (!nameInput) {
+                console.error('❌ 루틴 이름 입력 필드를 찾을 수 없습니다');
+                showNotification('입력 필드를 찾을 수 없습니다.', 'error');
+                return;
+            }
+            
+            const name = nameInput.value;
+            const type = typeInput ? typeInput.value : 'yesno';
+            const time = timeInput ? timeInput.value : 'morning';
+            const frequency = freqInput ? freqInput.value : 'daily';
             
             console.log('📝 입력값:', { name, type, time, frequency });
             
             if (!name.trim()) {
+                console.log('❌ 루틴 이름이 비어있습니다');
                 showNotification('루틴 이름을 입력해주세요.', 'error');
                 return;
             }
 
             if (!currentUser) {
+                console.log('❌ 사용자가 로그인되지 않았습니다');
                 showNotification('로그인이 필요합니다.', 'error');
                 return;
             }
 
             if (!familyId) {
+                console.log('❌ 가족 ID가 없습니다');
                 showNotification('가족 정보를 찾을 수 없습니다.', 'error');
                 return;
             }
@@ -578,9 +601,9 @@
             try {
                 const routineData = {
                     name: name.trim(),
-                    type: type || 'yesno',
-                    time: time || 'morning',
-                    frequency: frequency || 'daily',
+                    type: type,
+                    time: time,
+                    frequency: frequency,
                     order: Date.now(),
                     userId: currentUser.uid,
                     familyId: familyId,
@@ -588,21 +611,23 @@
                 };
                 
                 console.log('💾 저장할 데이터:', routineData);
+                console.log('🔥 Firestore 연결 상태:', db ? 'OK' : 'NULL');
                 
                 const docRef = await db.collection('routines').add(routineData);
-                console.log('✅ Firestore에 저장 완료:', docRef.id);
+                console.log('✅ Firestore에 저장 완료! 문서 ID:', docRef.id);
                 
                 showNotification(`새 루틴 "${name}"이 추가되었습니다! 🎉`);
                 closeModal();
-                document.getElementById('routineName').value = '';
+                nameInput.value = '';
                 
-                // 관리 페이지라면 새로고침
-                if (document.getElementById('managePage').style.display === 'block') {
+                // 관리 페이지 새로고침
+                setTimeout(() => {
                     loadUserRoutines();
-                }
+                }, 500);
                 
             } catch (error) {
                 console.error('❌ 루틴 추가 오류:', error);
+                console.error('오류 상세:', error.message);
                 showNotification('루틴 추가에 실패했습니다: ' + error.message, 'error');
             }
         }
@@ -725,7 +750,7 @@
         }
 
         async function loadUserProfile() {
-            console.log('사용자 프로필 로드');
+            console.log('👤 사용자 프로필 로드 시작');
             
             try {
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -736,37 +761,54 @@
                     
                     console.log('👤 사용자 데이터:', userData);
                     console.log('🔑 가족 ID:', familyId);
+                    console.log('👥 사용자 역할:', userRole);
                     
                     const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
                     document.getElementById('userEmail').textContent = displayName;
                     document.getElementById('userRole').textContent = userRole === 'parent' ? '부모' : '자녀';
                     
-                    // 부모이고 가족 코드가 있다면 표시
+                    // 부모라면 가족 코드 확인 및 표시
                     if (userRole === 'parent' && familyId) {
+                        console.log('👨‍👩‍👧‍👦 부모 계정 - 가족 코드 찾는 중...');
+                        
                         const familyDoc = await db.collection('families').doc(familyId).get();
                         if (familyDoc.exists) {
                             const familyData = familyDoc.data();
                             const familyCode = familyData.familyCode || familyId;
                             
-                            console.log('🔑 가족 코드 찾음:', familyCode);
+                            console.log('🔑 가족 코드 발견:', familyCode);
                             
-                            setTimeout(() => {
-                                const codeElement = document.getElementById('generatedFamilyCode');
-                                const displayElement = document.getElementById('familyCodeDisplay');
-                                if (codeElement && displayElement) {
-                                    codeElement.textContent = familyCode;
-                                    displayElement.classList.remove('hidden');
-                                    displayElement.style.display = 'block';
-                                    console.log('✅ 기존 가족 코드 표시 완료');
-                                }
-                            }, 500);
+                            // 즉시 표시
+                            const codeElement = document.getElementById('generatedFamilyCode');
+                            const displayElement = document.getElementById('familyCodeDisplay');
+                            
+                            console.log('🎯 DOM 요소 확인:', {
+                                codeElement: codeElement ? 'OK' : 'NULL',
+                                displayElement: displayElement ? 'OK' : 'NULL'
+                            });
+                            
+                            if (codeElement && displayElement) {
+                                codeElement.textContent = familyCode;
+                                displayElement.classList.remove('hidden');
+                                displayElement.style.display = 'block';
+                                console.log('✅ 가족 코드 표시 완료!');
+                                
+                                // 추가 알림
+                                showNotification(`가족 코드: ${familyCode} (자녀에게 공유하세요!)`, 'success');
+                            } else {
+                                console.error('❌ 가족 코드 DOM 요소를 찾을 수 없습니다');
+                            }
+                        } else {
+                            console.log('❌ 가족 문서를 찾을 수 없습니다');
                         }
                     }
                     
                     showNotification(`안녕하세요, ${displayName}님! 👋`);
+                } else {
+                    console.log('❌ 사용자 문서가 존재하지 않습니다');
                 }
             } catch (error) {
-                console.error('프로필 로드 오류:', error);
+                console.error('❌ 프로필 로드 오류:', error);
             }
         }
 
