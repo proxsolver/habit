@@ -19,23 +19,38 @@
                     <div class="role-btn" onclick="selectRole('child')">👶 자녀</div>
                 </div>
 
-                <div class="input-group">
-                    <label for="email">이메일</label>
-                    <input type="email" id="email" placeholder="your@email.com">
-                </div>
-                <div class="input-group">
-                    <label for="password">비밀번호</label>
-                    <input type="password" id="password" placeholder="비밀번호 입력">
-                </div>
-
                 <!-- 가족 코드 입력 (자녀용) -->
                 <div id="familyCodeInput" class="input-group family-code-input">
                     <label for="familyCode">가족 코드</label>
                     <input type="text" id="familyCode" placeholder="가족 코드를 입력하세요">
                 </div>
 
-                <button class="btn" id="loginBtn" onclick="handleAuth('login')">로그인</button>
-                <button class="btn btn-secondary" onclick="handleAuth('register')">회원가입</button>
+                <!-- Google 로그인 버튼 -->
+                <button class="btn google-btn" onclick="signInWithGoogle()">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                    Google로 시작하기
+                </button>
+
+                <!-- 구분선 -->
+                <div class="divider">
+                    <span>또는</span>
+                </div>
+
+                <!-- 이메일/비밀번호 로그인 (선택사항) -->
+                <div class="email-login-section collapsed" id="emailLoginSection">
+                    <div class="input-group">
+                        <label for="email">이메일</label>
+                        <input type="email" id="email" placeholder="your@email.com">
+                    </div>
+                    <div class="input-group">
+                        <label for="password">비밀번호</label>
+                        <input type="password" id="password" placeholder="비밀번호 입력">
+                    </div>
+                    <button class="btn" id="loginBtn" onclick="handleAuth('login')">로그인</button>
+                    <button class="btn btn-secondary" onclick="handleAuth('register')">회원가입</button>
+                </div>
+
+                <button class="btn-text" onclick="toggleEmailLogin()">이메일로 로그인</button>
 
                 <!-- 가족 코드 표시 (부모용 회원가입 후) -->
                 <div id="familyCodeDisplay" class="family-code-display hidden">
