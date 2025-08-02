@@ -98,6 +98,30 @@
             <!-- 가족 페이지 -->
             <div id="familyPage" class="page family-page">
                 <div class="page-title">가족 루틴 현황</div>
+                
+                <!-- 가족 코드 표시 카드 (부모만) -->
+                <div id="familyCodeCard" class="family-code-card hidden">
+                    <div class="card-header">
+                        <h3>👨‍👩‍👧‍👦 가족 코드</h3>
+                        <div class="card-subtitle">자녀들이 가족에 참여할 때 필요한 코드입니다</div>
+                    </div>
+                    <div class="family-code-display-main">
+                        <div class="family-code-large" id="familyCodeMain">-</div>
+                        <button class="copy-btn" onclick="copyFamilyCode()">📋 복사</button>
+                    </div>
+                    <div class="family-info">
+                        <div class="info-item">
+                            <span class="info-label">가족 구성원:</span>
+                            <span class="info-value" id="memberCount">-명</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">생성일:</span>
+                            <span class="info-value" id="familyCreatedDate">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 가족 구성원 목록 -->
                 <div id="familyMembers" class="family-members">
                     <!-- 가족 구성원들의 루틴 현황 -->
                 </div>
@@ -411,10 +435,111 @@
             } else if (page === 'family') {
                 document.getElementById('familyPage').style.display = 'block';
                 document.querySelectorAll('.nav-item')[4].classList.add('active');
+                // 가족 페이지로 이동할 때 가족 정보 로드
+                loadFamilyPageInfo();
             } else if (page === 'review') {
                 showNotification('리뷰 페이지는 곧 준비됩니다! 📊');
             } else if (page === 'stats') {
                 showNotification('통계 페이지는 곧 준비됩니다! 📈');
+            }
+        }
+
+        // 가족 페이지 정보 로드
+        async function loadFamilyPageInfo() {
+            console.log('👨‍👩‍👧‍👦 가족 페이지 정보 로드');
+            
+            if (!currentUser || !familyId) {
+                console.log('❌ 사용자 또는 가족 정보가 없습니다');
+                return;
+            }
+
+            try {
+                // 부모인 경우 가족 코드 카드 표시
+                if (userRole === 'parent') {
+                    const familyDoc = await db.collection('families').doc(familyId).get();
+                    if (familyDoc.exists) {
+                        const familyData = familyDoc.data();
+                        const familyCode = familyData.familyCode || familyId;
+                        const memberCount = familyData.members ? familyData.members.length : 1;
+                        const createdDate = familyData.createdAt ? familyData.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
+                        
+                        console.log('📋 가족 정보:', { familyCode, memberCount, createdDate });
+                        
+                        // 가족 코드 카드 표시
+                        const familyCodeCard = document.getElementById('familyCodeCard');
+                        const familyCodeMain = document.getElementById('familyCodeMain');
+                        const memberCountEl = document.getElementById('memberCount');
+                        const familyCreatedDateEl = document.getElementById('familyCreatedDate');
+                        
+                        if (familyCodeCard && familyCodeMain) {
+                            familyCodeMain.textContent = familyCode;
+                            if (memberCountEl) memberCountEl.textContent = `${memberCount}명`;
+                            if (familyCreatedDateEl) familyCreatedDateEl.textContent = createdDate;
+                            
+                            familyCodeCard.classList.remove('hidden');
+                            familyCodeCard.style.display = 'block';
+                            
+                            console.log('✅ 가족 코드 카드 표시 완료');
+                        }
+                        
+                        // 전역 변수에 저장 (복사 기능용)
+                        window.currentFamilyCode = familyCode;
+                    }
+                } else {
+                    // 자녀인 경우 가족 코드 카드 숨기기
+                    const familyCodeCard = document.getElementById('familyCodeCard');
+                    if (familyCodeCard) {
+                        familyCodeCard.classList.add('hidden');
+                        familyCodeCard.style.display = 'none';
+                    }
+                }
+                
+                // 가족 구성원 정보 로드
+                await loadFamilyMembers();
+                
+            } catch (error) {
+                console.error('❌ 가족 페이지 정보 로드 오류:', error);
+            }
+        }
+
+        // 가족 코드 복사
+        async function copyFamilyCode() {
+            const familyCode = window.currentFamilyCode || document.getElementById('familyCodeMain').textContent;
+            
+            if (!familyCode || familyCode === '-') {
+                showNotification('복사할 가족 코드가 없습니다.', 'error');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(familyCode);
+                showNotification(`가족 코드 "${familyCode}"가 클립보드에 복사되었습니다! 📋`);
+                
+                // 버튼 애니메이션
+                const copyBtn = document.querySelector('.copy-btn');
+                if (copyBtn) {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✅ 복사됨!';
+                    copyBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                console.error('클립보드 복사 실패:', error);
+                
+                // 폴백: 텍스트 선택
+                const codeElement = document.getElementById('familyCodeMain');
+                if (codeElement) {
+                    const range = document.createRange();
+                    range.selectNode(codeElement);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    showNotification('가족 코드가 선택되었습니다. Ctrl+C로 복사하세요!');
+                }
             }
         }
 
