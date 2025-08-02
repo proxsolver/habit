@@ -395,14 +395,269 @@
             document.getElementById('dailyQuote').textContent = quotes[quoteIndex];
         }
 
+        // 페이지 전환
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            
+            if (page === 'home') {
+                document.getElementById('homePage').style.display = 'block';
+                document.querySelectorAll('.nav-item')[0].classList.add('active');
+            } else if (page === 'manage') {
+                document.getElementById('managePage').style.display = 'block';
+                document.querySelectorAll('.nav-item')[1].classList.add('active');
+            } else if (page === 'family') {
+                document.getElementById('familyPage').style.display = 'block';
+                document.querySelectorAll('.nav-item')[4].classList.add('active');
+            } else if (page === 'review') {
+                showNotification('리뷰 페이지는 곧 준비됩니다! 📊');
+            } else if (page === 'stats') {
+                showNotification('통계 페이지는 곧 준비됩니다! 📈');
+            }
+        }
+
+        // 인증 처리 (이메일/비밀번호)
+        async function handleAuth(type) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const familyCode = document.getElementById('familyCode').value;
+
+            if (!email || !password) {
+                showNotification('이메일과 비밀번호를 입력해주세요.', 'error');
+                return;
+            }
+
+            if (userRole === 'child' && type === 'register' && !familyCode) {
+                showNotification('가족 코드를 입력해주세요.', 'error');
+                return;
+            }
+
+            try {
+                let userCredential;
+                
+                if (type === 'login') {
+                    userCredential = await auth.signInWithEmailAndPassword(email, password);
+                } else {
+                    userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    await createUserProfile(userCredential.user, familyCode);
+                }
+
+                showNotification('성공적으로 ' + (type === 'login' ? '로그인' : '회원가입') + '되었습니다!');
+                
+            } catch (error) {
+                console.error('인증 오류:', error);
+                showNotification('오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 사용자 프로필 생성
+        async function createUserProfile(user, familyCode = null) {
+            const userData = {
+                email: user.email,
+                role: userRole,
+                authProvider: 'email',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (userRole === 'parent') {
+                const newFamilyId = generateFamilyCode();
+                userData.familyId = newFamilyId;
+                userData.isParent = true;
+
+                await db.collection('families').doc(newFamilyId).set({
+                    parentId: user.uid,
+                    parentName: user.email.split('@')[0],
+                    members: [user.uid],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    familyCode: newFamilyId
+                });
+
+                document.getElementById('generatedFamilyCode').textContent = newFamilyId;
+                document.getElementById('familyCodeDisplay').classList.remove('hidden');
+            } else {
+                if (familyCode) {
+                    const familyDoc = await db.collection('families').doc(familyCode).get();
+                    if (familyDoc.exists) {
+                        userData.familyId = familyCode;
+                        userData.isParent = false;
+
+                        await db.collection('families').doc(familyCode).update({
+                            members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                        });
+                    } else {
+                        throw new Error('존재하지 않는 가족 코드입니다.');
+                    }
+                }
+            }
+
+            await db.collection('users').doc(user.uid).set(userData);
+            await createDefaultRoutines(user.uid, userData.familyId);
+        }
+
+        // 기본 루틴 생성
+        async function createDefaultRoutines(userId, familyId) {
+            const defaultRoutines = [
+                { name: '취침 시간', type: 'time', time: 'evening', frequency: 'daily', order: 1 },
+                { name: '기상 시간', type: 'time', time: 'morning', frequency: 'daily', order: 2 },
+                { name: '운동하기', type: 'yesno', time: 'morning', frequency: 'daily', order: 3 },
+                { name: '물 마시기 (잔)', type: 'number', time: 'evening', frequency: 'daily', order: 4 }
+            ];
+
+            const batch = db.batch();
+            defaultRoutines.forEach((routine) => {
+                const routineRef = db.collection('routines').doc();
+                batch.set(routineRef, {
+                    ...routine,
+                    userId: userId,
+                    familyId: familyId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+        }
+
+        // 루틴 업데이트
+        async function updateRoutine(routineId, value) {
+            if (!currentUser) return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            const logData = {
+                routineId: routineId,
+                userId: currentUser.uid,
+                familyId: familyId,
+                value: value,
+                completed: true,
+                date: today,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection('routine_logs').doc(`${routineId}_${currentUser.uid}_${today}`).set(logData);
+                showNotification('루틴이 업데이트되었습니다! ✅');
+            } catch (error) {
+                console.error('루틴 업데이트 오류:', error);
+                showNotification('루틴 업데이트에 실패했습니다.', 'error');
+            }
+        }
+
+        // 루틴 추가
+        async function addRoutine() {
+            const name = document.getElementById('routineName').value;
+            
+            if (!name.trim()) {
+                showNotification('루틴 이름을 입력해주세요.', 'error');
+                return;
+            }
+
+            try {
+                await db.collection('routines').add({
+                    name: name.trim(),
+                    type: 'yesno',
+                    time: 'morning',
+                    frequency: 'daily',
+                    order: Date.now(),
+                    userId: currentUser.uid,
+                    familyId: familyId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showNotification('새 루틴이 추가되었습니다!');
+                closeModal();
+                document.getElementById('routineName').value = '';
+            } catch (error) {
+                console.error('루틴 추가 오류:', error);
+                showNotification('루틴 추가에 실패했습니다.', 'error');
+            }
+        }
+
+        // 모달 관련
+        function openAddRoutineModal() {
+            document.getElementById('addRoutineModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('addRoutineModal').style.display = 'none';
+        }
+
+        // 로그아웃
+        async function logout() {
+            try {
+                await auth.signOut();
+                showNotification('로그아웃되었습니다.');
+            } catch (error) {
+                console.error('로그아웃 오류:', error);
+                showNotification('로그아웃에 실패했습니다.', 'error');
+            }
+        }
+
         // 임시 함수들 (기본 동작을 위해)
         async function createUserProfileFromGoogle(user, familyCode) {
             console.log('프로필 생성:', user.email);
-            // 임시로 간단한 프로필 생성
+            
+            const userData = {
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                role: userRole,
+                authProvider: 'google',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (userRole === 'parent') {
+                const newFamilyId = generateFamilyCode();
+                userData.familyId = newFamilyId;
+                userData.isParent = true;
+
+                await db.collection('families').doc(newFamilyId).set({
+                    parentId: user.uid,
+                    parentName: user.displayName || user.email.split('@')[0],
+                    members: [user.uid],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    familyCode: newFamilyId
+                });
+
+                document.getElementById('generatedFamilyCode').textContent = newFamilyId;
+                document.getElementById('familyCodeDisplay').classList.remove('hidden');
+            } else if (familyCode) {
+                const familyDoc = await db.collection('families').doc(familyCode).get();
+                if (familyDoc.exists) {
+                    userData.familyId = familyCode;
+                    userData.isParent = false;
+
+                    await db.collection('families').doc(familyCode).update({
+                        members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                    });
+                } else {
+                    throw new Error('존재하지 않는 가족 코드입니다.');
+                }
+            }
+
+            await db.collection('users').doc(user.uid).set(userData);
+            await createDefaultRoutines(user.uid, userData.familyId);
         }
 
         async function loadUserProfile() {
             console.log('사용자 프로필 로드');
+            
+            try {
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    userRole = userData.role;
+                    familyId = userData.familyId;
+                    
+                    const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
+                    document.getElementById('userEmail').textContent = displayName;
+                    document.getElementById('userRole').textContent = userRole === 'parent' ? '부모' : '자녀';
+                    
+                    showNotification(`안녕하세요, ${displayName}님! 👋`);
+                }
+            } catch (error) {
+                console.error('프로필 로드 오류:', error);
+            }
         }
 
         function startRealtimeListeners() {
