@@ -1214,9 +1214,12 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, addDoc, getDocs, FieldValue, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // Firebase 설정 (Canvas 환경에서 제공되는 전역 변수 사용)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        VITE_FIREBASE_API_KEY=AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM
+        VITE_FIREBASE_AUTH_DOMAIN=habit-dc62a.firebaseapp.com
+        VITE_FIREBASE_PROJECT_ID=habit-dc62a
+        VITE_FIREBASE_STORAGE_BUCKET=habit-dc62a.firebasestorage.app
+        VITE_FIREBASE_MESSAGING_SENDER_ID=668374525477
+        VITE_FIREBASE_APP_ID=1:668374525477:web:ecbecd95ec631fb82cc1cc
         // 전역 변수
         let currentUser = null;
         let userRole = 'parent'; // 기본값 설정
