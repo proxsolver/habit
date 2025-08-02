@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>🧸 SVG 3발 인형 뽑기 🎯</title>
+  <title>🧸 인형 뽑기 🎯</title>
   <style>
     * {
       margin: 0;
@@ -24,15 +24,31 @@
       overflow: hidden;
     }
 
+    .game-wrapper {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      max-width: 800px;
+      padding: 20px;
+    }
+
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     h1 {
-      margin-bottom: 10px;
       font-size: 1.8em;
       color: #fff;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+      margin-bottom: 8px;
     }
 
     p#status {
-      margin-top: 8px;
+      margin-bottom: 10px;
       font-size: 1.1em;
       color: #fff;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
@@ -47,7 +63,6 @@
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-      margin-bottom: 20px;
     }
 
     #dolls {
@@ -105,6 +120,7 @@
     #controls {
       display: flex;
       gap: 18px;
+      margin-top: 15px;
     }
 
     button {
@@ -130,37 +146,72 @@
       transform: none;
     }
 
-    #score {
-      margin-top: 10px;
+    /* 획득한 인형 표시 박스 */
+    .collected-box {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px dashed #fff;
+      border-radius: 15px;
+      padding: 15px;
+      width: 180px;
+      min-height: 420px;
+      color: white;
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .collected-box h2 {
       font-size: 1.3em;
-      color: #fff;
-      font-weight: bold;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .collected-dolls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .collected-item {
+      font-size: 2em;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
-  <h1>🧸 인형 뽑기 🎯</h1>
-  <p id="status">👉 크레인을 터치로 움직이고 [내리기]를 눌러보세요!</p>
-  <div id="game-container">
-    <div id="dolls"></div>
-    <div id="crane">
-      <div id="claw-arm"></div>
-      <!-- SVG 3발 집게 -->
-      <svg id="claw-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
-        <!-- 왼쪽 발 -->
-        <path id="left-finger" d="M30,20 C20,40 25,70 35,70 C45,70 40,40 30,20" fill="#ff4500" />
-        <!-- 오른쪽 발 -->
-        <path id="right-finger" d="M70,20 C80,40 75,70 65,70 C55,70 60,40 70,20" fill="#ff4500" />
-        <!-- 가운데 발 (더 깊이 들어감) -->
-        <path id="center-finger" d="M50,10 C48,40 48,65 50,75 C52,65 52,40 50,10" fill="#e63900" />
-      </svg>
+  <div class="game-wrapper">
+    <!-- 왼쪽: 게임 영역 -->
+    <div class="left-section">
+      <h1>🧸 인형 뽑기 🎯</h1>
+      <p id="status">👉 크레인을 터치로 움직이고 [내리기]를 눌러보세요!</p>
+      <div id="game-container">
+        <div id="dolls"></div>
+        <div id="crane">
+          <div id="claw-arm"></div>
+          <svg id="claw-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+            <path id="left-finger" d="M30,20 C20,40 25,70 35,70 C45,70 40,40 30,20" fill="#ff4500" />
+            <path id="right-finger" d="M70,20 C80,40 75,70 65,70 C55,70 60,40 70,20" fill="#ff4500" />
+            <path id="center-finger" d="M50,10 C48,40 48,65 50,75 C52,65 52,40 50,10" fill="#e63900" />
+          </svg>
+        </div>
+      </div>
+      <div id="controls">
+        <button id="btn-drop">🔽 내리기</button>
+        <button id="btn-reset">🔼 올리기</button>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 획득한 인형 표시 -->
+    <div class="collected-box">
+      <h2>🎉 내가 뽑은 인형</h2>
+      <div class="collected-dolls" id="collected-dolls">
+        <!-- 여기에 인형 추가됨 -->
+      </div>
     </div>
   </div>
-  <div id="controls">
-    <button id="btn-drop">🔽 내리기</button>
-    <button id="btn-reset">🔼 올리기</button>
-  </div>
-  <p id="score">획득: 0개</p>
 
   <script>
     const crane = document.getElementById('crane');
@@ -168,16 +219,14 @@
     const rightFinger = document.getElementById('right-finger');
     const centerFinger = document.getElementById('center-finger');
     const dollsContainer = document.getElementById('dolls');
+    const collectedDolls = document.getElementById('collected-dolls');
     const btnDrop = document.getElementById('btn-drop');
     const btnReset = document.getElementById('btn-reset');
     const status = document.getElementById('status');
-    const scoreEl = document.getElementById('score');
 
     let isDropping = false;
-    let score = 0;
     let holdingDoll = null;
 
-    // 인형 이모티콘
     const emojis = ['🧸', '🐻', '🐶', '🐱', '🐰', '🦊', '🐼', '🦄', '🐙', '🐸', '🐷', '🐵'];
 
     function createDolls() {
@@ -228,34 +277,33 @@
 
     document.addEventListener('mouseup', () => { isDragging = false; });
 
-    // 집게 닫기 (잡는 애니메이션)
+    // 집게 애니메이션
     function closeClaw() {
       leftFinger.setAttribute('d', 'M30,20 C25,30 30,45 38,55 C42,60 45,62 35,70 C25,70 20,40 30,20');
       rightFinger.setAttribute('d', 'M70,20 C75,30 70,45 62,55 C58,60 55,62 65,70 C75,70 80,40 70,20');
       centerFinger.setAttribute('d', 'M50,10 C50,30 50,60 50,75 C50,60 50,30 50,10');
     }
 
-    // 집게 열기 (기본 상태)
     function openClaw() {
       leftFinger.setAttribute('d', 'M30,20 C20,40 25,70 35,70 C45,70 40,40 30,20');
       rightFinger.setAttribute('d', 'M70,20 C80,40 75,70 65,70 C55,70 60,40 70,20');
       centerFinger.setAttribute('d', 'M50,10 C48,40 48,65 50,75 C52,65 52,40 50,10');
     }
 
-    // 내리기
+    // 내리기 (속도 느리게: 2.2초)
     btnDrop.addEventListener('click', () => {
       if (isDropping) return;
       isDropping = true;
       btnDrop.disabled = true;
 
-      crane.style.transition = 'top 1.8s cubic-bezier(0.2, 0.8, 0.3, 1)';
+      crane.style.transition = 'top 2.2s cubic-bezier(0.2, 0.8, 0.3, 1)';
       crane.style.top = '320px';
 
       setTimeout(() => {
         status.textContent = '🤏 잡는 중...';
         closeClaw();
 
-        const success = Math.random() < 0.6; // 60% 성공
+        const success = Math.random() < 0.6;
         const dolls = document.querySelectorAll('.doll');
         let grabbedDoll = null;
 
@@ -275,15 +323,19 @@
           if (success && grabbedDoll) {
             holdingDoll = grabbedDoll;
             grabbedDoll.dataset.grabbed = 'true';
-            grabbedDoll.style.position = 'absolute';
+
+            // 오른쪽 박스에 인형 추가
+            const item = document.createElement('div');
+            item.className = 'collected-item';
+            item.textContent = grabbedDoll.textContent;
+            collectedDolls.appendChild(item);
+
             status.textContent = '🎉 성공! 인형 획득!';
-            score++;
-            scoreEl.textContent = `획득: ${score}개`;
           } else {
-            openClaw(); // 실패 시 바로 열기
+            openClaw();
             status.textContent = '🥲 아쉬워요... 다음 기회에!';
           }
-        }, 600);
+        }, 700);
       }, 100);
     });
 
@@ -291,24 +343,23 @@
     btnReset.addEventListener('click', () => {
       if (!isDropping) return;
 
-      crane.style.transition = 'top 1.5s ease-in';
+      crane.style.transition = 'top 1.8s ease-in';
       crane.style.top = '0px';
 
       if (holdingDoll) {
-        holdingDoll.style.transition = 'top 1.5s ease-in';
-        holdingDoll.style.top = '0px';
+        holdingDoll.style.transition = 'top 1.8s ease-in';
         setTimeout(() => {
           holdingDoll.remove();
           holdingDoll = null;
-        }, 1500);
+        }, 1800);
       }
 
       setTimeout(() => {
-        openClaw(); // 집게 열기
+        openClaw();
         isDropping = false;
         btnDrop.disabled = false;
         status.textContent = '👆 다시 시도하세요!';
-      }, 1600);
+      }, 1900);
 
       setTimeout(() => {
         if (document.querySelectorAll('.doll').length === 0) {
@@ -318,8 +369,7 @@
       }, 500);
     });
 
-    // 초기 상태
-    openClaw();
+    openClaw(); // 초기 상태
   </script>
 </body>
 </html>
