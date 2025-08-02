@@ -1188,8 +1188,8 @@
                 
                 <!-- 역할 선택 -->
                 <div class="role-selector">
-                    <div class="role-btn active" onclick="selectRole('parent', event)">👨‍👩‍👧‍👦 부모</div>
-                    <div class="role-btn" onclick="selectRole('child', event)">👶 자녀</div>
+                    <div class="role-btn active" onclick="window.selectRole('parent', event)">👨‍👩‍👧‍👦 부모</div>
+                    <div class="role-btn" onclick="window.selectRole('child', event)">👶 자녀</div>
                 </div>
 
                 <!-- 가족 코드 입력 (자녀용) -->
@@ -1199,7 +1199,7 @@
                 </div>
 
                 <!-- Google 로그인 버튼 -->
-                <button class="btn google-btn" onclick="signInWithGoogle()">
+                <button class="btn google-btn" onclick="window.signInWithGoogle()">
                     <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
                     Google로 시작하기
                 </button>
@@ -1219,11 +1219,11 @@
                         <label for="password">비밀번호</label>
                         <input type="password" id="password" placeholder="비밀번호 입력">
                     </div>
-                    <button class="btn" id="loginBtn" onclick="handleAuth('login')">로그인</button>
-                    <button class="btn btn-secondary" onclick="handleAuth('register')">회원가입</button>
+                    <button class="btn" id="loginBtn" onclick="window.handleAuth('login')">로그인</button>
+                    <button class="btn btn-secondary" onclick="window.handleAuth('register')">회원가입</button>
                 </div>
 
-                <button class="btn-text" onclick="toggleEmailLogin()">이메일로 로그인</button>
+                <button class="btn-text" onclick="window.toggleEmailLogin()">이메일로 로그인</button>
 
                 <!-- 가족 코드 표시 (부모용 회원가입 후) -->
                 <div id="familyCodeDisplay" class="family-code-display hidden">
@@ -1244,7 +1244,7 @@
                     <span id="userEmail"></span>
                     <span class="user-role" id="userRole"></span>
                     <span class="user-id-display text-xs" id="currentUserId"></span> <!-- userId 표시 추가 -->
-                    <button class="logout-btn" onclick="logout()">로그아웃</button>
+                    <button class="logout-btn" onclick="window.logout()">로그아웃</button>
                 </div>
                 <h1>오늘의 루틴</h1>
                 <div id="currentDate"></div>
@@ -1281,7 +1281,7 @@
                     </div>
                     <div class="family-code-display-main">
                         <div class="family-code-large" id="familyCodeMain">-</div>
-                        <button class="copy-btn" onclick="copyFamilyCode()">📋 복사</button>
+                        <button class="copy-btn" onclick="window.copyFamilyCode()">📋 복사</button>
                     </div>
                     <div class="family-info">
                         <div class="info-item">
@@ -1304,7 +1304,7 @@
             <!-- 관리 페이지 -->
             <div id="managePage" class="page manage-page">
                 <div class="page-title">루틴 관리</div>
-                <button class="add-routine-btn" onclick="openAddRoutineModal()">✨ 새 루틴 추가</button>
+                <button class="add-routine-btn" onclick="window.openAddRoutineModal()">✨ 새 루틴 추가</button>
                 <div id="manageRoutineList">
                     <!-- 관리용 루틴 목록 -->
                 </div>
@@ -1312,23 +1312,23 @@
 
             <!-- 하단 네비게이션 -->
             <div class="bottom-nav">
-                <div class="nav-item active" onclick="showPage('home')">
+                <div class="nav-item active" onclick="window.showPage('home')">
                     <i>🏠</i>
                     <span>홈</span>
                 </div>
-                <div class="nav-item" onclick="showPage('manage')">
+                <div class="nav-item" onclick="window.showPage('manage')">
                     <i>⚙️</i>
                     <span>관리</span>
                 </div>
-                <div class="nav-item" onclick="showPage('review')">
+                <div class="nav-item" onclick="window.showPage('review')">
                     <i>📊</i>
                     <span>리뷰</span>
                 </div>
-                <div class="nav-item" onclick="showPage('stats')">
+                <div class="nav-item" onclick="window.showPage('stats')">
                     <i>📈</i>
                     <span>통계</span>
                 </div>
-                <div class="nav-item" onclick="showPage('family')">
+                <div class="nav-item" onclick="window.showPage('family')">
                     <i>👨‍👩‍👧‍👦</i>
                     <span>가족</span>
                 </div>
@@ -1338,7 +1338,7 @@
         <!-- 루틴 추가 모달 -->
         <div id="addRoutineModal" class="modal">
             <div class="modal-content">
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <button class="close-btn" onclick="window.closeModal()">&times;</button>
                 <div class="modal-header">✨ 새 루틴 추가</div>
                 
                 <div class="form-group">
@@ -1359,7 +1359,7 @@
                     <label for="routineTime">시점</label>
                     <select id="routineTime">
                         <option value="morning">🌅 아침</option>
-                        <option value="afternoon">� 점심</option>
+                        <option value="afternoon">🌞 점심</option>
                         <option value="evening">🌙 저녁</option>
                     </select>
                 </div>
@@ -1374,8 +1374,8 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-cancel" onclick="closeModal()">취소</button>
-                    <button class="btn" onclick="addRoutine()">추가</button>
+                    <button class="btn btn-cancel" onclick="window.closeModal()">취소</button>
+                    <button class="btn" onclick="window.addRoutine()">추가</button>
                 </div>
             </div>
         </div>
@@ -1500,6 +1500,9 @@
                 familyCodeInput.style.display = 'none';
             }
         }
+        // Make selectRole globally accessible
+        window.selectRole = selectRole;
+
 
         // Google 로그인
         async function signInWithGoogle() {
@@ -1551,6 +1554,8 @@
                 setLoading(false, 'google');
             }
         }
+        // Make signInWithGoogle globally accessible
+        window.signInWithGoogle = signInWithGoogle;
 
         // 이메일 로그인 토글
         function toggleEmailLogin() {
@@ -1565,6 +1570,8 @@
                 button.textContent = '이메일로 로그인';
             }
         }
+        // Make toggleEmailLogin globally accessible
+        window.toggleEmailLogin = toggleEmailLogin;
 
         // 유틸리티 함수들
         function generateFamilyCode() {
@@ -1692,6 +1699,8 @@
                 activePage.style.animation = 'fadeInUp 0.4s ease-out';
             }
         }
+        // Make showPage globally accessible
+        window.showPage = showPage;
 
         // 가족 페이지 정보 로드
         async function loadFamilyPageInfo() {
@@ -1849,6 +1858,8 @@
                 showNotification('클립보드 복사에 실패했습니다. 수동으로 복사해주세요.', 'error');
             }
         }
+        // Make copyFamilyCode globally accessible
+        window.copyFamilyCode = copyFamilyCode;
 
         // 인증 처리 (이메일/비밀번호)
         async function handleAuth(type) {
@@ -1882,11 +1893,20 @@
                 
             } catch (error) {
                 console.error('인증 오류:', error);
-                showNotification('오류가 발생했습니다: ' + error.message, 'error');
+                // 자녀 계정 생성 오류에 대한 더 구체적인 메시지
+                if (userRole === 'child' && type === 'register' && error.message.includes('존재하지 않는 가족 코드입니다.')) {
+                    showNotification('입력하신 가족 코드가 유효하지 않거나 존재하지 않습니다. 다시 확인해주세요.', 'error');
+                } else if (userRole === 'child' && type === 'register' && error.message.includes('가족 코드 확인 또는 업데이트 중 오류 발생')) {
+                    showNotification('가족 코드 확인 또는 가족 가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                } else {
+                    showNotification('오류가 발생했습니다: ' + error.message, 'error');
+                }
             } finally {
                 setLoading(false, 'email');
             }
         }
+        // Make handleAuth globally accessible
+        window.handleAuth = handleAuth;
 
         // 사용자 프로필 생성
         async function createUserProfile(user, familyCode = null) {
@@ -1931,24 +1951,34 @@
                 }, 1000);
                 
             } else if (familyCode) {
+                console.log(`Attempting to join family with code: ${familyCode}`);
                 const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyCode}`);
-                const familyDoc = await getDoc(familyDocRef);
-                if (familyDoc.exists()) {
-                    userData.familyId = familyCode;
-                    userData.isParent = false;
+                try {
+                    const familyDoc = await getDoc(familyDocRef);
+                    if (familyDoc.exists()) {
+                        userData.familyId = familyCode;
+                        userData.isParent = false;
 
-                    await updateDoc(familyDocRef, {
-                        members: FieldValue.arrayUnion(user.uid)
-                    });
-                    
-                    showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
-                } else {
-                    throw new Error('존재하지 않는 가족 코드입니다.');
+                        await updateDoc(familyDocRef, {
+                            members: FieldValue.arrayUnion(user.uid)
+                        });
+                        console.log(`Successfully added user ${user.uid} to family ${familyCode} members array.`);
+                        
+                        showNotification(`👨‍👩‍👧‍👦 가족에 성공적으로 참여했습니다! 코드: ${familyCode}`);
+                    } else {
+                        console.error(`Family code ${familyCode} does not exist.`);
+                        throw new Error('존재하지 않는 가족 코드입니다.'); // 이 오류가 handleAuth로 전달됩니다.
+                    }
+                } catch (familyError) {
+                    console.error('Error checking or updating family document:', familyError);
+                    throw new Error('가족 코드 확인 또는 업데이트 중 오류 발생: ' + familyError.message);
                 }
             }
 
             await setDoc(userProfileRef, userData);
+            console.log(`User profile for ${user.uid} set successfully.`);
             await createDefaultRoutines(user.uid, userData.familyId);
+            console.log(`Default routines created for user ${user.uid}.`);
         }
 
         // 기본 루틴 생성
@@ -2004,6 +2034,8 @@
                 showNotification('루틴 업데이트에 실패했습니다.', 'error');
             }
         }
+        // Make updateRoutine globally accessible
+        window.updateRoutine = updateRoutine;
 
         // 루틴 추가
         async function addRoutine() {
@@ -2088,6 +2120,8 @@
                 showNotification('루틴 추가에 실패했습니다: ' + error.message, 'error');
             }
         }
+        // Make addRoutine globally accessible
+        window.addRoutine = addRoutine;
 
         // 사용자 루틴 로드 (관리 페이지용)
         async function loadUserRoutines() {
@@ -2256,17 +2290,17 @@
                         const noActive = currentValue === 'no' ? 'active' : '';
                         controlsHtml = `
                             <div class="yes-no-btns">
-                                <button class="yes-btn ${yesActive}" onclick="updateRoutine('${routine.id}', 'yes', event)">✅ 완료</button>
-                                <button class="no-btn ${noActive}" onclick="updateRoutine('${routine.id}', 'no', event)">❌ 건너뛰기</button>
+                                <button class="yes-btn ${yesActive}" onclick="window.updateRoutine('${routine.id}', 'yes', event)">✅ 완료</button>
+                                <button class="no-btn ${noActive}" onclick="window.updateRoutine('${routine.id}', 'no', event)">❌ 건너뛰기</button>
                             </div>
                         `;
                     } else if (routine.type === 'number') {
                         controlsHtml = `
-                            <input type="number" class="number-input" placeholder="숫자 입력" value="${currentValue}" onchange="updateRoutine('${routine.id}', this.value, event)">
+                            <input type="number" class="number-input" placeholder="숫자 입력" value="${currentValue}" onchange="window.updateRoutine('${routine.id}', this.value, event)">
                         `;
                     } else if (routine.type === 'time') {
                         controlsHtml = `
-                            <input type="time" class="time-input" value="${currentValue}" onchange="updateRoutine('${routine.id}', this.value, event)">
+                            <input type="time" class="time-input" value="${currentValue}" onchange="window.updateRoutine('${routine.id}', this.value, event)">
                         `;
                     }
 
@@ -2417,6 +2451,8 @@
                 }
             }, 10);
         }
+        // Make openAddRoutineModal globally accessible
+        window.openAddRoutineModal = openAddRoutineModal;
 
         function closeModal() {
             const modal = document.getElementById('addRoutineModal');
@@ -2430,6 +2466,8 @@
                 modal.style.display = 'none';
             }, 300);
         }
+        // Make closeModal globally accessible
+        window.closeModal = closeModal;
 
         // 모달 외부 클릭 시 닫기
         window.onclick = function(event) {
@@ -2449,6 +2487,8 @@
                 showNotification('로그아웃에 실패했습니다.', 'error');
             }
         }
+        // Make logout globally accessible
+        window.logout = logout;
 
         // Google 프로필 생성
         async function createUserProfileFromGoogle(user, familyCode) {
@@ -2493,24 +2533,34 @@
                 }, 1000);
                 
             } else if (familyCode) {
+                console.log(`Attempting to join family with code: ${familyCode}`);
                 const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyCode}`);
-                const familyDoc = await getDoc(familyDocRef);
-                if (familyDoc.exists()) {
-                    userData.familyId = familyCode;
-                    userData.isParent = false;
+                try {
+                    const familyDoc = await getDoc(familyDocRef);
+                    if (familyDoc.exists()) {
+                        userData.familyId = familyCode;
+                        userData.isParent = false;
 
-                    await updateDoc(familyDocRef, {
-                        members: FieldValue.arrayUnion(user.uid)
-                    });
-                    
-                    showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
-                } else {
-                    throw new Error('존재하지 않는 가족 코드입니다.');
+                        await updateDoc(familyDocRef, {
+                            members: FieldValue.arrayUnion(user.uid)
+                        });
+                        console.log(`Successfully added user ${user.uid} to family ${familyCode} members array.`);
+                        
+                        showNotification(`👨‍👩‍👧‍👦 가족에 성공적으로 참여했습니다! 코드: ${familyCode}`);
+                    } else {
+                        console.error(`Family code ${familyCode} does not exist.`);
+                        throw new Error('입력하신 가족 코드가 유효하지 않거나 존재하지 않습니다. 다시 확인해주세요.'); // 이 오류가 handleAuth로 전달됩니다.
+                    }
+                } catch (familyError) {
+                    console.error('Error checking or updating family document:', familyError);
+                    throw new Error('가족 코드 확인 또는 가족 가입 중 오류가 발생했습니다: ' + familyError.message);
                 }
             }
 
             await setDoc(userProfileRef, userData);
+            console.log(`User profile for ${user.uid} set successfully.`);
             await createDefaultRoutines(user.uid, userData.familyId);
+            console.log(`Default routines created for user ${user.uid}.`);
         }
 
         // 버튼 클릭 이벤트에 리플 효과 추가
