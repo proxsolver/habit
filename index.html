@@ -555,17 +555,16 @@
             console.log('현재 사용자:', currentUser);
             console.log('가족 ID:', familyId);
             
+            // familyId가 없다면 다시 로드 시도
+            if (!familyId && currentUser) {
+                console.log('🔄 가족 ID가 없어서 다시 로드 시도...');
+                await loadUserProfile();
+            }
+            
             const nameInput = document.getElementById('routineName');
             const typeInput = document.getElementById('routineType');
             const timeInput = document.getElementById('routineTime');
             const freqInput = document.getElementById('routineFreq');
-            
-            console.log('📋 폼 요소들:', {
-                nameInput: nameInput ? 'OK' : 'NULL',
-                typeInput: typeInput ? 'OK' : 'NULL',
-                timeInput: timeInput ? 'OK' : 'NULL',
-                freqInput: freqInput ? 'OK' : 'NULL'
-            });
             
             if (!nameInput) {
                 console.error('❌ 루틴 이름 입력 필드를 찾을 수 없습니다');
@@ -592,9 +591,25 @@
                 return;
             }
 
-            if (!familyId) {
-                console.log('❌ 가족 ID가 없습니다');
-                showNotification('가족 정보를 찾을 수 없습니다.', 'error');
+            // familyId가 여전히 없다면 강제로 사용자 데이터에서 가져오기
+            let userFamilyId = familyId;
+            if (!userFamilyId) {
+                console.log('🔍 familyId가 없어서 직접 Firestore에서 조회...');
+                try {
+                    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                    if (userDoc.exists) {
+                        userFamilyId = userDoc.data().familyId;
+                        familyId = userFamilyId; // 전역 변수도 업데이트
+                        console.log('✅ Firestore에서 familyId 조회 성공:', userFamilyId);
+                    }
+                } catch (error) {
+                    console.error('❌ familyId 조회 실패:', error);
+                }
+            }
+
+            if (!userFamilyId) {
+                console.log('❌ 가족 ID를 찾을 수 없습니다');
+                showNotification('가족 정보를 찾을 수 없습니다. 다시 로그인해주세요.', 'error');
                 return;
             }
 
@@ -606,7 +621,7 @@
                     frequency: frequency,
                     order: Date.now(),
                     userId: currentUser.uid,
-                    familyId: familyId,
+                    familyId: userFamilyId,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
@@ -759,13 +774,20 @@
                     userRole = userData.role;
                     familyId = userData.familyId;
                     
-                    console.log('👤 사용자 데이터:', userData);
-                    console.log('🔑 가족 ID:', familyId);
-                    console.log('👥 사용자 역할:', userRole);
+                    console.log('👤 사용자 데이터 전체:', userData);
+                    console.log('🔑 가족 ID 확인:', familyId);
+                    console.log('👥 사용자 역할 확인:', userRole);
+                    
+                    // 전역 변수 강제 업데이트
+                    window.currentFamilyId = familyId;
+                    window.currentUserRole = userRole;
                     
                     const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
-                    document.getElementById('userEmail').textContent = displayName;
-                    document.getElementById('userRole').textContent = userRole === 'parent' ? '부모' : '자녀';
+                    const userEmailEl = document.getElementById('userEmail');
+                    const userRoleEl = document.getElementById('userRole');
+                    
+                    if (userEmailEl) userEmailEl.textContent = displayName;
+                    if (userRoleEl) userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
                     
                     // 부모라면 가족 코드 확인 및 표시
                     if (userRole === 'parent' && familyId) {
@@ -782,11 +804,6 @@
                             const codeElement = document.getElementById('generatedFamilyCode');
                             const displayElement = document.getElementById('familyCodeDisplay');
                             
-                            console.log('🎯 DOM 요소 확인:', {
-                                codeElement: codeElement ? 'OK' : 'NULL',
-                                displayElement: displayElement ? 'OK' : 'NULL'
-                            });
-                            
                             if (codeElement && displayElement) {
                                 codeElement.textContent = familyCode;
                                 displayElement.classList.remove('hidden');
@@ -801,6 +818,13 @@
                         } else {
                             console.log('❌ 가족 문서를 찾을 수 없습니다');
                         }
+                    }
+                    
+                    // familyId가 제대로 설정되었는지 다시 한 번 확인
+                    if (familyId) {
+                        console.log('✅ familyId 설정 완료:', familyId);
+                    } else {
+                        console.error('❌ familyId가 여전히 null입니다!');
                     }
                     
                     showNotification(`안녕하세요, ${displayName}님! 👋`);
