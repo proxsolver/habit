@@ -1,14 +1,5 @@
 // Firebase 설정 - 실제 프로젝트에서는 여러분의 Firebase 설정으로 교체하세요
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
-  authDomain: "habit-dc62a.firebaseapp.com",
-  projectId: "habit-dc62a",
-  storageBucket: "habit-dc62a.firebasestorage.app",
-  messagingSenderId: "668374525477",
-  appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc",
-  measurementId: "G-DV5Z9YVTZG"
-};
+https://console.cloud.google.com
 
 // Firebase 초기화
 firebase.initializeApp(firebaseConfig);
@@ -64,8 +55,119 @@ function selectRole(role) {
     }
 }
 
-// 인증 처리
-async function handleAuth(type) {
+// Google 로그인
+async function signInWithGoogle() {
+    const familyCode = document.getElementById('familyCode').value;
+    
+    if (userRole === 'child' && !familyCode) {
+        showNotification('자녀는 가족 코드를 먼저 입력해주세요.', 'error');
+        return;
+    }
+
+    setLoading(true, 'google');
+    
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        // 기존 사용자인지 확인
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+            // 새 사용자라면 프로필 생성
+            await createUserProfileFromGoogle(user, familyCode);
+            showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
+        } else {
+            // 기존 사용자라면 로그인
+            showNotification('Google 계정으로 로그인되었습니다! 👋');
+        }
+        
+    } catch (error) {
+        console.error('Google 로그인 오류:', error);
+        if (error.code === 'auth/popup-closed-by-user') {
+            showNotification('로그인이 취소되었습니다.', 'error');
+        } else if (error.code === 'auth/popup-blocked') {
+            showNotification('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+        } else {
+            showNotification('Google 로그인에 실패했습니다.', 'error');
+        }
+    } finally {
+        setLoading(false, 'google');
+    }
+}
+
+// Google 사용자 프로필 생성
+async function createUserProfileFromGoogle(user, familyCode = null) {
+    const userData = {
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        role: userRole,
+        authProvider: 'google',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastActive: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (userRole === 'parent') {
+        // 부모인 경우 새 가족 생성
+        const newFamilyId = generateFamilyCode();
+        userData.familyId = newFamilyId;
+        userData.isParent = true;
+
+        // 가족 정보 생성
+        await db.collection('families').doc(newFamilyId).set({
+            parentId: user.uid,
+            parentName: user.displayName || user.email.split('@')[0],
+            members: [user.uid],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            familyCode: newFamilyId
+        });
+
+        // 가족 코드 표시
+        document.getElementById('generatedFamilyCode').textContent = newFamilyId;
+        document.getElementById('familyCodeDisplay').classList.remove('hidden');
+        
+    } else {
+        // 자녀인 경우 기존 가족에 참여
+        if (familyCode) {
+            const familyDoc = await db.collection('families').doc(familyCode).get();
+            if (familyDoc.exists) {
+                userData.familyId = familyCode;
+                userData.isParent = false;
+
+                // 가족 구성원에 추가
+                await db.collection('families').doc(familyCode).update({
+                    members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                });
+            } else {
+                throw new Error('존재하지 않는 가족 코드입니다.');
+            }
+        }
+    }
+
+    await db.collection('users').doc(user.uid).set(userData);
+    
+    // 기본 루틴 생성
+    await createDefaultRoutines(user.uid, userData.familyId);
+}
+
+// 이메일 로그인 토글
+function toggleEmailLogin() {
+    const section = document.getElementById('emailLoginSection');
+    const button = event.target;
+    
+    if (section.classList.contains('collapsed')) {
+        section.classList.remove('collapsed');
+        button.textContent = '간편 로그인으로 돌아가기';
+    } else {
+        section.classList.add('collapsed');
+        button.textContent = '이메일로 로그인';
+    }
+}
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const familyCode = document.getElementById('familyCode').value;
@@ -163,7 +265,9 @@ async function loadUserProfile() {
         userRole = userData.role;
         familyId = userData.familyId;
         
-        document.getElementById('userEmail').textContent = currentUser.email;
+        // 사용자 이름 표시 (Google 사용자는 displayName 우선)
+        const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
+        document.getElementById('userEmail').textContent = displayName;
         document.getElementById('userRole').textContent = userRole === 'parent' ? '부모' : '자녀';
         
         await loadRoutines();
@@ -288,7 +392,7 @@ function startRealtimeListeners() {
 // 루틴 완료 알림 표시
 function showRoutineCompletionNotification(routineData) {
     const member = familyMembers.find(m => m.id === routineData.userId);
-    const memberName = member ? member.email.split('@')[0] : '가족';
+    const memberName = member ? (member.displayName || member.email.split('@')[0]) : '가족';
     
     showNotification(`${memberName}님이 "${routineData.routineName}" 루틴을 완료했습니다! 🎉`);
 }
@@ -400,7 +504,8 @@ function renderFamilyMembers() {
         const memberEl = document.createElement('div');
         memberEl.className = 'member-card';
         
-        const memberName = member.email.split('@')[0];
+        // 구성원 이름 표시 (Google 사용자는 displayName 우선)
+        const memberName = member.displayName || member.email.split('@')[0];
         const isOnline = member.lastActive && 
             (Date.now() - member.lastActive.toDate().getTime()) < 5 * 60 * 1000;
 
@@ -592,16 +697,35 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-function setLoading(loading) {
-    const loginBtn = document.getElementById('loginBtn');
-    if (loading) {
-        loginBtn.disabled = true;
-        loginBtn.textContent = '처리 중...';
-        document.querySelector('.login-form').classList.add('loading');
+function setLoading(loading, type = 'email') {
+    if (type === 'google') {
+        const googleBtn = document.querySelector('.google-btn');
+        if (loading) {
+            googleBtn.disabled = true;
+            googleBtn.innerHTML = `
+                <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                Google 로그인 중...
+            `;
+        } else {
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = `
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                Google로 시작하기
+            `;
+        }
     } else {
-        loginBtn.disabled = false;
-        loginBtn.textContent = '로그인';
-        document.querySelector('.login-form').classList.remove('loading');
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            if (loading) {
+                loginBtn.disabled = true;
+                loginBtn.textContent = '처리 중...';
+                document.querySelector('.login-form').classList.add('loading');
+            } else {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '로그인';
+                document.querySelector('.login-form').classList.remove('loading');
+            }
+        }
     }
 }
 
