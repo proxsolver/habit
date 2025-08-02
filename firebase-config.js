@@ -8,3 +8,9 @@ const firebaseConfig = {
     appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc",
     measurementId: "G-DV5Z9YVTZG"
   };
+
+
+firebase.initializeApp(firebaseConfig);
+window.auth = firebase.auth();
+window.db = firebase.firestore();
+console.log('✅ Firebase 초기화 성공!');
