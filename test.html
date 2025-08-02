@@ -43,7 +43,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
             color: var(--text-primary);
@@ -1188,8 +1188,8 @@
                 
                 <!-- 역할 선택 -->
                 <div class="role-selector">
-                    <div class="role-btn active" onclick="selectRole('parent')">👨‍👩‍👧‍👦 부모</div>
-                    <div class="role-btn" onclick="selectRole('child')">👶 자녀</div>
+                    <div class="role-btn active" onclick="selectRole('parent', event)">👨‍👩‍👧‍👦 부모</div>
+                    <div class="role-btn" onclick="selectRole('child', event)">👶 자녀</div>
                 </div>
 
                 <!-- 가족 코드 입력 (자녀용) -->
@@ -1243,6 +1243,7 @@
                 <div class="user-info">
                     <span id="userEmail"></span>
                     <span class="user-role" id="userRole"></span>
+                    <span class="user-id-display text-xs" id="currentUserId"></span> <!-- userId 표시 추가 -->
                     <button class="logout-btn" onclick="logout()">로그아웃</button>
                 </div>
                 <h1>오늘의 루틴</h1>
@@ -1358,7 +1359,7 @@
                     <label for="routineTime">시점</label>
                     <select id="routineTime">
                         <option value="morning">🌅 아침</option>
-                        <option value="afternoon">🌞 점심</option>
+                        <option value="afternoon">� 점심</option>
                         <option value="evening">🌙 저녁</option>
                     </select>
                 </div>
@@ -1380,30 +1381,25 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <!-- JavaScript 코드 -->
-    <script>
-        // Firebase 설정
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
-            authDomain: "habit-dc62a.firebaseapp.com",
-            projectId: "habit-dc62a",
-            storageBucket: "habit-dc62a.firebasestorage.app",
-            messagingSenderId: "668374525477",
-            appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc"
-        };
+    <!-- Firebase SDKs (Updated to v11.6.1) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, where, addDoc, getDocs, FieldValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase 설정 (Canvas 환경에서 제공되는 전역 변수 사용)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // 전역 변수
         let currentUser = null;
-        let userRole = 'parent';
+        let userRole = 'parent'; // 기본값 설정
         let familyId = null;
         let routines = [];
         let familyMembers = [];
         let auth, db;
+        let currentUserId = null; // 현재 로그인된 사용자의 UID
 
         // 기본 명언들
         const quotes = [
@@ -1420,26 +1416,37 @@
         ];
 
         // Firebase 초기화
-        function initializeFirebase() {
+        async function initializeFirebase() {
             try {
                 console.log('🔥 Firebase 초기화 시작...');
-                firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.firestore();
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
                 
+                // Canvas 환경의 초기 인증 토큰 사용
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log('✅ Custom Token으로 로그인 성공!');
+                } else {
+                    await signInAnonymously(auth);
+                    console.log('✅ 익명 로그인 성공!');
+                }
+
                 console.log('✅ Firebase 초기화 성공!');
                 console.log('🔥 Auth:', auth);
                 console.log('🗃️ DB:', db);
                 
                 // 인증 상태 변경 감지
-                auth.onAuthStateChanged(async (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         currentUser = user;
+                        currentUserId = user.uid; // 사용자 UID 설정
                         await loadUserProfile();
                         showMainApp();
                         startRealtimeListeners();
                     } else {
                         currentUser = null;
+                        currentUserId = null;
                         showLoginPage();
                     }
                 });
@@ -1447,6 +1454,7 @@
                 return true;
             } catch (error) {
                 console.error('❌ Firebase 초기화 실패:', error);
+                showNotification('Firebase 초기화에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
                 return false;
             }
         }
@@ -1479,10 +1487,10 @@
         }
 
         // 역할 선택
-        function selectRole(role) {
+        function selectRole(role, event) {
             userRole = role;
             document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            event.currentTarget.classList.add('active'); // event.currentTarget 사용
             
             const familyCodeInput = document.getElementById('familyCodeInput');
             if (role === 'child') {
@@ -1510,17 +1518,18 @@
             setLoading(true, 'google');
             
             try {
-                const provider = new firebase.auth.GoogleAuthProvider();
+                const provider = new GoogleAuthProvider();
                 provider.addScope('email');
                 provider.addScope('profile');
                 
-                const result = await auth.signInWithPopup(provider);
+                const result = await signInWithPopup(auth, provider);
                 const user = result.user;
                 
                 // 기존 사용자인지 확인
-                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
+                const userDoc = await getDoc(userDocRef);
                 
-                if (!userDoc.exists) {
+                if (!userDoc.exists()) {
                     // 새 사용자라면 프로필 생성
                     await createUserProfileFromGoogle(user, familyCode);
                     showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
@@ -1603,6 +1612,11 @@
                         `;
                     }
                 }
+            } else { // For email login/register buttons
+                const loginBtn = document.getElementById('loginBtn');
+                const registerBtn = document.querySelector('.btn-secondary');
+                if (loginBtn) loginBtn.disabled = loading;
+                if (registerBtn) registerBtn.disabled = loading;
             }
         }
 
@@ -1657,10 +1671,11 @@
             if (page === 'home') {
                 document.getElementById('homePage').style.display = 'block';
                 document.querySelectorAll('.nav-item')[0].classList.add('active');
+                loadRoutinesForDisplay(); // 홈 페이지 루틴 로드
             } else if (page === 'manage') {
                 document.getElementById('managePage').style.display = 'block';
                 document.querySelectorAll('.nav-item')[1].classList.add('active');
-                loadUserRoutines();
+                loadUserRoutines(); // 관리 페이지 루틴 로드
             } else if (page === 'family') {
                 document.getElementById('familyPage').style.display = 'block';
                 document.querySelectorAll('.nav-item')[4].classList.add('active');
@@ -1690,8 +1705,9 @@
             try {
                 // 부모인 경우 가족 코드 카드 표시
                 if (userRole === 'parent') {
-                    const familyDoc = await db.collection('families').doc(familyId).get();
-                    if (familyDoc.exists) {
+                    const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyId}`);
+                    const familyDoc = await getDoc(familyDocRef);
+                    if (familyDoc.exists()) {
                         const familyData = familyDoc.data();
                         const familyCode = familyData.familyCode || familyId;
                         const memberCount = familyData.members ? familyData.members.length : 1;
@@ -1741,8 +1757,9 @@
             if (!familyId) return;
 
             try {
-                const familyDoc = await db.collection('families').doc(familyId).get();
-                if (!familyDoc.exists) return;
+                const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyId}`);
+                const familyDoc = await getDoc(familyDocRef);
+                if (!familyDoc.exists()) return;
 
                 const familyData = familyDoc.data();
                 const memberIds = familyData.members || [];
@@ -1751,8 +1768,9 @@
                 familyMembersContainer.innerHTML = '';
 
                 for (const memberId of memberIds) {
-                    const memberDoc = await db.collection('users').doc(memberId).get();
-                    if (memberDoc.exists) {
+                    const memberDocRef = doc(db, `artifacts/${appId}/users/${memberId}/profile/data`);
+                    const memberDoc = await getDoc(memberDocRef);
+                    if (memberDoc.exists()) {
                         const memberData = memberDoc.data();
                         const memberCard = createMemberCard(memberData, memberId);
                         familyMembersContainer.appendChild(memberCard);
@@ -1783,6 +1801,7 @@
                     </div>
                 </div>
                 <div class="routine-progress">
+                    <!-- TODO: 실제 루틴 진행 상황을 여기에 동적으로 표시 -->
                     <div class="routine-badge completed">운동 완료</div>
                     <div class="routine-badge pending">물마시기 대기</div>
                     <div class="routine-badge completed">수면시간 기록</div>
@@ -1802,7 +1821,14 @@
             }
             
             try {
-                await navigator.clipboard.writeText(familyCode);
+                // navigator.clipboard.writeText() 대신 document.execCommand('copy') 사용
+                const tempInput = document.createElement('textarea');
+                tempInput.value = familyCode;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
                 showNotification(`🎉 가족 코드 "${familyCode}"가 클립보드에 복사되었습니다!`);
                 
                 // 버튼 애니메이션
@@ -1820,16 +1846,7 @@
                 
             } catch (error) {
                 console.error('클립보드 복사 실패:', error);
-                
-                // 폴백: 텍스트 선택
-                const codeElement = document.getElementById('familyCodeMain');
-                if (codeElement) {
-                    const range = document.createRange();
-                    range.selectNode(codeElement);
-                    window.getSelection().removeAllRanges();
-                    window.getSelection().addRange(range);
-                    showNotification('가족 코드가 선택되었습니다. Ctrl+C로 복사하세요!');
-                }
+                showNotification('클립보드 복사에 실패했습니다. 수동으로 복사해주세요.', 'error');
             }
         }
 
@@ -1849,13 +1866,15 @@
                 return;
             }
 
+            setLoading(true, 'email');
+
             try {
                 let userCredential;
                 
                 if (type === 'login') {
-                    userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    userCredential = await signInWithEmailAndPassword(auth, email, password);
                 } else {
-                    userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await createUserProfile(userCredential.user, familyCode);
                 }
 
@@ -1864,17 +1883,24 @@
             } catch (error) {
                 console.error('인증 오류:', error);
                 showNotification('오류가 발생했습니다: ' + error.message, 'error');
+            } finally {
+                setLoading(false, 'email');
             }
         }
 
         // 사용자 프로필 생성
         async function createUserProfile(user, familyCode = null) {
+            console.log('프로필 생성:', user.email);
+            
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
             const userData = {
                 email: user.email,
+                displayName: user.displayName || user.email.split('@')[0],
+                photoURL: user.photoURL || '',
                 role: userRole,
                 authProvider: 'email',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: FieldValue.serverTimestamp(),
+                lastActive: FieldValue.serverTimestamp()
             };
 
             if (userRole === 'parent') {
@@ -1882,38 +1908,46 @@
                 userData.familyId = newFamilyId;
                 userData.isParent = true;
 
-                await db.collection('families').doc(newFamilyId).set({
+                const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${newFamilyId}`);
+                await setDoc(familyDocRef, {
                     parentId: user.uid,
-                    parentName: user.email.split('@')[0],
+                    parentName: userData.displayName,
                     members: [user.uid],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: FieldValue.serverTimestamp(),
                     familyCode: newFamilyId
                 });
 
                 // 가족 코드 표시
                 setTimeout(() => {
-                    document.getElementById('generatedFamilyCode').textContent = newFamilyId;
-                    document.getElementById('familyCodeDisplay').classList.remove('hidden');
-                    showNotification(`🔑 가족 코드가 생성되었습니다: ${newFamilyId}`);
+                    const codeElement = document.getElementById('generatedFamilyCode');
+                    const displayElement = document.getElementById('familyCodeDisplay');
+                    if (codeElement && displayElement) {
+                        codeElement.textContent = newFamilyId;
+                        displayElement.classList.remove('hidden');
+                        displayElement.style.display = 'block';
+                        console.log('✅ 가족 코드 UI 업데이트 완료');
+                    }
+                    showNotification(`🔑 가족 코드: ${newFamilyId}`);
                 }, 1000);
                 
-            } else {
-                if (familyCode) {
-                    const familyDoc = await db.collection('families').doc(familyCode).get();
-                    if (familyDoc.exists) {
-                        userData.familyId = familyCode;
-                        userData.isParent = false;
+            } else if (familyCode) {
+                const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyCode}`);
+                const familyDoc = await getDoc(familyDocRef);
+                if (familyDoc.exists()) {
+                    userData.familyId = familyCode;
+                    userData.isParent = false;
 
-                        await db.collection('families').doc(familyCode).update({
-                            members: firebase.firestore.FieldValue.arrayUnion(user.uid)
-                        });
-                    } else {
-                        throw new Error('존재하지 않는 가족 코드입니다.');
-                    }
+                    await updateDoc(familyDocRef, {
+                        members: FieldValue.arrayUnion(user.uid)
+                    });
+                    
+                    showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
+                } else {
+                    throw new Error('존재하지 않는 가족 코드입니다.');
                 }
             }
 
-            await db.collection('users').doc(user.uid).set(userData);
+            await setDoc(userProfileRef, userData);
             await createDefaultRoutines(user.uid, userData.familyId);
         }
 
@@ -1928,12 +1962,12 @@
 
             const batch = db.batch();
             defaultRoutines.forEach((routine) => {
-                const routineRef = db.collection('routines').doc();
+                const routineRef = doc(collection(db, `artifacts/${appId}/users/${userId}/routines`));
                 batch.set(routineRef, {
                     ...routine,
                     userId: userId,
                     familyId: familyId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: FieldValue.serverTimestamp()
                 });
             });
 
@@ -1945,6 +1979,7 @@
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
+            const logDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/routine_logs/${routineId}_${today}`);
             const logData = {
                 routineId: routineId,
                 userId: currentUser.uid,
@@ -1952,11 +1987,11 @@
                 value: value,
                 completed: true,
                 date: today,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                timestamp: FieldValue.serverTimestamp()
             };
 
             try {
-                await db.collection('routine_logs').doc(`${routineId}_${currentUser.uid}_${today}`).set(logData);
+                await setDoc(logDocRef, logData, { merge: true }); // merge: true로 기존 데이터와 병합
                 showNotification('✅ 루틴이 업데이트되었습니다!');
                 
                 // 성공 애니메이션 효과
@@ -2007,10 +2042,11 @@
             let userFamilyId = familyId;
             if (!userFamilyId) {
                 try {
-                    const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                    if (userDoc.exists) {
+                    const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/profile/data`);
+                    const userDoc = await getDoc(userDocRef);
+                    if (userDoc.exists()) {
                         userFamilyId = userDoc.data().familyId;
-                        familyId = userFamilyId;
+                        familyId = userFamilyId; // 전역 familyId 업데이트
                     }
                 } catch (error) {
                     console.error('❌ familyId 조회 실패:', error);
@@ -2023,18 +2059,19 @@
             }
 
             try {
+                const routineCollectionRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/routines`);
                 const routineData = {
                     name: name.trim(),
                     type: type,
                     time: time,
                     frequency: frequency,
-                    order: Date.now(),
+                    order: Date.now(), // 순서 지정을 위해 타임스탬프 사용
                     userId: currentUser.uid,
                     familyId: userFamilyId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: FieldValue.serverTimestamp()
                 };
                 
-                const docRef = await db.collection('routines').add(routineData);
+                const docRef = await addDoc(routineCollectionRef, routineData);
                 console.log('✅ Firestore에 저장 완료! 문서 ID:', docRef.id);
                 
                 showNotification(`✨ 새 루틴 "${name}"이 추가되었습니다!`);
@@ -2062,10 +2099,11 @@
             try {
                 console.log('📋 루틴 목록 로드 시작...');
                 
-                const routinesSnapshot = await db.collection('routines')
-                    .where('userId', '==', currentUser.uid)
-                    .where('familyId', '==', familyId)
-                    .get();
+                const routinesQuery = query(
+                    collection(db, `artifacts/${appId}/users/${currentUser.uid}/routines`),
+                    where('familyId', '==', familyId)
+                );
+                const routinesSnapshot = await getDocs(routinesQuery);
 
                 console.log('📊 조회된 루틴 수:', routinesSnapshot.size);
 
@@ -2079,16 +2117,16 @@
 
                 if (routinesSnapshot.empty) {
                     manageList.innerHTML = `
-                        <div style="text-align: center; color: var(--text-secondary); padding: 3rem 1rem;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
-                            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">아직 추가된 루틴이 없습니다</div>
-                            <div style="font-size: 0.875rem;">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div class="empty-state-title">아직 추가된 루틴이 없습니다</div>
+                            <div class="empty-state-description">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
                         </div>
                     `;
                     return;
                 }
 
-                // 시간 순으로 정렬
+                // 시간 순으로 정렬 (클라이언트 사이드 정렬)
                 const routines = [];
                 routinesSnapshot.docs.forEach(doc => {
                     const data = doc.data();
@@ -2146,11 +2184,222 @@
                 const manageList = document.getElementById('manageRoutineList');
                 if (manageList) {
                     manageList.innerHTML = `
-                        <div style="text-align: center; color: var(--error); padding: 2rem;">
-                            <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
-                            <div>루틴 목록을 불러오는데 실패했습니다.</div>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div class="empty-state-title">루틴 목록을 불러오는데 실패했습니다.</div>
+                            <div class="empty-state-description">${error.message}</div>
                         </div>
                     `;
+                }
+            }
+        }
+
+        // 루틴 표시 (홈 페이지용)
+        async function loadRoutinesForDisplay() {
+            if (!currentUser || !familyId) {
+                console.log('❌ 홈 페이지 루틴 로드 조건 불충족');
+                return;
+            }
+
+            try {
+                const routineListContainer = document.getElementById('routineList');
+                routineListContainer.innerHTML = ''; // 기존 루틴 초기화
+
+                const routinesQuery = query(
+                    collection(db, `artifacts/${appId}/users/${currentUser.uid}/routines`),
+                    where('familyId', '==', familyId)
+                );
+                const routinesSnapshot = await getDocs(routinesQuery);
+
+                if (routinesSnapshot.empty) {
+                    routineListContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">✨</div>
+                            <div class="empty-state-title">오늘의 루틴이 없습니다</div>
+                            <div class="empty-state-description">관리 페이지에서 새로운 루틴을 추가해보세요!</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const today = new Date().toISOString().split('T')[0];
+                const routineLogsQuery = query(
+                    collection(db, `artifacts/${appId}/users/${currentUser.uid}/routine_logs`),
+                    where('userId', '==', currentUser.uid),
+                    where('date', '==', today)
+                );
+                const logsSnapshot = await getDocs(routineLogsQuery);
+                const todayLogs = {};
+                logsSnapshot.forEach(doc => {
+                    const logData = doc.data();
+                    todayLogs[logData.routineId] = logData.value;
+                });
+
+                const routines = [];
+                routinesSnapshot.docs.forEach(doc => {
+                    routines.push({ id: doc.id, ...doc.data() });
+                });
+
+                // 루틴 순서대로 정렬 (order 필드 사용)
+                routines.sort((a, b) => a.order - b.order);
+
+                routines.forEach((routine, index) => {
+                    const routineEl = document.createElement('div');
+                    routineEl.className = 'routine-item';
+                    routineEl.style.animationDelay = `${index * 0.1}s`;
+
+                    let controlsHtml = '';
+                    const currentValue = todayLogs[routine.id] || '';
+
+                    if (routine.type === 'yesno') {
+                        const yesActive = currentValue === 'yes' ? 'active' : '';
+                        const noActive = currentValue === 'no' ? 'active' : '';
+                        controlsHtml = `
+                            <div class="yes-no-btns">
+                                <button class="yes-btn ${yesActive}" onclick="updateRoutine('${routine.id}', 'yes', event)">✅ 완료</button>
+                                <button class="no-btn ${noActive}" onclick="updateRoutine('${routine.id}', 'no', event)">❌ 건너뛰기</button>
+                            </div>
+                        `;
+                    } else if (routine.type === 'number') {
+                        controlsHtml = `
+                            <input type="number" class="number-input" placeholder="숫자 입력" value="${currentValue}" onchange="updateRoutine('${routine.id}', this.value, event)">
+                        `;
+                    } else if (routine.type === 'time') {
+                        controlsHtml = `
+                            <input type="time" class="time-input" value="${currentValue}" onchange="updateRoutine('${routine.id}', this.value, event)">
+                        `;
+                    }
+
+                    routineEl.innerHTML = `
+                        <div class="routine-title">${routine.name}</div>
+                        <div class="routine-controls">
+                            ${controlsHtml}
+                        </div>
+                    `;
+                    routineListContainer.appendChild(routineEl);
+                });
+
+            } catch (error) {
+                console.error('❌ 홈 페이지 루틴 로드 오류:', error);
+                const routineListContainer = document.getElementById('routineList');
+                if (routineListContainer) {
+                    routineListContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div class="empty-state-title">루틴을 불러오는데 실패했습니다.</div>
+                            <div class="empty-state-description">${error.message}</div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // 사용자 프로필 로드 및 UI 업데이트
+        async function loadUserProfile() {
+            console.log('👤 사용자 프로필 로드 시작');
+            
+            try {
+                const userDocRef = doc(db, `artifacts/${appId}/users/${currentUser.uid}/profile/data`);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    userRole = userData.role;
+                    familyId = userData.familyId;
+                    
+                    console.log('👤 사용자 데이터:', userData);
+                    console.log('🔑 가족 ID:', familyId);
+                    console.log('👥 사용자 역할:', userRole);
+                    
+                    const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
+                    const userEmailEl = document.getElementById('userEmail');
+                    const userRoleEl = document.getElementById('userRole');
+                    const currentUserIdEl = document.getElementById('currentUserId'); // userId 엘리먼트
+                    
+                    if (userEmailEl) userEmailEl.textContent = displayName;
+                    if (userRoleEl) userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
+                    if (currentUserIdEl) currentUserIdEl.textContent = `ID: ${currentUser.uid}`; // userId 표시
+                    
+                    // 부모인 경우 가족 코드 확인
+                    if (userRole === 'parent' && familyId) {
+                        console.log('👨‍👩‍👧‍👦 부모 계정 - 가족 코드 찾는 중...');
+                        
+                        const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyId}`);
+                        const familyDoc = await getDoc(familyDocRef);
+                        if (familyDoc.exists()) {
+                            const familyData = familyDoc.data();
+                            const familyCode = familyData.familyCode || familyId;
+                            
+                            console.log('🔑 가족 코드 발견:', familyCode);
+                            
+                            const codeElement = document.getElementById('generatedFamilyCode');
+                            const displayElement = document.getElementById('familyCodeDisplay');
+                            
+                            if (codeElement && displayElement) {
+                                codeElement.textContent = familyCode;
+                                displayElement.classList.remove('hidden');
+                                displayElement.style.display = 'block';
+                                console.log('✅ 가족 코드 표시 완료!');
+                                
+                                showNotification(`🔑 가족 코드: ${familyCode} (자녀에게 공유하세요!)`);
+                            }
+                        }
+                    }
+                    
+                    if (familyId) {
+                        console.log('✅ familyId 설정 완료:', familyId);
+                    } else {
+                        console.error('❌ familyId가 여전히 null입니다!');
+                    }
+                    
+                    showNotification(`안녕하세요, ${displayName}님! 👋`);
+                } else {
+                    console.log('❌ 사용자 문서가 존재하지 않습니다');
+                }
+            } catch (error) {
+                console.error('❌ 프로필 로드 오류:', error);
+            }
+        }
+
+        function startRealtimeListeners() {
+            console.log('🔄 실시간 리스너 시작');
+            // TODO: Firestore onSnapshot 리스너를 여기에 추가하여 실시간 업데이트 구현
+            // 예: onSnapshot(collection(db, `artifacts/${appId}/users/${currentUser.uid}/routines`), (snapshot) => { ... });
+            // 예: onSnapshot(collection(db, `artifacts/${appId}/public/data/families/${familyId}/members`), (snapshot) => { ... });
+            
+            // 현재 로그인된 사용자의 루틴을 실시간으로 로드
+            if (currentUser && familyId) {
+                const routinesCollectionRef = collection(db, `artifacts/${appId}/users/${currentUser.uid}/routines`);
+                const q = query(routinesCollectionRef, where('familyId', '==', familyId));
+
+                onSnapshot(q, (snapshot) => {
+                    console.log('🔄 루틴 데이터 실시간 업데이트 감지!');
+                    // 홈 페이지가 활성화되어 있을 때만 업데이트
+                    if (document.getElementById('homePage').style.display === 'block') {
+                        loadRoutinesForDisplay();
+                    }
+                    // 관리 페이지가 활성화되어 있을 때만 업데이트
+                    if (document.getElementById('managePage').style.display === 'block') {
+                        loadUserRoutines();
+                    }
+                }, (error) => {
+                    console.error("Error listening to routines: ", error);
+                    showNotification("루틴 실시간 업데이트 오류: " + error.message, 'error');
+                });
+
+                // 가족 구성원 정보 실시간 업데이트 (부모용)
+                if (userRole === 'parent') {
+                    const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyId}`);
+                    onSnapshot(familyDocRef, (docSnapshot) => {
+                        if (docSnapshot.exists()) {
+                            console.log('🔄 가족 멤버 데이터 실시간 업데이트 감지!');
+                            if (document.getElementById('familyPage').style.display === 'block') {
+                                loadFamilyPageInfo(); // 가족 페이지 정보 및 멤버 목록 새로고침
+                            }
+                        }
+                    }, (error) => {
+                        console.error("Error listening to family members: ", error);
+                        showNotification("가족 멤버 실시간 업데이트 오류: " + error.message, 'error');
+                    });
                 }
             }
         }
@@ -2193,7 +2442,7 @@
         // 로그아웃
         async function logout() {
             try {
-                await auth.signOut();
+                await signOut(auth);
                 showNotification('👋 로그아웃되었습니다.');
             } catch (error) {
                 console.error('로그아웃 오류:', error);
@@ -2203,16 +2452,17 @@
 
         // Google 프로필 생성
         async function createUserProfileFromGoogle(user, familyCode) {
-            console.log('프로필 생성:', user.email);
+            console.log('Google 프로필 생성:', user.email);
             
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile/data`);
             const userData = {
                 email: user.email,
                 displayName: user.displayName,
                 photoURL: user.photoURL,
                 role: userRole,
                 authProvider: 'google',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: FieldValue.serverTimestamp(),
+                lastActive: FieldValue.serverTimestamp()
             };
 
             if (userRole === 'parent') {
@@ -2220,11 +2470,12 @@
                 userData.familyId = newFamilyId;
                 userData.isParent = true;
 
-                await db.collection('families').doc(newFamilyId).set({
+                const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${newFamilyId}`);
+                await setDoc(familyDocRef, {
                     parentId: user.uid,
-                    parentName: user.displayName || user.email.split('@')[0],
+                    parentName: userData.displayName || user.email.split('@')[0],
                     members: [user.uid],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: FieldValue.serverTimestamp(),
                     familyCode: newFamilyId
                 });
 
@@ -2242,13 +2493,14 @@
                 }, 1000);
                 
             } else if (familyCode) {
-                const familyDoc = await db.collection('families').doc(familyCode).get();
-                if (familyDoc.exists) {
+                const familyDocRef = doc(db, `artifacts/${appId}/public/data/families/${familyCode}`);
+                const familyDoc = await getDoc(familyDocRef);
+                if (familyDoc.exists()) {
                     userData.familyId = familyCode;
                     userData.isParent = false;
 
-                    await db.collection('families').doc(familyCode).update({
-                        members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                    await updateDoc(familyDocRef, {
+                        members: FieldValue.arrayUnion(user.uid)
                     });
                     
                     showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
@@ -2257,79 +2509,14 @@
                 }
             }
 
-            await db.collection('users').doc(user.uid).set(userData);
+            await setDoc(userProfileRef, userData);
             await createDefaultRoutines(user.uid, userData.familyId);
-        }
-
-        async function loadUserProfile() {
-            console.log('👤 사용자 프로필 로드 시작');
-            
-            try {
-                const userDoc = await db.collection('users').doc(currentUser.uid).get();
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    userRole = userData.role;
-                    familyId = userData.familyId;
-                    
-                    console.log('👤 사용자 데이터:', userData);
-                    console.log('🔑 가족 ID:', familyId);
-                    console.log('👥 사용자 역할:', userRole);
-                    
-                    const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
-                    const userEmailEl = document.getElementById('userEmail');
-                    const userRoleEl = document.getElementById('userRole');
-                    
-                    if (userEmailEl) userEmailEl.textContent = displayName;
-                    if (userRoleEl) userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
-                    
-                    // 부모인 경우 가족 코드 확인
-                    if (userRole === 'parent' && familyId) {
-                        console.log('👨‍👩‍👧‍👦 부모 계정 - 가족 코드 찾는 중...');
-                        
-                        const familyDoc = await db.collection('families').doc(familyId).get();
-                        if (familyDoc.exists) {
-                            const familyData = familyDoc.data();
-                            const familyCode = familyData.familyCode || familyId;
-                            
-                            console.log('🔑 가족 코드 발견:', familyCode);
-                            
-                            const codeElement = document.getElementById('generatedFamilyCode');
-                            const displayElement = document.getElementById('familyCodeDisplay');
-                            
-                            if (codeElement && displayElement) {
-                                codeElement.textContent = familyCode;
-                                displayElement.classList.remove('hidden');
-                                displayElement.style.display = 'block';
-                                console.log('✅ 가족 코드 표시 완료!');
-                                
-                                showNotification(`🔑 가족 코드: ${familyCode} (자녀에게 공유하세요!)`);
-                            }
-                        }
-                    }
-                    
-                    if (familyId) {
-                        console.log('✅ familyId 설정 완료:', familyId);
-                    } else {
-                        console.error('❌ familyId가 여전히 null입니다!');
-                    }
-                    
-                    showNotification(`안녕하세요, ${displayName}님! 👋`);
-                } else {
-                    console.log('❌ 사용자 문서가 존재하지 않습니다');
-                }
-            } catch (error) {
-                console.error('❌ 프로필 로드 오류:', error);
-            }
-        }
-
-        function startRealtimeListeners() {
-            console.log('🔄 실시간 리스너 시작');
         }
 
         // 버튼 클릭 이벤트에 리플 효과 추가
         document.addEventListener('DOMContentLoaded', function() {
             document.addEventListener('click', function(e) {
-                if (e.target.matches('.btn') || e.target.matches('.yes-btn') || e.target.matches('.no-btn')) {
+                if (e.target.matches('.btn') || e.target.matches('.yes-btn') || e.target.matches('.no-btn') || e.target.matches('.role-btn') || e.target.matches('.nav-item')) {
                     addRippleEffect(e.target, e);
                 }
             });
@@ -2342,12 +2529,13 @@
             updateDailyQuote();
             
             // Firebase 초기화 시도
-            setTimeout(() => {
-                if (typeof firebase !== 'undefined') {
+            // Canvas 환경에서 __app_id, __firebase_config, __initial_auth_token이 로드될 때까지 기다림
+            const checkFirebaseGlobals = setInterval(() => {
+                if (typeof __app_id !== 'undefined' && typeof __firebase_config !== 'undefined' && typeof __initial_auth_token !== 'undefined') {
+                    clearInterval(checkFirebaseGlobals);
                     initializeFirebase();
                 } else {
-                    console.error('❌ Firebase SDK가 로드되지 않았습니다.');
-                    setTimeout(initializeFirebase, 1000);
+                    console.log('⏳ Firebase 전역 변수 로드 대기 중...');
                 }
             }, 100);
         });
