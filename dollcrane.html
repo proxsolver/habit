@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>인형 뽑기 게임 🎯🧸</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      touch-action: none; /* 중요: 터치 스크롤 방지 */
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f8ff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 1.5em;
+    }
+
+    #game-container {
+      position: relative;
+      width: 300px;
+      height: 400px;
+      background: #fff8dc;
+      border: 8px solid #8b4513;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    #dolls {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .doll {
+      font-size: 2em;
+      user-select: none;
+      animation: float 3s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    #crane {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 100px;
+      background: #a9a9a9;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    #claw-arm {
+      width: 8px;
+      height: 60px;
+      background: #666;
+      margin-top: 10px;
+    }
+
+    #claw {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ff4500;
+      border-radius: 50% 50% 0 50%;
+      transform: rotate(45deg);
+      opacity: 0.8;
+      transition: transform 0.2s;
+    }
+
+    #controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 1.1em;
+      background: #ff6347;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    #status {
+      margin-top: 10px;
+      font-size: 1.1em;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧸 인형 뽑기 🎯</h1>
+  <div id="game-container">
+    <div id="dolls"></div>
+    <div id="crane">
+      <div id="claw-arm"></div>
+      <div id="claw"></div>
+    </div>
+  </div>
+  <div id="controls">
+    <button id="btn-drop">내리기</button>
+    <button id="btn-reset">올리기</button>
+  </div>
+  <p id="status">👉 터치로 크레인을 좌우로 움직여 보세요!</p>
+
+  <script>
+    // 요소 선택
+    const crane = document.getElementById('crane');
+    const claw = document.getElementById('claw');
+    const dollsContainer = document.getElementById('dolls');
+    const btnDrop = document.getElementById('btn-drop');
+    const btnReset = document.getElementById('btn-reset');
+    const status = document.getElementById('status');
+
+    // 인형 이모티콘 배열
+    const emojis = ['🧸', '🐻', '🐶', '🐱', '🐰', '🦊', '🐼', '🦄', '🐙', '🐸'];
+    
+    // 인형 생성
+    function createDolls() {
+      dollsContainer.innerHTML = '';
+      for (let i = 0; i < 12; i++) {
+        const doll = document.createElement('div');
+        doll.className = 'doll';
+        doll.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        doll.style.left = Math.random() * 250 + 'px';
+        doll.style.bottom = Math.random() * 100 + 'px';
+        dollsContainer.appendChild(doll);
+      }
+    }
+    createDolls();
+
+    // 터치/마우스 드래그로 크레인 이동
+    let isDragging = false;
+    let craneX = window.innerWidth / 2;
+
+    function updateCranePosition() {
+      const containerRect = document.getElementById('game-container').getBoundingClientRect();
+      const newX = Math.max(30, Math.min(craneX - containerRect.left - 30, containerRect.width - 60));
+      crane.style.left = `${newX + 30}px`;
+    }
+
+    // 터치 시작
+    crane.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      isDragging = true;
+      const touch = e.touches[0];
+      craneX = touch.clientX;
+      updateCranePosition();
+    });
+
+    // 드래그 중
+    document.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        const touch = e.touches[0];
+        craneX = touch.clientX;
+        updateCranePosition();
+      }
+    });
+
+    // 드래그 끝
+    document.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // 드래그 (데스크탑용 보조)
+    crane.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      craneX = e.clientX;
+      updateCranePosition();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        craneX = e.clientX;
+        updateCranePosition();
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // 내리기 버튼
+    btnDrop.addEventListener('click', () => {
+      if (crane.style.top !== '300px') {
+        crane.style.transition = 'top 1.5s ease-out';
+        crane.style.top = '300px';
+        claw.style.transform = 'rotate(45deg) scale(1.2)';
+        status.textContent = '🤏 잡는 중...';
+        setTimeout(() => {
+          claw.style.transform = 'rotate(45deg) scale(0.8)';
+          status.textContent = '🥹 놓쳤나요?';
+        }, 800);
+      }
+    });
+
+    // 올리기 버튼
+    btnReset.addEventListener('click', () => {
+      crane.style.transition = 'top 1.5s ease-in';
+      crane.style.top = '0';
+      claw.style.transform = 'rotate(45deg) scale(1)';
+      status.textContent = '👆 다시 시도하세요!';
+    });
+
+    // 초기 위치 설정
+    crane.style.top = '0px';
+  </script>
+</body>
+</html>
