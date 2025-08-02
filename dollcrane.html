@@ -3,63 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>인형 뽑기 게임 🎯🧸</title>
+  <title>🧸 SVG 3발 인형 뽑기 🎯</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      touch-action: none; /* 중요: 터치 스크롤 방지 */
+      touch-action: none;
     }
 
     body {
-      font-family: 'Arial', sans-serif;
-      background: #f0f8ff;
+      font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+      background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
+      color: #333;
       overflow: hidden;
     }
 
     h1 {
       margin-bottom: 10px;
-      color: #333;
-      font-size: 1.5em;
+      font-size: 1.8em;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    p#status {
+      margin-top: 8px;
+      font-size: 1.1em;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
 
     #game-container {
       position: relative;
-      width: 300px;
-      height: 400px;
-      background: #fff8dc;
-      border: 8px solid #8b4513;
-      border-radius: 15px;
+      width: 320px;
+      height: 420px;
+      background: #fffaf0;
+      border: 12px solid #8b4513;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
     }
 
     #dolls {
       position: absolute;
-      bottom: 20px;
+      bottom: 30px;
       width: 100%;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-around;
-      gap: 10px;
+      gap: 12px;
       padding: 10px;
     }
 
     .doll {
-      font-size: 2em;
+      font-size: 2.2em;
       user-select: none;
       animation: float 3s infinite ease-in-out;
+      filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.1));
     }
 
     @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(2deg); }
     }
 
     #crane {
@@ -69,175 +80,246 @@
       transform: translateX(-50%);
       width: 60px;
       height: 100px;
-      background: #a9a9a9;
-      border-radius: 10px 10px 0 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      background: linear-gradient(to bottom, #c0c0c0, #888);
+      border-radius: 12px 12px 0 0;
       z-index: 10;
+      transition: top 0.1s linear;
     }
 
     #claw-arm {
-      width: 8px;
-      height: 60px;
-      background: #666;
-      margin-top: 10px;
+      width: 6px;
+      height: 70px;
+      background: linear-gradient(to bottom, #555, #333);
+      margin: 12px auto 0;
     }
 
-    #claw {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #ff4500;
-      border-radius: 50% 50% 0 50%;
-      transform: rotate(45deg);
-      opacity: 0.8;
-      transition: transform 0.2s;
+    #claw-svg {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 50px;
     }
 
     #controls {
-      margin-top: 20px;
       display: flex;
-      gap: 15px;
+      gap: 18px;
     }
 
     button {
-      padding: 12px 20px;
-      font-size: 1.1em;
-      background: #ff6347;
+      padding: 14px 24px;
+      font-size: 1.2em;
+      font-weight: bold;
+      background: linear-gradient(to bottom, #ff7043, #e64a19);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 15px;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+      transition: all 0.2s;
     }
 
     button:active {
-      transform: scale(0.95);
+      transform: translateY(2px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
     }
 
-    #status {
+    button:disabled {
+      background: #9e9e9e;
+      transform: none;
+    }
+
+    #score {
       margin-top: 10px;
-      font-size: 1.1em;
-      color: #333;
+      font-size: 1.3em;
+      color: #fff;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>🧸 인형 뽑기 🎯</h1>
+  <p id="status">👉 크레인을 터치로 움직이고 [내리기]를 눌러보세요!</p>
   <div id="game-container">
     <div id="dolls"></div>
     <div id="crane">
       <div id="claw-arm"></div>
-      <div id="claw"></div>
+      <!-- SVG 3발 집게 -->
+      <svg id="claw-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+        <!-- 왼쪽 발 -->
+        <path id="left-finger" d="M30,20 C20,40 25,70 35,70 C45,70 40,40 30,20" fill="#ff4500" />
+        <!-- 오른쪽 발 -->
+        <path id="right-finger" d="M70,20 C80,40 75,70 65,70 C55,70 60,40 70,20" fill="#ff4500" />
+        <!-- 가운데 발 (더 깊이 들어감) -->
+        <path id="center-finger" d="M50,10 C48,40 48,65 50,75 C52,65 52,40 50,10" fill="#e63900" />
+      </svg>
     </div>
   </div>
   <div id="controls">
-    <button id="btn-drop">내리기</button>
-    <button id="btn-reset">올리기</button>
+    <button id="btn-drop">🔽 내리기</button>
+    <button id="btn-reset">🔼 올리기</button>
   </div>
-  <p id="status">👉 터치로 크레인을 좌우로 움직여 보세요!</p>
+  <p id="score">획득: 0개</p>
 
   <script>
-    // 요소 선택
     const crane = document.getElementById('crane');
-    const claw = document.getElementById('claw');
+    const leftFinger = document.getElementById('left-finger');
+    const rightFinger = document.getElementById('right-finger');
+    const centerFinger = document.getElementById('center-finger');
     const dollsContainer = document.getElementById('dolls');
     const btnDrop = document.getElementById('btn-drop');
     const btnReset = document.getElementById('btn-reset');
     const status = document.getElementById('status');
+    const scoreEl = document.getElementById('score');
 
-    // 인형 이모티콘 배열
-    const emojis = ['🧸', '🐻', '🐶', '🐱', '🐰', '🦊', '🐼', '🦄', '🐙', '🐸'];
-    
-    // 인형 생성
+    let isDropping = false;
+    let score = 0;
+    let holdingDoll = null;
+
+    // 인형 이모티콘
+    const emojis = ['🧸', '🐻', '🐶', '🐱', '🐰', '🦊', '🐼', '🦄', '🐙', '🐸', '🐷', '🐵'];
+
     function createDolls() {
       dollsContainer.innerHTML = '';
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 10; i++) {
         const doll = document.createElement('div');
         doll.className = 'doll';
         doll.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-        doll.style.left = Math.random() * 250 + 'px';
-        doll.style.bottom = Math.random() * 100 + 'px';
+        doll.style.left = Math.random() * 260 + 'px';
+        doll.style.bottom = Math.random() * 80 + 'px';
+        doll.dataset.grabbed = 'false';
         dollsContainer.appendChild(doll);
       }
     }
     createDolls();
 
-    // 터치/마우스 드래그로 크레인 이동
+    // 드래그 제어
     let isDragging = false;
-    let craneX = window.innerWidth / 2;
+    let craneX = 0;
 
-    function updateCranePosition() {
+    function updateCranePosition(e) {
       const containerRect = document.getElementById('game-container').getBoundingClientRect();
-      const newX = Math.max(30, Math.min(craneX - containerRect.left - 30, containerRect.width - 60));
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const newX = Math.max(40, Math.min(clientX - containerRect.left - 30, containerRect.width - 70));
       crane.style.left = `${newX + 30}px`;
     }
 
-    // 터치 시작
     crane.addEventListener('touchstart', (e) => {
       e.preventDefault();
       isDragging = true;
-      const touch = e.touches[0];
-      craneX = touch.clientX;
-      updateCranePosition();
+      updateCranePosition(e);
     });
 
-    // 드래그 중
     document.addEventListener('touchmove', (e) => {
-      if (isDragging) {
-        const touch = e.touches[0];
-        craneX = touch.clientX;
-        updateCranePosition();
-      }
-    });
+      if (isDragging) updateCranePosition(e);
+    }, { passive: false });
 
-    // 드래그 끝
-    document.addEventListener('touchend', () => {
-      isDragging = false;
-    });
+    document.addEventListener('touchend', () => { isDragging = false; });
 
-    // 드래그 (데스크탑용 보조)
     crane.addEventListener('mousedown', (e) => {
       isDragging = true;
-      craneX = e.clientX;
-      updateCranePosition();
+      updateCranePosition(e);
     });
 
     document.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        craneX = e.clientX;
-        updateCranePosition();
-      }
+      if (isDragging) updateCranePosition(e);
     });
 
-    document.addEventListener('mouseup', () => {
-      isDragging = false;
-    });
+    document.addEventListener('mouseup', () => { isDragging = false; });
 
-    // 내리기 버튼
+    // 집게 닫기 (잡는 애니메이션)
+    function closeClaw() {
+      leftFinger.setAttribute('d', 'M30,20 C25,30 30,45 38,55 C42,60 45,62 35,70 C25,70 20,40 30,20');
+      rightFinger.setAttribute('d', 'M70,20 C75,30 70,45 62,55 C58,60 55,62 65,70 C75,70 80,40 70,20');
+      centerFinger.setAttribute('d', 'M50,10 C50,30 50,60 50,75 C50,60 50,30 50,10');
+    }
+
+    // 집게 열기 (기본 상태)
+    function openClaw() {
+      leftFinger.setAttribute('d', 'M30,20 C20,40 25,70 35,70 C45,70 40,40 30,20');
+      rightFinger.setAttribute('d', 'M70,20 C80,40 75,70 65,70 C55,70 60,40 70,20');
+      centerFinger.setAttribute('d', 'M50,10 C48,40 48,65 50,75 C52,65 52,40 50,10');
+    }
+
+    // 내리기
     btnDrop.addEventListener('click', () => {
-      if (crane.style.top !== '300px') {
-        crane.style.transition = 'top 1.5s ease-out';
-        crane.style.top = '300px';
-        claw.style.transform = 'rotate(45deg) scale(1.2)';
+      if (isDropping) return;
+      isDropping = true;
+      btnDrop.disabled = true;
+
+      crane.style.transition = 'top 1.8s cubic-bezier(0.2, 0.8, 0.3, 1)';
+      crane.style.top = '320px';
+
+      setTimeout(() => {
         status.textContent = '🤏 잡는 중...';
+        closeClaw();
+
+        const success = Math.random() < 0.6; // 60% 성공
+        const dolls = document.querySelectorAll('.doll');
+        let grabbedDoll = null;
+
+        for (let doll of dolls) {
+          if (doll.dataset.grabbed === 'false') {
+            const dollRect = doll.getBoundingClientRect();
+            const craneRect = crane.getBoundingClientRect();
+            const horizontalOverlap = !(craneRect.right < dollRect.left || craneRect.left > dollRect.right);
+            if (horizontalOverlap) {
+              grabbedDoll = doll;
+              break;
+            }
+          }
+        }
+
         setTimeout(() => {
-          claw.style.transform = 'rotate(45deg) scale(0.8)';
-          status.textContent = '🥹 놓쳤나요?';
-        }, 800);
-      }
+          if (success && grabbedDoll) {
+            holdingDoll = grabbedDoll;
+            grabbedDoll.dataset.grabbed = 'true';
+            grabbedDoll.style.position = 'absolute';
+            status.textContent = '🎉 성공! 인형 획득!';
+            score++;
+            scoreEl.textContent = `획득: ${score}개`;
+          } else {
+            openClaw(); // 실패 시 바로 열기
+            status.textContent = '🥲 아쉬워요... 다음 기회에!';
+          }
+        }, 600);
+      }, 100);
     });
 
-    // 올리기 버튼
+    // 올리기
     btnReset.addEventListener('click', () => {
+      if (!isDropping) return;
+
       crane.style.transition = 'top 1.5s ease-in';
-      crane.style.top = '0';
-      claw.style.transform = 'rotate(45deg) scale(1)';
-      status.textContent = '👆 다시 시도하세요!';
+      crane.style.top = '0px';
+
+      if (holdingDoll) {
+        holdingDoll.style.transition = 'top 1.5s ease-in';
+        holdingDoll.style.top = '0px';
+        setTimeout(() => {
+          holdingDoll.remove();
+          holdingDoll = null;
+        }, 1500);
+      }
+
+      setTimeout(() => {
+        openClaw(); // 집게 열기
+        isDropping = false;
+        btnDrop.disabled = false;
+        status.textContent = '👆 다시 시도하세요!';
+      }, 1600);
+
+      setTimeout(() => {
+        if (document.querySelectorAll('.doll').length === 0) {
+          createDolls();
+          status.textContent = '🎉 새 인형들이 도착했어요!';
+        }
+      }, 500);
     });
 
-    // 초기 위치 설정
-    crane.style.top = '0px';
+    // 초기 상태
+    openClaw();
   </script>
 </body>
 </html>
