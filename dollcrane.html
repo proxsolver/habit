@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>🧸 인형 뽑기 🎯</title>
+  <meta name="theme-color" content="#ff7043" />
+  <title>🧸 인형 뽑기 GO! 🎯</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="#manifest-placeholder" />
+  <link rel="apple-touch-icon" href="https://em-content.zobj.net/thumbs/120/twitter/355/bear-face_1f43b.png">
+
   <style>
     * {
       margin: 0;
@@ -30,7 +36,7 @@
       align-items: flex-start;
       justify-content: center;
       width: 100%;
-      max-width: 800px;
+      max-width: 900px;
       padding: 20px;
     }
 
@@ -83,9 +89,29 @@
       filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.1));
     }
 
+    .doll.rare {
+      font-size: 2.6em;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    .doll.legendary {
+      font-size: 3em;
+      animation: shine 2s infinite alternate;
+    }
+
     @keyframes float {
       0%, 100% { transform: translateY(0) rotate(0deg); }
       50% { transform: translateY(-12px) rotate(2deg); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
+    }
+
+    @keyframes shine {
+      0% { filter: drop-shadow(0 0 5px gold); transform: scale(1); }
+      100% { filter: drop-shadow(0 0 15px gold); transform: scale(1.15); }
     }
 
     #crane {
@@ -119,13 +145,13 @@
 
     #controls {
       display: flex;
-      gap: 18px;
+      gap: 14px;
       margin-top: 15px;
     }
 
     button {
-      padding: 14px 24px;
-      font-size: 1.2em;
+      padding: 14px 20px;
+      font-size: 1.1em;
       font-weight: bold;
       background: linear-gradient(to bottom, #ff7043, #e64a19);
       color: white;
@@ -146,13 +172,12 @@
       transform: none;
     }
 
-    /* 획득한 인형 표시 박스 */
     .collected-box {
       background: rgba(255, 255, 255, 0.2);
       border: 2px dashed #fff;
       border-radius: 15px;
       padding: 15px;
-      width: 180px;
+      width: 200px;
       min-height: 420px;
       color: white;
       text-align: center;
@@ -173,20 +198,43 @@
     }
 
     .collected-item {
-      font-size: 2em;
+      padding: 10px;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.2);
-      padding: 8px;
-      border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+
+    .collected-item span.name {
+      font-size: 1em;
+      display: block;
+      font-weight: bold;
+    }
+
+    .collected-item span.rarity {
+      font-size: 0.8em;
+      opacity: 0.9;
+    }
+
+    .rarity-normal { color: #888; }
+    .rarity-rare { color: #1e88e5; }
+    .rarity-legendary { color: #ff8f00; font-weight: bold; }
+
+    .achievement {
+      font-size: 0.9em;
+      color: #fff;
+      margin: 5px 0;
+      padding: 5px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
   <div class="game-wrapper">
-    <!-- 왼쪽: 게임 영역 -->
     <div class="left-section">
-      <h1>🧸 인형 뽑기 🎯</h1>
-      <p id="status">👉 크레인을 터치로 움직이고 [내리기]를 눌러보세요!</p>
+      <h1>🧸 인형 뽑기 GO! 🎯</h1>
+      <p id="status">👉 터치로 이동하고 [내리기]를 눌러보세요!</p>
       <div id="game-container">
         <div id="dolls"></div>
         <div id="crane">
@@ -201,19 +249,32 @@
       <div id="controls">
         <button id="btn-drop">🔽 내리기</button>
         <button id="btn-reset">🔼 올리기</button>
+        <button id="btn-restart">🔄 다시 하기</button>
       </div>
     </div>
 
-    <!-- 오른쪽: 획득한 인형 표시 -->
     <div class="collected-box">
-      <h2>🎉 내가 뽑은 인형</h2>
-      <div class="collected-dolls" id="collected-dolls">
-        <!-- 여기에 인형 추가됨 -->
+      <h2>🎉 내 컬렉션</h2>
+      <div class="collected-dolls" id="collected-dolls"></div>
+
+      <div style="margin-top: 20px;">
+        <h3>🏆 도전 과제</h3>
+        <div class="achievement">
+          <span id="ach-consecutive">연속 성공: 0/3</span>
+        </div>
+        <div class="achievement">
+          <span id="ach-total">획득: 0/10</span>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- 사운드 -->
+  <audio id="sound-win" src="https://assets.mixkit.co/sfx/preview/mixkit-coin-drop-384.wav" preload="auto"></audio>
+  <audio id="sound-fail" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-bleep-2227.wav" preload="auto"></audio>
+
   <script>
+    // 요소 선택
     const crane = document.getElementById('crane');
     const leftFinger = document.getElementById('left-finger');
     const rightFinger = document.getElementById('right-finger');
@@ -222,60 +283,61 @@
     const collectedDolls = document.getElementById('collected-dolls');
     const btnDrop = document.getElementById('btn-drop');
     const btnReset = document.getElementById('btn-reset');
+    const btnRestart = document.getElementById('btn-restart');
     const status = document.getElementById('status');
+    const achConsecutive = document.getElementById('ach-consecutive');
+    const achTotal = document.getElementById('ach-total');
 
+    const soundWin = document.getElementById('sound-win');
+    const soundFail = document.getElementById('sound-fail');
+
+    // 게임 상태
     let isDropping = false;
     let holdingDoll = null;
+    let consecutiveSuccess = 0;
+    let totalDolls = 0;
 
-    const emojis = ['🧸', '🐻', '🐶', '🐱', '🐰', '🦊', '🐼', '🦄', '🐙', '🐸', '🐷', '🐵'];
+    // 인형 데이터: 이름, 이모티콘, 희귀도
+    const dollsData = [
+      // 일반 (70%)
+      { name: "뽀로로", emoji: "🐧", rarity: "일반", weight: 70 },
+      { name: "쿠키", emoji: "🍪", rarity: "일반", weight: 70 },
+      { name: "곰돌이", emoji: "🧸", rarity: "일반", weight: 70 },
+      { name: "강아지", emoji: "🐶", rarity: "일반", weight: 70 },
+      { name: "고양이", emoji: "🐱", rarity: "일반", weight: 70 },
+      { name: "토비", emoji: "🐰", rarity: "일반", weight: 70 },
+      { name: "판다", emoji: "🐼", rarity: "일반", weight: 70 },
+      { name: "여우", emoji: "🦊", rarity: "일반", weight: 70 },
 
-    function createDolls() {
-      dollsContainer.innerHTML = '';
-      for (let i = 0; i < 10; i++) {
-        const doll = document.createElement('div');
-        doll.className = 'doll';
-        doll.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-        doll.style.left = Math.random() * 260 + 'px';
-        doll.style.bottom = Math.random() * 80 + 'px';
-        doll.dataset.grabbed = 'false';
-        dollsContainer.appendChild(doll);
+      // 희귀 (25%)
+      { name: "샤이닝 베어", emoji: "🐻‍❄️", rarity: "희귀", weight: 25 },
+      { name: "마법의 유니콘", emoji: "🦄", rarity: "희귀", weight: 25 },
+      { name: "스파클 토끼", emoji: "🐇✨", rarity: "희귀", weight: 25 },
+      { name: "달빛 여우", emoji: "🦊🌙", rarity: "희귀", weight: 25 },
+
+      // 전설 (5%)
+      { name: "황금 드래곤", emoji: "🐉✨", rarity: "전설", weight: 5 },
+      { name: "별빛 요정", emoji: "🧚‍♀️💫", rarity: "전설", weight: 5 },
+      { name: "태양의 사자", emoji: "🦁☀️", rarity: "전설", weight: 5 }
+    ];
+
+    // 가중치 기반 랜덤 선택
+    function getRandomDoll() {
+      const totalWeight = dollsData.reduce((sum, d) => sum + d.weight, 0);
+      let random = Math.random() * totalWeight;
+      for (let doll of dollsData) {
+        random -= doll.weight;
+        if (random <= 0) return doll;
       }
     }
-    createDolls();
 
-    // 드래그 제어
-    let isDragging = false;
-    let craneX = 0;
-
-    function updateCranePosition(e) {
-      const containerRect = document.getElementById('game-container').getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const newX = Math.max(40, Math.min(clientX - containerRect.left - 30, containerRect.width - 70));
-      crane.style.left = `${newX + 30}px`;
+    // 진동 함수
+    function vibrateSuccess() {
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 100]);
     }
-
-    crane.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      isDragging = true;
-      updateCranePosition(e);
-    });
-
-    document.addEventListener('touchmove', (e) => {
-      if (isDragging) updateCranePosition(e);
-    }, { passive: false });
-
-    document.addEventListener('touchend', () => { isDragging = false; });
-
-    crane.addEventListener('mousedown', (e) => {
-      isDragging = true;
-      updateCranePosition(e);
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (isDragging) updateCranePosition(e);
-    });
-
-    document.addEventListener('mouseup', () => { isDragging = false; });
+    function vibrateFail() {
+      if ('vibrate' in navigator) navigator.vibrate(200);
+    }
 
     // 집게 애니메이션
     function closeClaw() {
@@ -283,14 +345,47 @@
       rightFinger.setAttribute('d', 'M70,20 C75,30 70,45 62,55 C58,60 55,62 65,70 C75,70 80,40 70,20');
       centerFinger.setAttribute('d', 'M50,10 C50,30 50,60 50,75 C50,60 50,30 50,10');
     }
-
     function openClaw() {
       leftFinger.setAttribute('d', 'M30,20 C20,40 25,70 35,70 C45,70 40,40 30,20');
       rightFinger.setAttribute('d', 'M70,20 C80,40 75,70 65,70 C55,70 60,40 70,20');
       centerFinger.setAttribute('d', 'M50,10 C48,40 48,65 50,75 C52,65 52,40 50,10');
     }
 
-    // 내리기 (속도 느리게: 2.2초)
+    // 인형 생성
+    function createDolls() {
+      dollsContainer.innerHTML = '';
+      for (let i = 0; i < 10; i++) {
+        const data = getRandomDoll();
+        const doll = document.createElement('div');
+        doll.className = `doll ${data.rarity === '희귀' ? 'rare' : data.rarity === '전설' ? 'legendary' : ''}`;
+        doll.dataset.name = data.name;
+        doll.dataset.rarity = data.rarity;
+        doll.dataset.grabbed = 'false';
+        doll.innerHTML = data.emoji;
+
+        doll.style.left = Math.random() * 260 + 'px';
+        doll.style.bottom = Math.random() * 80 + 'px';
+        dollsContainer.appendChild(doll);
+      }
+    }
+    createDolls();
+
+    // 드래그 제어
+    let isDragging = false;
+    function updateCranePosition(e) {
+      const containerRect = document.getElementById('game-container').getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const newX = Math.max(40, Math.min(clientX - containerRect.left - 30, containerRect.width - 70));
+      crane.style.left = `${newX + 30}px`;
+    }
+    crane.addEventListener('touchstart', e => { e.preventDefault(); isDragging = true; updateCranePosition(e); });
+    document.addEventListener('touchmove', e => { if (isDragging) updateCranePosition(e); }, { passive: false });
+    document.addEventListener('touchend', () => { isDragging = false; });
+    crane.addEventListener('mousedown', e => { isDragging = true; updateCranePosition(e); });
+    document.addEventListener('mousemove', e => { if (isDragging) updateCranePosition(e); });
+    document.addEventListener('mouseup', () => { isDragging = false; });
+
+    // 내리기
     btnDrop.addEventListener('click', () => {
       if (isDropping) return;
       isDropping = true;
@@ -324,16 +419,44 @@
             holdingDoll = grabbedDoll;
             grabbedDoll.dataset.grabbed = 'true';
 
-            // 오른쪽 박스에 인형 추가
+            const name = grabbedDoll.dataset.name;
+            const rarity = grabbedDoll.dataset.rarity;
+
+            // 컬렉션에 추가
             const item = document.createElement('div');
-            item.className = 'collected-item';
-            item.textContent = grabbedDoll.textContent;
+            item.className = `collected-item rarity-${rarity.toLowerCase()}`;
+            item.innerHTML = `<span class="name">${name}</span><span class="rarity">${rarity}</span>`;
+
             collectedDolls.appendChild(item);
 
-            status.textContent = '🎉 성공! 인형 획득!';
+            totalDolls++;
+            consecutiveSuccess++;
+            achTotal.textContent = `획득: ${totalDolls}/10`;
+            achConsecutive.textContent = `연속 성공: ${consecutiveSuccess}/3`;
+
+            // 알림
+            alert(`🎉 축하해요! "${name}"를 획득했어요! (${rarity})`);
+
+            // 도전 과제
+            if (consecutiveSuccess >= 3) {
+              alert('🔥 대단해요! 연속 3회 성공!');
+              consecutiveSuccess = 0;
+              achConsecutive.textContent = `연속 성공: ${consecutiveSuccess}/3`;
+            }
+            if (totalDolls === 10) {
+              alert('🎊 모든 인형을 모았어요! 완벽한 컬렉터!');
+            }
+
+            status.textContent = `🎉 ${name} 획득!`;
+            soundWin.play();
+            vibrateSuccess();
           } else {
+            consecutiveSuccess = 0;
+            achConsecutive.textContent = `연속 성공: 0/3`;
             openClaw();
-            status.textContent = '🥲 아쉬워요... 다음 기회에!';
+            status.textContent = '🥲 아쉬워요...';
+            soundFail.play();
+            vibrateFail();
           }
         }, 700);
       }, 100);
@@ -342,34 +465,57 @@
     // 올리기
     btnReset.addEventListener('click', () => {
       if (!isDropping) return;
-
       crane.style.transition = 'top 1.8s ease-in';
       crane.style.top = '0px';
-
       if (holdingDoll) {
-        holdingDoll.style.transition = 'top 1.8s ease-in';
-        setTimeout(() => {
-          holdingDoll.remove();
-          holdingDoll = null;
-        }, 1800);
+        setTimeout(() => { holdingDoll.remove(); holdingDoll = null; }, 1800);
       }
-
       setTimeout(() => {
         openClaw();
         isDropping = false;
         btnDrop.disabled = false;
         status.textContent = '👆 다시 시도하세요!';
       }, 1900);
-
-      setTimeout(() => {
-        if (document.querySelectorAll('.doll').length === 0) {
-          createDolls();
-          status.textContent = '🎉 새 인형들이 도착했어요!';
-        }
-      }, 500);
     });
 
-    openClaw(); // 초기 상태
+    // 다시 하기
+    btnRestart.addEventListener('click', () => {
+      location.reload();
+    });
+
+    // 초기 상태
+    openClaw();
+
+    // PWA 설치 유도
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setTimeout(() => {
+        if (confirm('홈 화면에 추가하고 앱처럼 사용하시겠어요?')) {
+          e.prompt();
+        }
+      }, 3000);
+    });
+  </script>
+
+  <!-- PWA Manifest 동적 생성 -->
+  <script>
+    const manifest = {
+      "name": "인형 뽑기 GO!",
+      "short_name": "인형뽑기",
+      "description": "아이들을 위한 인형 뽑기 게임",
+      "start_url": ".",
+      "display": "standalone",
+      "background_color": "#a6c1ee",
+      "theme_color": "#ff7043",
+      "icons": [{
+        "src": "https://em-content.zobj.net/thumbs/120/twitter/355/stuffed-flat-leaved-sprout_1fadc.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('link[rel="manifest"]').href = manifestURL;
   </script>
 </body>
 </html>
