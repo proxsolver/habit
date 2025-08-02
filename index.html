@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가족 루틴 트래커</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 로그인 페이지 -->
+        <div id="loginPage" class="login-page">
+            <div class="login-form">
+                <h1 class="app-title">🌅 루틴 트래커</h1>
+                
+                <!-- 역할 선택 -->
+                <div class="role-selector">
+                    <div class="role-btn active" onclick="selectRole('parent')">👨‍👩‍👧‍👦 부모</div>
+                    <div class="role-btn" onclick="selectRole('child')">👶 자녀</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" placeholder="your@email.com">
+                </div>
+                <div class="input-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" placeholder="비밀번호 입력">
+                </div>
+
+                <!-- 가족 코드 입력 (자녀용) -->
+                <div id="familyCodeInput" class="input-group family-code-input">
+                    <label for="familyCode">가족 코드</label>
+                    <input type="text" id="familyCode" placeholder="가족 코드를 입력하세요">
+                </div>
+
+                <button class="btn" id="loginBtn" onclick="handleAuth('login')">로그인</button>
+                <button class="btn btn-secondary" onclick="handleAuth('register')">회원가입</button>
+
+                <!-- 가족 코드 표시 (부모용 회원가입 후) -->
+                <div id="familyCodeDisplay" class="family-code-display hidden">
+                    <div>가족 코드</div>
+                    <div class="family-code" id="generatedFamilyCode"></div>
+                    <div style="font-size: 12px; margin-top: 10px; color: #666;">
+                        자녀에게 이 코드를 알려주세요
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 앱 -->
+        <div id="mainApp" class="main-app">
+            <!-- 헤더 -->
+            <div class="header">
+                <div class="user-info">
+                    <span id="userEmail"></span>
+                    <span class="user-role" id="userRole"></span>
+                    <button class="logout-btn" onclick="logout()">로그아웃</button>
+                </div>
+                <h1>오늘의 루틴</h1>
+                <div id="currentDate"></div>
+            </div>
+
+            <!-- 메인 페이지 -->
+            <div id="homePage" class="page">
+                <!-- 수면 정보 -->
+                <div class="sleep-info">
+                    <div class="sleep-hours" id="sleepHours">-</div>
+                    <div>어젯밤 수면시간</div>
+                </div>
+
+                <!-- 오늘의 명언 -->
+                <div class="quote" id="dailyQuote">
+                    "성공은 매일의 작은 노력들이 쌓여서 만들어진다."
+                </div>
+
+                <!-- 루틴 목록 -->
+                <div class="routine-list" id="routineList">
+                    <!-- 루틴 아이템들이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <!-- 가족 페이지 -->
+            <div id="familyPage" class="page family-page">
+                <div class="page-title">가족 루틴 현황</div>
+                <div id="familyMembers" class="family-members">
+                    <!-- 가족 구성원들의 루틴 현황 -->
+                </div>
+            </div>
+
+            <!-- 관리 페이지 -->
+            <div id="managePage" class="page manage-page">
+                <div class="page-title">루틴 관리</div>
+                <button class="add-routine-btn" onclick="openAddRoutineModal()">+ 새 루틴 추가</button>
+                <div id="manageRoutineList">
+                    <!-- 관리용 루틴 목록 -->
+                </div>
+            </div>
+
+            <!-- 하단 네비게이션 -->
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="showPage('home')">
+                    <i>🏠</i>
+                    <span>홈</span>
+                </div>
+                <div class="nav-item" onclick="showPage('manage')">
+                    <i>⚙️</i>
+                    <span>관리</span>
+                </div>
+                <div class="nav-item" onclick="showPage('review')">
+                    <i>📊</i>
+                    <span>리뷰</span>
+                </div>
+                <div class="nav-item" onclick="showPage('stats')">
+                    <i>📈</i>
+                    <span>통계</span>
+                </div>
+                <div class="nav-item" onclick="showPage('family')">
+                    <i>👨‍👩‍👧‍👦</i>
+                    <span>가족</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 루틴 추가 모달 -->
+        <div id="addRoutineModal" class="modal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <div class="modal-header">새 루틴 추가</div>
+                
+                <div class="form-group">
+                    <label for="routineName">루틴 이름</label>
+                    <input type="text" id="routineName" placeholder="루틴 이름을 입력하세요">
+                </div>
+
+                <div class="form-group">
+                    <label for="routineType">루틴 타입</label>
+                    <select id="routineType">
+                        <option value="yesno">예/아니오</option>
+                        <option value="number">숫자 입력</option>
+                        <option value="time">시간 입력</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="routineTime">시점</label>
+                    <select id="routineTime">
+                        <option value="morning">아침</option>
+                        <option value="afternoon">점심</option>
+                        <option value="evening">저녁</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="routineFreq">주기</label>
+                    <select id="routineFreq">
+                        <option value="daily">매일</option>
+                        <option value="weekday">평일</option>
+                        <option value="weekend">주말</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-cancel" onclick="closeModal()">취소</button>
+                    <button class="btn" onclick="addRoutine()">추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-firestore-compat.min.js"></script>
+    
+    <!-- 메인 스크립트 -->
+    <script src="script.js"></script>
+</body>
+</html>
