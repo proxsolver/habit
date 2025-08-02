@@ -1,10 +1,6 @@
-// Firebase 설정 - 실제 프로젝트에서는 여러분의 Firebase 설정으로 교체하세요
-https://console.cloud.google.com
-
-// Firebase 초기화
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Firebase 설정은 firebase-config.js에서 처리됩니다
+const auth = window.auth;
+const db = window.db;
 
 // 전역 변수
 let currentUser = null;
@@ -26,6 +22,12 @@ const quotes = [
 function init() {
     updateCurrentDate();
     updateDailyQuote();
+    
+    // Firebase가 로드될 때까지 기다리기
+    if (typeof firebase === 'undefined' || !window.auth) {
+        setTimeout(init, 100);
+        return;
+    }
     
     // 인증 상태 변경 감지
     auth.onAuthStateChanged(async (user) => {
@@ -168,6 +170,9 @@ function toggleEmailLogin() {
         button.textContent = '이메일로 로그인';
     }
 }
+
+// 인증 처리 (이메일/비밀번호)
+async function handleAuth(type) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const familyCode = document.getElementById('familyCode').value;
@@ -182,7 +187,7 @@ function toggleEmailLogin() {
         return;
     }
 
-    setLoading(true);
+    setLoading(true, 'email');
 
     try {
         let userCredential;
@@ -202,7 +207,7 @@ function toggleEmailLogin() {
         console.error('인증 오류:', error);
         showNotification(getErrorMessage(error.code), 'error');
     } finally {
-        setLoading(false);
+        setLoading(false, 'email');
     }
 }
 
@@ -211,6 +216,7 @@ async function createUserProfile(user, familyCode = null) {
     const userData = {
         email: user.email,
         role: userRole,
+        authProvider: 'email',
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         lastActive: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -224,6 +230,7 @@ async function createUserProfile(user, familyCode = null) {
         // 가족 정보 생성
         await db.collection('families').doc(newFamilyId).set({
             parentId: user.uid,
+            parentName: user.email.split('@')[0],
             members: [user.uid],
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             familyCode: newFamilyId
@@ -700,18 +707,20 @@ function showNotification(message, type = 'success') {
 function setLoading(loading, type = 'email') {
     if (type === 'google') {
         const googleBtn = document.querySelector('.google-btn');
-        if (loading) {
-            googleBtn.disabled = true;
-            googleBtn.innerHTML = `
-                <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                Google 로그인 중...
-            `;
-        } else {
-            googleBtn.disabled = false;
-            googleBtn.innerHTML = `
-                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
-                Google로 시작하기
-            `;
+        if (googleBtn) {
+            if (loading) {
+                googleBtn.disabled = true;
+                googleBtn.innerHTML = `
+                    <div style="width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    Google 로그인 중...
+                `;
+            } else {
+                googleBtn.disabled = false;
+                googleBtn.innerHTML = `
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                    Google로 시작하기
+                `;
+            }
         }
     } else {
         const loginBtn = document.getElementById('loginBtn');
