@@ -649,37 +649,76 @@
 
         // 사용자 루틴 로드 (관리 페이지용)
         async function loadUserRoutines() {
-            if (!currentUser || !familyId) return;
+            if (!currentUser || !familyId) {
+                console.log('❌ 루틴 로드 조건 불충족');
+                return;
+            }
             
             try {
+                console.log('📋 루틴 목록 로드 시작...');
+                
+                // 간단한 쿼리로 변경 (인덱스 불필요)
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
-                    .orderBy('createdAt', 'desc')
                     .get();
 
+                console.log('📊 조회된 루틴 수:', routinesSnapshot.size);
+
                 const manageList = document.getElementById('manageRoutineList');
+                if (!manageList) {
+                    console.error('❌ 관리 목록 DOM 요소를 찾을 수 없습니다');
+                    return;
+                }
+                
                 manageList.innerHTML = '';
 
+                if (routinesSnapshot.empty) {
+                    manageList.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">아직 추가된 루틴이 없습니다.</div>';
+                    console.log('📝 루틴이 없습니다');
+                    return;
+                }
+
+                // 시간 순으로 정렬 (클라이언트에서)
+                const routines = [];
                 routinesSnapshot.docs.forEach(doc => {
-                    const routine = doc.data();
+                    const data = doc.data();
+                    routines.push({
+                        id: doc.id,
+                        ...data,
+                        createdAt: data.createdAt?.toDate() || new Date()
+                    });
+                });
+
+                // 생성일 기준 내림차순 정렬
+                routines.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+                console.log('📋 정렬된 루틴 목록:', routines);
+
+                routines.forEach(routine => {
                     const routineEl = document.createElement('div');
                     routineEl.className = 'routine-item';
                     routineEl.innerHTML = `
                         <div class="routine-title">${routine.name}</div>
-                        <div style="font-size: 12px; color: #666;">
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
                             타입: ${routine.type} | 시점: ${routine.time} | 주기: ${routine.frequency}
+                        </div>
+                        <div style="font-size: 11px; color: #999; margin-top: 3px;">
+                            생성일: ${routine.createdAt.toLocaleDateString('ko-KR')}
                         </div>
                     `;
                     manageList.appendChild(routineEl);
                 });
 
-                if (routinesSnapshot.empty) {
-                    manageList.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">아직 추가된 루틴이 없습니다.</div>';
-                }
+                console.log('✅ 루틴 목록 렌더링 완료');
                 
             } catch (error) {
-                console.error('루틴 로드 오류:', error);
+                console.error('❌ 루틴 로드 오류:', error);
+                
+                const manageList = document.getElementById('manageRoutineList');
+                if (manageList) {
+                    manageList.innerHTML = '<div style="text-align: center; color: #f56565; padding: 20px;">루틴 목록을 불러오는데 실패했습니다.</div>';
+                }
             }
         }
 
