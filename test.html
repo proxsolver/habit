@@ -4,1180 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>가족 루틴 트래커</title>
-    <style>
-        /* 전역 스타일 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --accent: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --success: #10b981;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            --radius: 12px;
-            --radius-lg: 16px;
-            --radius-xl: 20px;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            min-height: 100vh;
-            color: var(--text-primary);
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background: #ffffff;
-            position: relative;
-            overflow-x: hidden;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
-        }
-
-        /* 애니메이션 키프레임 */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes bounce {
-            0%, 20%, 53%, 80%, 100% { transform: translateY(0); }
-            40%, 43% { transform: translateY(-8px); }
-            70% { transform: translateY(-4px); }
-            90% { transform: translateY(-2px); }
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200px 0; }
-            100% { background-position: calc(200px + 100%) 0; }
-        }
-
-        /* 로딩 스켈레톤 */
-        .skeleton {
-            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
-            background-size: 200px 100%;
-            animation: shimmer 2s infinite;
-        }
-
-        /* 로그인 페이지 */
-        .login-page {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 2rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .login-form {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 2.5rem 2rem;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            width: 100%;
-            max-width: 380px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: slideInRight 0.8s ease-out 0.2s both;
-        }
-
-        .app-title {
-            text-align: center;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 2rem;
-            letter-spacing: -0.02em;
-        }
-
-        .role-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .role-btn {
-            padding: 1rem 0.75rem;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius);
-            background: white;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 600;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .role-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-            transition: left 0.5s;
-        }
-
-        .role-btn:hover::before {
-            left: 100%;
-        }
-
-        .role-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .role-btn.active {
-            border-color: var(--primary);
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 1rem 1.25rem;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: white;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 1rem 1.5rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            background: var(--gray-300);
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .family-code-input {
-            display: none;
-            animation: fadeInUp 0.3s ease-out;
-        }
-
-        .family-code-display {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
-            padding: 1.5rem;
-            border-radius: var(--radius);
-            text-align: center;
-            margin-bottom: 1.5rem;
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            animation: pulse 2s infinite;
-        }
-
-        .family-code {
-            font-size: 1.75rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 3px;
-            font-family: 'Courier New', monospace;
-        }
-
-        /* Google 로그인 버튼 */
-        .google-btn {
-            background: white;
-            color: var(--text-primary);
-            border: 2px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .google-btn:hover {
-            background: var(--gray-50);
-            border-color: var(--gray-300);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .google-icon {
-            width: 1.25rem;
-            height: 1.25rem;
-        }
-
-        /* 구분선 */
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gray-200);
-        }
-
-        .divider span {
-            padding: 0 1rem;
-            background: white;
-        }
-
-        /* 이메일 로그인 섹션 */
-        .email-login-section {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-height: 500px;
-            overflow: hidden;
-        }
-
-        .email-login-section.collapsed {
-            max-height: 0;
-            margin: 0;
-        }
-
-        .btn-text {
-            background: none;
-            border: none;
-            color: var(--primary);
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            padding: 0.75rem;
-            margin-top: 0.5rem;
-            border-radius: var(--radius);
-            transition: all 0.3s;
-        }
-
-        .btn-text:hover {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--primary-dark);
-        }
-
-        /* 메인 앱 */
-        .main-app {
-            display: none;
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 2rem 1.5rem 3rem;
-            text-align: center;
-            position: relative;
-            border-radius: 0 0 2rem 2rem;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            border-radius: 0 0 2rem 2rem;
-            transform: scaleY(0.5);
-            opacity: 0.3;
-        }
-
-        .user-info {
-            position: absolute;
-            right: 1.5rem;
-            top: 1.5rem;
-            font-size: 0.875rem;
-            text-align: right;
-        }
-
-        .user-role {
-            display: block;
-            font-size: 0.75rem;
-            opacity: 0.8;
-            margin-top: 0.25rem;
-        }
-
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 1.5rem;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .header h1 {
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
-        }
-
-        #currentDate {
-            opacity: 0.9;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .sleep-info {
-            background: white;
-            margin: -2rem 1.5rem 1.5rem;
-            padding: 2rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            text-align: center;
-            position: relative;
-            z-index: 10;
-            border: 1px solid rgba(99, 102, 241, 0.1);
-        }
-
-        .sleep-hours {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
-        }
-
-        .sleep-info p {
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .quote {
-            background: linear-gradient(135deg, var(--gray-50), white);
-            margin: 0 1.5rem 1.5rem;
-            padding: 1.5rem;
-            border-radius: var(--radius-lg);
-            border-left: 4px solid var(--primary);
-            font-style: italic;
-            text-align: center;
-            box-shadow: var(--shadow);
-            position: relative;
-        }
-
-        .quote::before {
-            content: '"';
-            position: absolute;
-            top: -0.5rem;
-            left: 1rem;
-            font-size: 3rem;
-            color: var(--primary);
-            opacity: 0.3;
-        }
-
-        .routine-list {
-            padding: 0 1.5rem 8rem;
-        }
-
-        .routine-item {
-            background: white;
-            margin-bottom: 1rem;
-            padding: 1.5rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid var(--gray-100);
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .routine-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .routine-title {
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            font-size: 1.125rem;
-        }
-
-        .routine-controls {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .time-input, .number-input {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .time-input:focus, .number-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .number-input {
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .yes-no-btns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            flex: 1;
-        }
-
-        .yes-btn, .no-btn {
-            padding: 0.875rem;
-            border: none;
-            border-radius: var(--radius);
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 0.875rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .yes-btn {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            border: 2px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .yes-btn:hover {
-            background: rgba(16, 185, 129, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .yes-btn.active {
-            background: var(--success);
-            color: white;
-            box-shadow: var(--shadow-md);
-            animation: bounce 0.6s ease-out;
-        }
-
-        .no-btn {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-            border: 2px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .no-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .no-btn.active {
-            background: var(--error);
-            color: white;
-            box-shadow: var(--shadow-md);
-            animation: bounce 0.6s ease-out;
-        }
-
-        /* 가족 코드 카드 */
-        .family-code-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            margin: 1.5rem;
-            padding: 2rem;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .family-code-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 3s infinite;
-        }
-
-        .card-header h3 {
-            margin: 0 0 0.5rem 0;
-            font-size: 1.5rem;
-            font-weight: 800;
-            position: relative;
-            z-index: 1;
-        }
-
-        .card-subtitle {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            margin-bottom: 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .family-code-display-main {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            z-index: 1;
-        }
-
-        .family-code-large {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: 4px;
-            margin-bottom: 1rem;
-            font-family: 'Courier New', monospace;
-        }
-
-        .copy-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 2rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .copy-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .family-info {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-
-        .info-value {
-            font-size: 0.875rem;
-            font-weight: 700;
-        }
-
-        /* 페이지 */
-        .page {
-            display: none;
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .family-page, .manage-page {
-            padding: 1.5rem;
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            text-align: center;
-            letter-spacing: -0.02em;
-        }
-
-        .add-routine-btn {
-            width: 100%;
-            padding: 1.25rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .add-routine-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .add-routine-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .add-routine-btn:hover::before {
-            left: 100%;
-        }
-
-        /* 가족 구성원 */
-        .family-members {
-            margin-bottom: 2rem;
-        }
-
-        .member-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: var(--radius-lg);
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid var(--gray-100);
-        }
-
-        .member-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .member-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .member-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .member-name {
-            font-weight: 700;
-            font-size: 1.125rem;
-            color: var(--text-primary);
-        }
-
-        .member-role {
-            font-size: 0.75rem;
-            color: var(--primary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .member-status {
-            padding: 0.5rem 1rem;
-            border-radius: 1.5rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            white-space: nowrap;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .member-status.online {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .member-status.offline {
-            background: var(--gray-100);
-            color: var(--gray-500);
-        }
-
-        .routine-progress {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .routine-badge {
-            padding: 0.5rem 0.75rem;
-            border-radius: 1.5rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .routine-badge.completed {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .routine-badge.pending {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .routine-badge.skipped {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-        }
-
-        /* 알림 */
-        .notification {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: var(--success);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-xl);
-            z-index: 1000;
-            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 600;
-            max-width: 300px;
-        }
-
-        .notification.error {
-            background: var(--error);
-        }
-
-        .notification.warning {
-            background: var(--warning);
-        }
-
-        /* 네비게이션 */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--gray-200);
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
-            border-radius: 1.5rem 1.5rem 0 0;
-        }
-
-        .nav-item {
-            text-align: center;
-            padding: 0.75rem 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--gray-400);
-            border-radius: var(--radius);
-            margin: 0 0.25rem;
-        }
-
-        .nav-item:hover {
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--primary);
-        }
-
-        .nav-item.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .nav-item i {
-            display: block;
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-            font-style: normal;
-        }
-
-        /* 모달 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            animation: fadeInUp 0.3s ease-out;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2rem;
-            border-radius: var(--radius-xl);
-            width: 90%;
-            max-width: 420px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-xl);
-            animation: slideInRight 0.3s ease-out;
-        }
-
-        .modal-header {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            color: var(--text-primary);
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 1rem;
-            right: 1.25rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray-400);
-            transition: all 0.3s;
-            width: 2rem;
-            height: 2rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .close-btn:hover {
-            background: var(--gray-100);
-            color: var(--gray-600);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .form-group select,
-        .form-group input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-group select:focus,
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-top: 2rem;
-        }
-
-        .btn-cancel {
-            background: var(--gray-100);
-            color: var(--gray-600);
-        }
-
-        .btn-cancel:hover {
-            background: var(--gray-200);
-        }
-
-        /* 유틸리티 클래스 */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .font-bold {
-            font-weight: 700;
-        }
-
-        .text-sm {
-            font-size: 0.875rem;
-        }
-
-        .text-xs {
-            font-size: 0.75rem;
-        }
-
-        .mb-4 {
-            margin-bottom: 1rem;
-        }
-
-        .p-4 {
-            padding: 1rem;
-        }
-
-        /* 반응형 디자인 */
-        @media (max-width: 480px) {
-            .container {
-                max-width: 100%;
-                margin: 0;
-            }
-            
-            .bottom-nav {
-                max-width: 100%;
-                left: 0;
-                transform: none;
-            }
-
-            .login-form {
-                margin: 1rem;
-                padding: 2rem 1.5rem;
-            }
-
-            .header {
-                padding: 1.5rem 1rem 2.5rem;
-            }
-
-            .user-info {
-                right: 1rem;
-                top: 1rem;
-            }
-
-            .sleep-info {
-                margin: -1.5rem 1rem 1rem;
-                padding: 1.5rem;
-            }
-
-            .quote, .routine-list {
-                margin-left: 1rem;
-                margin-right: 1rem;
-            }
-
-            .family-code-card {
-                margin: 1rem;
-                padding: 1.5rem;
-            }
-
-            .notification {
-                top: 1rem;
-                right: 1rem;
-                left: 1rem;
-                max-width: none;
-            }
-        }
-
-        /* 다크 모드 준비 */
-        @media (prefers-color-scheme: dark) {
-            /* 나중에 다크 모드 구현 시 사용 */
-        }
-
-        /* 프린트 스타일 */
-        @media print {
-            .bottom-nav,
-            .logout-btn,
-            .add-routine-btn {
-                display: none;
-            }
-        }
-
-        /* 접근성 개선 */
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* 터치 디바이스 최적화 */
-        @media (pointer: coarse) {
-            .btn,
-            .nav-item,
-            .role-btn,
-            .yes-btn,
-            .no-btn {
-                min-height: 44px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -1517,26 +344,44 @@
                 const result = await auth.signInWithPopup(provider);
                 const user = result.user;
                 
-                // 기존 사용자인지 확인
-                const userDoc = await db.collection('users').doc(user.uid).get();
+                console.log('✅ Google 로그인 성공:', user.email);
                 
-                if (!userDoc.exists) {
-                    // 새 사용자라면 프로필 생성
-                    await createUserProfileFromGoogle(user, familyCode);
-                    showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
-                } else {
-                    // 기존 사용자라면 로그인
-                    showNotification('Google 계정으로 로그인되었습니다! 👋');
+                // 기존 사용자인지 확인
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    
+                    if (!userDoc.exists) {
+                        console.log('🆕 새 사용자 - 프로필 생성 시작');
+                        // 새 사용자라면 프로필 생성
+                        await createUserProfileFromGoogle(user, familyCode);
+                        showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
+                    } else {
+                        console.log('👤 기존 사용자 - 로그인 완료');
+                        // 기존 사용자라면 로그인
+                        showNotification('Google 계정으로 로그인되었습니다! 👋');
+                    }
+                } catch (permissionError) {
+                    if (permissionError.code === 'permission-denied') {
+                        console.log('⚠️ 권한 오류 - 새 사용자로 처리');
+                        // 권한 오류라면 새 사용자로 간주하고 프로필 생성
+                        await createUserProfileFromGoogle(user, familyCode);
+                        showNotification('새 계정이 생성되었습니다! 🎉');
+                    } else {
+                        throw permissionError;
+                    }
                 }
                 
             } catch (error) {
                 console.error('Google 로그인 오류:', error);
+                
                 if (error.code === 'auth/popup-closed-by-user') {
                     showNotification('로그인이 취소되었습니다.', 'error');
                 } else if (error.code === 'auth/popup-blocked') {
                     showNotification('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+                } else if (error.code === 'permission-denied') {
+                    showNotification('⚠️ Firebase 권한 설정을 확인해주세요. Firestore 보안 규칙을 업데이트하세요.', 'error');
                 } else {
-                    showNotification('Google 로그인에 실패했습니다.', 'error');
+                    showNotification('Google 로그인에 실패했습니다: ' + error.message, 'error');
                 }
             } finally {
                 setLoading(false, 'google');
@@ -1974,8 +819,18 @@
         async function addRoutine() {
             console.log('🔧 루틴 추가 시작');
             
-            if (!familyId && currentUser) {
-                await loadUserProfile();
+            if (!currentUser) {
+                showNotification('로그인이 필요합니다.', 'error');
+                return;
+            }
+            
+            if (!familyId) {
+                console.log('🔄 가족 ID가 없어서 프로필 재로드 시도...');
+                try {
+                    await loadUserProfile();
+                } catch (error) {
+                    console.error('❌ 프로필 재로드 실패:', error);
+                }
             }
             
             const nameInput = document.getElementById('routineName');
@@ -1999,11 +854,6 @@
                 return;
             }
 
-            if (!currentUser) {
-                showNotification('로그인이 필요합니다.', 'error');
-                return;
-            }
-
             let userFamilyId = familyId;
             if (!userFamilyId) {
                 try {
@@ -2011,9 +861,14 @@
                     if (userDoc.exists) {
                         userFamilyId = userDoc.data().familyId;
                         familyId = userFamilyId;
+                        console.log('✅ familyId 재조회 성공:', userFamilyId);
                     }
                 } catch (error) {
                     console.error('❌ familyId 조회 실패:', error);
+                    if (error.code === 'permission-denied') {
+                        showNotification('⚠️ Firebase 권한 설정을 확인해주세요. Firestore 보안 규칙을 업데이트하세요.', 'error');
+                        return;
+                    }
                 }
             }
 
@@ -2034,6 +889,8 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
+                console.log('💾 저장할 루틴 데이터:', routineData);
+                
                 const docRef = await db.collection('routines').add(routineData);
                 console.log('✅ Firestore에 저장 완료! 문서 ID:', docRef.id);
                 
@@ -2048,7 +905,11 @@
                 
             } catch (error) {
                 console.error('❌ 루틴 추가 오류:', error);
-                showNotification('루틴 추가에 실패했습니다: ' + error.message, 'error');
+                if (error.code === 'permission-denied') {
+                    showNotification('⚠️ Firebase 권한 설정을 확인해주세요. Firestore 보안 규칙을 업데이트하세요.', 'error');
+                } else {
+                    showNotification('루틴 추가에 실패했습니다: ' + error.message, 'error');
+                }
             }
         }
 
@@ -2079,10 +940,10 @@
 
                 if (routinesSnapshot.empty) {
                     manageList.innerHTML = `
-                        <div style="text-align: center; color: var(--text-secondary); padding: 3rem 1rem;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
-                            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">아직 추가된 루틴이 없습니다</div>
-                            <div style="font-size: 0.875rem;">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div class="empty-state-title">아직 추가된 루틴이 없습니다</div>
+                            <div class="empty-state-description">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
                         </div>
                     `;
                     return;
@@ -2146,9 +1007,9 @@
                 const manageList = document.getElementById('manageRoutineList');
                 if (manageList) {
                     manageList.innerHTML = `
-                        <div style="text-align: center; color: var(--error); padding: 2rem;">
-                            <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
-                            <div>루틴 목록을 불러오는데 실패했습니다.</div>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div class="empty-state-title">루틴 목록을 불러오는데 실패했습니다</div>
                         </div>
                     `;
                 }
@@ -2203,62 +1064,90 @@
 
         // Google 프로필 생성
         async function createUserProfileFromGoogle(user, familyCode) {
-            console.log('프로필 생성:', user.email);
+            console.log('🆕 Google 프로필 생성 시작:', user.email);
             
-            const userData = {
-                email: user.email,
-                displayName: user.displayName,
-                photoURL: user.photoURL,
-                role: userRole,
-                authProvider: 'google',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            if (userRole === 'parent') {
-                const newFamilyId = generateFamilyCode();
-                userData.familyId = newFamilyId;
-                userData.isParent = true;
-
-                await db.collection('families').doc(newFamilyId).set({
-                    parentId: user.uid,
-                    parentName: user.displayName || user.email.split('@')[0],
-                    members: [user.uid],
+            try {
+                const userData = {
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    role: userRole,
+                    authProvider: 'google',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    familyCode: newFamilyId
-                });
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                };
 
-                // 가족 코드 표시
-                setTimeout(() => {
-                    const codeElement = document.getElementById('generatedFamilyCode');
-                    const displayElement = document.getElementById('familyCodeDisplay');
-                    if (codeElement && displayElement) {
-                        codeElement.textContent = newFamilyId;
-                        displayElement.classList.remove('hidden');
-                        displayElement.style.display = 'block';
-                        console.log('✅ 가족 코드 UI 업데이트 완료');
-                    }
-                    showNotification(`🔑 가족 코드: ${newFamilyId}`);
-                }, 1000);
-                
-            } else if (familyCode) {
-                const familyDoc = await db.collection('families').doc(familyCode).get();
-                if (familyDoc.exists) {
-                    userData.familyId = familyCode;
-                    userData.isParent = false;
+                if (userRole === 'parent') {
+                    const newFamilyId = generateFamilyCode();
+                    userData.familyId = newFamilyId;
+                    userData.isParent = true;
 
-                    await db.collection('families').doc(familyCode).update({
-                        members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                    console.log('👨‍👩‍👧‍👦 부모 계정 - 가족 생성:', newFamilyId);
+
+                    // 가족 문서 생성
+                    await db.collection('families').doc(newFamilyId).set({
+                        parentId: user.uid,
+                        parentName: user.displayName || user.email.split('@')[0],
+                        members: [user.uid],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        familyCode: newFamilyId
                     });
-                    
-                    showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
-                } else {
-                    throw new Error('존재하지 않는 가족 코드입니다.');
-                }
-            }
 
-            await db.collection('users').doc(user.uid).set(userData);
-            await createDefaultRoutines(user.uid, userData.familyId);
+                    // 가족 코드 표시
+                    setTimeout(() => {
+                        const codeElement = document.getElementById('generatedFamilyCode');
+                        const displayElement = document.getElementById('familyCodeDisplay');
+                        if (codeElement && displayElement) {
+                            codeElement.textContent = newFamilyId;
+                            displayElement.classList.remove('hidden');
+                            displayElement.style.display = 'block';
+                            console.log('✅ 가족 코드 UI 업데이트 완료');
+                        }
+                        showNotification(`🔑 가족 코드: ${newFamilyId}`);
+                    }, 1000);
+                    
+                } else if (familyCode) {
+                    console.log('👶 자녀 계정 - 가족 참여:', familyCode);
+                    
+                    try {
+                        const familyDoc = await db.collection('families').doc(familyCode).get();
+                        if (familyDoc.exists) {
+                            userData.familyId = familyCode;
+                            userData.isParent = false;
+
+                            // 가족에 구성원 추가
+                            await db.collection('families').doc(familyCode).update({
+                                members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                            });
+                            
+                            showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
+                        } else {
+                            throw new Error('존재하지 않는 가족 코드입니다.');
+                        }
+                    } catch (familyError) {
+                        console.error('❌ 가족 참여 오류:', familyError);
+                        if (familyError.code === 'permission-denied') {
+                            showNotification('⚠️ 가족 코드 확인 권한이 없습니다. Firebase 설정을 확인해주세요.', 'error');
+                        }
+                        throw familyError;
+                    }
+                }
+
+                // 사용자 문서 생성
+                await db.collection('users').doc(user.uid).set(userData);
+                console.log('✅ 사용자 문서 생성 완료');
+                
+                // 기본 루틴 생성
+                await createDefaultRoutines(user.uid, userData.familyId);
+                console.log('✅ 기본 루틴 생성 완료');
+                
+            } catch (error) {
+                console.error('❌ Google 프로필 생성 오류:', error);
+                if (error.code === 'permission-denied') {
+                    showNotification('⚠️ Firebase 권한 설정을 확인해주세요. Firestore 보안 규칙을 업데이트하세요.', 'error');
+                }
+                throw error;
+            }
         }
 
         async function loadUserProfile() {
@@ -2286,24 +1175,28 @@
                     if (userRole === 'parent' && familyId) {
                         console.log('👨‍👩‍👧‍👦 부모 계정 - 가족 코드 찾는 중...');
                         
-                        const familyDoc = await db.collection('families').doc(familyId).get();
-                        if (familyDoc.exists) {
-                            const familyData = familyDoc.data();
-                            const familyCode = familyData.familyCode || familyId;
-                            
-                            console.log('🔑 가족 코드 발견:', familyCode);
-                            
-                            const codeElement = document.getElementById('generatedFamilyCode');
-                            const displayElement = document.getElementById('familyCodeDisplay');
-                            
-                            if (codeElement && displayElement) {
-                                codeElement.textContent = familyCode;
-                                displayElement.classList.remove('hidden');
-                                displayElement.style.display = 'block';
-                                console.log('✅ 가족 코드 표시 완료!');
+                        try {
+                            const familyDoc = await db.collection('families').doc(familyId).get();
+                            if (familyDoc.exists) {
+                                const familyData = familyDoc.data();
+                                const familyCode = familyData.familyCode || familyId;
                                 
-                                showNotification(`🔑 가족 코드: ${familyCode} (자녀에게 공유하세요!)`);
+                                console.log('🔑 가족 코드 발견:', familyCode);
+                                
+                                const codeElement = document.getElementById('generatedFamilyCode');
+                                const displayElement = document.getElementById('familyCodeDisplay');
+                                
+                                if (codeElement && displayElement) {
+                                    codeElement.textContent = familyCode;
+                                    displayElement.classList.remove('hidden');
+                                    displayElement.style.display = 'block';
+                                    console.log('✅ 가족 코드 표시 완료!');
+                                    
+                                    showNotification(`🔑 가족 코드: ${familyCode} (자녀에게 공유하세요!)`);
+                                }
                             }
+                        } catch (familyError) {
+                            console.error('❌ 가족 정보 로드 오류:', familyError);
                         }
                     }
                     
@@ -2315,10 +1208,20 @@
                     
                     showNotification(`안녕하세요, ${displayName}님! 👋`);
                 } else {
-                    console.log('❌ 사용자 문서가 존재하지 않습니다');
+                    console.log('❌ 사용자 문서가 존재하지 않습니다 - 새 사용자일 수 있습니다');
+                    // 새 사용자라면 로그아웃하여 다시 가입 프로세스 진행
+                    showNotification('사용자 정보가 없습니다. 다시 가입해주세요.', 'warning');
+                    setTimeout(() => {
+                        auth.signOut();
+                    }, 2000);
                 }
             } catch (error) {
                 console.error('❌ 프로필 로드 오류:', error);
+                if (error.code === 'permission-denied') {
+                    showNotification('⚠️ Firebase 권한 설정을 확인해주세요. Firestore 보안 규칙을 업데이트하세요.', 'error');
+                } else {
+                    showNotification('프로필 로드에 실패했습니다: ' + error.message, 'error');
+                }
             }
         }
 
@@ -2351,126 +1254,6 @@
                 }
             }, 100);
         });
-
-        // 추가 스타일 - 리플 효과
-        const style = document.createElement('style');
-        style.textContent = `
-            .ripple {
-                position: absolute;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.6);
-                transform: scale(0);
-                animation: ripple 0.6s ease-out;
-                pointer-events: none;
-            }
-
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-
-            @keyframes slideOutRight {
-                from {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                to {
-                    opacity: 0;
-                    transform: translateX(100%);
-                }
-            }
-
-            /* 추가 호버 효과 */
-            .routine-item:hover .routine-title {
-                color: var(--primary);
-                transition: color 0.3s ease;
-            }
-
-            .member-card:hover .member-name {
-                color: var(--primary);
-                transition: color 0.3s ease;
-            }
-
-            /* 스크롤바 스타일링 */
-            ::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            ::-webkit-scrollbar-track {
-                background: var(--gray-100);
-                border-radius: 3px;
-            }
-
-            ::-webkit-scrollbar-thumb {
-                background: var(--gray-300);
-                border-radius: 3px;
-            }
-
-            ::-webkit-scrollbar-thumb:hover {
-                background: var(--gray-400);
-            }
-
-            /* 포커스 스타일 개선 */
-            input:focus, select:focus, button:focus {
-                outline: 2px solid var(--primary);
-                outline-offset: 2px;
-            }
-
-            /* 터치 피드백 */
-            .btn:active,
-            .nav-item:active,
-            .role-btn:active {
-                transform: scale(0.98);
-            }
-
-            /* 로딩 상태 개선 */
-            .btn:disabled {
-                background: var(--gray-300);
-                cursor: not-allowed;
-                transform: none;
-                opacity: 0.7;
-            }
-
-            /* 성공/오류 상태 */
-            .input-success {
-                border-color: var(--success) !important;
-                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
-            }
-
-            .input-error {
-                border-color: var(--error) !important;
-                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-            }
-
-            /* 빈 상태 개선 */
-            .empty-state {
-                text-align: center;
-                padding: 3rem 1rem;
-                color: var(--text-secondary);
-            }
-
-            .empty-state-icon {
-                font-size: 4rem;
-                margin-bottom: 1rem;
-                opacity: 0.5;
-            }
-
-            .empty-state-title {
-                font-size: 1.25rem;
-                font-weight: 600;
-                margin-bottom: 0.5rem;
-                color: var(--text-primary);
-            }
-
-            .empty-state-description {
-                font-size: 0.875rem;
-                max-width: 300px;
-                margin: 0 auto;
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>
