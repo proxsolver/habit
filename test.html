@@ -890,7 +890,21 @@
                 };
                 
                 console.log('💾 저장할 루틴 데이터:', routineData);
+                console.log('🔑 현재 사용자 UID:', currentUser.uid);
+                console.log('👨‍👩‍👧‍👦 가족 ID:', userFamilyId);
+                console.log('🔐 Auth 상태:', currentUser ? '인증됨' : '인증안됨');
                 
+                // 테스트용 간단한 데이터 먼저 시도
+                console.log('🧪 테스트 데이터 저장 시도...');
+                const testDoc = await db.collection('test').add({
+                    message: 'Hello World',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userId: currentUser.uid
+                });
+                console.log('✅ 테스트 데이터 저장 성공:', testDoc.id);
+                
+                // 실제 루틴 데이터 저장
+                console.log('💾 실제 루틴 데이터 저장 시도...');
                 const docRef = await db.collection('routines').add(routineData);
                 console.log('✅ Firestore에 저장 완료! 문서 ID:', docRef.id);
                 
@@ -1107,30 +1121,47 @@
                     }, 1000);
                     
                 } else if (familyCode) {
-                    console.log('👶 자녀 계정 - 가족 참여:', familyCode);
+                    console.log('👶 자녀 계정 - 가족 참여 시도:', familyCode);
                     
                     try {
+                        // 가족 코드로 가족 문서 조회
+                        console.log('🔍 가족 문서 조회 중...');
                         const familyDoc = await db.collection('families').doc(familyCode).get();
+                        
                         if (familyDoc.exists) {
+                            const familyData = familyDoc.data();
+                            console.log('✅ 가족 문서 발견:', familyData);
+                            
                             userData.familyId = familyCode;
                             userData.isParent = false;
 
                             // 가족에 구성원 추가
+                            console.log('👨‍👩‍👧‍👦 가족에 구성원 추가 중...');
                             await db.collection('families').doc(familyCode).update({
                                 members: firebase.firestore.FieldValue.arrayUnion(user.uid)
                             });
                             
+                            console.log('✅ 가족 참여 완료!');
                             showNotification(`👨‍👩‍👧‍👦 가족에 참여했습니다! 코드: ${familyCode}`);
                         } else {
-                            throw new Error('존재하지 않는 가족 코드입니다.');
+                            console.log('❌ 가족 문서가 존재하지 않음');
+                            throw new Error('존재하지 않는 가족 코드입니다. 부모님께 정확한 코드를 확인해주세요.');
                         }
                     } catch (familyError) {
                         console.error('❌ 가족 참여 오류:', familyError);
+                        
                         if (familyError.code === 'permission-denied') {
-                            showNotification('⚠️ 가족 코드 확인 권한이 없습니다. Firebase 설정을 확인해주세요.', 'error');
+                            showNotification('⚠️ 가족 참여 권한이 없습니다. Firebase Firestore 보안 규칙을 다음과 같이 수정해주세요:\n\nmatch /families/{familyId} {\n  allow read: if request.auth != null;\n  allow write: if request.auth != null;\n}', 'error');
+                        } else if (familyError.message.includes('존재하지 않는')) {
+                            showNotification(familyError.message, 'error');
+                        } else {
+                            showNotification('가족 참여에 실패했습니다: ' + familyError.message, 'error');
                         }
                         throw familyError;
                     }
+                } else {
+                    console.log('❌ 자녀 계정인데 가족 코드가 없음');
+                    throw new Error('자녀 계정은 가족 코드가 필요합니다.');
                 }
 
                 // 사용자 문서 생성
