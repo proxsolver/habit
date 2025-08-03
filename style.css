@@ -53,7 +53,7 @@ body {
     position: relative;
     overflow-x: hidden;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
-    padding-bottom: 6rem; /* 네비게이션 바를 위한 기본 여백 */
+    padding-bottom: 6rem;
 }
 
 /* 애니메이션 키프레임 */
@@ -117,6 +117,13 @@ body {
         opacity: 0;
         transform: translateX(100%);
     }
+}
+
+@keyframes celebration {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    75% { transform: scale(1.1) rotate(-3deg); }
 }
 
 /* 로딩 스켈레톤 */
@@ -421,7 +428,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
-    padding-bottom: 6rem; /* 네비게이션 바를 위한 추가 여백 */
+    padding-bottom: 6rem;
 }
 
 .header {
@@ -492,9 +499,129 @@ body {
     font-weight: 500;
 }
 
+/* 스트릭 대시보드 */
+.streak-dashboard {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: -2rem 1.5rem 1.5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.streak-card {
+    background: white;
+    padding: 1.5rem 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.streak-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+.streak-card:nth-child(1) { animation-delay: 0.1s; }
+.streak-card:nth-child(2) { animation-delay: 0.2s; }
+.streak-card:nth-child(3) { animation-delay: 0.3s; }
+
+.streak-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+.streak-number {
+    font-size: 1.75rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+}
+
+.streak-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 주간 진행 상황 */
+.weekly-progress {
+    background: white;
+    margin: 0 1.5rem 1.5rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-100);
+    animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.weekly-progress h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.week-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    text-align: center;
+    padding: 0.75rem 0.25rem;
+    border-radius: var(--radius);
+    transition: all 0.3s;
+    position: relative;
+}
+
+.calendar-day.today {
+    background: rgba(99, 102, 241, 0.1);
+    border: 2px solid var(--primary);
+}
+
+.day-name {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.day-number {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.25rem 0;
+}
+
+.day-progress {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 0.5rem;
+}
+
+.day-progress.level-0 { background: var(--gray-200); }
+.day-progress.level-1 { background: rgba(16, 185, 129, 0.3); }
+.day-progress.level-2 { background: rgba(16, 185, 129, 0.5); }
+.day-progress.level-3 { background: rgba(16, 185, 129, 0.7); }
+.day-progress.level-4 { background: var(--success); }
+
 .sleep-info {
     background: white;
-    margin: -2rem 1.5rem 1.5rem;
+    margin: 0 1.5rem 1.5rem;
     padding: 2rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
@@ -502,6 +629,7 @@ body {
     position: relative;
     z-index: 10;
     border: 1px solid rgba(99, 102, 241, 0.1);
+    animation: fadeInUp 0.6s ease-out 0.5s both;
 }
 
 .sleep-hours {
@@ -530,6 +658,7 @@ body {
     text-align: center;
     box-shadow: var(--shadow);
     position: relative;
+    animation: fadeInUp 0.6s ease-out 0.6s both;
 }
 
 .quote::before {
@@ -595,6 +724,12 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+.time-input:disabled, .number-input:disabled {
+    background: var(--gray-100);
+    color: var(--gray-500);
+    cursor: not-allowed;
+}
+
 .number-input {
     text-align: center;
     font-weight: 600;
@@ -619,13 +754,18 @@ body {
     overflow: hidden;
 }
 
+.yes-btn:disabled, .no-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .yes-btn {
     background: rgba(16, 185, 129, 0.1);
     color: var(--success);
     border: 2px solid rgba(16, 185, 129, 0.2);
 }
 
-.yes-btn:hover {
+.yes-btn:hover:not(:disabled) {
     background: rgba(16, 185, 129, 0.2);
     transform: translateY(-1px);
 }
@@ -767,13 +907,13 @@ body {
 .page {
     display: none;
     animation: fadeInUp 0.6s ease-out;
-    padding-bottom: 10rem; /* 네비게이션 바 여백 확보 */
+    padding-bottom: 10rem;
     min-height: calc(100vh - 10rem);
     overflow-y: auto;
 }
 
-.family-page, .manage-page {
-    padding: 1.5rem 1.5rem 6rem 1.5rem; /* 하단에 추가 여백 */
+.family-page, .manage-page, .stats-page {
+    padding: 1.5rem;
 }
 
 .page-title {
@@ -819,6 +959,233 @@ body {
 
 .add-routine-btn:hover::before {
     left: 100%;
+}
+
+/* 통계 페이지 */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    text-align: center;
+    border: 1px solid var(--gray-100);
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 월간 히트맵 */
+.monthly-heatmap {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border: 1px solid var(--gray-100);
+}
+
+.monthly-heatmap h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 1rem;
+}
+
+.heatmap-day {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.heatmap-day:hover {
+    transform: scale(1.1);
+}
+
+.heatmap-day[data-level="0"] { background: var(--gray-200); color: var(--gray-500); }
+.heatmap-day[data-level="1"] { background: rgba(16, 185, 129, 0.3); }
+.heatmap-day[data-level="2"] { background: rgba(16, 185, 129, 0.5); }
+.heatmap-day[data-level="3"] { background: rgba(16, 185, 129, 0.7); }
+.heatmap-day[data-level="4"] { background: var(--success); }
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.legend-colors {
+    display: flex;
+    gap: 2px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-color[data-level="0"] { background: var(--gray-200); }
+.legend-color[data-level="1"] { background: rgba(16, 185, 129, 0.3); }
+.legend-color[data-level="2"] { background: rgba(16, 185, 129, 0.5); }
+.legend-color[data-level="3"] { background: rgba(16, 185, 129, 0.7); }
+.legend-color[data-level="4"] { background: var(--success); }
+
+/* 루틴별 통계 */
+.routine-stats {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-100);
+}
+
+.routine-stats h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.routine-stat-card {
+    padding: 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+}
+
+.routine-stat-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.routine-stat-card:last-child {
+    margin-bottom: 0;
+}
+
+.routine-stat-name {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.routine-stat-rate {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.routine-stat-detail {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* 성취 모달 */
+.achievement-modal {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+.achievement-content {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    text-align: center;
+    border: none;
+    max-width: 320px;
+}
+
+.achievement-animation {
+    padding: 2rem;
+}
+
+.celebration-emoji {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: celebration 1s ease-out;
+}
+
+.achievement-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.achievement-description {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.celebration-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    margin: 0;
+}
+
+.celebration-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* 가족 구성원 */
@@ -962,7 +1329,7 @@ body {
     grid-template-columns: repeat(5, 1fr);
     padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
     border-radius: 1.5rem 1.5rem 0 0;
-    z-index: 9999; /* 높은 z-index로 다른 요소들 위에 표시 */
+    z-index: 9999;
 }
 
 .nav-item {
@@ -1127,6 +1494,14 @@ body {
     margin: 0 auto;
 }
 
+/* 로딩 메시지 */
+.loading-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* 유틸리티 클래스 */
 .loading {
     opacity: 0.6;
@@ -1209,7 +1584,7 @@ input:focus, select:focus, button:focus {
     .container {
         max-width: 100%;
         margin: 0;
-        padding-bottom: 8rem; /* 작은 화면에서도 충분한 여백 */
+        padding-bottom: 8rem;
     }
     
     .bottom-nav {
@@ -1232,12 +1607,25 @@ input:focus, select:focus, button:focus {
         top: 1rem;
     }
 
-    .sleep-info {
+    .streak-dashboard {
         margin: -1.5rem 1rem 1rem;
+        gap: 0.75rem;
+    }
+
+    .streak-card {
+        padding: 1rem 0.75rem;
+    }
+
+    .streak-number {
+        font-size: 1.5rem;
+    }
+
+    .sleep-info {
+        margin: 0 1rem 1rem;
         padding: 1.5rem;
     }
 
-    .quote, .routine-list {
+    .quote, .routine-list, .weekly-progress {
         margin-left: 1rem;
         margin-right: 1rem;
     }
@@ -1255,11 +1643,24 @@ input:focus, select:focus, button:focus {
     }
     
     .page {
-        padding-bottom: 12rem; /* 모바일에서 더 큰 여백 */
+        padding-bottom: 12rem;
     }
     
-    .family-page, .manage-page {
-        padding: 1.5rem 1rem 8rem 1rem; /* 모바일에서 더 큰 하단 여백 */
+    .family-page, .manage-page, .stats-page {
+        padding: 1.5rem 1rem 8rem 1rem;
+    }
+
+    .stats-overview {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .heatmap-grid {
+        gap: 1px;
+    }
+
+    .heatmap-day {
+        font-size: 0.7rem;
     }
 }
 
