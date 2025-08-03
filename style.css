@@ -42,6 +42,7 @@ body {
     color: var(--text-primary);
     font-size: 16px;
     line-height: 1.6;
+    overflow-x: hidden;
 }
 
 .container {
@@ -52,6 +53,7 @@ body {
     position: relative;
     overflow-x: hidden;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+    padding-bottom: 6rem; /* 네비게이션 바를 위한 기본 여백 */
 }
 
 /* 애니메이션 키프레임 */
@@ -417,6 +419,9 @@ body {
     animation: fadeInUp 0.6s ease-out;
     min-height: 100vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    padding-bottom: 6rem; /* 네비게이션 바를 위한 추가 여백 */
 }
 
 .header {
@@ -762,11 +767,13 @@ body {
 .page {
     display: none;
     animation: fadeInUp 0.6s ease-out;
-    padding-bottom: 8rem; /* 네비게이션 바 여백 확보 */
+    padding-bottom: 10rem; /* 네비게이션 바 여백 확보 */
+    min-height: calc(100vh - 10rem);
+    overflow-y: auto;
 }
 
 .family-page, .manage-page {
-    padding: 1.5rem;
+    padding: 1.5rem 1.5rem 6rem 1.5rem; /* 하단에 추가 여백 */
 }
 
 .page-title {
@@ -955,6 +962,7 @@ body {
     grid-template-columns: repeat(5, 1fr);
     padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
     border-radius: 1.5rem 1.5rem 0 0;
+    z-index: 9999; /* 높은 z-index로 다른 요소들 위에 표시 */
 }
 
 .nav-item {
@@ -1201,6 +1209,7 @@ input:focus, select:focus, button:focus {
     .container {
         max-width: 100%;
         margin: 0;
+        padding-bottom: 8rem; /* 작은 화면에서도 충분한 여백 */
     }
     
     .bottom-nav {
@@ -1243,6 +1252,14 @@ input:focus, select:focus, button:focus {
         right: 1rem;
         left: 1rem;
         max-width: none;
+    }
+    
+    .page {
+        padding-bottom: 12rem; /* 모바일에서 더 큰 여백 */
+    }
+    
+    .family-page, .manage-page {
+        padding: 1.5rem 1rem 8rem 1rem; /* 모바일에서 더 큰 하단 여백 */
     }
 }
 
