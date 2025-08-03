@@ -626,7 +626,7 @@
             try {
                 console.log('📊 사용자 통계 로드 시작...');
 
-                // 지난 30일간의 루틴 로그 가져오기
+                // 지난 30일간의 루틴 로그 가져오기 (orderBy 제거)
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                 const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -634,7 +634,6 @@
                 const logsSnapshot = await db.collection('routine_logs')
                     .where('userId', '==', currentUser.uid)
                     .where('date', '>=', thirtyDaysAgoStr)
-                    .orderBy('date', 'desc')
                     .get();
 
                 // 날짜별 완료 데이터 정리
@@ -714,7 +713,7 @@
 
         // 최고 연속 일수 계산
         function calculateBestStreak(dailyCompletions, totalRoutinesPerDay) {
-            const dates = Object.keys(dailyCompletions).sort();
+            const dates = Object.keys(dailyCompletions).sort(); // 클라이언트에서 정렬
             let bestStreak = 0;
             let currentStreak = 0;
             
@@ -776,12 +775,12 @@
             if (completionRateEl) completionRateEl.textContent = `${userStats.completionRate}%`;
         }
 
-        // 오늘 진행률 계산
+        // 오늘 진행률 계산 (단순한 쿼리 사용)
         async function calculateTodayProgress() {
             if (!currentUser || !familyId) return 0;
 
             try {
-                // 오늘 해야 할 루틴들 가져오기
+                // 오늘 해야 할 루틴들 가져오기 (단순한 쿼리)
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
@@ -853,6 +852,7 @@
             if (!currentUser || !familyId) return 0;
 
             try {
+                // 단순한 쿼리 사용
                 const logsSnapshot = await db.collection('routine_logs')
                     .where('userId', '==', currentUser.uid)
                     .where('date', '==', dateStr)
@@ -890,11 +890,10 @@
                 const routineList = document.getElementById('routineList');
                 routineList.innerHTML = '<div class="loading-message">루틴을 불러오는 중...</div>';
 
-                // 사용자의 루틴들 가져오기
+                // 사용자의 루틴들 가져오기 (orderBy 제거로 인덱스 요구사항 해결)
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
-                    .orderBy('order')
                     .get();
 
                 console.log('📊 조회된 루틴 수:', routinesSnapshot.size);
@@ -928,13 +927,20 @@
                     evening: []
                 };
 
+                // 루틴을 order 필드로 정렬
+                const sortedRoutines = [];
                 routinesSnapshot.docs.forEach(doc => {
                     const data = doc.data();
-                    const routine = {
+                    sortedRoutines.push({
                         id: doc.id,
                         ...data
-                    };
-                    
+                    });
+                });
+
+                // order 필드로 정렬 (클라이언트 사이드)
+                sortedRoutines.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                sortedRoutines.forEach(routine => {
                     // 주기 확인 (오늘이 해당 루틴을 해야 하는 날인지)
                     if (shouldShowRoutineToday(routine)) {
                         routinesByTime[routine.time].push(routine);
@@ -982,7 +988,7 @@
             }
         }
 
-        // 오늘 완료된 루틴들 로드
+        // 오늘 완료된 루틴들 로드 (단순한 쿼리 사용)
         async function loadTodayCompletedRoutines() {
             const today = new Date().toISOString().split('T')[0];
             
@@ -1281,7 +1287,7 @@
                     const routine = doc.data();
                     const routineId = doc.id;
 
-                    // 지난 30일간의 해당 루틴 완료율 계산
+                    // 지난 30일간의 해당 루틴 완료율 계산 (단순한 쿼리 사용)
                     const thirtyDaysAgo = new Date();
                     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                     const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -1289,17 +1295,19 @@
                     const logsSnapshot = await db.collection('routine_logs')
                         .where('routineId', '==', routineId)
                         .where('userId', '==', currentUser.uid)
-                        .where('date', '>=', thirtyDaysAgoStr)
                         .get();
 
+                    // 날짜 필터링을 클라이언트 사이드에서 처리
                     let totalDays = 0;
                     let completedDays = 0;
 
                     logsSnapshot.docs.forEach(doc => {
                         const data = doc.data();
-                        totalDays++;
-                        if (data.completed) {
-                            completedDays++;
+                        if (data.date >= thirtyDaysAgoStr) {
+                            totalDays++;
+                            if (data.completed) {
+                                completedDays++;
+                            }
                         }
                     });
 
@@ -1704,6 +1712,7 @@
                     return;
                 }
 
+                // 생성 시간 순으로 정렬 (클라이언트에서)
                 const routines = [];
                 routinesSnapshot.docs.forEach(doc => {
                     const data = doc.data();
