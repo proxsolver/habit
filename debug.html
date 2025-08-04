@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Console Module</title>
+    <style>
+        /* 디버그 콘솔 스타일 */
+        .debug-console {
+            position: fixed;
+            top: 10%;
+            left: 5%;
+            right: 5%;
+            bottom: 20%;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-radius: 12px; /* var(--radius) */
+            padding: 1rem;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); /* var(--shadow-xl) */
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .debug-close {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            width: 2rem; /* min-height: 44px for touch */
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .debug-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .debug-close:active {
+            transform: scale(0.95);
+        }
+
+        .debug-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .debug-entry {
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+
+        .debug-time {
+            color: #666;
+            font-size: 10px;
+        }
+
+        .debug-entry.debug-error { color: #ff6b6b; }
+        .debug-entry.debug-warning { color: #feca57; }
+        .debug-entry.debug-success { color: #48cae4; }
+        .debug-entry.debug-info { color: #00ff00; }
+
+        .debug-clear {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 44px; /* For touch target */
+        }
+        .debug-clear:hover {
+            background: #555;
+        }
+        .debug-clear:active {
+            transform: scale(0.98);
+        }
+
+        /* 디버그 토글 버튼 스타일 */
+        .debug-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            width: 4rem;
+            height: 4rem;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: 3px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 9999;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        .debug-toggle:hover {
+            background: linear-gradient(135deg, #ee5a24, #ff6b6b);
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .debug-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* 간단한 상태 표시기 스타일 */
+        .status-indicator {
+            position: fixed;
+            bottom: 8rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            z-index: 9998;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* 공통 애니메이션 키프레임 (필요시 메인 앱과 공유) */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 480px) {
+            .debug-toggle {
+                top: 1rem;
+                left: 0.5rem;
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1.25rem;
+            }
+
+            .debug-console {
+                top: 5%;
+                left: 2%;
+                right: 2%;
+                bottom: 15%;
+            }
+        }
+        @media (pointer: coarse) {
+            .debug-toggle, .debug-close, .debug-clear {
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 디버그 콘솔 -->
+    <div id="debugConsole" class="debug-console hidden">
+        <div class="debug-header">
+            <span>🐛 디버그 로그</span>
+            <button class="debug-close" id="debugCloseBtn">×</button>
+        </div>
+        <div id="debugMessages" class="debug-messages"></div>
+        <button class="debug-clear" id="debugClearBtn">로그 지우기</button>
+    </div>
+
+    <!-- 디버그 토글 버튼 -->
+    <div id="debugToggle" class="debug-toggle">
+        🐛
+    </div>
+
+    <!-- 간단한 상태 표시기 -->
+    <div id="statusIndicator" class="status-indicator hidden">
+        <div id="statusText">상태 확인 중...</div>
+    </div>
+
+    <script>
+        // 이 모듈은 메인 HTML 파일에 직접 복사하여 붙여넣도록 설계되었습니다.
+        // 독립적으로 실행되지 않으며, 메인 앱의 전역 변수 (예: `debugEnabled`)를 사용합니다.
+
+        let debugEnabled = false; // 메인 앱에서 이 변수를 제어합니다.
+
+        // 디버그 로깅 함수
+        function debugLog(message, type = 'info') {
+            console.log(message);
+            
+            if (debugEnabled) {
+                const debugMessages = document.getElementById('debugMessages');
+                if (debugMessages) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    const logEntry = document.createElement('div');
+                    logEntry.className = `debug-entry debug-${type}`;
+                    logEntry.innerHTML = `<span class="debug-time">${timestamp}</span> ${message}`;
+                    
+                    debugMessages.appendChild(logEntry);
+                    debugMessages.scrollTop = debugMessages.scrollHeight;
+                    
+                    // 최대 100개 메시지만 유지
+                    if (debugMessages.children.length > 100) {
+                        debugMessages.removeChild(debugMessages.firstChild);
+                    }
+                }
+            }
+        }
+
+        // 디버그 콘솔 토글
+        function toggleDebugConsole() {
+            debugLog('🔄 디버그 콘솔 토글 시도', 'info');
+            
+            const debugConsole = document.getElementById('debugConsole');
+            const debugToggle = document.getElementById('debugToggle');
+            
+            if (!debugConsole || !debugToggle) {
+                debugLog('❌ 디버그 요소를 찾을 수 없습니다', 'error');
+                return;
+            }
+            
+            if (debugConsole.classList.contains('hidden')) {
+                debugConsole.classList.remove('hidden');
+                debugToggle.style.display = 'none';
+                debugEnabled = true; // 디버그 모드 활성화
+                debugLog('🐛 디버그 모드 활성화', 'success');
+                showStatus('디버그 모드 ON', 2000);
+            } else {
+                debugConsole.classList.add('hidden');
+                debugToggle.style.display = 'block';
+                debugEnabled = false; // 디버그 모드 비활성화
+                debugLog('🐛 디버그 모드 비활성화', 'info');
+                showStatus('디버그 모드 OFF', 2000);
+            }
+        }
+
+        // 디버그 로그 지우기
+        function clearDebugLog() {
+            const debugMessages = document.getElementById('debugMessages');
+            if (debugMessages) {
+                debugMessages.innerHTML = '';
+            }
+            debugLog('🧹 로그 지워짐', 'info');
+        }
+
+        // 상태 표시
+        function showStatus(message, duration = 3000) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            if (statusIndicator && statusText) {
+                statusText.textContent = message;
+                statusIndicator.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    statusIndicator.classList.add('hidden');
+                }, duration);
+            }
+        }
+
+        // 터치 이벤트 처리 함수 (디버그 버튼용)
+        function addTouchEventListener(element, callback, useCapture = false) {
+            if (!element) {
+                // debugLog('❌ 터치 이벤트 추가 실패: 요소가 없음', 'error'); // 너무 많은 로그 방지
+                return;
+            }
+
+            const elementInfo = element.id || element.className || element.tagName;
+
+            element.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                this.style.transform = 'scale(0.98)';
+            }, { passive: false, capture: useCapture });
+
+            element.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.transform = '';
+                callback.call(this, e);
+            }, { passive: false, capture: useCapture });
+
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                callback.call(this, e);
+            }, { capture: useCapture });
+        }
+
+        // DOM 로드 후 이벤트 리스너 연결 (이 파일이 직접 실행될 때)
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugToggle = document.getElementById('debugToggle');
+            const debugCloseBtn = document.getElementById('debugCloseBtn');
+            const debugClearBtn = document.getElementById('debugClearBtn');
+
+            if (debugToggle) {
+                addTouchEventListener(debugToggle, toggleDebugConsole);
+            }
+            if (debugCloseBtn) addTouchEventListener(debugCloseBtn, toggleDebugConsole);
+            if (debugClearBtn) addTouchEventListener(debugClearBtn, clearDebugLog);
+
+            // 초기 디버그 모드 설정 (필요시 메인 앱에서 재정의)
+            debugEnabled = false; 
+            // debugLog('🐛 Debug module loaded. Initializing with debugEnabled = ' + debugEnabled, 'info');
+        });
+    </script>
+</body>
+</html>
