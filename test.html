@@ -298,6 +298,21 @@
                 </div>
             </div>
         </div>
+
+        <!-- 디버그 콘솔 (아이패드용) -->
+        <div id="debugConsole" class="debug-console hidden">
+            <div class="debug-header">
+                <span>🐛 디버그 로그</span>
+                <button onclick="toggleDebugConsole()" class="debug-close">×</button>
+            </div>
+            <div id="debugMessages" class="debug-messages"></div>
+            <button onclick="clearDebugLog()" class="debug-clear">로그 지우기</button>
+        </div>
+
+        <!-- 디버그 토글 버튼 -->
+        <div id="debugToggle" class="debug-toggle" onclick="toggleDebugConsole()">
+            🐛
+        </div>
     </div>
 
     <!-- Firebase SDKs -->
@@ -332,6 +347,55 @@
             weeklyScore: 0,
             completionRate: 0
         };
+        let debugEnabled = false;
+
+        // 디버그 로깅 함수
+        function debugLog(message, type = 'info') {
+            console.log(message);
+            
+            if (debugEnabled) {
+                const debugMessages = document.getElementById('debugMessages');
+                if (debugMessages) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    const logEntry = document.createElement('div');
+                    logEntry.className = `debug-entry debug-${type}`;
+                    logEntry.innerHTML = `<span class="debug-time">${timestamp}</span> ${message}`;
+                    
+                    debugMessages.appendChild(logEntry);
+                    debugMessages.scrollTop = debugMessages.scrollHeight;
+                    
+                    // 최대 100개 메시지만 유지
+                    if (debugMessages.children.length > 100) {
+                        debugMessages.removeChild(debugMessages.firstChild);
+                    }
+                }
+            }
+        }
+
+        // 디버그 콘솔 토글
+        function toggleDebugConsole() {
+            const debugConsole = document.getElementById('debugConsole');
+            const debugToggle = document.getElementById('debugToggle');
+            
+            if (debugConsole.classList.contains('hidden')) {
+                debugConsole.classList.remove('hidden');
+                debugToggle.style.display = 'none';
+                debugEnabled = true;
+                debugLog('🐛 디버그 모드 활성화', 'success');
+            } else {
+                debugConsole.classList.add('hidden');
+                debugToggle.style.display = 'block';
+                debugEnabled = false;
+            }
+        }
+
+        // 디버그 로그 지우기
+        function clearDebugLog() {
+            const debugMessages = document.getElementById('debugMessages');
+            if (debugMessages) {
+                debugMessages.innerHTML = '';
+            }
+        }
 
         // 기본 명언들
         const quotes = [
@@ -350,12 +414,12 @@
         // Firebase 초기화
         function initializeFirebase() {
             try {
-                console.log('🔥 Firebase 초기화 시작...');
+                debugLog('🔥 Firebase 초기화 시작...', 'info');
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
                 
-                console.log('✅ Firebase 초기화 성공!');
+                debugLog('✅ Firebase 초기화 성공!', 'success');
                 
                 // 인증 상태 변경 감지
                 auth.onAuthStateChanged(async (user) => {
@@ -372,7 +436,7 @@
                 
                 return true;
             } catch (error) {
-                console.error('❌ Firebase 초기화 실패:', error);
+                debugLog('❌ Firebase 초기화 실패: ' + error.message, 'error');
                 return false;
             }
         }
@@ -624,7 +688,7 @@
             if (!currentUser || !familyId) return;
 
             try {
-                console.log('📊 사용자 통계 로드 시작...');
+                debugLog('📊 사용자 통계 로드 시작...', 'info');
 
                 // 지난 30일간의 루틴 로그 가져오기 (인덱스 오류 방지를 위해 단순 쿼리 사용)
                 const thirtyDaysAgo = new Date();
@@ -678,10 +742,13 @@
                 // UI 업데이트
                 updateStatsUI();
 
-                console.log('✅ 사용자 통계 로드 완료:', userStats);
+                debugLog('✅ 사용자 통계 로드 완료: 스트릭 ' + userStats.currentStreak + '일', 'success');
 
             } catch (error) {
-                console.error('❌ 통계 로드 오류:', error);
+                debugLog('❌ 통계 로드 오류: ' + error.message, 'error');
+                if (error.code === 'permission-denied') {
+                    debugLog('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요', 'warning');
+                }
             }
         }
 
@@ -881,10 +948,10 @@
 
         // 홈 페이지 루틴 로드
         async function loadHomeRoutines() {
-            console.log('🏠 홈 페이지 루틴 로드 시작');
+            debugLog('🏠 홈 페이지 루틴 로드 시작', 'info');
             
             if (!currentUser || !familyId) {
-                console.log('❌ 사용자 또는 가족 정보가 없습니다');
+                debugLog('❌ 사용자 또는 가족 정보가 없습니다', 'error');
                 return;
             }
 
@@ -898,7 +965,7 @@
                     .where('familyId', '==', familyId)
                     .get();
 
-                console.log('📊 조회된 루틴 수:', routinesSnapshot.size);
+                debugLog('📊 조회된 루틴 수: ' + routinesSnapshot.size, 'info');
 
                 // 오늘 완료된 루틴들 확인
                 await loadTodayCompletedRoutines();
@@ -981,10 +1048,10 @@
                     }
                 }
 
-                console.log('✅ 홈 루틴 로드 완료');
+                debugLog('✅ 홈 루틴 로드 완료', 'success');
 
             } catch (error) {
-                console.error('❌ 홈 루틴 로드 오류:', error);
+                debugLog('❌ 홈 루틴 로드 오류: ' + error.message, 'error');
                 const routineList = document.getElementById('routineList');
                 routineList.innerHTML = `
                     <div class="empty-state">
@@ -1337,7 +1404,10 @@
                 container.innerHTML = statsHTML.join('');
 
             } catch (error) {
-                console.error('❌ 루틴별 통계 로드 오류:', error);
+                debugLog('❌ 루틴별 통계 로드 오류: ' + error.message, 'error');
+                if (error.code === 'permission-denied') {
+                    debugLog('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요', 'warning');
+                }
                 container.innerHTML = '통계를 불러올 수 없습니다.';
             }
         }
@@ -1968,7 +2038,7 @@
         }
 
         function startRealtimeListeners() {
-            console.log('🔄 실시간 리스너 시작');
+            debugLog('🔄 실시간 리스너 시작', 'info');
         }
 
         // 버튼 클릭 이벤트에 리플 효과 추가
@@ -1982,7 +2052,7 @@
 
         // DOM 로드 완료 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📄 DOM 로드 완료');
+            debugLog('📄 DOM 로드 완료', 'success');
             updateCurrentDate();
             updateDailyQuote();
             
@@ -1990,7 +2060,7 @@
                 if (typeof firebase !== 'undefined') {
                     initializeFirebase();
                 } else {
-                    console.error('❌ Firebase SDK가 로드되지 않았습니다.');
+                    debugLog('❌ Firebase SDK가 로드되지 않았습니다.', 'error');
                     setTimeout(initializeFirebase, 1000);
                 }
             }, 100);
