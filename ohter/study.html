@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>30분 코딩 학습 트래커</title>
+  <style>
+    /* 전역 스타일 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #ec4899;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --success: #10b981;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --radius: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--gray-50);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      padding-bottom: 6rem;
+    }
+    
+    .container {
+      max-width: 768px;
+      margin: 0 auto;
+    }
+    
+    /* 애니메이션 */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+      }
+    }
+    
+    @keyframes celebration {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+    
+    /* 헤더 스타일 */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 2rem 1.5rem 3rem;
+      text-align: center;
+      position: relative;
+      border-radius: 0 0 2rem 2rem;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 0 0 2rem 2rem;
+    }
+    
+    .app-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, white, rgba(255, 255, 255, 0.8));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+    
+    .user-info {
+      position: absolute;
+      right: 1.5rem;
+      top: 1.5rem;
+      font-size: 0.875rem;
+      text-align: right;
+    }
+    
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 1.5rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      transition: all 0.3s;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      min-height: 32px;
+    }
+    
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* 스트릭 대시보드 */
+    .streak-dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 0 1.5rem 1.5rem;
+    }
+    
+    .streak-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-100);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .streak-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .streak-card:nth-child(1) { animation-delay: 0.1s; }
+    .streak-card:nth-child(2) { animation-delay: 0.2s; }
+    .streak-card:nth-child(3) { animation-delay: 0.3s; }
+    
+    .streak-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+    
+    .streak-number {
+      font-size: 1.75rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.02em;
+    }
+    
+    .streak-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    /* 학습 콘텐츠 */
+    .learning-content {
+      background: white;
+      margin: 0 1.5rem 1.5rem;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-100);
+      animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+    
+    .learning-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    
+    .learning-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+    
+    .learning-progress {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 30%;
+    }
+    
+    .progress-text {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 50px;
+      text-align: right;
+    }
+    
+    .learning-steps {
+      margin-bottom: 1.5rem;
+    }
+    
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .step:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .step-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .step-content h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    
+    .step-content p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    
+    .step-code {
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      overflow-x: auto;
+    }
+    
+    /* 버튼 스타일 */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      min-height: 48px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+      transition: left 0.5s;
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn-outline {
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    
+    .btn-outline:hover {
+      background: var(--gray-50);
+    }
+    
+    /* 네비게이션 */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      justify-content: space-around;
+      background: white;
+      padding: 0.75rem 0;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--gray-500);
+      font-size: 0.75rem;
+      transition: all 0.2s;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      min-height: 44px;
+    }
+    
+    .nav-item.active {
+      color: var(--primary);
+    }
+    
+    .nav-icon {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    /* 알림 */
+    .notification {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: var(--success);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-xl);
+      z-index: 1000;
+      animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 600;
+      max-width: 300px;
+    }
+    
+    .notification.error {
+      background: var(--error);
+    }
+    
+    .notification.warning {
+      background: var(--warning);
+    }
+    
+    /* 페이지 */
+    .page {
+      display: none;
+      animation: fadeInUp 0.6s ease-out;
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      padding-bottom: 6rem;
+    }
+    
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+    
+    /* 로그인 페이지 */
+    .login-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .login-form {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 2.5rem 2rem;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      width: 100%;
+      max-width: 380px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideInRight 0.8s ease-out 0.2s both;
+    }
+    
+    .app-title {
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 2rem;
+      letter-spacing: -0.02em;
+    }
+    
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .role-btn {
+      padding: 1rem 0.75rem;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 600;
+      position: relative;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .role-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+      transition: left 0.5s;
+    }
+    
+    .role-btn:hover::before {
+      left: 100%;
+    }
+    
+    .role-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    .role-btn i {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      transition: all 0.3s;
+      touch-action: manipulation;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .login-help {
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+    
+    .login-help details {
+      background: var(--gray-50);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .login-help summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      touch-action: manipulation;
+    }
+    
+    .login-help summary:active {
+      transform: scale(0.98);
+    }
+    
+    .help-content {
+      margin-top: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .help-content p {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    
+    .help-content ul {
+      margin-left: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .help-content li {
+      margin-bottom: 0.25rem;
+    }
+    
+    /* 실습 섹션 */
+    .practice-section {
+      background: white;
+      margin: 0 1.5rem 1.5rem;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-100);
+      animation: fadeInUp 0.6s ease-out 0.6s both;
+    }
+    
+    .practice-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    
+    .practice-description {
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+    
+    .code-editor {
+      background: var(--gray-800);
+      color: white;
+      border-radius: var(--radius);
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      min-height: 150px;
+      margin-bottom: 1rem;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+    
+    .code-line {
+      display: flex;
+      align-items: flex-start;
+    }
+    
+    .line-number {
+      color: var(--gray-500);
+      min-width: 25px;
+      text-align: right;
+      margin-right: 0.75rem;
+    }
+    
+    .code-content {
+      flex: 1;
+    }
+    
+    .run-btn {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    
+    .output {
+      background: var(--gray-900);
+      color: #a5d6a7;
+      border-radius: var(--radius);
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      min-height: 100px;
+    }
+    
+    /* 성취 모달 */
+    .achievement-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .achievement-content {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--radius-xl);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: var(--shadow-xl);
+      animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .celebration-emoji {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: celebration 1s ease-out;
+    }
+    
+    .achievement-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    
+    .achievement-description {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+    
+    .celebration-btn {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+    }
+    
+    .celebration-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    /* 반응형 */
+    @media (max-width: 640px) {
+      .streak-dashboard {
+        grid-template-columns: 1fr;
+      }
+      
+      .header {
+        padding: 1.5rem 1rem 2.5rem;
+      }
+      
+      .app-title {
+        font-size: 1.5rem;
+      }
+      
+      .header::before {
+        height: 1.5rem;
+      }
+      
+      .learning-content, .practice-section {
+        margin-left: 1rem;
+        margin-right: 1rem;
+      }
+      
+      .page {
+        padding-bottom: 12rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 로그인 페이지 -->
+  <div id="loginPage" class="login-page">
+    <div class="login-form">
+      <h1 class="app-title">📚 30분 코딩 학습</h1>
+      
+      <!-- 역할 선택 -->
+      <div class="role-selector">
+        <button class="role-btn active" data-role="learner">
+          <i>👨‍💻</i>
+          학습자
+        </button>
+        <button class="role-btn" data-role="mentor">
+          <i>👩‍🏫</i>
+          멘토
+        </button>
+      </div>
+      
+      <!-- 이메일 로그인 폼 -->
+      <div class="form-group">
+        <label for="email">이메일</label>
+        <input type="email" id="email" placeholder="이메일을 입력하세요">
+      </div>
+      
+      <div class="form-group">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" placeholder="비밀번호를 입력하세요">
+      </div>
+      
+      <button class="btn" id="loginBtn">로그인</button>
+      <button class="btn btn-outline" id="registerBtn" style="margin-top: 0.75rem;">회원가입</button>
+      
+      <!-- 도움말 -->
+      <div class="login-help">
+        <details>
+          <summary>도움이 필요하신가요?</summary>
+          <div class="help-content">
+            <p>시작하기 전에:</p>
+            <ul>
+              <li>이메일: test@example.com</li>
+              <li>비밀번호: 123456</li>
+            </ul>
+            <p>이 계정으로 로그인하여 학습을 시작해 보세요!</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메인 앱 -->
+  <div id="mainApp" class="main-app" style="display: none;">
+    <!-- 헤더 -->
+    <div class="header">
+      <div class="user-info">
+        <span id="userEmail">learner@example.com</span>
+        <span class="user-role" id="userRole">학습자</span>
+        <button class="logout-btn" id="logoutBtn">로그아웃</button>
+      </div>
+      <h1>30분 코딩 학습</h1>
+      <div id="currentDate"></div>
+    </div>
+    
+    <!-- 홈 페이지 -->
+    <div id="homePage" class="page" style="display: block;">
+      <!-- 스트릭 대시보드 -->
+      <div class="streak-dashboard">
+        <div class="streak-card">
+          <div class="streak-icon">🔥</div>
+          <div class="streak-number" id="currentStreak">3</div>
+          <div class="streak-label">연속 학습</div>
+        </div>
+        <div class="streak-card">
+          <div class="streak-icon">🎯</div>
+          <div class="streak-number" id="totalLessons">12</div>
+          <div class="streak-label">완료한 학습</div>
+        </div>
+        <div class="streak-card">
+          <div class="streak-icon">🏆</div>
+          <div class="streak-number" id="bestStreak">5</div>
+          <div class="streak-label">최장 기록</div>
+        </div>
+      </div>
+      
+      <!-- 오늘의 학습 -->
+      <div class="learning-content">
+        <h2 class="learning-title" id="lessonTitle">JavaScript 기초: 변수와 데이터 타입</h2>
+        <p class="learning-description" id="lessonDescription">JavaScript에서 변수를 선언하고 사용하는 방법을 배웁니다. 오늘 학습을 완료하면 총 4일 연속 학습을 달성하게 됩니다!</p>
+        
+        <div class="learning-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="lessonProgress" style="width: 30%;"></div>
+          </div>
+          <div class="progress-text">30%</div>
+        </div>
+        
+        <div class="learning-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>변수 선언하기</h4>
+              <p>JavaScript에서 변수를 선언하는 세 가지 방법: var, let, const</p>
+              <div class="step-code">let name = "John";
+const age = 30;
+var isStudent = true;</div>
+            </div>
+          </div>
+          
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>데이터 타입 이해하기</h4>
+              <p>기본 데이터 타입: 문자열, 숫자, 불리언, null, undefined</p>
+              <div class="step-code">console.log(typeof "Hello"); // "string"
+console.log(typeof 42); // "number"
+console.log(typeof true); // "boolean"</div>
+            </div>
+          </div>
+        </div>
+        
+        <button class="btn" id="completeLessonBtn">학습 완료하기</button>
+      </div>
+      
+      <!-- 실습 섹션 -->
+      <div class="practice-section">
+        <h2 class="practice-title">실습: 변수 사용해보기</h2>
+        <p class="practice-description">다음 코드를 수정하여 이름과 나이를 출력하는 프로그램을 완성해 보세요.</p>
+        
+        <div class="code-editor" id="codeEditor">
+<span class="code-line"><span class="line-number">1</span><span class="code-content">// 변수를 선언하고 값을 할당하세요</span></span>
+<span class="code-line"><span class="line-number">2</span><span class="code-content">let name = "________";</span></span>
+<span class="code-line"><span class="line-number">3</span><span class="code-content">let age = ________;</span></span>
+<span class="code-line"><span class="line-number">4</span><span class="code-content"></span></span>
+<span class="code-line"><span class="line-number">5</span><span class="code-content">// 결과를 출력하세요</span></span>
+<span class="code-line"><span class="line-number">6</span><span class="code-content">console.log("이름: " + name);</span></span>
+<span class="code-line"><span class="line-number">7</span><span class="code-content">console.log("나이: " + age);</span></span>
+        </div>
+        
+        <button class="btn run-btn" id="runCodeBtn">실행하기</button>
+        
+        <div class="output" id="codeOutput">
+변수를 선언하고 코드를 실행해 보세요!
+        </div>
+      </div>
+    </div>
+    
+    <!-- 학습 페이지 -->
+    <div id="learningPage" class="page">
+      <div class="learning-content">
+        <h2 class="learning-title">학습 목록</h2>
+        
+        <div class="lesson-item" style="margin-bottom: 1rem; padding: 1rem; background: var(--gray-50); border-radius: var(--radius); animation: fadeInUp 0.6s ease-out;">
+          <h3 style="margin-bottom: 0.5rem;">JavaScript 기초: 변수와 데이터 타입</h3>
+          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">기본 문법과 변수 선언 방법을 배웁니다.</p>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 1.5rem; font-size: 0.75rem; font-weight: 700;">완료</span>
+            <span style="color: var(--text-secondary); font-size: 0.75rem;">30분</span>
+          </div>
+        </div>
+        
+        <div class="lesson-item" style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: var(--radius); animation: fadeInUp 0.6s ease-out 0.1s;">
+          <h3 style="margin-bottom: 0.5rem;">JavaScript 조건문과 반복문</h3>
+          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">if, switch, for, while 등 제어문을 배웁니다.</p>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="background: rgba(245, 158, 11, 0.1); color: var(--warning); padding: 0.25rem 0.5rem; border-radius: 1.5rem; font-size: 0.75rem; font-weight: 700;">진행 중</span>
+            <span style="color: var(--text-secondary); font-size: 0.75rem;">30분</span>
+          </div>
+        </div>
+        
+        <div class="lesson-item" style="margin-bottom: 1rem; padding: 1rem; background: white; border-radius: var(--radius); animation: fadeInUp 0.6s ease-out 0.2s;">
+          <h3 style="margin-bottom: 0.5rem;">JavaScript 함수와 객체</h3>
+          <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">함수 정의와 객체 사용법을 배웁니다.</p>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="background: var(--gray-100); color: var(--gray-500); padding: 0.25rem 0.5rem; border-radius: 1.5rem; font-size: 0.75rem; font-weight: 700;">대기 중</span>
+            <span style="color: var(--text-secondary); font-size: 0.75rem;">30분</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 통계 페이지 -->
+    <div id="statsPage" class="page">
+      <div class="page-title">학습 통계</div>
+      
+      <div class="stat-card" style="background: white; margin: 0 1.5rem 1.5rem; padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--gray-100); animation: fadeInUp 0.6s ease-out;">
+        <div class="stat-number" id="completionRate">75%</div>
+        <div class="stat-label">학습 완료율</div>
+      </div>
+      
+      <div class="stat-card" style="background: white; margin: 0 1.5rem 1.5rem; padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--gray-100); animation: fadeInUp 0.6s ease-out 0.1s;">
+        <div class="stat-number" id="totalHours">6.5시간</div>
+        <div class="stat-label">총 학습 시간</div>
+      </div>
+      
+      <div class="stat-card" style="background: white; margin: 0 1.5rem 1.5rem; padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--gray-100); animation: fadeInUp 0.6s ease-out 0.2s;">
+        <div class="stat-number" id="dailyAverage">28분</div>
+        <div class="stat-label">일평균 학습 시간</div>
+      </div>
+      
+      <div class="monthly-heatmap" style="background: white; padding: 1.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); margin: 0 1.5rem 1.5rem; border: 1px solid var(--gray-100); animation: fadeInUp 0.6s ease-out 0.3s;">
+        <h3>학습 히트맵</h3>
+        <div class="heatmap-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 1rem;">
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--gray-300);">1</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--gray-300);">2</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--gray-400);">3</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary);">4</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary);">5</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary-dark);">6</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary-dark);">7</div>
+          
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--gray-300);">8</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--gray-300);">9</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--gray-400);">10</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary);">11</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary);">12</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary-dark);">13</div>
+          <div class="heatmap-day" style="aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; background: var(--primary-dark);">14</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+          <span>약함</span>
+          <span>강함</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 성취 모달 -->
+    <div id="achievementModal" class="achievement-modal">
+      <div class="achievement-content">
+        <div class="celebration-emoji">🎉</div>
+        <h2 class="achievement-title" id="achievementTitle">3일 연속 학습 달성!</h2>
+        <p class="achievement-description" id="achievementDesc">훌륭해요! 꾸준함이 습관이 되고 있습니다.</p>
+        <button class="celebration-btn" id="closeAchievementBtn">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 네비게이션 -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-page="home">
+      <div class="nav-icon">🏠</div>
+      <div>홈</div>
+    </div>
+    <div class="nav-item" data-page="learning">
+      <div class="nav-icon">📚</div>
+      <div>학습</div>
+    </div>
+    <div class="nav-item" data-page="stats">
+      <div class="nav-icon">📊</div>
+      <div>통계</div>
+    </div>
+  </div>
+
+  <script>
+    // 전역 변수
+    let currentUser = null;
+    let userRole = 'learner';
+    let learningProgress = 30;
+    let currentStreak = 3;
+    let totalLessons = 12;
+    let bestStreak = 5;
+    
+    // DOM 요소
+    document.addEventListener('DOMContentLoaded', function() {
+      // 날짜 업데이트
+      updateCurrentDate();
+      
+      // 네비게이션 클릭 이벤트
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const page = this.getAttribute('data-page');
+          showPage(page);
+        });
+      });
+      
+      // 로그인 버튼 이벤트
+      document.getElementById('loginBtn').addEventListener('click', login);
+      document.getElementById('registerBtn').addEventListener('click', register);
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+      
+      // 역할 선택 버튼 이벤트
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          userRole = this.getAttribute('data-role');
+        });
+      });
+      
+      // 학습 완료 버튼 이벤트
+      document.getElementById('completeLessonBtn').addEventListener('click', completeLesson);
+      
+      // 코드 실행 버튼 이벤트
+      document.getElementById('runCodeBtn').addEventListener('click', runCode);
+      
+      // 성취 모달 닫기 버튼
+      document.getElementById('closeAchievementBtn').addEventListener('click', function() {
+        document.getElementById('achievementModal').style.display = 'none';
+      });
+      
+      // 학습 진도 업데이트
+      updateProgress();
+    });
+    
+    // 현재 날짜 업데이트
+    function updateCurrentDate() {
+      const today = new Date();
+      const options = { 
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+      };
+      document.getElementById('currentDate').textContent = 
+        today.toLocaleDateString('ko-KR', options);
+    }
+    
+    // 페이지 표시
+    function showPage(page) {
+      // 모든 페이지 숨기기
+      document.querySelectorAll('.page').forEach(p => {
+        p.style.display = 'none';
+      });
+      
+      // 선택한 페이지 표시
+      document.getElementById(`${page}Page`).style.display = 'block';
+      
+      // 네비게이션 업데이트
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-page') === page) {
+          item.classList.add('active');
+        }
+      });
+    }
+    
+    // 로그인
+    function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      if (!email || !password) {
+        showNotification('이메일과 비밀번호를 입력해주세요.', 'error');
+        return;
+      }
+      
+      // 간단한 인증 (실제 앱에서는 Firebase 인증 사용)
+      if (email === 'test@example.com' && password === '123456') {
+        currentUser = { email: email };
+        document.getElementById('userEmail').textContent = email;
+        document.getElementById('userRole').textContent = userRole === 'learner' ? '학습자' : '멘토';
+        
+        // 로그인 페이지 숨기기
+        document.getElementById('loginPage').style.display = 'none';
+        
+        // 메인 앱 표시
+        document.getElementById('mainApp').style.display = 'block';
+        
+        // 홈 페이지로 이동
+        showPage('home');
+        
+        showNotification('👋 로그인되었습니다.');
+      } else {
+        showNotification('이메일 또는 비밀번호가 올바르지 않습니다.', 'error');
+      }
+    }
+    
+    // 회원가입
+    function register() {
+      showNotification('회원가입은 테스트 계정으로만 가능합니다.', 'warning');
+    }
+    
+    // 로그아웃
+    function logout() {
+      currentUser = null;
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      showNotification('👋 로그아웃되었습니다.');
+    }
+    
+    // 학습 완료
+    function completeLesson() {
+      // 학습 진도 업데이트
+      learningProgress = 100;
+      updateProgress();
+      
+      // 연속 학습 업데이트
+      currentStreak++;
+      if (currentStreak > bestStreak) {
+        bestStreak = currentStreak;
+      }
+      totalLessons++;
+      
+      // UI 업데이트
+      document.getElementById('currentStreak').textContent = currentStreak;
+      document.getElementById('totalLessons').textContent = totalLessons;
+      document.getElementById('bestStreak').textContent = bestStreak;
+      
+      // 성취 모달 표시
+      if (currentStreak % 3 === 0) {
+        showAchievementModal(`🔥 ${currentStreak}일 연속 학습!`, '정말 대단해요! 꾸준함이 습관이 되고 있어요.');
+      } else {
+        showNotification('✅ 학습이 완료되었습니다!');
+      }
+    }
+    
+    // 진도 업데이트
+    function updateProgress() {
+      document.getElementById('lessonProgress').style.width = `${learningProgress}%`;
+      document.querySelector('.progress-text').textContent = `${learningProgress}%`;
+    }
+    
+    // 코드 실행
+    function runCode() {
+      const codeEditor = document.getElementById('codeEditor');
+      const output = document.getElementById('codeOutput');
+      
+      // 간단한 코드 실행 시뮬레이션
+      const nameMatch = codeEditor.innerHTML.match(/let name = "(.*?)";/);
+      const ageMatch = codeEditor.innerHTML.match(/let age = (.*?);/);
+      
+      if (nameMatch && nameMatch[1] && ageMatch && ageMatch[1]) {
+        output.textContent = `이름: ${nameMatch[1]}\n나이: ${ageMatch[1]}`;
+        showNotification('코드가 성공적으로 실행되었습니다!');
+      } else {
+        output.textContent = '변수 값을 올바르게 입력해주세요!';
+        showNotification('변수 값을 올바르게 입력해주세요.', 'error');
+      }
+    }
+    
+    // 성취 모달 표시
+    function showAchievementModal(title, description) {
+      document.getElementById('achievementTitle').textContent = title;
+      document.getElementById('achievementDesc').textContent = description;
+      document.getElementById('achievementModal').style.display = 'flex';
+    }
+    
+    // 알림 표시
+    function showNotification(message, type = 'success') {
+      // 기존 알림 제거
+      const existingNotification = document.querySelector('.notification');
+      if (existingNotification) {
+        existingNotification.remove();
+      }
+      
+      // 새 알림 생성
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      // 애니메이션
+      setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+        setTimeout(() => {
+          notification.remove();
+        }, 3000);
+      }, 2000);
+    }
+    
+    // Firebase 초기화 (실제 앱에서는 사용)
+    function initFirebase() {
+      // Firebase SDK 초기화 코드
+      // const firebaseConfig = { ... };
+      // firebase.initializeApp(firebaseConfig);
+      // auth = firebase.auth();
+      // db = firebase.firestore();
+    }
+    
+    // 학습 데이터 로드 (실제 앱에서는 Firebase에서 데이터 로드)
+    function loadLearningData() {
+      // Firebase에서 학습 데이터 로드
+      // db.collection('users').doc(currentUser.uid).get().then(...)
+    }
+    
+    // 학습 데이터 저장 (실제 앱에서는 Firebase에 데이터 저장)
+    function saveLearningProgress() {
+      // Firebase에 학습 진도 저장
+      // db.collection('users').doc(currentUser.uid).update({ ... })
+    }
+  </script>
+</body>
+</html>
