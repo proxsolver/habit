@@ -1057,7 +1057,7 @@
             overflow-y: auto;
         }
 
-        .family-page, .manage-page, .stats-page, .rewards-page {
+        .family-page, .manage-page, .stats-page, .rewards-page, .reward-requests-page {
             padding: 1.5rem;
         }
 
@@ -1304,14 +1304,16 @@
         .achievement-modal {
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
+            z-index: 1000; /* Ensure it's on top */
         }
 
         .achievement-content {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
+            color: white; /* Ensure text color is white */
             text-align: center;
             border: none;
             max-width: 320px;
+            z-index: 1001; /* Ensure content is above modal background */
         }
 
         .achievement-animation {
@@ -1328,12 +1330,14 @@
             font-size: 1.5rem;
             font-weight: 800;
             margin-bottom: 0.5rem;
+            color: white; /* Explicitly set color */
         }
 
         .achievement-description {
             font-size: 1rem;
             opacity: 0.9;
             margin-bottom: 2rem;
+            color: white; /* Explicitly set color */
         }
 
         .celebration-btn {
@@ -1829,108 +1833,8 @@
             margin: 0;
         }
 
-        /* 디버그 콘솔 */
-        .debug-console {
-            position: fixed;
-            top: 10%;
-            left: 5%;
-            right: 5%;
-            bottom: 20%;
-            background: rgba(0, 0, 0, 0.9);
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            border-radius: var(--radius);
-            padding: 1rem;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .debug-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #333;
-        }
-
-        .debug-close {
-            background: none;
-            border: none;
-            color: #ff6b6b;
-            font-size: 1.5rem;
-            cursor: pointer;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-        }
-
-        .debug-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.5rem 0;
-        }
-
-        .debug-entry {
-            margin-bottom: 0.5rem;
-            word-break: break-all;
-        }
-
-        .debug-time {
-            color: #666;
-            font-size: 10px;
-        }
-
-        .debug-entry.debug-error { color: #ff6b6b; }
-        .debug-entry.debug-warning { color: #feca57; }
-        .debug-entry.debug-success { color: #48cae4; }
-        .debug-entry.debug-info { color: #00ff00; }
-
-        .debug-clear {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-        }
-
-        .debug-toggle {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            width: 4rem;
-            height: 4rem;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            border: 3px solid white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            z-index: 9999;
-            transition: all 0.3s;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-            animation: pulse 2s infinite;
-        }
-
-        .debug-toggle:hover {
-            background: linear-gradient(135deg, #ee5a24, #ff6b6b);
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-        }
-
-        .debug-toggle:active {
-            transform: scale(0.95);
-        }
+        /* 디버그 콘솔 관련 스타일 제거 */
+        /* .debug-console, .debug-toggle, .debug-header, .debug-close, .debug-messages, .debug-entry, .debug-time, .debug-clear { display: none !important; } */
 
         .status-indicator {
             position: fixed;
@@ -2458,7 +2362,7 @@
                 padding-bottom: 12rem;
             }
             
-            .family-page, .manage-page, .stats-page, .rewards-page {
+            .family-page, .manage-page, .stats-page, .rewards-page, .reward-requests-page {
                 padding: 1.5rem 1rem 8rem 1rem;
             }
 
@@ -2474,21 +2378,6 @@
             .heatmap-day {
                 font-size: 0.7rem;
             }
-
-            .debug-toggle {
-                top: 1rem;
-                left: 0.5rem;
-                width: 2.5rem;
-                height: 2.5rem;
-                font-size: 1.25rem;
-            }
-
-            .debug-console {
-                top: 5%;
-                left: 2%;
-                right: 2%;
-                bottom: 15%;
-            }
         }
 
         /* 다크 모드 준비 */
@@ -2500,9 +2389,7 @@
         @media print {
             .bottom-nav,
             .logout-btn,
-            .add-routine-btn,
-            .debug-toggle,
-            .debug-console {
+            .add-routine-btn {
                 display: none;
             }
         }
@@ -2528,12 +2415,69 @@
             .copy-btn,
             .logout-btn,
             .close-btn,
-            .btn-text,
-            .debug-toggle,
-            .debug-close,
-            .debug-clear {
+            .btn-text {
                 min-height: 44px;
             }
+        }
+
+        /* 보상 요청 관리 페이지 스타일 */
+        .reward-request-item {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .request-details {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .request-btn {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            color: white;
+        }
+
+        .request-btn.approve {
+            background: var(--success);
+        }
+
+        .request-btn.approve:hover {
+            background: var(--accent);
+        }
+
+        .request-btn.reject {
+            background: var(--error);
+        }
+
+        .request-btn.reject:hover {
+            background: #e04040; /* Darker red */
         }
     </style>
 </head>
@@ -2786,6 +2730,14 @@
                 </div>
             </div>
 
+            <!-- 보상 요청 관리 페이지 (부모만) -->
+            <div id="rewardRequestsPage" class="page reward-requests-page hidden">
+                <div class="page-title">📝 보상 요청 관리</div>
+                <div id="rewardRequestsList">
+                    <!-- 보상 요청 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
             <!-- 하단 네비게이션 -->
             <div class="bottom-nav">
                 <div class="nav-item active" data-page="home">
@@ -2807,6 +2759,10 @@
                 <div class="nav-item" data-page="family">
                     <i>👨‍👩‍👧‍👦</i>
                     <span>가족</span>
+                </div>
+                <div class="nav-item hidden" data-page="reward-requests" id="rewardRequestsNavItem">
+                    <i>🔔</i>
+                    <span>요청</span>
                 </div>
             </div>
         </div>
@@ -2945,21 +2901,6 @@
             </div>
         </div>
 
-        <!-- 디버그 콘솔 (아이패드용) -->
-        <div id="debugConsole" class="debug-console hidden">
-            <div class="debug-header">
-                <span>🐛 디버그 로그</span>
-                <button class="debug-close" id="debugCloseBtn">×</button>
-            </div>
-            <div id="debugMessages" class="debug-messages"></div>
-            <button class="debug-clear" id="debugClearBtn">로그 지우기</button>
-        </div>
-
-        <!-- 디버그 토글 버튼 -->
-        <div id="debugToggle" class="debug-toggle">
-            🐛
-        </div>
-
         <!-- 간단한 상태 표시기 -->
         <div id="statusIndicator" class="status-indicator hidden">
             <div id="statusText">상태 확인 중...</div>
@@ -2997,65 +2938,10 @@
             weeklyScore: 0,
             completionRate: 0
         };
-        let debugEnabled = false;
 
-        // 디버그 로깅 함수
+        // 디버그 로깅 함수 (console.log로 대체)
         function debugLog(message, type = 'info') {
-            console.log(message);
-            
-            if (debugEnabled) {
-                const debugMessages = document.getElementById('debugMessages');
-                if (debugMessages) {
-                    const timestamp = new Date().toLocaleTimeString();
-                    const logEntry = document.createElement('div');
-                    logEntry.className = `debug-entry debug-${type}`;
-                    logEntry.innerHTML = `<span class="debug-time">${timestamp}</span> ${message}`;
-                    
-                    debugMessages.appendChild(logEntry);
-                    debugMessages.scrollTop = debugMessages.scrollHeight;
-                    
-                    // 최대 100개 메시지만 유지
-                    if (debugMessages.children.length > 100) {
-                        debugMessages.removeChild(debugMessages.firstChild);
-                    }
-                }
-            }
-        }
-
-        // 디버그 콘솔 토글
-        function toggleDebugConsole() {
-            debugLog('🔄 디버그 콘솔 토글 시도', 'info');
-            
-            const debugConsole = document.getElementById('debugConsole');
-            const debugToggle = document.getElementById('debugToggle');
-            
-            if (!debugConsole || !debugToggle) {
-                debugLog('❌ 디버그 요소를 찾을 수 없습니다', 'error');
-                return;
-            }
-            
-            if (debugConsole.classList.contains('hidden')) {
-                debugConsole.classList.remove('hidden');
-                debugToggle.style.display = 'none';
-                debugEnabled = true;
-                debugLog('🐛 디버그 모드 활성화', 'success');
-                showStatus('디버그 모드 ON', 2000);
-            } else {
-                debugConsole.classList.add('hidden');
-                debugToggle.style.display = 'block';
-                debugEnabled = false;
-                debugLog('🐛 디버그 모드 비활성화', 'info');
-                showStatus('디버그 모드 OFF', 2000);
-            }
-        }
-
-        // 디버그 로그 지우기
-        function clearDebugLog() {
-            const debugMessages = document.getElementById('debugMessages');
-            if (debugMessages) {
-                debugMessages.innerHTML = '';
-            }
-            debugLog('🧹 로그 지워짐', 'info');
+            console.log(`[${type.toUpperCase()}] ${message}`);
         }
 
         // 상태 표시
@@ -3076,35 +2962,27 @@
         // 터치 이벤트 처리 함수
         function addTouchEventListener(element, callback, useCapture = false) {
             if (!element) {
-                debugLog('❌ 터치 이벤트 추가 실패: 요소가 없음', 'error');
+                console.error('❌ 터치 이벤트 추가 실패: 요소가 없음');
                 return;
             }
 
-            const elementInfo = element.id || element.className || element.tagName;
-            // debugLog('📱 터치 이벤트 추가: ' + elementInfo, 'info'); // 너무 많은 로그 방지
-
             // 터치 이벤트 추가
             element.addEventListener('touchstart', function(e) {
-                // debugLog('👆 터치 시작: ' + elementInfo, 'info');
-                e.preventDefault();
+                e.preventDefault(); // 기본 스크롤/줌 방지
                 this.style.transform = 'scale(0.98)';
             }, { passive: false, capture: useCapture });
 
             element.addEventListener('touchend', function(e) {
-                // debugLog('👆 터치 완료: ' + elementInfo, 'info');
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); // 기본 클릭 이벤트 방지
+                e.stopPropagation(); // 이벤트 버블링 중단
                 this.style.transform = '';
-                // debugLog('🚀 콜백 실행: ' + elementInfo, 'info');
                 callback.call(this, e);
             }, { passive: false, capture: useCapture });
 
             // 마우스 이벤트도 추가 (데스크톱 지원)
             element.addEventListener('click', function(e) {
-                // debugLog('🖱️ 마우스 클릭: ' + elementInfo, 'info');
-                e.preventDefault();
-                e.stopPropagation();
-                // debugLog('🚀 콜백 실행 (마우스): ' + elementInfo, 'info');
+                e.preventDefault(); // 기본 클릭 이벤트 방지
+                e.stopPropagation(); // 이벤트 버블링 중단
                 callback.call(this, e);
             }, { capture: useCapture });
         }
@@ -3239,42 +3117,27 @@
             };
         }
         function initializeTouchEvents() {
-            debugLog('📱 터치 이벤트 초기화 시작', 'info');
-
             // 역할 선택 버튼들
             const roleButtons = document.querySelectorAll('.role-btn');
-            debugLog('👥 역할 버튼 개수: ' + roleButtons.length, 'info');
             roleButtons.forEach(btn => {
                 addTouchEventListener(btn, function(e) {
                     const role = this.getAttribute('data-role');
-                    debugLog('👥 역할 선택됨: ' + role, 'info');
                     selectRole(role);
                 });
             });
 
-            // Google 로그인 버튼 - 특별히 주의깊게 처리
+            // Google 로그인 버튼
             const googleBtn = document.getElementById('googleSignInBtn');
             if (googleBtn) {
-                debugLog('✅ Google 로그인 버튼 발견됨', 'success');
-                debugLog('🔍 버튼 상태 - disabled: ' + googleBtn.disabled + ', style: ' + googleBtn.style.display, 'info');
-                
                 addTouchEventListener(googleBtn, function(e) {
-                    debugLog('🔑 Google 로그인 버튼 클릭됨!', 'success');
                     signInWithGoogle();
                 });
-                
-                debugLog('✅ Google 로그인 터치 이벤트 추가 완료', 'success');
-            } else {
-                debugLog('❌ Google 로그인 버튼을 찾을 수 없습니다!', 'error');
             }
 
             // 이메일 로그인 토글
             const toggleEmailBtn = document.getElementById('toggleEmailLogin');
             if (toggleEmailBtn) {
-                debugLog('✅ 이메일 토글 버튼 발견됨', 'info');
                 addTouchEventListener(toggleEmailBtn, toggleEmailLogin);
-            } else {
-                debugLog('❌ 이메일 토글 버튼을 찾을 수 없습니다', 'error');
             }
 
             // 로그인/회원가입 버튼
@@ -3282,27 +3145,22 @@
             const registerBtn = document.getElementById('registerBtn');
             if (loginBtn) {
                 addTouchEventListener(loginBtn, () => handleAuth('login'));
-                debugLog('✅ 이메일 로그인 버튼 이벤트 추가', 'info');
             }
             if (registerBtn) {
                 addTouchEventListener(registerBtn, () => handleAuth('register'));
-                debugLog('✅ 회원가입 버튼 이벤트 추가', 'info');
             }
 
             // 로그아웃 버튼
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
                 addTouchEventListener(logoutBtn, logout);
-                debugLog('✅ 로그아웃 버튼 이벤트 추가', 'info');
             }
 
             // 네비게이션 버튼들
             const navItems = document.querySelectorAll('.nav-item');
-            debugLog('🧭 네비게이션 버튼 개수: ' + navItems.length, 'info');
             navItems.forEach(navItem => {
                 addTouchEventListener(navItem, function(e) {
                     const page = this.getAttribute('data-page');
-                    debugLog('🧭 네비게이션 클릭: ' + page, 'info');
                     showPage(page);
                 });
             });
@@ -3311,14 +3169,12 @@
             const addRoutineBtn = document.getElementById('addRoutineBtn');
             if (addRoutineBtn) {
                 addTouchEventListener(addRoutineBtn, openAddRoutineModal);
-                debugLog('✅ 루틴 추가 버튼 이벤트 추가', 'info');
             }
 
             // 보상 추가 버튼 (부모에게만 보임)
             const addRewardBtn = document.getElementById('addRewardBtn');
             if (addRewardBtn) {
                 addTouchEventListener(addRewardBtn, openAddRewardModal);
-                debugLog('✅ 보상 추가 버튼 이벤트 추가', 'info');
             }
 
             // 모달 관련 버튼들 (루틴 추가 모달)
@@ -3351,22 +3207,7 @@
             const copyFamilyCodeBtn = document.getElementById('copyFamilyCodeBtn');
             if (copyFamilyCodeBtn) {
                 addTouchEventListener(copyFamilyCodeBtn, copyFamilyCode);
-                debugLog('✅ 가족 코드 복사 버튼 이벤트 추가', 'info');
             }
-
-            // 디버그 버튼들
-            const debugToggle = document.getElementById('debugToggle');
-            const debugCloseBtn = document.getElementById('debugCloseBtn');
-            const debugClearBtn = document.getElementById('debugClearBtn');
-
-            if (debugToggle) {
-                addTouchEventListener(debugToggle, toggleDebugConsole);
-                debugLog('✅ 디버그 토글 버튼 이벤트 추가', 'info');
-            }
-            if (debugCloseBtn) addTouchEventListener(debugCloseBtn, toggleDebugConsole);
-            if (debugClearBtn) addTouchEventListener(debugClearBtn, clearDebugLog);
-
-            debugLog('✅ 터치 이벤트 초기화 완료', 'success');
         }
 
         // 기본 명언들
@@ -3386,47 +3227,31 @@
         // Firebase 초기화
         function initializeFirebase() {
             try {
-                debugLog('🔥 Firebase 초기화 시작...', 'info');
                 showStatus('Firebase 연결 중...', 2000);
                 
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
                 
-                debugLog('✅ Firebase 초기화 성공!', 'success');
                 showStatus('Firebase 연결 완료!', 2000);
                 
                 // 인증 상태 변경 감지
                 auth.onAuthStateChanged(async (user) => {
-                    debugLog('🔄 인증 상태 변경 감지됨!', 'info');
-                    debugLog('👤 사용자 정보: ' + (user ? user.email : '로그아웃됨'), 'info');
-                    
                     if (user) {
-                        debugLog('✅ 사용자 로그인 확인됨', 'success');
-                        debugLog('📧 이메일: ' + user.email, 'info');
-                        debugLog('🆔 UID: ' + user.uid, 'info');
-                        debugLog('🔍 인증 제공자: ' + (user.providerData[0]?.providerId || '알 수 없음'), 'info');
-                        
                         currentUser = user;
                         showStatus('사용자 정보 로드 중...', 3000);
                         
                         try {
-                            debugLog('👤 사용자 프로필 로드 시작...', 'info');
                             await loadUserProfile();
-                            debugLog('✅ 프로필 로드 완료, 메인 앱으로 전환', 'success');
                             showMainApp();
                             startRealtimeListeners();
                         } catch (error) {
-                            debugLog('❌ 프로필 로드 실패: ' + error.message, 'error');
-                            debugLog('🔍 오류 상세: ' + JSON.stringify(error), 'error');
                             // 프로필 로드 실패 시에도 메인 앱으로 전환 (새 사용자일 수 있음)
-                            debugLog('🆕 새 사용자로 처리 시작...', 'info');
                             showStatus('새 사용자로 프로필 생성 중...', 2000);
                             await handleNewUser(user);
                         }
                     } else {
                         currentUser = null;
-                        debugLog('👋 사용자 로그아웃됨', 'info');
                         showLoginPage();
                     }
                 });
@@ -3436,7 +3261,7 @@
                 
                 return true;
             } catch (error) {
-                debugLog('❌ Firebase 초기화 실패: ' + error.message, 'error');
+                console.error('❌ Firebase 초기화 실패:', error);
                 showStatus('Firebase 연결 실패: ' + error.message, 5000);
                 return false;
             }
@@ -3486,64 +3311,41 @@
 
         // Google 로그인 (개선된 버전)
         async function signInWithGoogle() {
-            debugLog('🔑 Google 로그인 함수 호출됨', 'info');
-            
             const familyCode = document.getElementById('familyCode').value;
-            debugLog('👶 가족 코드 확인: ' + (familyCode || '없음'), 'info');
-            debugLog('👤 현재 역할: ' + userRole, 'info');
             
             if (userRole === 'child' && !familyCode) {
                 showNotification('자녀는 가족 코드를 먼저 입력해주세요.', 'error');
-                debugLog('❌ 자녀 로그인 시 가족 코드 누락', 'error');
                 return;
             }
 
             if (!auth) {
                 showNotification('Firebase가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
-                debugLog('❌ Firebase Auth가 초기화되지 않음', 'error');
                 return;
             }
 
             setLoading(true, 'google');
-            debugLog('🔑 Google 로그인 시작...', 'info');
-            debugLog('🌐 현재 도메인: ' + window.location.hostname, 'info');
-            debugLog('🔗 현재 URL: ' + window.location.href, 'info');
             showStatus('Google 로그인 중...', 3000);
             
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.addScope('email');
                 provider.addScope('profile');
-                debugLog('🔧 Google Auth Provider 생성 완료', 'info');
                 
                 let result;
                 
-                // 디버그를 위해 우선 팝업 방식만 시도
-                debugLog('💻 팝업 방식으로 로그인 시도', 'info');
-                
                 try {
-                    debugLog('📝 signInWithPopup 호출 직전', 'info');
                     result = await auth.signInWithPopup(provider);
-                    debugLog('✅ signInWithPopup 성공!', 'success');
-                    debugLog('👤 로그인 사용자: ' + result.user.email, 'info');
                 } catch (popupError) {
-                    debugLog('⚠️ 팝업 로그인 실패: ' + popupError.message, 'warning');
-                    debugLog('🔍 팝업 오류 코드: ' + popupError.code, 'warning');
-                    
                     if (popupError.code === 'auth/popup-blocked' || 
                         popupError.code === 'auth/popup-closed-by-user' ||
                         popupError.code === 'auth/cancelled-popup-request') {
                         
-                        debugLog('🔄 리디렉션 방식으로 전환', 'info');
-                        // 팝업이 차단되면 리디렉션 방식으로 전환
                         if (familyCode) {
                             sessionStorage.setItem('tempFamilyCode', familyCode);
                             sessionStorage.setItem('tempUserRole', userRole);
-                            debugLog('💾 임시 데이터 저장 완료', 'info');
                         }
                         
                         showNotification('팝업이 차단되어 페이지 이동 방식으로 로그인합니다.', 'warning');
-                        debugLog('🚀 signInWithRedirect 호출', 'info');
                         await auth.signInWithRedirect(provider);
                         return;
                     } else {
@@ -3552,24 +3354,16 @@
                 }
                 
                 if (result && result.user) {
-                    debugLog('🎉 로그인 결과 확인됨', 'success');
                     await handleGoogleSignInSuccess(result.user, familyCode);
-                } else {
-                    debugLog('❌ 로그인 결과가 없음', 'error');
                 }
                 
             } catch (error) {
-                debugLog('❌ Google 로그인 오류: ' + error.message, 'error');
-                debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'error');
-                debugLog('🔍 전체 오류 객체: ' + JSON.stringify(error), 'error');
+                console.error('❌ Google 로그인 오류:', error);
                 
-                // Firebase Console 설정 가이드
                 if (error.code === 'auth/unauthorized-domain') {
-                    debugLog('🚨 도메인 승인 필요! Firebase Console → Authentication → Settings → Authorized domains에 ' + window.location.hostname + ' 추가', 'error');
                     showNotification('❌ 도메인이 승인되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.', 'error');
                     showStatus('도메인 승인 필요', 5000);
                 } else if (error.code === 'auth/operation-not-allowed') {
-                    debugLog('🚨 Google 로그인이 비활성화됨! Firebase Console → Authentication → Sign-in method에서 Google 활성화', 'error');
                     showNotification('❌ Google 로그인이 비활성화되어 있습니다. Firebase Console에서 활성화해주세요.', 'error');
                     showStatus('Google 로그인 비활성화', 5000);
                 } else if (error.code === 'auth/popup-closed-by-user') {
@@ -3589,51 +3383,33 @@
                     showStatus('로그인 실패: ' + error.message, 5000);
                 }
             } finally {
-                debugLog('🔄 로그인 시도 완료, 로딩 해제', 'info');
                 setLoading(false, 'google');
             }
         }
 
         // Google 로그인 성공 처리
         async function handleGoogleSignInSuccess(user, familyCode) {
-            debugLog('✅ Google 로그인 성공 처리 시작', 'success');
-            debugLog('👤 사용자 이메일: ' + user.email, 'info');
-            debugLog('🆔 사용자 UID: ' + user.uid, 'info');
-            debugLog('👶 가족 코드: ' + (familyCode || '없음'), 'info');
-            
             showStatus('로그인 성공! 프로필 확인 중...', 2000);
             
             try {
-                debugLog('🔍 기존 사용자 확인 중...', 'info');
                 // 기존 사용자인지 확인
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
                 if (!userDoc.exists) {
-                    debugLog('🆕 새 사용자 감지 - 프로필 생성 시작', 'info');
                     await createUserProfileFromGoogle(user, familyCode);
                     showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
                     showStatus('회원가입 완료!', 2000);
                 } else {
-                    debugLog('👤 기존 사용자 확인됨 - 로그인 완료', 'success');
-                    const userData = userDoc.data();
-                    debugLog('📋 기존 사용자 데이터: 역할=' + userData.role + ', 가족ID=' + userData.familyId, 'info');
                     showNotification('Google 계정으로 로그인되었습니다! 👋');
                     showStatus('로그인 완료!', 2000);
                 }
                 
-                debugLog('✅ Google 로그인 성공 처리 완료', 'success');
-                
             } catch (permissionError) {
-                debugLog('⚠️ 권한 오류 발생: ' + permissionError.message, 'warning');
-                debugLog('🔍 오류 코드: ' + permissionError.code, 'warning');
-                
                 if (permissionError.code === 'permission-denied') {
-                    debugLog('⚠️ 권한 오류 - 새 사용자로 처리 시도', 'warning');
                     await createUserProfileFromGoogle(user, familyCode);
                     showNotification('새 계정이 생성되었습니다! 🎉');
                     showStatus('계정 생성 완료!', 2000);
                 } else {
-                    debugLog('❌ 처리할 수 없는 오류, 다시 발생시킴', 'error');
                     throw permissionError;
                 }
             }
@@ -3645,8 +3421,6 @@
                 const result = await auth.getRedirectResult();
                 
                 if (result && result.user) {
-                    debugLog('🔄 리ди렉션 로그인 결과 처리', 'info');
-                    
                     // sessionStorage에서 임시 저장된 정보 복원
                     const tempFamilyCode = sessionStorage.getItem('tempFamilyCode');
                     const tempUserRole = sessionStorage.getItem('tempUserRole');
@@ -3663,7 +3437,7 @@
                     await handleGoogleSignInSuccess(result.user, tempFamilyCode);
                 }
             } catch (error) {
-                debugLog('❌ 리디렉션 결과 처리 오류: ' + error.message, 'error');
+                console.error('❌ 리디렉션 결과 처리 오류:', error);
                 showNotification('로그인 처리 중 오류가 발생했습니다: ' + error.message, 'error');
             }
         }
@@ -3735,20 +3509,17 @@
         }
 
         function showLoginPage() {
-            debugLog('🏠 로그인 페이지 표시', 'info');
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
         }
 
         function showMainApp() {
-            debugLog('🚀 메인 앱 표시 시작', 'info');
-            
             try {
                 const loginPage = document.getElementById('loginPage');
                 const mainApp = document.getElementById('mainApp');
                 
                 if (!loginPage || !mainApp) {
-                    debugLog('❌ 페이지 요소를 찾을 수 없습니다', 'error');
+                    console.error('❌ 페이지 요소를 찾을 수 없습니다');
                     return;
                 }
                 
@@ -3760,7 +3531,6 @@
                     mainAppElement.style.animation = 'fadeInUp 0.6s ease-out';
                 }
                 
-                debugLog('✅ 메인 앱 표시 완료', 'success');
                 showStatus('메인 앱 로드 완료!', 2000);
                 
                 // 홈 페이지를 기본으로 표시
@@ -3769,7 +3539,7 @@
                 }, 500);
                 
             } catch (error) {
-                debugLog('❌ 메인 앱 표시 오류: ' + error.message, 'error');
+                console.error('❌ 메인 앱 표시 오류:', error);
                 showStatus('앱 로드 중 오류 발생', 3000);
             }
         }
@@ -3797,7 +3567,6 @@
 
         // 페이지 전환
         function showPage(page) {
-            debugLog('📄 페이지 전환: ' + page, 'info');
             showStatus('페이지 로드 중...', 1500);
             
             // 가족 페이지에서 벗어날 때 자동 새로고침 중단
@@ -3836,6 +3605,10 @@
                 document.getElementById('familyPage').style.display = 'block';
                 document.querySelector('[data-page="family"]').classList.add('active');
                 loadFamilyPageInfo();
+            } else if (page === 'reward-requests') { // 보상 요청 관리 페이지 추가
+                document.getElementById('rewardRequestsPage').style.display = 'block';
+                document.querySelector('[data-page="reward-requests"]').classList.add('active');
+                loadRewardRequests();
             } else if (page === 'review') {
                 showNotification('📊 리뷰 페이지는 곧 준비됩니다!', 'warning');
                 return;
@@ -3853,8 +3626,6 @@
             if (!currentUser || !familyId) return;
 
             try {
-                debugLog('📊 사용자 통계 로드 시작...', 'info');
-
                 // 지난 30일간의 루틴 로그 가져오기 (인덱스 오류 방지를 위해 단순 쿼리 사용)
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -3918,12 +3689,10 @@
                 // UI 업데이트
                 updateStatsUI();
 
-                debugLog('✅ 사용자 통계 로드 완료: 스트릭 ' + userStats.currentStreak + '일, 포인트: ' + userPoints, 'success');
-
             } catch (error) {
-                debugLog('❌ 통계 로드 오류: ' + error.message, 'error');
+                console.error('❌ 통계 로드 오류:', error);
                 if (error.code === 'permission-denied') {
-                    debugLog('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요', 'warning');
+                    console.warn('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요');
                 }
             }
         }
@@ -4159,16 +3928,13 @@
 
         // 홈 페이지 루틴 로드
         async function loadHomeRoutines() {
-            debugLog('🏠 홈 페이지 루틴 로드 시작', 'info');
-            
             const routineList = document.getElementById('routineList');
             if (!routineList) {
-                debugLog('❌ routineList 요소를 찾을 수 없습니다', 'error');
+                console.error('❌ routineList 요소를 찾을 수 없습니다');
                 return;
             }
             
             if (!currentUser) {
-                debugLog('❌ 사용자가 로그인되지 않음', 'error');
                 routineList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">👤</div>
@@ -4182,11 +3948,7 @@
             routineList.innerHTML = '<div class="loading-message">루틴을 불러오는 중...</div>';
 
             try {
-                debugLog('🔍 현재 사용자: ' + currentUser.uid, 'info');
-                debugLog('🔍 가족 ID: ' + (familyId || '없음'), 'info');
-                
                 if (!familyId) {
-                    debugLog('⚠️ 가족 ID가 없음 - 기본 루틴 표시', 'warning');
                     routineList.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">👨‍👩‍👧‍👦</div>
@@ -4198,13 +3960,10 @@
                 }
 
                 // 사용자의 루틴들 가져오기
-                debugLog('📊 Firestore에서 루틴 조회 중...', 'info');
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
                     .get();
-
-                debugLog('📊 조회된 루틴 수: ' + routinesSnapshot.size, 'info');
 
                 // 오늘 완료된 루틴들 확인
                 await loadTodayCompletedRoutines();
@@ -4218,7 +3977,6 @@
                 routineList.innerHTML = '';
 
                 if (routinesSnapshot.empty) {
-                    debugLog('📝 루틴이 없음 - 빈 상태 표시', 'info');
                     routineList.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">📝</div>
@@ -4313,11 +4071,8 @@
                     `;
                 }
 
-                debugLog('✅ 홈 루틴 로드 완료 (총 ' + totalRendered + '개)', 'success');
-
             } catch (error) {
-                debugLog('❌ 홈 루틴 로드 오류: ' + error.message, 'error');
-                debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'warning');
+                console.error('❌ 홈 루틴 로드 오류:', error);
                 
                 showStatus('루틴 로드 실패: ' + error.message, 5000);
                 
@@ -4366,9 +4121,8 @@
         }
 
         // 루틴이 오늘 표시되어야 하는지 확인
-        function shouldShowRoutineToday(routine) {
-            const today = new Date();
-            const dayOfWeek = today.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+        function shouldShowRoutineToday(routine, date = new Date()) {
+            const dayOfWeek = date.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
             
             switch (routine.frequency) {
                 case 'daily':
@@ -4682,7 +4436,16 @@
         // 성취 모달 닫기
         function closeAchievementModal() {
             const modal = document.getElementById('achievementModal');
-            modal.style.display = 'none';
+            const modalContent = modal.querySelector('.achievement-content');
+            
+            // 애니메이션 역재생 후 숨기기
+            if (modalContent) {
+                modalContent.style.animation = 'fadeInUp 0.3s ease-out reverse forwards'; // 'forwards' 추가
+            }
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // 애니메이션 시간과 일치
         }
 
         // 통계 페이지 로드
@@ -4802,9 +4565,9 @@
                 container.innerHTML = statsHTML.join('');
 
             } catch (error) {
-                debugLog('❌ 루틴별 통계 로드 오류: ' + error.message, 'error');
+                console.error('❌ 루틴별 통계 로드 오류:', error);
                 if (error.code === 'permission-denied') {
-                    debugLog('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요', 'warning');
+                    console.warn('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요');
                 }
                 container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">통계를 불러올 수 없습니다</div></div>';
             }
@@ -4812,10 +4575,7 @@
 
         // 가족 페이지 정보 로드
         async function loadFamilyPageInfo() {
-            debugLog('👨‍👩‍👧‍👦 가족 페이지 정보 로드', 'info');
-            
             if (!currentUser || !familyId) {
-                debugLog('❌ 사용자 또는 가족 정보가 없습니다', 'error');
                 return;
             }
 
@@ -4836,8 +4596,7 @@
                         if (familyCodeCard && familyCodeMain) {
                             familyCodeMain.textContent = familyCode;
                             if (memberCountEl) memberCountEl.textContent = `${memberCount}명`;
-                            if (familyCreatedDateEl) familyCreatedDateEl.textContent = createdDate;
-                            
+                            if (familyCreatedDateEl) familyCreatedDateEl.textContent = createdDate; // Removed "보다"
                             familyCodeCard.classList.remove('hidden');
                             familyCodeCard.style.display = 'block';
                         }
@@ -4858,7 +4617,7 @@
                 startFamilyPageAutoRefresh();
                 
             } catch (error) {
-                debugLog('❌ 가족 페이지 정보 로드 오류: ' + error.message, 'error');
+                console.error('❌ 가족 페이지 정보 로드 오류:', error);
             }
         }
 
@@ -4875,7 +4634,6 @@
             familyPageRefreshInterval = setInterval(async () => {
                 const familyPage = document.getElementById('familyPage');
                 if (familyPage && familyPage.style.display === 'block') {
-                    debugLog('🔄 가족 정보 자동 새로고침', 'info');
                     await loadFamilyMembers();
                 }
             }, 30000); // 30초마다
@@ -4893,16 +4651,12 @@
             if (!familyId) return;
 
             try {
-                debugLog('👨‍👩‍👧‍👦 가족 구성원 로드 시작', 'info');
-                
                 const familyDoc = await db.collection('families').doc(familyId).get();
                 if (!familyDoc.exists) return;
 
                 const familyData = familyDoc.data();
                 const memberIds = familyData.members || [];
                 
-                debugLog('👥 구성원 ID 목록: ' + memberIds.join(', '), 'info');
-
                 const familyMembersContainer = document.getElementById('familyMembers');
                 familyMembersContainer.innerHTML = '<div class="loading-message">가족 구성원 정보를 불러오는 중...</div>';
 
@@ -4913,7 +4667,6 @@
                         const memberDoc = await db.collection('users').doc(memberId).get();
                         if (memberDoc.exists) {
                             const memberData = memberDoc.data();
-                            debugLog('👤 구성원 로드: ' + memberData.email, 'info');
                             
                             // 해당 구성원의 오늘 진행율 계산
                             const todayProgress = await calculateMemberTodayProgress(memberId);
@@ -4922,7 +4675,7 @@
                             memberCards.push(memberCard);
                         }
                     } catch (memberError) {
-                        debugLog('❌ 구성원 로드 오류 (' + memberId + '): ' + memberError.message, 'error');
+                        console.error('❌ 구성원 로드 오류 (' + memberId + '):', memberError);
                     }
                 }
 
@@ -4941,10 +4694,8 @@
                     });
                 }
 
-                debugLog('✅ 가족 구성원 로드 완료 (' + memberCards.length + '명)', 'success');
-                
             } catch (error) {
-                debugLog('❌ 가족 구성원 로드 오류: ' + error.message, 'error');
+                console.error('❌ 가족 구성원 로드 오류:', error);
                 const familyMembersContainer = document.getElementById('familyMembers');
                 familyMembersContainer.innerHTML = `
                     <div class="empty-state">
@@ -5013,7 +4764,7 @@
                 };
 
             } catch (error) {
-                debugLog('❌ 구성원 진행율 계산 오류: ' + error.message, 'error');
+                console.error('❌ 구성원 진행율 계산 오류:', error);
                 return { percentage: 0, completed: 0, total: 0, routines: [] };
             }
         }
@@ -5080,8 +4831,6 @@
 
         // 가족 구성원 상세보기 모달
         async function showMemberDetail(memberId, memberData, progress) {
-            debugLog('👤 구성원 상세보기 표시: ' + memberData.email, 'info');
-            
             const modal = document.getElementById('memberDetailModal');
             const avatar = document.getElementById('memberDetailAvatar');
             const name = document.getElementById('memberDetailName');
@@ -5350,8 +5099,6 @@
 
         // 루틴 추가
         async function addRoutine() {
-            console.log('🔧 루틴 추가 시작');
-            
             if (!currentUser) {
                 showNotification('로그인이 필요합니다.', 'error');
                 return;
@@ -5445,7 +5192,6 @@
         // 사용자 루틴 로드 (관리 페이지용)
         async function loadUserRoutines() {
             if (!currentUser || !familyId) {
-                console.log('❌ 루틴 로드 조건 불충족');
                 return;
             }
             
@@ -5596,6 +5342,7 @@
         window.addEventListener('click', function(event) {
             const addRoutineModal = document.getElementById('addRoutineModal');
             const addRewardModal = document.getElementById('addRewardModal');
+            const achievementModal = document.getElementById('achievementModal');
             const memberDetailModal = document.getElementById('memberDetailModal');
             
             if (event.target === addRoutineModal) {
@@ -5604,6 +5351,10 @@
             
             if (event.target === addRewardModal) {
                 closeAddRewardModal();
+            }
+
+            if (event.target === achievementModal) {
+                closeAchievementModal();
             }
             
             if (event.target === memberDetailModal) {
@@ -5624,8 +5375,6 @@
 
         // Google 프로필 생성
         async function createUserProfileFromGoogle(user, familyCode) {
-            console.log('🆕 Google 프로필 생성 시작:', user.email);
-            
             try {
                 const userData = {
                     email: user.email,
@@ -5708,8 +5457,6 @@
 
         // 새 사용자 처리
         async function handleNewUser(user) {
-            debugLog('🆕 새 사용자 처리 시작: ' + user.email, 'info');
-            
             try {
                 // 임시로 기본값 설정
                 userRole = userRole || 'parent'; // 기본값은 부모
@@ -5741,12 +5488,10 @@
                         familyCode: newFamilyId
                     });
 
-                    debugLog('👨‍👩‍👧‍👦 부모 계정 및 가족 생성: ' + newFamilyId, 'success');
                 } else {
                     // 자녀의 경우 가족 코드가 필요하지만, 일단 임시로 처리
                     userData.familyId = null;
                     userData.isParent = false;
-                    debugLog('👶 자녀 계정 생성 (가족 참여 대기)', 'info');
                 }
 
                 // 사용자 문서 생성
@@ -5757,14 +5502,13 @@
                     await createDefaultRoutines(user.uid, userData.familyId);
                 }
                 
-                debugLog('✅ 새 사용자 프로필 생성 완료', 'success');
                 showNotification('새 계정이 생성되었습니다! 🎉');
                 
                 // 메인 앱으로 전환
                 showMainApp();
                 
             } catch (error) {
-                debugLog('❌ 새 사용자 처리 실패: ' + error.message, 'error');
+                console.error('❌ 새 사용자 처리 실패:', error);
                 showNotification('계정 생성에 실패했습니다: ' + error.message, 'error');
                 
                 // 실패해도 메인 앱으로 전환 (최소한의 기능이라도 사용할 수 있도록)
@@ -5773,21 +5517,15 @@
         }
 
         async function loadUserProfile() {
-            debugLog('👤 사용자 프로필 로드 시작', 'info');
-            
             if (!currentUser) {
-                debugLog('❌ currentUser가 없습니다', 'error');
                 throw new Error('사용자가 로그인되지 않았습니다');
             }
             
             try {
-                debugLog('🔍 Firestore에서 사용자 문서 조회: ' + currentUser.uid, 'info');
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    debugLog('📋 사용자 데이터 로드됨', 'info');
-                    debugLog('🔑 역할: ' + userData.role + ', 가족ID: ' + userData.familyId, 'info');
                     
                     userRole = userData.role || 'parent';
                     familyId = userData.familyId;
@@ -5799,7 +5537,6 @@
                     
                     if (userEmailEl) {
                         userEmailEl.textContent = displayName;
-                        debugLog('👤 UI 업데이트: ' + displayName, 'info');
                     }
                     if (userRoleEl) {
                         userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
@@ -5813,11 +5550,10 @@
                                 const familyData = familyDoc.data();
                                 const familyCode = familyData.familyCode || familyId;
                                 
-                                debugLog('👨‍👩‍👧‍👦 가족 코드: ' + familyCode, 'info');
                                 window.currentFamilyCode = familyCode;
                             }
                         } catch (familyError) {
-                            debugLog('⚠️ 가족 정보 로드 실패: ' + familyError.message, 'warning');
+                            console.warn('⚠️ 가족 정보 로드 실패:', familyError);
                         }
                     }
 
@@ -5830,18 +5566,25 @@
                             addRewardBtn.classList.add('hidden');
                         }
                     }
+
+                    // 보상 요청 내비게이션 아이템 가시성 제어
+                    const rewardRequestsNavItem = document.getElementById('rewardRequestsNavItem');
+                    if (rewardRequestsNavItem) {
+                        if (userRole === 'parent') {
+                            rewardRequestsNavItem.classList.remove('hidden');
+                        } else {
+                            rewardRequestsNavItem.classList.add('hidden');
+                        }
+                    }
                     
                     showNotification(`안녕하세요, ${displayName}님! 👋`);
-                    debugLog('✅ 프로필 로드 완료', 'success');
                 } else {
-                    debugLog('❌ 사용자 문서가 존재하지 않음 - 새 사용자로 처리', 'warning');
                     throw new Error('사용자 프로필이 없습니다');
                 }
             } catch (error) {
-                debugLog('❌ 프로필 로드 오류: ' + error.message + ' (코드: ' + (error.code || '없음') + ')', 'error');
+                console.error('❌ 프로필 로드 오류:', error);
                 
                 if (error.code === 'permission-denied') {
-                    debugLog('🚨 권한 거부 - Firestore 보안 규칙 확인 필요', 'error');
                     showNotification('⚠️ 데이터베이스 접근 권한이 없습니다. 잠시 후 다시 시도해주세요.', 'warning');
                     
                     // 권한 문제여도 기본 정보로 앱 사용 가능하도록
@@ -5864,7 +5607,6 @@
         }
 
         function startRealtimeListeners() {
-            debugLog('🔄 실시간 리스너 시작', 'info');
             // 사용자 포인트 실시간 업데이트 리스너
             if (currentUser && db) {
                 db.collection('users').doc(currentUser.uid)
@@ -5872,20 +5614,31 @@
                         if (doc.exists) {
                             const newPoints = doc.data().points || 0;
                             if (newPoints !== userPoints) {
-                                debugLog(`💰 포인트 업데이트 감지: ${userPoints} -> ${newPoints}`, 'info');
                                 userPoints = newPoints;
                                 updateStatsUI(); // UI에 반영
                             }
                         }
                     }, (error) => {
-                        debugLog('❌ 사용자 포인트 실시간 리스너 오류: ' + error.message, 'error');
+                        console.error('❌ 사용자 포인트 실시간 리스너 오류:', error);
+                    });
+            }
+
+            // 부모 계정인 경우 보상 요청 실시간 리스너 추가
+            if (currentUser && db && userRole === 'parent' && familyId) {
+                db.collection('reward_redemptions')
+                    .where('familyId', '==', familyId)
+                    .where('status', '==', 'requested')
+                    .onSnapshot((snapshot) => {
+                        console.log('🔔 새로운 보상 요청 감지됨!');
+                        loadRewardRequests(); // 보상 요청 페이지 새로고침
+                    }, (error) => {
+                        console.error('❌ 보상 요청 실시간 리스너 오류:', error);
                     });
             }
         }
 
         // 보상 페이지 로드
         async function loadRewardsPage() {
-            debugLog('🎁 보상 페이지 로드 시작', 'info');
             const rewardsListContainer = document.getElementById('rewardsList');
             const rewardPointsDisplay = document.getElementById('rewardPointsDisplay');
             const addRewardBtn = document.getElementById('addRewardBtn');
@@ -5959,10 +5712,8 @@
                     }
                 });
 
-                debugLog('✅ 보상 목록 로드 완료', 'success');
-
             } catch (error) {
-                debugLog('❌ 보상 목록 로드 오류: ' + error.message, 'error');
+                console.error('❌ 보상 목록 로드 오류:', error);
                 rewardsListContainer.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">⚠️</div>
@@ -6069,76 +5820,206 @@
             }
         }
 
+        // 보상 요청 관리 페이지 로드 (부모용)
+        async function loadRewardRequests() {
+            const rewardRequestsList = document.getElementById('rewardRequestsList');
+            if (!rewardRequestsList || !currentUser || userRole !== 'parent' || !familyId) {
+                if (rewardRequestsList) {
+                    rewardRequestsList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔒</div>
+                            <div class="empty-state-title">부모 계정에서만 접근 가능합니다</div>
+                            <div class="empty-state-description">자녀의 보상 요청을 관리하려면 부모 계정으로 로그인해주세요.</div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            rewardRequestsList.innerHTML = '<div class="loading-message">보상 요청을 불러오는 중...</div>';
+
+            try {
+                const requestsSnapshot = await db.collection('reward_redemptions')
+                    .where('familyId', '==', familyId)
+                    .where('status', '==', 'requested')
+                    .get();
+
+                rewardRequestsList.innerHTML = '';
+
+                if (requestsSnapshot.empty) {
+                    rewardRequestsList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🎉</div>
+                            <div class="empty-state-title">현재 보상 요청이 없습니다</div>
+                            <div class="empty-state-description">자녀들이 루틴을 완료하고 보상을 교환할 때 여기에 표시됩니다.</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                for (const doc of requestsSnapshot.docs) {
+                    const request = { id: doc.id, ...doc.data() };
+                    
+                    // 요청한 자녀 정보 가져오기
+                    const childDoc = await db.collection('users').doc(request.userId).get();
+                    const childName = childDoc.exists ? (childDoc.data().displayName || childDoc.data().email.split('@')[0]) : '알 수 없는 자녀';
+
+                    // 보상 정보 가져오기
+                    const rewardDoc = await db.collection('families').doc(familyId).collection('rewards').doc(request.rewardId).get();
+                    const rewardName = rewardDoc.exists ? rewardDoc.data().name : '알 수 없는 보상';
+                    const rewardEmoji = rewardDoc.exists ? rewardDoc.data().emoji : '🎁';
+
+                    const requestItem = document.createElement('div');
+                    requestItem.className = 'reward-request-item';
+                    requestItem.innerHTML = `
+                        <div class="request-header">
+                            <span>${rewardEmoji} ${rewardName}</span>
+                            <span>${request.cost} 포인트</span>
+                        </div>
+                        <div class="request-details">
+                            ${childName}님이 ${request.timestamp.toDate().toLocaleDateString('ko-KR')} ${request.timestamp.toDate().toLocaleTimeString('ko-KR')}에 요청
+                        </div>
+                        <div class="request-actions">
+                            <button class="request-btn approve" data-request-id="${request.id}" data-child-id="${request.userId}" data-reward-cost="${request.cost}">승인</button>
+                            <button class="request-btn reject" data-request-id="${request.id}" data-child-id="${request.userId}" data-reward-cost="${request.cost}">거절</button>
+                        </div>
+                    `;
+                    rewardRequestsList.appendChild(requestItem);
+
+                    // 이벤트 리스너 추가
+                    addTouchEventListener(requestItem.querySelector('.approve'), async function() {
+                        const requestId = this.getAttribute('data-request-id');
+                        const childId = this.getAttribute('data-child-id');
+                        await approveRewardRequest(requestId, childId);
+                    });
+                    addTouchEventListener(requestItem.querySelector('.reject'), async function() {
+                        const requestId = this.getAttribute('data-request-id');
+                        const childId = this.getAttribute('data-child-id');
+                        const rewardCost = parseInt(this.getAttribute('data-reward-cost'));
+                        await rejectRewardRequest(requestId, childId, rewardCost);
+                    });
+                }
+
+            } catch (error) {
+                console.error('❌ 보상 요청 로드 오류:', error);
+                rewardRequestsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <div class="empty-state-title">보상 요청을 불러올 수 없습니다</div>
+                        <div class="empty-state-description">${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 보상 요청 승인
+        async function approveRewardRequest(requestId, childUserId) {
+            if (!currentUser || userRole !== 'parent') {
+                showNotification('권한이 없습니다.', 'error');
+                return;
+            }
+
+            const requestRef = db.collection('reward_redemptions').doc(requestId);
+            try {
+                await requestRef.update({
+                    status: 'fulfilled',
+                    processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    processedBy: currentUser.uid
+                });
+                showNotification('✅ 보상 요청이 승인되었습니다!');
+                loadRewardRequests(); // 목록 새로고침
+            } catch (error) {
+                console.error('보상 요청 승인 오류:', error);
+                showNotification('보상 요청 승인에 실패했습니다.', 'error');
+            }
+        }
+
+        // 보상 요청 거절
+        async function rejectRewardRequest(requestId, childUserId, rewardCost) {
+            if (!currentUser || userRole !== 'parent') {
+                showNotification('권한이 없습니다.', 'error');
+                return;
+            }
+
+            const requestRef = db.collection('reward_redemptions').doc(requestId);
+            const childUserRef = db.collection('users').doc(childUserId);
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const childDoc = await transaction.get(childUserRef);
+                    if (!childDoc.exists) {
+                        throw "Child user does not exist!";
+                    }
+                    const currentChildPoints = childDoc.data().points || 0;
+
+                    // 포인트 환불
+                    transaction.update(childUserRef, {
+                        points: currentChildPoints + rewardCost
+                    });
+
+                    // 요청 상태 업데이트
+                    transaction.update(requestRef, {
+                        status: 'rejected',
+                        processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        processedBy: currentUser.uid
+                    });
+                });
+
+                showNotification(`❌ 보상 요청이 거절되었습니다. ${rewardCost} 포인트가 환불되었습니다.`);
+                loadRewardRequests(); // 목록 새로고침
+                updateStatsUI(); // 부모의 홈 화면 포인트 업데이트 (자녀 포인트 변화 반영)
+
+            } catch (error) {
+                console.error('보상 요청 거절 오류:', error);
+                showNotification('보상 요청 거절에 실패했습니다: ' + error.message, 'error');
+            }
+        }
+
 
         // DOM 로드 완료 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog('📄 DOM 로드 완료 - 앱 초기화 시작', 'success');
             showStatus('앱 초기화 중...', 2000);
-            
-            // 디버그 모드를 자동으로 켜서 로그 확인 가능
-            debugEnabled = true;
-            debugLog('🐛 디버그 모드 자동 활성화', 'info');
             
             // 기본 UI 요소 확인
             const loginPage = document.getElementById('loginPage');
             const mainApp = document.getElementById('mainApp');
             const googleBtn = document.getElementById('googleSignInBtn');
             
-            debugLog('🔍 UI 요소 확인:', 'info');
-            debugLog('  - 로그인 페이지: ' + (loginPage ? '존재' : '없음'), loginPage ? 'success' : 'error');
-            debugLog('  - 메인 앱: ' + (mainApp ? '존재' : '없음'), mainApp ? 'success' : 'error');
-            debugLog('  - Google 버튼: ' + (googleBtn ? '존재' : '없음'), googleBtn ? 'success' : 'error');
-            
             if (!loginPage || !mainApp || !googleBtn) {
-                debugLog('❌ 필수 UI 요소가 누락되었습니다!', 'error');
+                console.error('❌ 필수 UI 요소가 누락되었습니다!');
                 showStatus('UI 로드 오류', 5000);
                 return;
             }
             
-            debugLog('📅 현재 날짜 업데이트', 'info');
             updateCurrentDate();
             
-            debugLog('💭 일일 명언 업데이트', 'info');
             updateDailyQuote();
             
-            debugLog('📱 터치 이벤트 초기화 시작', 'info');
             // 터치 이벤트를 먼저 초기화
             initializeTouchEvents();
             
             // Firebase 초기화 전 체크
-            debugLog('🔥 Firebase SDK 로드 상태 확인...', 'info');
-            
             setTimeout(() => {
                 if (typeof firebase !== 'undefined') {
-                    debugLog('✅ Firebase SDK 감지됨', 'success');
-                    debugLog('🔍 Firebase 버전: ' + (firebase.SDK_VERSION || '알 수 없음'), 'info');
-                    debugLog('🚀 Firebase 초기화 시작', 'info');
-                    
                     const initResult = initializeFirebase();
                     if (initResult) {
-                        debugLog('✅ Firebase 초기화 성공', 'success');
+                        // Firebase 초기화 성공
                     } else {
-                        debugLog('❌ Firebase 초기화 실패', 'error');
+                        // Firebase 초기화 실패
                     }
                 } else {
-                    debugLog('❌ Firebase SDK가 로드되지 않았습니다.', 'error');
-                    debugLog('🔄 1초 후 재시도...', 'warning');
                     showStatus('Firebase 로드 실패 - 재시도 중...', 3000);
                     
                     setTimeout(() => {
-                        debugLog('🔄 Firebase 초기화 재시도', 'info');
                         if (typeof firebase !== 'undefined') {
-                            debugLog('✅ 재시도에서 Firebase SDK 감지됨', 'success');
                             initializeFirebase();
                         } else {
-                            debugLog('❌ 재시도 실패 - Firebase SDK 여전히 없음', 'error');
                             showStatus('Firebase SDK 로드 실패', 5000);
                         }
                     }, 1000);
                 }
             }, 100);
             
-            debugLog('🏁 DOM 초기화 완료', 'success');
         });
     </script>
 </body>
