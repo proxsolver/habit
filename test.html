@@ -2465,25 +2465,36 @@
 
         // 터치 이벤트 처리 함수
         function addTouchEventListener(element, callback, useCapture = false) {
-            if (!element) return;
+            if (!element) {
+                debugLog('❌ 터치 이벤트 추가 실패: 요소가 없음', 'error');
+                return;
+            }
+
+            const elementInfo = element.id || element.className || element.tagName;
+            debugLog('📱 터치 이벤트 추가: ' + elementInfo, 'info');
 
             // 터치 이벤트 추가
             element.addEventListener('touchstart', function(e) {
+                debugLog('👆 터치 시작: ' + elementInfo, 'info');
                 e.preventDefault();
                 this.style.transform = 'scale(0.98)';
             }, { passive: false, capture: useCapture });
 
             element.addEventListener('touchend', function(e) {
+                debugLog('👆 터치 완료: ' + elementInfo, 'info');
                 e.preventDefault();
                 e.stopPropagation();
                 this.style.transform = '';
+                debugLog('🚀 콜백 실행: ' + elementInfo, 'info');
                 callback.call(this, e);
             }, { passive: false, capture: useCapture });
 
             // 마우스 이벤트도 추가 (데스크톱 지원)
             element.addEventListener('click', function(e) {
+                debugLog('🖱️ 마우스 클릭: ' + elementInfo, 'info');
                 e.preventDefault();
                 e.stopPropagation();
+                debugLog('🚀 콜백 실행 (마우스): ' + elementInfo, 'info');
                 callback.call(this, e);
             }, { capture: useCapture });
         }
@@ -2493,42 +2504,77 @@
             debugLog('📱 터치 이벤트 초기화 시작', 'info');
 
             // 역할 선택 버튼들
-            document.querySelectorAll('.role-btn').forEach(btn => {
+            const roleButtons = document.querySelectorAll('.role-btn');
+            debugLog('👥 역할 버튼 개수: ' + roleButtons.length, 'info');
+            roleButtons.forEach(btn => {
                 addTouchEventListener(btn, function(e) {
                     const role = this.getAttribute('data-role');
+                    debugLog('👥 역할 선택됨: ' + role, 'info');
                     selectRole(role);
                 });
             });
 
-            // Google 로그인 버튼
+            // Google 로그인 버튼 - 특별히 주의깊게 처리
             const googleBtn = document.getElementById('googleSignInBtn');
-            addTouchEventListener(googleBtn, signInWithGoogle);
+            if (googleBtn) {
+                debugLog('✅ Google 로그인 버튼 발견됨', 'success');
+                debugLog('🔍 버튼 상태 - disabled: ' + googleBtn.disabled + ', style: ' + googleBtn.style.display, 'info');
+                
+                addTouchEventListener(googleBtn, function(e) {
+                    debugLog('🔑 Google 로그인 버튼 클릭됨!', 'success');
+                    signInWithGoogle();
+                });
+                
+                debugLog('✅ Google 로그인 터치 이벤트 추가 완료', 'success');
+            } else {
+                debugLog('❌ Google 로그인 버튼을 찾을 수 없습니다!', 'error');
+            }
 
             // 이메일 로그인 토글
             const toggleEmailBtn = document.getElementById('toggleEmailLogin');
-            addTouchEventListener(toggleEmailBtn, toggleEmailLogin);
+            if (toggleEmailBtn) {
+                debugLog('✅ 이메일 토글 버튼 발견됨', 'info');
+                addTouchEventListener(toggleEmailBtn, toggleEmailLogin);
+            } else {
+                debugLog('❌ 이메일 토글 버튼을 찾을 수 없습니다', 'error');
+            }
 
             // 로그인/회원가입 버튼
             const loginBtn = document.getElementById('loginBtn');
             const registerBtn = document.getElementById('registerBtn');
-            addTouchEventListener(loginBtn, () => handleAuth('login'));
-            addTouchEventListener(registerBtn, () => handleAuth('register'));
+            if (loginBtn) {
+                addTouchEventListener(loginBtn, () => handleAuth('login'));
+                debugLog('✅ 이메일 로그인 버튼 이벤트 추가', 'info');
+            }
+            if (registerBtn) {
+                addTouchEventListener(registerBtn, () => handleAuth('register'));
+                debugLog('✅ 회원가입 버튼 이벤트 추가', 'info');
+            }
 
             // 로그아웃 버튼
             const logoutBtn = document.getElementById('logoutBtn');
-            addTouchEventListener(logoutBtn, logout);
+            if (logoutBtn) {
+                addTouchEventListener(logoutBtn, logout);
+                debugLog('✅ 로그아웃 버튼 이벤트 추가', 'info');
+            }
 
             // 네비게이션 버튼들
-            document.querySelectorAll('.nav-item').forEach(navItem => {
+            const navItems = document.querySelectorAll('.nav-item');
+            debugLog('🧭 네비게이션 버튼 개수: ' + navItems.length, 'info');
+            navItems.forEach(navItem => {
                 addTouchEventListener(navItem, function(e) {
                     const page = this.getAttribute('data-page');
+                    debugLog('🧭 네비게이션 클릭: ' + page, 'info');
                     showPage(page);
                 });
             });
 
             // 루틴 추가 버튼
             const addRoutineBtn = document.getElementById('addRoutineBtn');
-            addTouchEventListener(addRoutineBtn, openAddRoutineModal);
+            if (addRoutineBtn) {
+                addTouchEventListener(addRoutineBtn, openAddRoutineModal);
+                debugLog('✅ 루틴 추가 버튼 이벤트 추가', 'info');
+            }
 
             // 모달 관련 버튼들
             const closeModalBtn = document.getElementById('closeModalBtn');
@@ -2536,23 +2582,29 @@
             const confirmAddRoutineBtn = document.getElementById('confirmAddRoutineBtn');
             const closeAchievementBtn = document.getElementById('closeAchievementBtn');
 
-            addTouchEventListener(closeModalBtn, closeModal);
-            addTouchEventListener(cancelModalBtn, closeModal);
-            addTouchEventListener(confirmAddRoutineBtn, addRoutine);
-            addTouchEventListener(closeAchievementBtn, closeAchievementModal);
+            if (closeModalBtn) addTouchEventListener(closeModalBtn, closeModal);
+            if (cancelModalBtn) addTouchEventListener(cancelModalBtn, closeModal);
+            if (confirmAddRoutineBtn) addTouchEventListener(confirmAddRoutineBtn, addRoutine);
+            if (closeAchievementBtn) addTouchEventListener(closeAchievementBtn, closeAchievementModal);
 
             // 가족 코드 복사 버튼
             const copyFamilyCodeBtn = document.getElementById('copyFamilyCodeBtn');
-            addTouchEventListener(copyFamilyCodeBtn, copyFamilyCode);
+            if (copyFamilyCodeBtn) {
+                addTouchEventListener(copyFamilyCodeBtn, copyFamilyCode);
+                debugLog('✅ 가족 코드 복사 버튼 이벤트 추가', 'info');
+            }
 
             // 디버그 버튼들
             const debugToggle = document.getElementById('debugToggle');
             const debugCloseBtn = document.getElementById('debugCloseBtn');
             const debugClearBtn = document.getElementById('debugClearBtn');
 
-            addTouchEventListener(debugToggle, toggleDebugConsole);
-            addTouchEventListener(debugCloseBtn, toggleDebugConsole);
-            addTouchEventListener(debugClearBtn, clearDebugLog);
+            if (debugToggle) {
+                addTouchEventListener(debugToggle, toggleDebugConsole);
+                debugLog('✅ 디버그 토글 버튼 이벤트 추가', 'info');
+            }
+            if (debugCloseBtn) addTouchEventListener(debugCloseBtn, toggleDebugConsole);
+            if (debugClearBtn) addTouchEventListener(debugClearBtn, clearDebugLog);
 
             debugLog('✅ 터치 이벤트 초기화 완료', 'success');
         }
@@ -2586,27 +2638,35 @@
                 
                 // 인증 상태 변경 감지
                 auth.onAuthStateChanged(async (user) => {
-                    debugLog('🔄 인증 상태 변경 감지: ' + (user ? user.email : '로그아웃'), 'info');
+                    debugLog('🔄 인증 상태 변경 감지됨!', 'info');
+                    debugLog('👤 사용자 정보: ' + (user ? user.email : '로그아웃됨'), 'info');
                     
                     if (user) {
+                        debugLog('✅ 사용자 로그인 확인됨', 'success');
+                        debugLog('📧 이메일: ' + user.email, 'info');
+                        debugLog('🆔 UID: ' + user.uid, 'info');
+                        debugLog('🔍 인증 제공자: ' + (user.providerData[0]?.providerId || '알 수 없음'), 'info');
+                        
                         currentUser = user;
-                        debugLog('👤 현재 사용자: ' + user.email, 'info');
                         showStatus('사용자 정보 로드 중...', 3000);
                         
                         try {
+                            debugLog('👤 사용자 프로필 로드 시작...', 'info');
                             await loadUserProfile();
                             debugLog('✅ 프로필 로드 완료, 메인 앱으로 전환', 'success');
                             showMainApp();
                             startRealtimeListeners();
                         } catch (error) {
                             debugLog('❌ 프로필 로드 실패: ' + error.message, 'error');
+                            debugLog('🔍 오류 상세: ' + JSON.stringify(error), 'error');
                             // 프로필 로드 실패 시에도 메인 앱으로 전환 (새 사용자일 수 있음)
+                            debugLog('🆕 새 사용자로 처리 시작...', 'info');
                             showStatus('새 사용자로 프로필 생성 중...', 2000);
                             await handleNewUser(user);
                         }
                     } else {
                         currentUser = null;
-                        debugLog('👋 사용자 로그아웃', 'info');
+                        debugLog('👋 사용자 로그아웃됨', 'info');
                         showLoginPage();
                     }
                 });
@@ -2666,7 +2726,11 @@
 
         // Google 로그인 (개선된 버전)
         async function signInWithGoogle() {
+            debugLog('🔑 Google 로그인 함수 호출됨', 'info');
+            
             const familyCode = document.getElementById('familyCode').value;
+            debugLog('👶 가족 코드 확인: ' + (familyCode || '없음'), 'info');
+            debugLog('👤 현재 역할: ' + userRole, 'info');
             
             if (userRole === 'child' && !familyCode) {
                 showNotification('자녀는 가족 코드를 먼저 입력해주세요.', 'error');
@@ -2683,12 +2747,14 @@
             setLoading(true, 'google');
             debugLog('🔑 Google 로그인 시작...', 'info');
             debugLog('🌐 현재 도메인: ' + window.location.hostname, 'info');
+            debugLog('🔗 현재 URL: ' + window.location.href, 'info');
             showStatus('Google 로그인 중...', 3000);
             
             try {
                 const provider = new firebase.auth.GoogleAuthProvider();
                 provider.addScope('email');
                 provider.addScope('profile');
+                debugLog('🔧 Google Auth Provider 생성 완료', 'info');
                 
                 let result;
                 
@@ -2697,54 +2763,52 @@
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                 
                 debugLog('📱 디바이스 감지 - 모바일: ' + isMobile + ', iOS: ' + isIOS, 'info');
+                debugLog('🌐 User Agent: ' + navigator.userAgent, 'info');
                 
-                if (isIOS) {
-                    // iOS에서는 리디렉션 방식 사용
-                    debugLog('🍎 iOS 감지 - 리디렉션 방식 사용', 'info');
+                // 디버그를 위해 우선 팝업 방식만 시도
+                debugLog('💻 팝업 방식으로 로그인 시도', 'info');
+                
+                try {
+                    debugLog('📝 signInWithPopup 호출 직전', 'info');
+                    result = await auth.signInWithPopup(provider);
+                    debugLog('✅ signInWithPopup 성공!', 'success');
+                    debugLog('👤 로그인 사용자: ' + result.user.email, 'info');
+                } catch (popupError) {
+                    debugLog('⚠️ 팝업 로그인 실패: ' + popupError.message, 'warning');
+                    debugLog('🔍 팝업 오류 코드: ' + popupError.code, 'warning');
                     
-                    // 가족 코드를 sessionStorage에 임시 저장 (리디렉션 후 복원용)
-                    if (familyCode) {
-                        sessionStorage.setItem('tempFamilyCode', familyCode);
-                        sessionStorage.setItem('tempUserRole', userRole);
-                    }
-                    
-                    await auth.signInWithRedirect(provider);
-                    return; // 리디렉션되므로 여기서 종료
-                } else {
-                    // 데스크톱이나 Android에서는 팝업 방식 사용
-                    debugLog('💻 데스크톱/Android - 팝업 방식 사용', 'info');
-                    
-                    try {
-                        result = await auth.signInWithPopup(provider);
-                    } catch (popupError) {
-                        debugLog('⚠️ 팝업 실패, 리디렉션으로 전환: ' + popupError.message, 'warning');
+                    if (popupError.code === 'auth/popup-blocked' || 
+                        popupError.code === 'auth/popup-closed-by-user' ||
+                        popupError.code === 'auth/cancelled-popup-request') {
                         
-                        if (popupError.code === 'auth/popup-blocked' || 
-                            popupError.code === 'auth/popup-closed-by-user' ||
-                            popupError.code === 'auth/cancelled-popup-request') {
-                            
-                            // 팝업이 차단되면 리디렉션 방식으로 전환
-                            if (familyCode) {
-                                sessionStorage.setItem('tempFamilyCode', familyCode);
-                                sessionStorage.setItem('tempUserRole', userRole);
-                            }
-                            
-                            showNotification('팝업이 차단되어 페이지 이동 방식으로 로그인합니다.', 'warning');
-                            await auth.signInWithRedirect(provider);
-                            return;
-                        } else {
-                            throw popupError;
+                        debugLog('🔄 리디렉션 방식으로 전환', 'info');
+                        // 팝업이 차단되면 리디렉션 방식으로 전환
+                        if (familyCode) {
+                            sessionStorage.setItem('tempFamilyCode', familyCode);
+                            sessionStorage.setItem('tempUserRole', userRole);
+                            debugLog('💾 임시 데이터 저장 완료', 'info');
                         }
+                        
+                        showNotification('팝업이 차단되어 페이지 이동 방식으로 로그인합니다.', 'warning');
+                        debugLog('🚀 signInWithRedirect 호출', 'info');
+                        await auth.signInWithRedirect(provider);
+                        return;
+                    } else {
+                        throw popupError;
                     }
                 }
                 
                 if (result && result.user) {
+                    debugLog('🎉 로그인 결과 확인됨', 'success');
                     await handleGoogleSignInSuccess(result.user, familyCode);
+                } else {
+                    debugLog('❌ 로그인 결과가 없음', 'error');
                 }
                 
             } catch (error) {
                 debugLog('❌ Google 로그인 오류: ' + error.message, 'error');
                 debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'error');
+                debugLog('🔍 전체 오류 객체: ' + JSON.stringify(error), 'error');
                 
                 // Firebase Console 설정 가이드
                 if (error.code === 'auth/unauthorized-domain') {
@@ -2772,36 +2836,51 @@
                     showStatus('로그인 실패: ' + error.message, 5000);
                 }
             } finally {
+                debugLog('🔄 로그인 시도 완료, 로딩 해제', 'info');
                 setLoading(false, 'google');
             }
         }
 
         // Google 로그인 성공 처리
         async function handleGoogleSignInSuccess(user, familyCode) {
-            debugLog('✅ Google 로그인 성공: ' + user.email, 'success');
+            debugLog('✅ Google 로그인 성공 처리 시작', 'success');
+            debugLog('👤 사용자 이메일: ' + user.email, 'info');
+            debugLog('🆔 사용자 UID: ' + user.uid, 'info');
+            debugLog('👶 가족 코드: ' + (familyCode || '없음'), 'info');
+            
             showStatus('로그인 성공! 프로필 확인 중...', 2000);
             
             try {
+                debugLog('🔍 기존 사용자 확인 중...', 'info');
                 // 기존 사용자인지 확인
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
                 if (!userDoc.exists) {
-                    debugLog('🆕 새 사용자 - 프로필 생성 시작', 'info');
+                    debugLog('🆕 새 사용자 감지 - 프로필 생성 시작', 'info');
                     await createUserProfileFromGoogle(user, familyCode);
                     showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
                     showStatus('회원가입 완료!', 2000);
                 } else {
-                    debugLog('👤 기존 사용자 - 로그인 완료', 'success');
+                    debugLog('👤 기존 사용자 확인됨 - 로그인 완료', 'success');
+                    const userData = userDoc.data();
+                    debugLog('📋 기존 사용자 데이터: 역할=' + userData.role + ', 가족ID=' + userData.familyId, 'info');
                     showNotification('Google 계정으로 로그인되었습니다! 👋');
                     showStatus('로그인 완료!', 2000);
                 }
+                
+                debugLog('✅ Google 로그인 성공 처리 완료', 'success');
+                
             } catch (permissionError) {
+                debugLog('⚠️ 권한 오류 발생: ' + permissionError.message, 'warning');
+                debugLog('🔍 오류 코드: ' + permissionError.code, 'warning');
+                
                 if (permissionError.code === 'permission-denied') {
-                    debugLog('⚠️ 권한 오류 - 새 사용자로 처리', 'warning');
+                    debugLog('⚠️ 권한 오류 - 새 사용자로 처리 시도', 'warning');
                     await createUserProfileFromGoogle(user, familyCode);
                     showNotification('새 계정이 생성되었습니다! 🎉');
                     showStatus('계정 생성 완료!', 2000);
                 } else {
+                    debugLog('❌ 처리할 수 없는 오류, 다시 발생시킴', 'error');
                     throw permissionError;
                 }
             }
@@ -4532,32 +4611,73 @@
 
         // DOM 로드 완료 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog('📄 DOM 로드 완료', 'success');
+            debugLog('📄 DOM 로드 완료 - 앱 초기화 시작', 'success');
             showStatus('앱 초기화 중...', 2000);
             
             // 디버그 모드를 자동으로 켜서 로그 확인 가능
             debugEnabled = true;
             debugLog('🐛 디버그 모드 자동 활성화', 'info');
             
+            // 기본 UI 요소 확인
+            const loginPage = document.getElementById('loginPage');
+            const mainApp = document.getElementById('mainApp');
+            const googleBtn = document.getElementById('googleSignInBtn');
+            
+            debugLog('🔍 UI 요소 확인:', 'info');
+            debugLog('  - 로그인 페이지: ' + (loginPage ? '존재' : '없음'), loginPage ? 'success' : 'error');
+            debugLog('  - 메인 앱: ' + (mainApp ? '존재' : '없음'), mainApp ? 'success' : 'error');
+            debugLog('  - Google 버튼: ' + (googleBtn ? '존재' : '없음'), googleBtn ? 'success' : 'error');
+            
+            if (!loginPage || !mainApp || !googleBtn) {
+                debugLog('❌ 필수 UI 요소가 누락되었습니다!', 'error');
+                showStatus('UI 로드 오류', 5000);
+                return;
+            }
+            
+            debugLog('📅 현재 날짜 업데이트', 'info');
             updateCurrentDate();
+            
+            debugLog('💭 일일 명언 업데이트', 'info');
             updateDailyQuote();
             
+            debugLog('📱 터치 이벤트 초기화 시작', 'info');
             // 터치 이벤트를 먼저 초기화
             initializeTouchEvents();
             
+            // Firebase 초기화 전 체크
+            debugLog('🔥 Firebase SDK 로드 상태 확인...', 'info');
+            
             setTimeout(() => {
                 if (typeof firebase !== 'undefined') {
-                    debugLog('🔥 Firebase SDK 감지됨', 'success');
-                    initializeFirebase();
+                    debugLog('✅ Firebase SDK 감지됨', 'success');
+                    debugLog('🔍 Firebase 버전: ' + (firebase.SDK_VERSION || '알 수 없음'), 'info');
+                    debugLog('🚀 Firebase 초기화 시작', 'info');
+                    
+                    const initResult = initializeFirebase();
+                    if (initResult) {
+                        debugLog('✅ Firebase 초기화 성공', 'success');
+                    } else {
+                        debugLog('❌ Firebase 초기화 실패', 'error');
+                    }
                 } else {
                     debugLog('❌ Firebase SDK가 로드되지 않았습니다.', 'error');
-                    showStatus('Firebase 로드 실패', 3000);
+                    debugLog('🔄 1초 후 재시도...', 'warning');
+                    showStatus('Firebase 로드 실패 - 재시도 중...', 3000);
+                    
                     setTimeout(() => {
                         debugLog('🔄 Firebase 초기화 재시도', 'info');
-                        initializeFirebase();
+                        if (typeof firebase !== 'undefined') {
+                            debugLog('✅ 재시도에서 Firebase SDK 감지됨', 'success');
+                            initializeFirebase();
+                        } else {
+                            debugLog('❌ 재시도 실패 - Firebase SDK 여전히 없음', 'error');
+                            showStatus('Firebase SDK 로드 실패', 5000);
+                        }
                     }, 1000);
                 }
             }, 100);
+            
+            debugLog('🏁 DOM 초기화 완료', 'success');
         });
     </script>
 </body>
