@@ -1757,12 +1757,13 @@
 
         .debug-toggle {
             position: fixed;
-            top: 2rem;
+            top: 1rem;
             left: 1rem;
-            width: 3rem;
-            height: 3rem;
-            background: rgba(0, 0, 0, 0.7);
-            color: #00ff00;
+            width: 4rem;
+            height: 4rem;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: 3px solid white;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -1773,11 +1774,14 @@
             transition: all 0.3s;
             touch-action: manipulation;
             -webkit-touch-callout: none;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            animation: pulse 2s infinite;
         }
 
         .debug-toggle:hover {
-            background: rgba(0, 0, 0, 0.9);
+            background: linear-gradient(135deg, #ee5a24, #ff6b6b);
             transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
         }
 
         .debug-toggle:active {
@@ -2582,14 +2586,27 @@
                 
                 // 인증 상태 변경 감지
                 auth.onAuthStateChanged(async (user) => {
+                    debugLog('🔄 인증 상태 변경 감지: ' + (user ? user.email : '로그아웃'), 'info');
+                    
                     if (user) {
                         currentUser = user;
-                        showStatus('사용자 정보 로드 중...', 2000);
-                        await loadUserProfile();
-                        showMainApp();
-                        startRealtimeListeners();
+                        debugLog('👤 현재 사용자: ' + user.email, 'info');
+                        showStatus('사용자 정보 로드 중...', 3000);
+                        
+                        try {
+                            await loadUserProfile();
+                            debugLog('✅ 프로필 로드 완료, 메인 앱으로 전환', 'success');
+                            showMainApp();
+                            startRealtimeListeners();
+                        } catch (error) {
+                            debugLog('❌ 프로필 로드 실패: ' + error.message, 'error');
+                            // 프로필 로드 실패 시에도 메인 앱으로 전환 (새 사용자일 수 있음)
+                            showStatus('새 사용자로 프로필 생성 중...', 2000);
+                            await handleNewUser(user);
+                        }
                     } else {
                         currentUser = null;
+                        debugLog('👋 사용자 로그아웃', 'info');
                         showLoginPage();
                     }
                 });
@@ -2886,16 +2903,43 @@
         }
 
         function showLoginPage() {
+            debugLog('🏠 로그인 페이지 표시', 'info');
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
         }
 
         function showMainApp() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
+            debugLog('🚀 메인 앱 표시 시작', 'info');
             
-            const mainApp = document.getElementById('mainApp');
-            mainApp.style.animation = 'fadeInUp 0.6s ease-out';
+            try {
+                const loginPage = document.getElementById('loginPage');
+                const mainApp = document.getElementById('mainApp');
+                
+                if (!loginPage || !mainApp) {
+                    debugLog('❌ 페이지 요소를 찾을 수 없습니다', 'error');
+                    return;
+                }
+                
+                loginPage.style.display = 'none';
+                mainApp.style.display = 'block';
+                
+                const mainAppElement = document.getElementById('mainApp');
+                if (mainAppElement) {
+                    mainAppElement.style.animation = 'fadeInUp 0.6s ease-out';
+                }
+                
+                debugLog('✅ 메인 앱 표시 완료', 'success');
+                showStatus('메인 앱 로드 완료!', 2000);
+                
+                // 홈 페이지를 기본으로 표시
+                setTimeout(() => {
+                    showPage('home');
+                }, 500);
+                
+            } catch (error) {
+                debugLog('❌ 메인 앱 표시 오류: ' + error.message, 'error');
+                showStatus('앱 로드 중 오류 발생', 3000);
+            }
         }
 
         // 현재 날짜 업데이트
@@ -3230,16 +3274,44 @@
         async function loadHomeRoutines() {
             debugLog('🏠 홈 페이지 루틴 로드 시작', 'info');
             
-            if (!currentUser || !familyId) {
-                debugLog('❌ 사용자 또는 가족 정보가 없습니다', 'error');
+            const routineList = document.getElementById('routineList');
+            if (!routineList) {
+                debugLog('❌ routineList 요소를 찾을 수 없습니다', 'error');
+                return;
+            }
+            
+            if (!currentUser) {
+                debugLog('❌ 사용자가 로그인되지 않음', 'error');
+                routineList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👤</div>
+                        <div class="empty-state-title">로그인이 필요합니다</div>
+                        <div class="empty-state-description">루틴을 확인하려면 먼저 로그인해주세요</div>
+                    </div>
+                `;
                 return;
             }
 
-            try {
-                const routineList = document.getElementById('routineList');
-                routineList.innerHTML = '<div class="loading-message">루틴을 불러오는 중...</div>';
+            routineList.innerHTML = '<div class="loading-message">루틴을 불러오는 중...</div>';
 
-                // 사용자의 루틴들 가져오기 (인덱스 오류 방지를 위해 단순 쿼리 사용)
+            try {
+                debugLog('🔍 현재 사용자: ' + currentUser.uid, 'info');
+                debugLog('🔍 가족 ID: ' + (familyId || '없음'), 'info');
+                
+                if (!familyId) {
+                    debugLog('⚠️ 가족 ID가 없음 - 기본 루틴 표시', 'warning');
+                    routineList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👨‍👩‍👧‍👦</div>
+                            <div class="empty-state-title">가족 설정이 필요합니다</div>
+                            <div class="empty-state-description">관리 탭에서 루틴을 추가하거나 가족에 참여해주세요</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 사용자의 루틴들 가져오기
+                debugLog('📊 Firestore에서 루틴 조회 중...', 'info');
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
@@ -3259,6 +3331,7 @@
                 routineList.innerHTML = '';
 
                 if (routinesSnapshot.empty) {
+                    debugLog('📝 루틴이 없음 - 빈 상태 표시', 'info');
                     routineList.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">📝</div>
@@ -3308,6 +3381,7 @@
                     evening: '🌙 저녁 루틴'
                 };
 
+                let totalRendered = 0;
                 for (const [timeSlot, routines] of Object.entries(routinesByTime)) {
                     if (routines.length > 0) {
                         // 시간대 제목 추가
@@ -3322,28 +3396,46 @@
                         routines.forEach((routine, index) => {
                             const routineElement = createRoutineElement(routine, index);
                             routineList.appendChild(routineElement);
+                            totalRendered++;
                         });
                     }
                 }
 
-                debugLog('✅ 홈 루틴 로드 완료', 'success');
+                if (totalRendered === 0) {
+                    routineList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <div class="empty-state-title">오늘은 할 루틴이 없습니다</div>
+                            <div class="empty-state-description">주말이나 평일 설정에 따라 루틴이 표시되지 않을 수 있습니다</div>
+                        </div>
+                    `;
+                }
+
+                debugLog('✅ 홈 루틴 로드 완료 (총 ' + totalRendered + '개)', 'success');
 
             } catch (error) {
                 debugLog('❌ 홈 루틴 로드 오류: ' + error.message, 'error');
                 debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'warning');
-                debugLog('🧪 currentUser: ' + (currentUser ? currentUser.uid : 'null'), 'info');
-                debugLog('🧪 familyId: ' + (familyId || 'null'), 'info');
                 
                 showStatus('루틴 로드 실패: ' + error.message, 5000);
                 
-                const routineList = document.getElementById('routineList');
-                routineList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">⚠️</div>
-                        <div class="empty-state-title">루틴을 불러오는데 실패했습니다</div>
-                        <div class="empty-state-description">오류: ${error.message}</div>
-                    </div>
-                `;
+                if (error.code === 'permission-denied') {
+                    routineList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔒</div>
+                            <div class="empty-state-title">데이터베이스 접근 권한이 없습니다</div>
+                            <div class="empty-state-description">Firebase 설정을 확인해주세요</div>
+                        </div>
+                    `;
+                } else {
+                    routineList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div class="empty-state-title">루틴을 불러오는데 실패했습니다</div>
+                            <div class="empty-state-description">오류: ${error.message}</div>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -4289,23 +4381,104 @@
             }
         }
 
-        async function loadUserProfile() {
-            console.log('👤 사용자 프로필 로드 시작');
+        // 새 사용자 처리
+        async function handleNewUser(user) {
+            debugLog('🆕 새 사용자 처리 시작: ' + user.email, 'info');
             
             try {
+                // 임시로 기본값 설정
+                userRole = userRole || 'parent'; // 기본값은 부모
+                
+                // 사용자 프로필 생성
+                const userData = {
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0],
+                    photoURL: user.photoURL,
+                    role: userRole,
+                    authProvider: user.providerData[0]?.providerId === 'google.com' ? 'google' : 'email',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (userRole === 'parent') {
+                    const newFamilyId = generateFamilyCode();
+                    userData.familyId = newFamilyId;
+                    userData.isParent = true;
+                    familyId = newFamilyId;
+
+                    // 가족 문서 생성
+                    await db.collection('families').doc(newFamilyId).set({
+                        parentId: user.uid,
+                        parentName: userData.displayName,
+                        members: [user.uid],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        familyCode: newFamilyId
+                    });
+
+                    debugLog('👨‍👩‍👧‍👦 부모 계정 및 가족 생성: ' + newFamilyId, 'success');
+                } else {
+                    // 자녀의 경우 가족 코드가 필요하지만, 일단 임시로 처리
+                    userData.familyId = null;
+                    userData.isParent = false;
+                    debugLog('👶 자녀 계정 생성 (가족 참여 대기)', 'info');
+                }
+
+                // 사용자 문서 생성
+                await db.collection('users').doc(user.uid).set(userData);
+                
+                // 기본 루틴 생성 (부모인 경우만)
+                if (userData.familyId) {
+                    await createDefaultRoutines(user.uid, userData.familyId);
+                }
+                
+                debugLog('✅ 새 사용자 프로필 생성 완료', 'success');
+                showNotification('새 계정이 생성되었습니다! 🎉');
+                
+                // 메인 앱으로 전환
+                showMainApp();
+                
+            } catch (error) {
+                debugLog('❌ 새 사용자 처리 실패: ' + error.message, 'error');
+                showNotification('계정 생성에 실패했습니다: ' + error.message, 'error');
+                
+                // 실패해도 메인 앱으로 전환 (최소한의 기능이라도 사용할 수 있도록)
+                showMainApp();
+            }
+        }
+
+        async function loadUserProfile() {
+            debugLog('👤 사용자 프로필 로드 시작', 'info');
+            
+            if (!currentUser) {
+                debugLog('❌ currentUser가 없습니다', 'error');
+                throw new Error('사용자가 로그인되지 않았습니다');
+            }
+            
+            try {
+                debugLog('🔍 Firestore에서 사용자 문서 조회: ' + currentUser.uid, 'info');
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    userRole = userData.role;
+                    debugLog('📋 사용자 데이터 로드됨', 'info');
+                    debugLog('🔑 역할: ' + userData.role + ', 가족ID: ' + userData.familyId, 'info');
+                    
+                    userRole = userData.role || 'parent';
                     familyId = userData.familyId;
                     
                     const displayName = userData.displayName || currentUser.displayName || currentUser.email.split('@')[0];
                     const userEmailEl = document.getElementById('userEmail');
                     const userRoleEl = document.getElementById('userRole');
                     
-                    if (userEmailEl) userEmailEl.textContent = displayName;
-                    if (userRoleEl) userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
+                    if (userEmailEl) {
+                        userEmailEl.textContent = displayName;
+                        debugLog('👤 UI 업데이트: ' + displayName, 'info');
+                    }
+                    if (userRoleEl) {
+                        userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
+                    }
                     
+                    // 부모이고 가족 ID가 있으면 가족 코드 표시
                     if (userRole === 'parent' && familyId) {
                         try {
                             const familyDoc = await db.collection('families').doc(familyId).get();
@@ -4313,36 +4486,43 @@
                                 const familyData = familyDoc.data();
                                 const familyCode = familyData.familyCode || familyId;
                                 
-                                const codeElement = document.getElementById('generatedFamilyCode');
-                                const displayElement = document.getElementById('familyCodeDisplay');
-                                
-                                if (codeElement && displayElement) {
-                                    codeElement.textContent = familyCode;
-                                    displayElement.classList.remove('hidden');
-                                    displayElement.style.display = 'block';
-                                    
-                                    showNotification(`🔑 가족 코드: ${familyCode} (자녀에게 공유하세요!)`);
-                                }
+                                debugLog('👨‍👩‍👧‍👦 가족 코드: ' + familyCode, 'info');
+                                window.currentFamilyCode = familyCode;
                             }
                         } catch (familyError) {
-                            console.error('❌ 가족 정보 로드 오류:', familyError);
+                            debugLog('⚠️ 가족 정보 로드 실패: ' + familyError.message, 'warning');
                         }
                     }
                     
                     showNotification(`안녕하세요, ${displayName}님! 👋`);
+                    debugLog('✅ 프로필 로드 완료', 'success');
                 } else {
-                    showNotification('사용자 정보가 없습니다. 다시 가입해주세요.', 'warning');
-                    setTimeout(() => {
-                        auth.signOut();
-                    }, 2000);
+                    debugLog('❌ 사용자 문서가 존재하지 않음 - 새 사용자로 처리', 'warning');
+                    throw new Error('사용자 프로필이 없습니다');
                 }
             } catch (error) {
-                console.error('❌ 프로필 로드 오류:', error);
+                debugLog('❌ 프로필 로드 오류: ' + error.message + ' (코드: ' + (error.code || '없음') + ')', 'error');
+                
                 if (error.code === 'permission-denied') {
-                    showNotification('⚠️ Firebase 권한 설정을 확인해주세요.', 'error');
-                } else {
-                    showNotification('프로필 로드에 실패했습니다: ' + error.message, 'error');
+                    debugLog('🚨 권한 거부 - Firestore 보안 규칙 확인 필요', 'error');
+                    showNotification('⚠️ 데이터베이스 접근 권한이 없습니다. 잠시 후 다시 시도해주세요.', 'warning');
+                    
+                    // 권한 문제여도 기본 정보로 앱 사용 가능하도록
+                    const displayName = currentUser.displayName || currentUser.email.split('@')[0];
+                    const userEmailEl = document.getElementById('userEmail');
+                    if (userEmailEl) {
+                        userEmailEl.textContent = displayName;
+                    }
+                    
+                    // 기본값 설정
+                    userRole = 'parent';
+                    familyId = generateFamilyCode();
+                    
+                    showNotification('임시 모드로 실행됩니다. 일부 기능이 제한될 수 있습니다.', 'warning');
+                    return; // 에러를 던지지 않고 계속 진행
                 }
+                
+                throw error; // 다른 에러는 새 사용자 처리로 넘김
             }
         }
 
@@ -4355,6 +4535,10 @@
             debugLog('📄 DOM 로드 완료', 'success');
             showStatus('앱 초기화 중...', 2000);
             
+            // 디버그 모드를 자동으로 켜서 로그 확인 가능
+            debugEnabled = true;
+            debugLog('🐛 디버그 모드 자동 활성화', 'info');
+            
             updateCurrentDate();
             updateDailyQuote();
             
@@ -4363,11 +4547,15 @@
             
             setTimeout(() => {
                 if (typeof firebase !== 'undefined') {
+                    debugLog('🔥 Firebase SDK 감지됨', 'success');
                     initializeFirebase();
                 } else {
                     debugLog('❌ Firebase SDK가 로드되지 않았습니다.', 'error');
                     showStatus('Firebase 로드 실패', 3000);
-                    setTimeout(initializeFirebase, 1000);
+                    setTimeout(() => {
+                        debugLog('🔄 Firebase 초기화 재시도', 'info');
+                        initializeFirebase();
+                    }, 1000);
                 }
             }, 100);
         });
