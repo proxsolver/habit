@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>가족 루틴 트래커</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <style>
+        /* 최적화된 CSS - 중요한 스타일만 인라인으로 포함 */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-900: #111827;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #ffffff;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+            padding-bottom: 6rem;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 공통 컴포넌트 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 44px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #dc2626);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* 로딩 상태 */
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* 알림 */
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            animation: slideInRight 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.error { background: var(--error); }
+        .notification.warning { background: var(--warning); }
+
+        /* 로그인 페이지 */
+        .login-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .login-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .app-title {
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-btn {
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .role-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .role-btn.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .google-btn {
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .google-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* 메인 앱 */
+        .main-app {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem 1.5rem 3rem;
+            text-align: center;
+            position: relative;
+            border-radius: 0 0 2rem 2rem;
+        }
+
+        .user-info {
+            position: absolute;
+            right: 1.5rem;
+            top: 1.5rem;
+            text-align: right;
+            font-size: 0.875rem;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            transition: all 0.2s ease;
+            min-height: 32px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 스트릭 대시보드 */
+        .streak-dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: -2rem 1.5rem 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .streak-card {
+            background: white;
+            padding: 1.5rem 1rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .streak-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .streak-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .streak-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+        }
+
+        .streak-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* 루틴 목록 */
+        .routine-list {
+            padding: 0 1.5rem;
+        }
+
+        .routine-item {
+            background: white;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+
+        .routine-item:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .routine-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+
+        .routine-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .yes-no-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .yes-btn, .no-btn {
+            padding: 0.875rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+
+        .yes-btn {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 2px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .yes-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .yes-btn.active {
+            background: var(--success);
+            color: white;
+        }
+
+        .no-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 2px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .no-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .no-btn.active {
+            background: var(--error);
+            color: white;
+        }
+
+        /* 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--gray-200);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 0.75rem 0;
+            z-index: 9999;
+        }
+
+        .nav-item {
+            text-align: center;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            border-radius: var(--radius);
+            margin: 0 0.25rem;
+            min-height: 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+            font-style: normal;
+        }
+
+        /* 페이지 */
+        .page {
+            display: none;
+            min-height: calc(100vh - 6rem);
+            padding-bottom: 8rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 420px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: var(--gray-100);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        /* 유틸리티 */
+        .hidden { 
+            display: none !important; 
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state-description {
+            font-size: 0.875rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* 반응형 */
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+                margin: 0;
+            }
+            
+            .bottom-nav {
+                max-width: 100%;
+                left: 0;
+                transform: none;
+            }
+
+            .login-form {
+                margin: 1rem;
+                padding: 2rem 1.5rem;
+            }
+
+            .streak-dashboard {
+                margin: -1.5rem 1rem 1rem;
+            }
+
+            .routine-list {
+                padding: 0 1rem;
+            }
+
+            .notification {
+                left: 1rem;
+                right: 1rem;
+                max-width: none;
+            }
+        }
+
+        /* 접근성 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 포커스 개선 */
+        .btn:focus,
+        .nav-item:focus,
+        .role-btn:focus,
+        input:focus,
+        select:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 로그인 페이지 -->
+        <div id="loginPage" class="login-page">
+            <div class="login-form">
+                <h1 class="app-title">🌅 루틴 트래커</h1>
+                
+                <!-- 역할 선택 -->
+                <div class="role-selector">
+                    <button class="role-btn active" data-role="parent" type="button">
+                        👨‍👩‍👧‍👦 부모
+                    </button>
+                    <button class="role-btn" data-role="child" type="button">
+                        👶 자녀
+                    </button>
+                </div>
+
+                <div id="familyCodeInput" class="input-group hidden">
+                    <label for="familyCode">가족 코드</label>
+                    <input type="text" id="familyCode" placeholder="가족 코드를 입력하세요" maxlength="8">
+                </div>
+
+                <button class="btn google-btn" id="googleSignInBtn" type="button">
+                    <svg class="google-icon" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Google로 시작하기
+                </button>
+
+                <div class="divider">
+                    <span>또는</span>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+                </div>
+
+                <div class="input-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" placeholder="비밀번호 입력" autocomplete="current-password">
+                </div>
+
+                <button class="btn" id="loginBtn" type="button">로그인</button>
+                <button class="btn btn-secondary" id="registerBtn" type="button">회원가입</button>
+            </div>
+        </div>
+
+        <!-- 메인 앱 -->
+        <div id="mainApp" class="main-app">
+            <!-- 헤더 -->
+            <div class="header">
+                <div class="user-info">
+                    <div id="userEmail">사용자</div>
+                    <div id="userRole">역할</div>
+                    <button class="logout-btn" id="logoutBtn" type="button">로그아웃</button>
+                </div>
+                <h1>오늘의 루틴</h1>
+                <div id="currentDate"></div>
+            </div>
+
+            <!-- 홈 페이지 -->
+            <div id="homePage" class="page">
+                <!-- 스트릭 대시보드 -->
+                <div class="streak-dashboard">
+                    <div class="streak-card">
+                        <div class="streak-icon">🔥</div>
+                        <div class="streak-number" id="currentStreak">0</div>
+                        <div class="streak-label">연속 일수</div>
+                    </div>
+                    <div class="streak-card">
+                        <div class="streak-icon">🎯</div>
+                        <div class="streak-number" id="todayProgress">0%</div>
+                        <div class="streak-label">오늘 진행률</div>
+                    </div>
+                    <div class="streak-card">
+                        <div class="streak-icon">⭐</div>
+                        <div class="streak-number" id="weeklyScore">0</div>
+                        <div class="streak-label">주간 점수</div>
+                    </div>
+                </div>
+
+                <!-- 루틴 목록 -->
+                <div class="routine-list" id="routineList">
+                    <!-- 루틴들이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <!-- 관리 페이지 -->
+            <div id="managePage" class="page">
+                <h2 class="page-title">루틴 관리</h2>
+                <div style="padding: 0 1.5rem;">
+                    <button class="btn" id="addRoutineBtn" style="width: 100%; margin-bottom: 1.5rem;" type="button">
+                        ✨ 새 루틴 추가
+                    </button>
+                    <div id="manageRoutineList">
+                        <!-- 관리용 루틴 목록 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 통계 페이지 -->
+            <div id="statsPage" class="page">
+                <h2 class="page-title">📈 나의 통계</h2>
+                <div style="padding: 0 1.5rem;">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-title">통계 기능 준비 중</div>
+                        <div class="empty-state-description">곧 상세한 통계를 확인할 수 있습니다</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 가족 페이지 -->
+            <div id="familyPage" class="page">
+                <h2 class="page-title">👨‍👩‍👧‍👦 가족 현황</h2>
+                <div style="padding: 0 1.5rem;">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👨‍👩‍👧‍👦</div>
+                        <div class="empty-state-title">가족 기능 준비 중</div>
+                        <div class="empty-state-description">곧 가족 구성원들의 진행 상황을 확인할 수 있습니다</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 네비게이션 -->
+            <div class="bottom-nav">
+                <div class="nav-item active" data-page="home">
+                    <i>🏠</i>
+                    <span>홈</span>
+                </div>
+                <div class="nav-item" data-page="manage">
+                    <i>⚙️</i>
+                    <span>관리</span>
+                </div>
+                <div class="nav-item" data-page="stats">
+                    <i>📈</i>
+                    <span>통계</span>
+                </div>
+                <div class="nav-item" data-page="family">
+                    <i>👨‍👩‍👧‍👦</i>
+                    <span>가족</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 루틴 추가 모달 -->
+        <div id="addRoutineModal" class="modal">
+            <div class="modal-content">
+                <button class="close-btn" id="closeModalBtn" type="button">&times;</button>
+                <h3 class="modal-header">✨ 새 루틴 추가</h3>
+                
+                <div class="input-group">
+                    <label for="routineName">루틴 이름</label>
+                    <input type="text" id="routineName" placeholder="루틴 이름을 입력하세요" maxlength="50">
+                </div>
+
+                <div class="input-group">
+                    <label for="routineType">루틴 타입</label>
+                    <select id="routineType">
+                        <option value="yesno">예/아니오</option>
+                        <option value="number">숫자 입력</option>
+                        <option value="time">시간 입력</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="routineTime">시점</label>
+                    <select id="routineTime">
+                        <option value="morning">🌅 아침</option>
+                        <option value="afternoon">🌞 점심</option>
+                        <option value="evening">🌙 저녁</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="routineFreq">주기</label>
+                    <select id="routineFreq">
+                        <option value="daily">매일</option>
+                        <option value="weekday">평일</option>
+                        <option value="weekend">주말</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" id="cancelBtn" type="button">취소</button>
+                    <button class="btn" id="confirmBtn" type="button">추가</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // 모듈식 앱 구조
+        class FamilyRoutineTracker {
+            constructor() {
+                this.firebaseConfig = {
+                    apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
+                    authDomain: "habit-dc62a.firebaseapp.com",
+                    projectId: "habit-dc62a",
+                    storageBucket: "habit-dc62a.firebasestorage.app",
+                    messagingSenderId: "668374525477",
+                    appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc"
+                };
+                
+                this.state = {
+                    currentUser: null,
+                    userRole: 'parent',
+                    familyId: null,
+                    routines: [],
+                    todayCompletedRoutines: new Set(),
+                    stats: { currentStreak: 0, todayProgress: 0, weeklyScore: 0 }
+                };
+                
+                this.auth = null;
+                this.db = null;
+                this.currentPage = 'home';
+                
+                this.init();
+            }
+
+            async init() {
+                try {
+                    await this.initializeFirebase();
+                    this.setupEventListeners();
+                    this.updateUI();
+                    console.log('✅ 앱 초기화 완료');
+                } catch (error) {
+                    console.error('❌ 앱 초기화 실패:', error);
+                    this.showNotification('앱 초기화에 실패했습니다', 'error');
+                }
+            }
+
+            async initializeFirebase() {
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK가 로드되지 않았습니다');
+                }
+
+                firebase.initializeApp(this.firebaseConfig);
+                this.auth = firebase.auth();
+                this.db = firebase.firestore();
+
+                // 인증 상태 변경 감지
+                this.auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        this.state.currentUser = user;
+                        await this.loadUserProfile();
+                        this.showMainApp();
+                        await this.loadHomeData();
+                    } else {
+                        this.state.currentUser = null;
+                        this.showLoginPage();
+                    }
+                });
+
+                // 리디렉션 결과 처리
+                try {
+                    const result = await this.auth.getRedirectResult();
+                    if (result && result.user) {
+                        await this.handleGoogleSignInSuccess(result.user);
+                    }
+                } catch (error) {
+                    console.error('리디렉션 처리 오류:', error);
+                }
+            }
+
+            setupEventListeners() {
+                // 역할 선택
+                document.querySelectorAll('.role-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const role = e.target.dataset.role;
+                        this.selectRole(role);
+                    });
+                });
+
+                // Google 로그인
+                document.getElementById('googleSignInBtn').addEventListener('click', () => {
+                    this.signInWithGoogle();
+                });
+
+                // 이메일 로그인/회원가입
+                document.getElementById('loginBtn').addEventListener('click', () => {
+                    this.handleEmailAuth('login');
+                });
+                
+                document.getElementById('registerBtn').addEventListener('click', () => {
+                    this.handleEmailAuth('register');
+                });
+
+                // 로그아웃
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+
+                // 네비게이션
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        const page = e.currentTarget.dataset.page;
+                        this.showPage(page);
+                    });
+                });
+
+                // 루틴 관리
+                document.getElementById('addRoutineBtn').addEventListener('click', () => {
+                    this.openAddRoutineModal();
+                });
+
+                document.getElementById('closeModalBtn').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                document.getElementById('cancelBtn').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                document.getElementById('confirmBtn').addEventListener('click', () => {
+                    this.addRoutine();
+                });
+
+                // 모달 외부 클릭시 닫기
+                document.getElementById('addRoutineModal').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        this.closeModal();
+                    }
+                });
+
+                // Enter 키 처리
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeModal();
+                    }
+                });
+            }
+
+            updateUI() {
+                this.updateCurrentDate();
+                this.updateStats();
+            }
+
+            updateCurrentDate() {
+                const now = new Date();
+                const options = { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    weekday: 'long'
+                };
+                const dateEl = document.getElementById('currentDate');
+                if (dateEl) {
+                    dateEl.textContent = now.toLocaleDateString('ko-KR', options);
+                }
+            }
+
+            updateStats() {
+                const { currentStreak, todayProgress, weeklyScore } = this.state.stats;
+                
+                const elements = {
+                    currentStreak: document.getElementById('currentStreak'),
+                    todayProgress: document.getElementById('todayProgress'),
+                    weeklyScore: document.getElementById('weeklyScore')
+                };
+
+                if (elements.currentStreak) elements.currentStreak.textContent = currentStreak;
+                if (elements.todayProgress) elements.todayProgress.textContent = `${todayProgress}%`;
+                if (elements.weeklyScore) elements.weeklyScore.textContent = weeklyScore;
+            }
+
+            selectRole(role) {
+                this.state.userRole = role;
+                
+                document.querySelectorAll('.role-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-role="${role}"]`).classList.add('active');
+                
+                const familyCodeInput = document.getElementById('familyCodeInput');
+                if (role === 'child') {
+                    familyCodeInput.classList.remove('hidden');
+                } else {
+                    familyCodeInput.classList.add('hidden');
+                }
+            }
+
+            async signInWithGoogle() {
+                const familyCode = document.getElementById('familyCode').value.trim();
+                
+                if (this.state.userRole === 'child' && !familyCode) {
+                    this.showNotification('자녀는 가족 코드를 입력해주세요', 'error');
+                    return;
+                }
+
+                this.setButtonLoading('googleSignInBtn', true);
+
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.addScope('email');
+                    provider.addScope('profile');
+
+                    let result;
+                    try {
+                        result = await this.auth.signInWithPopup(provider);
+                    } catch (popupError) {
+                        if (popupError.code === 'auth/popup-blocked' || 
+                            popupError.code === 'auth/popup-closed-by-user') {
+                            
+                            if (familyCode) {
+                                sessionStorage.setItem('tempFamilyCode', familyCode);
+                                sessionStorage.setItem('tempUserRole', this.state.userRole);
+                            }
+                            
+                            await this.auth.signInWithRedirect(provider);
+                            return;
+                        }
+                        throw popupError;
+                    }
+
+                    if (result?.user) {
+                        await this.handleGoogleSignInSuccess(result.user, familyCode);
+                    }
+
+                } catch (error) {
+                    console.error('Google 로그인 오류:', error);
+                    this.handleAuthError(error);
+                } finally {
+                    this.setButtonLoading('googleSignInBtn', false);
+                }
+            }
+
+            async handleGoogleSignInSuccess(user, familyCode = null) {
+                try {
+                    // 복원된 정보 확인
+                    familyCode = familyCode || sessionStorage.getItem('tempFamilyCode');
+                    const tempRole = sessionStorage.getItem('tempUserRole');
+                    if (tempRole) {
+                        this.state.userRole = tempRole;
+                        sessionStorage.removeItem('tempUserRole');
+                        sessionStorage.removeItem('tempFamilyCode');
+                    }
+
+                    const userDoc = await this.db.collection('users').doc(user.uid).get();
+                    
+                    if (!userDoc.exists) {
+                        await this.createUserProfile(user, familyCode);
+                        this.showNotification('Google 계정으로 가입 완료! 🎉');
+                    } else {
+                        this.showNotification('Google 계정으로 로그인되었습니다! 👋');
+                    }
+                } catch (error) {
+                    console.error('Google 로그인 처리 오류:', error);
+                    this.showNotification('로그인 처리 중 오류가 발생했습니다', 'error');
+                }
+            }
+
+            async handleEmailAuth(type) {
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const familyCode = document.getElementById('familyCode').value.trim();
+
+                if (!email || !password) {
+                    this.showNotification('이메일과 비밀번호를 입력해주세요', 'error');
+                    return;
+                }
+
+                if (this.state.userRole === 'child' && type === 'register' && !familyCode) {
+                    this.showNotification('자녀는 가족 코드를 입력해주세요', 'error');
+                    return;
+                }
+
+                const buttonId = type === 'login' ? 'loginBtn' : 'registerBtn';
+                this.setButtonLoading(buttonId, true);
+
+                try {
+                    let userCredential;
+                    
+                    if (type === 'login') {
+                        userCredential = await this.auth.signInWithEmailAndPassword(email, password);
+                    } else {
+                        userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                        await this.createUserProfile(userCredential.user, familyCode);
+                    }
+
+                    this.showNotification(`${type === 'login' ? '로그인' : '회원가입'} 성공! ✨`);
+                    
+                } catch (error) {
+                    console.error('이메일 인증 오류:', error);
+                    this.handleAuthError(error);
+                } finally {
+                    this.setButtonLoading(buttonId, false);
+                }
+            }
+
+            async createUserProfile(user, familyCode = null) {
+                const userData = {
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0],
+                    photoURL: user.photoURL,
+                    role: this.state.userRole,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                if (this.state.userRole === 'parent') {
+                    const newFamilyId = this.generateFamilyCode();
+                    userData.familyId = newFamilyId;
+                    this.state.familyId = newFamilyId;
+
+                    // 가족 문서 생성
+                    await this.db.collection('families').doc(newFamilyId).set({
+                        parentId: user.uid,
+                        parentName: userData.displayName,
+                        members: [user.uid],
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        familyCode: newFamilyId
+                    });
+
+                } else if (familyCode) {
+                    // 자녀 계정 - 가족 참여
+                    const familyDoc = await this.db.collection('families').doc(familyCode).get();
+                    if (familyDoc.exists) {
+                        userData.familyId = familyCode;
+                        this.state.familyId = familyCode;
+
+                        await this.db.collection('families').doc(familyCode).update({
+                            members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                        });
+                    } else {
+                        throw new Error('존재하지 않는 가족 코드입니다');
+                    }
+                }
+
+                await this.db.collection('users').doc(user.uid).set(userData);
+                
+                // 기본 루틴 생성
+                if (userData.familyId) {
+                    await this.createDefaultRoutines(user.uid, userData.familyId);
+                }
+            }
+
+            async createDefaultRoutines(userId, familyId) {
+                const defaultRoutines = [
+                    { name: '🌙 취침 시간', type: 'time', time: 'evening', frequency: 'daily' },
+                    { name: '💪 운동하기', type: 'yesno', time: 'morning', frequency: 'daily' },
+                    { name: '💧 물 마시기 (잔)', type: 'number', time: 'evening', frequency: 'daily' }
+                ];
+
+                const batch = this.db.batch();
+                defaultRoutines.forEach((routine, index) => {
+                    const routineRef = this.db.collection('routines').doc();
+                    batch.set(routineRef, {
+                        ...routine,
+                        userId,
+                        familyId,
+                        order: index,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+            }
+
+            async loadUserProfile() {
+                if (!this.state.currentUser) return;
+
+                try {
+                    const userDoc = await this.db.collection('users').doc(this.state.currentUser.uid).get();
+                    
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        this.state.userRole = userData.role || 'parent';
+                        this.state.familyId = userData.familyId;
+
+                        const displayName = userData.displayName || this.state.currentUser.displayName || 
+                                           this.state.currentUser.email.split('@')[0];
+                        
+                        document.getElementById('userEmail').textContent = displayName;
+                        document.getElementById('userRole').textContent = userData.role === 'parent' ? '부모' : '자녀';
+                    }
+                } catch (error) {
+                    console.error('프로필 로드 오류:', error);
+                }
+            }
+
+            async loadHomeData() {
+                if (!this.state.currentUser || !this.state.familyId) return;
+
+                try {
+                    await this.loadRoutines();
+                    await this.calculateStats();
+                    this.updateStats();
+                } catch (error) {
+                    console.error('홈 데이터 로드 오류:', error);
+                }
+            }
+
+            async loadRoutines() {
+                if (!this.state.currentUser || !this.state.familyId) return;
+
+                try {
+                    const routinesSnapshot = await this.db.collection('routines')
+                        .where('userId', '==', this.state.currentUser.uid)
+                        .where('familyId', '==', this.state.familyId)
+                        .orderBy('order', 'asc')
+                        .get();
+
+                    this.state.routines = routinesSnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+
+                    await this.loadTodayCompletedRoutines();
+                    this.renderRoutines();
+                } catch (error) {
+                    console.error('루틴 로드 오류:', error);
+                    this.renderEmptyRoutines();
+                }
+            }
+
+            async loadTodayCompletedRoutines() {
+                const today = new Date().toISOString().split('T')[0];
+                
+                try {
+                    const logsSnapshot = await this.db.collection('routine_logs')
+                        .where('userId', '==', this.state.currentUser.uid)
+                        .where('date', '==', today)
+                        .get();
+
+                    this.state.todayCompletedRoutines.clear();
+                    logsSnapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        if (data.completed) {
+                            this.state.todayCompletedRoutines.add(data.routineId);
+                        }
+                    });
+                } catch (error) {
+                    console.error('완료된 루틴 로드 오류:', error);
+                }
+            }
+
+            renderRoutines() {
+                const routineList = document.getElementById('routineList');
+                if (!routineList) return;
+
+                routineList.innerHTML = '';
+
+                if (this.state.routines.length === 0) {
+                    this.renderEmptyRoutines();
+                    return;
+                }
+
+                // 시간대별 그룹화
+                const routinesByTime = {
+                    morning: [],
+                    afternoon: [],
+                    evening: []
+                };
+
+                this.state.routines.forEach(routine => {
+                    if (this.shouldShowRoutineToday(routine)) {
+                        routinesByTime[routine.time].push(routine);
+                    }
+                });
+
+                const timeLabels = {
+                    morning: '🌅 아침 루틴',
+                    afternoon: '🌞 점심 루틴',
+                    evening: '🌙 저녁 루틴'
+                };
+
+                Object.entries(routinesByTime).forEach(([timeSlot, routines]) => {
+                    if (routines.length === 0) return;
+
+                    // 시간대 헤더
+                    const timeHeader = document.createElement('div');
+                    timeHeader.style.cssText = 'margin: 2rem 0 1rem 0; padding: 0 0.5rem;';
+                    timeHeader.innerHTML = `<h3 style="color: var(--primary); font-weight: 800; font-size: 1.25rem; margin: 0;">${timeLabels[timeSlot]}</h3>`;
+                    routineList.appendChild(timeHeader);
+
+                    // 루틴들 렌더링
+                    routines.forEach(routine => {
+                        const routineElement = this.createRoutineElement(routine);
+                        routineList.appendChild(routineElement);
+                    });
+                });
+            }
+
+            createRoutineElement(routine) {
+                const routineDiv = document.createElement('div');
+                routineDiv.className = 'routine-item';
+                
+                const isCompleted = this.state.todayCompletedRoutines.has(routine.id);
+                if (isCompleted) {
+                    routineDiv.style.opacity = '0.7';
+                }
+
+                let controlsHTML = '';
+                
+                switch (routine.type) {
+                    case 'yesno':
+                        controlsHTML = `
+                            <div class="yes-no-btns">
+                                <button class="yes-btn ${isCompleted ? 'active' : ''}" 
+                                        data-routine-id="${routine.id}"
+                                        data-action="complete"
+                                        ${isCompleted ? 'disabled' : ''}>
+                                    ✅ 완료
+                                </button>
+                                <button class="no-btn" 
+                                        data-routine-id="${routine.id}"
+                                        data-action="skip">
+                                    ❌ 건너뛰기
+                                </button>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'number':
+                        controlsHTML = `
+                            <input type="number" class="number-input" 
+                                   data-routine-id="${routine.id}"
+                                   placeholder="숫자 입력"
+                                   ${isCompleted ? 'disabled' : ''}
+                                   style="flex: 1; text-align: center; font-weight: 600;">
+                            <button class="yes-btn ${isCompleted ? 'active' : ''}" 
+                                    data-routine-id="${routine.id}"
+                                    data-action="save-number"
+                                    ${isCompleted ? 'disabled' : ''}>
+                                저장
+                            </button>
+                        `;
+                        break;
+                        
+                    case 'time':
+                        controlsHTML = `
+                            <input type="time" class="time-input" 
+                                   data-routine-id="${routine.id}"
+                                   ${isCompleted ? 'disabled' : ''}
+                                   style="flex: 1;">
+                            <button class="yes-btn ${isCompleted ? 'active' : ''}" 
+                                    data-routine-id="${routine.id}"
+                                    data-action="save-time"
+                                    ${isCompleted ? 'disabled' : ''}>
+                                저장
+                            </button>
+                        `;
+                        break;
+                }
+
+                routineDiv.innerHTML = `
+                    <div class="routine-title">
+                        ${routine.name}
+                        ${isCompleted ? '<span style="color: var(--success); margin-left: 0.5rem;">✅</span>' : ''}
+                    </div>
+                    <div class="routine-controls">
+                        ${controlsHTML}
+                    </div>
+                `;
+
+                // 이벤트 리스너 추가
+                routineDiv.querySelectorAll('button[data-action]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const routineId = e.target.dataset.routineId;
+                        const action = e.target.dataset.action;
+                        this.handleRoutineAction(routineId, action, e.target);
+                    });
+                });
+
+                return routineDiv;
+            }
+
+            async handleRoutineAction(routineId, action, button) {
+                try {
+                    let value;
+                    
+                    switch (action) {
+                        case 'complete':
+                            value = true;
+                            break;
+                        case 'skip':
+                            value = false;
+                            break;
+                        case 'save-number':
+                            const numberInput = button.parentElement.querySelector('.number-input');
+                            value = parseInt(numberInput.value) || 0;
+                            if (value <= 0) {
+                                this.showNotification('0보다 큰 숫자를 입력해주세요', 'error');
+                                return;
+                            }
+                            break;
+                        case 'save-time':
+                            const timeInput = button.parentElement.querySelector('.time-input');
+                            value = timeInput.value;
+                            if (!value) {
+                                this.showNotification('시간을 선택해주세요', 'error');
+                                return;
+                            }
+                            break;
+                    }
+
+                    await this.updateRoutine(routineId, value);
+                    
+                } catch (error) {
+                    console.error('루틴 액션 처리 오류:', error);
+                    this.showNotification('처리 중 오류가 발생했습니다', 'error');
+                }
+            }
+
+            async updateRoutine(routineId, value) {
+                const today = new Date().toISOString().split('T')[0];
+                const logData = {
+                    routineId,
+                    userId: this.state.currentUser.uid,
+                    familyId: this.state.familyId,
+                    value,
+                    completed: value !== false,
+                    date: today,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    await this.db.collection('routine_logs')
+                        .doc(`${routineId}_${this.state.currentUser.uid}_${today}`)
+                        .set(logData);
+
+                    if (value !== false) {
+                        this.showNotification('✅ 루틴이 완료되었습니다!');
+                        this.state.todayCompletedRoutines.add(routineId);
+                    } else {
+                        this.showNotification('📝 루틴을 건너뛰었습니다');
+                        this.state.todayCompletedRoutines.delete(routineId);
+                    }
+
+                    await this.calculateStats();
+                    this.renderRoutines();
+                    this.updateStats();
+
+                } catch (error) {
+                    console.error('루틴 업데이트 오류:', error);
+                    this.showNotification('루틴 업데이트에 실패했습니다', 'error');
+                }
+            }
+
+            shouldShowRoutineToday(routine) {
+                const today = new Date();
+                const dayOfWeek = today.getDay(); // 0: 일요일, 6: 토요일
+                
+                switch (routine.frequency) {
+                    case 'daily':
+                        return true;
+                    case 'weekday':
+                        return dayOfWeek >= 1 && dayOfWeek <= 5;
+                    case 'weekend':
+                        return dayOfWeek === 0 || dayOfWeek === 6;
+                    default:
+                        return true;
+                }
+            }
+
+            async calculateStats() {
+                if (!this.state.currentUser || !this.state.familyId) return;
+
+                try {
+                    // 오늘 진행률 계산
+                    const todayRoutines = this.state.routines.filter(routine => 
+                        this.shouldShowRoutineToday(routine)
+                    );
+                    
+                    const completedCount = this.state.todayCompletedRoutines.size;
+                    const todayProgress = todayRoutines.length > 0 ? 
+                        Math.round((completedCount / todayRoutines.length) * 100) : 100;
+
+                    this.state.stats = {
+                        currentStreak: await this.calculateCurrentStreak(),
+                        todayProgress,
+                        weeklyScore: await this.calculateWeeklyScore()
+                    };
+
+                } catch (error) {
+                    console.error('통계 계산 오류:', error);
+                }
+            }
+
+            async calculateCurrentStreak() {
+                // 간단한 스트릭 계산 로직
+                try {
+                    const today = new Date();
+                    let streak = 0;
+                    
+                    for (let i = 0; i < 30; i++) {
+                        const checkDate = new Date(today);
+                        checkDate.setDate(today.getDate() - i);
+                        const dateStr = checkDate.toISOString().split('T')[0];
+                        
+                        const dayProgress = await this.getDayCompletionRate(dateStr);
+                        if (dayProgress >= 80) {
+                            streak++;
+                        } else if (i === 0) {
+                            break; // 오늘 미완료면 스트릭 0
+                        } else {
+                            break; // 과거 날짜 미완료면 스트릭 중단
+                        }
+                    }
+                    
+                    return streak;
+                } catch (error) {
+                    console.error('스트릭 계산 오류:', error);
+                    return 0;
+                }
+            }
+
+            async getDayCompletionRate(dateStr) {
+                try {
+                    const logsSnapshot = await this.db.collection('routine_logs')
+                        .where('userId', '==', this.state.currentUser.uid)
+                        .where('date', '==', dateStr)
+                        .get();
+
+                    let total = 0, completed = 0;
+                    logsSnapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        total++;
+                        if (data.completed) completed++;
+                    });
+
+                    return total > 0 ? Math.round((completed / total) * 100) : 0;
+                } catch (error) {
+                    return 0;
+                }
+            }
+
+            async calculateWeeklyScore() {
+                // 이번 주 평균 완료율 계산
+                const today = new Date();
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                
+                let totalScore = 0;
+                let days = 0;
+                
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(startOfWeek);
+                    checkDate.setDate(startOfWeek.getDate() + i);
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    
+                    const dayScore = await this.getDayCompletionRate(dateStr);
+                    if (dayScore > 0) {
+                        totalScore += dayScore;
+                        days++;
+                    }
+                }
+                
+                return days > 0 ? Math.round(totalScore / days) : 0;
+            }
+
+            renderEmptyRoutines() {
+                const routineList = document.getElementById('routineList');
+                if (!routineList) return;
+
+                routineList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-title">아직 루틴이 없습니다</div>
+                        <div class="empty-state-description">관리 탭에서 새로운 루틴을 추가해보세요!</div>
+                    </div>
+                `;
+            }
+
+            showPage(page) {
+                if (this.currentPage === page) return;
+                
+                this.currentPage = page;
+
+                // 모든 페이지 숨기기
+                document.querySelectorAll('.page').forEach(p => {
+                    p.style.display = 'none';
+                });
+
+                // 모든 네비게이션 항목 비활성화
+                document.querySelectorAll('.nav-item').forEach(nav => {
+                    nav.classList.remove('active');
+                });
+
+                // 선택된 페이지 및 네비게이션 활성화
+                const pageElement = document.getElementById(`${page}Page`);
+                const navElement = document.querySelector(`[data-page="${page}"]`);
+
+                if (pageElement) {
+                    pageElement.style.display = 'block';
+                }
+                
+                if (navElement) {
+                    navElement.classList.add('active');
+                }
+
+                // 페이지별 데이터 로드
+                switch (page) {
+                    case 'home':
+                        this.loadHomeData();
+                        break;
+                    case 'manage':
+                        this.loadManageData();
+                        break;
+                }
+            }
+
+            async loadManageData() {
+                const manageList = document.getElementById('manageRoutineList');
+                if (!manageList) return;
+
+                manageList.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+                try {
+                    await this.loadRoutines();
+                    
+                    manageList.innerHTML = '';
+                    
+                    if (this.state.routines.length === 0) {
+                        manageList.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <div class="empty-state-title">아직 추가된 루틴이 없습니다</div>
+                                <div class="empty-state-description">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    this.state.routines.forEach(routine => {
+                        const routineEl = this.createManageRoutineElement(routine);
+                        manageList.appendChild(routineEl);
+                    });
+
+                } catch (error) {
+                    console.error('관리 데이터 로드 오류:', error);
+                    manageList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div class="empty-state-title">루틴 목록을 불러오는데 실패했습니다</div>
+                        </div>
+                    `;
+                }
+            }
+
+            createManageRoutineElement(routine) {
+                const routineEl = document.createElement('div');
+                routineEl.className = 'card';
+                
+                const typeMap = {
+                    'yesno': '예/아니오',
+                    'number': '숫자 입력',
+                    'time': '시간 입력'
+                };
+                
+                const timeMap = {
+                    'morning': '🌅 아침',
+                    'afternoon': '🌞 점심',
+                    'evening': '🌙 저녁'
+                };
+                
+                const freqMap = {
+                    'daily': '매일',
+                    'weekday': '평일',
+                    'weekend': '주말'
+                };
+                
+                routineEl.innerHTML = `
+                    <div style="font-weight: 700; font-size: 1.125rem; margin-bottom: 0.75rem;">
+                        ${routine.name}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;">
+                            ${typeMap[routine.type]}
+                        </span>
+                        <span style="background: rgba(236, 72, 153, 0.1); color: var(--secondary); padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;">
+                            ${timeMap[routine.time]}
+                        </span>
+                        <span style="background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600;">
+                            ${freqMap[routine.frequency]}
+                        </span>
+                    </div>
+                    <button class="btn btn-danger" style="width: 100%; font-size: 0.875rem;" data-routine-id="${routine.id}">
+                        🗑️ 삭제
+                    </button>
+                `;
+                
+                // 삭제 버튼 이벤트
+                const deleteBtn = routineEl.querySelector('[data-routine-id]');
+                deleteBtn.addEventListener('click', () => {
+                    this.deleteRoutine(routine.id, routine.name);
+                });
+                
+                return routineEl;
+            }
+
+            async deleteRoutine(routineId, routineName) {
+                if (!confirm(`"${routineName}" 루틴을 정말 삭제하시겠습니까?`)) {
+                    return;
+                }
+
+                try {
+                    await this.db.collection('routines').doc(routineId).delete();
+                    
+                    // 관련 로그들도 삭제
+                    const logsSnapshot = await this.db.collection('routine_logs')
+                        .where('routineId', '==', routineId)
+                        .get();
+                    
+                    const batch = this.db.batch();
+                    logsSnapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    
+                    this.showNotification(`루틴 "${routineName}"이 삭제되었습니다`);
+                    this.loadManageData();
+                    
+                } catch (error) {
+                    console.error('루틴 삭제 오류:', error);
+                    this.showNotification('루틴 삭제에 실패했습니다', 'error');
+                }
+            }
+
+            openAddRoutineModal() {
+                const modal = document.getElementById('addRoutineModal');
+                modal.style.display = 'block';
+                
+                // 폼 초기화
+                document.getElementById('routineName').value = '';
+                document.getElementById('routineType').value = 'yesno';
+                document.getElementById('routineTime').value = 'morning';
+                document.getElementById('routineFreq').value = 'daily';
+                
+                // 포커스 설정
+                setTimeout(() => {
+                    document.getElementById('routineName').focus();
+                }, 100);
+            }
+
+            closeModal() {
+                const modal = document.getElementById('addRoutineModal');
+                modal.style.display = 'none';
+            }
+
+            async addRoutine() {
+                const name = document.getElementById('routineName').value.trim();
+                const type = document.getElementById('routineType').value;
+                const time = document.getElementById('routineTime').value;
+                const frequency = document.getElementById('routineFreq').value;
+
+                if (!name) {
+                    this.showNotification('루틴 이름을 입력해주세요', 'error');
+                    return;
+                }
+
+                if (!this.state.currentUser || !this.state.familyId) {
+                    this.showNotification('로그인이 필요합니다', 'error');
+                    return;
+                }
+
+                try {
+                    const routineData = {
+                        name,
+                        type,
+                        time,
+                        frequency,
+                        order: Date.now(),
+                        userId: this.state.currentUser.uid,
+                        familyId: this.state.familyId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    await this.db.collection('routines').add(routineData);
+                    
+                    this.showNotification(`✨ 새 루틴 "${name}"이 추가되었습니다!`);
+                    this.closeModal();
+                    
+                    if (this.currentPage === 'manage') {
+                        await this.loadManageData();
+                    }
+                    if (this.currentPage === 'home') {
+                        await this.loadHomeData();
+                    }
+
+                } catch (error) {
+                    console.error('루틴 추가 오류:', error);
+                    this.showNotification('루틴 추가에 실패했습니다', 'error');
+                }
+            }
+
+            async logout() {
+                try {
+                    await this.auth.signOut();
+                    this.showNotification('👋 로그아웃되었습니다');
+                } catch (error) {
+                    console.error('로그아웃 오류:', error);
+                    this.showNotification('로그아웃에 실패했습니다', 'error');
+                }
+            }
+
+            showLoginPage() {
+                document.getElementById('loginPage').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+            }
+
+            showMainApp() {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                this.showPage('home');
+            }
+
+            handleAuthError(error) {
+                const errorMessages = {
+                    'auth/user-not-found': '등록되지 않은 이메일입니다',
+                    'auth/wrong-password': '비밀번호가 올바르지 않습니다',
+                    'auth/email-already-in-use': '이미 사용 중인 이메일입니다',
+                    'auth/weak-password': '비밀번호는 6자 이상이어야 합니다',
+                    'auth/invalid-email': '올바르지 않은 이메일 형식입니다',
+                    'auth/too-many-requests': '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요',
+                    'auth/network-request-failed': '네트워크 연결을 확인해주세요',
+                    'auth/popup-closed-by-user': '로그인이 취소되었습니다',
+                    'auth/popup-blocked': '팝업이 차단되었습니다. 팝업을 허용해주세요'
+                };
+
+                const message = errorMessages[error.code] || error.message || '알 수 없는 오류가 발생했습니다';
+                this.showNotification(message, 'error');
+            }
+
+            setButtonLoading(buttonId, loading) {
+                const button = document.getElementById(buttonId);
+                if (!button) return;
+
+                if (loading) {
+                    button.disabled = true;
+                    const originalText = button.textContent;
+                    button.dataset.originalText = originalText;
+                    button.innerHTML = '<div class="spinner"></div> 처리 중...';
+                } else {
+                    button.disabled = false;
+                    button.textContent = button.dataset.originalText || '처리';
+                }
+            }
+
+            showNotification(message, type = 'success') {
+                // 기존 알림 제거
+                const existingNotification = document.querySelector('.notification');
+                if (existingNotification) {
+                    existingNotification.remove();
+                }
+
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+
+                // 4초 후 자동 제거
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.style.opacity = '0';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.remove();
+                            }
+                        }, 300);
+                    }
+                }, 4000);
+            }
+
+            generateFamilyCode() {
+                return Math.random().toString(36).substr(2, 8).toUpperCase();
+            }
+        }
+
+        // 앱 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new FamilyRoutineTracker();
+        });
+
+        // 서비스 워커 등록 (PWA 지원)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker 등록 성공:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Service Worker 등록 실패:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
