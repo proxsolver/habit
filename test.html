@@ -1802,10 +1802,384 @@
             animation: fadeInUp 0.3s ease-out;
         }
 
-        /* 유틸리티 클래스 */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
+        /* 숫자 휠 피커 스타일 */
+        .number-wheel-container {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .number-wheel-container:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .number-wheel {
+            width: 3rem;
+            height: 4rem;
+            overflow: hidden;
+            position: relative;
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .number-wheel-scroll {
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .number-wheel-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .number-option {
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            font-weight: 600;
+            scroll-snap-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--gray-500);
+        }
+
+        .number-option.active {
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.1);
+        }
+
+        .number-option:hover {
+            background: var(--gray-100);
+            color: var(--text-primary);
+        }
+
+        .wheel-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 0.25rem;
+            font-weight: 600;
+        }
+
+        .wheel-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .number-display {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0 1rem;
+            min-width: 3rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 완료된 루틴 스타일 */
+        .routine-item.completed {
+            opacity: 0.7;
+            order: 1;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+        }
+
+        .routine-item.completed .routine-title {
+            color: var(--gray-500);
+            text-decoration: line-through;
+        }
+
+        .routine-item:not(.completed) {
+            order: 0;
+        }
+
+        /* 가족 구성원 상세 정보 모달 */
+        .member-detail-modal {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .member-detail-content {
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .member-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .member-avatar {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 800;
+        }
+
+        .member-detail-info {
+            flex: 1;
+        }
+
+        .member-detail-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .member-detail-role {
+            font-size: 0.875rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .member-progress-ring {
+            width: 4rem;
+            height: 4rem;
+            position: relative;
+        }
+
+        .progress-ring {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: var(--gray-200);
+            stroke-width: 4;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.5s ease;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.875rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .member-routines-today {
+            margin-top: 1.5rem;
+        }
+
+        .member-routines-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .routine-result-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .routine-result-item:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .routine-result-item.completed {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .routine-result-item.skipped {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .routine-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .routine-result-name {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .routine-result-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .routine-result-status.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .routine-result-status.skipped {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .routine-result-status.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .routine-result-value {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .routine-result-time {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 0.5rem;
+        }
+
+        .member-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .member-stat {
+            text-align: center;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+        }
+
+        .member-stat-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .member-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* 가족 구성원 카드 개선 */
+        .member-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .member-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .member-card:hover::before {
+            left: 100%;
+        }
+
+        .member-card-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .member-detail-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .member-detail-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .member-detail-btn:active {
+            transform: scale(0.98);
+        }
+
+        .member-progress-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-percentage {
+            font-size: 1.125rem;
+            font-weight: 800;
+            color: var(--primary);
         }
 
         .hidden {
@@ -2334,6 +2708,55 @@
             </div>
         </div>
 
+        <!-- 가족 구성원 상세 모달 -->
+        <div id="memberDetailModal" class="modal member-detail-modal">
+            <div class="modal-content member-detail-content">
+                <button class="close-btn" id="closeMemberDetailBtn">&times;</button>
+                
+                <div class="member-detail-header">
+                    <div class="member-avatar" id="memberDetailAvatar">👤</div>
+                    <div class="member-detail-info">
+                        <div class="member-detail-name" id="memberDetailName">구성원</div>
+                        <div class="member-detail-role" id="memberDetailRole">역할</div>
+                    </div>
+                    <div class="member-progress-ring">
+                        <svg class="progress-ring" width="64" height="64">
+                            <circle class="progress-ring-bg" cx="32" cy="32" r="28"></circle>
+                            <circle class="progress-ring-fill" cx="32" cy="32" r="28" 
+                                    id="memberProgressRing" 
+                                    stroke-dasharray="0 176"
+                                    stroke-dashoffset="0"></circle>
+                        </svg>
+                        <div class="progress-ring-text" id="memberProgressText">0%</div>
+                    </div>
+                </div>
+
+                <div class="member-stats">
+                    <div class="member-stat">
+                        <div class="member-stat-number" id="memberTotalRoutines">0</div>
+                        <div class="member-stat-label">총 루틴</div>
+                    </div>
+                    <div class="member-stat">
+                        <div class="member-stat-number" id="memberCompletedRoutines">0</div>
+                        <div class="member-stat-label">완료됨</div>
+                    </div>
+                    <div class="member-stat">
+                        <div class="member-stat-number" id="memberPendingRoutines">0</div>
+                        <div class="member-stat-label">대기중</div>
+                    </div>
+                </div>
+
+                <div class="member-routines-today">
+                    <div class="member-routines-title">
+                        📅 오늘의 루틴 현황
+                    </div>
+                    <div id="memberRoutinesList">
+                        <!-- 구성원의 오늘 루틴 결과들이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 디버그 콘솔 (아이패드용) -->
         <div id="debugConsole" class="debug-console hidden">
             <div class="debug-header">
@@ -2499,7 +2922,135 @@
             }, { capture: useCapture });
         }
 
-        // 터치 지원 초기화
+        // 숫자 휠 피커 생성
+        function createNumberWheel(maxValue = 999, initialValue = 0) {
+            const container = document.createElement('div');
+            container.className = 'number-wheel-container';
+            
+            const hundreds = Math.floor(initialValue / 100);
+            const tens = Math.floor((initialValue % 100) / 10);
+            const ones = initialValue % 10;
+            
+            const maxHundreds = Math.floor(maxValue / 100);
+            
+            // 숫자 표시
+            const display = document.createElement('div');
+            display.className = 'number-display';
+            display.textContent = initialValue.toString().padStart(3, '0');
+            
+            // 100의 자리 휠
+            const hundredsWheel = createSingleWheel(0, maxHundreds, hundreds, '백');
+            const tensWheel = createSingleWheel(0, 9, tens, '십');
+            const onesWheel = createSingleWheel(0, 9, ones, '일');
+            
+            // 값 변경 이벤트
+            function updateValue() {
+                const h = parseInt(hundredsWheel.querySelector('.number-wheel-scroll').dataset.value || '0');
+                const t = parseInt(tensWheel.querySelector('.number-wheel-scroll').dataset.value || '0');
+                const o = parseInt(onesWheel.querySelector('.number-wheel-scroll').dataset.value || '0');
+                const total = h * 100 + t * 10 + o;
+                
+                display.textContent = total.toString().padStart(3, '0');
+                container.dataset.value = total;
+                
+                // 커스텀 이벤트 발생
+                container.dispatchEvent(new CustomEvent('valuechange', { detail: { value: total } }));
+            }
+            
+            [hundredsWheel, tensWheel, onesWheel].forEach(wheel => {
+                const scroll = wheel.querySelector('.number-wheel-scroll');
+                scroll.addEventListener('scroll', () => {
+                    debounce(() => {
+                        const scrollTop = scroll.scrollTop;
+                        const itemHeight = 32; // 2rem
+                        const index = Math.round(scrollTop / itemHeight);
+                        const maxIndex = scroll.children.length - 1;
+                        const clampedIndex = Math.max(0, Math.min(index, maxIndex));
+                        
+                        // 정확한 위치로 스냅
+                        scroll.scrollTop = clampedIndex * itemHeight;
+                        scroll.dataset.value = clampedIndex;
+                        
+                        // 활성 상태 업데이트
+                        Array.from(scroll.children).forEach((option, i) => {
+                            option.classList.toggle('active', i === clampedIndex);
+                        });
+                        
+                        updateValue();
+                    }, 100)();
+                });
+            });
+            
+            container.appendChild(hundredsWheel);
+            container.appendChild(display);
+            container.appendChild(tensWheel);
+            container.appendChild(onesWheel);
+            
+            // 초기값 설정
+            container.dataset.value = initialValue;
+            
+            // getValue 메서드 추가
+            container.getValue = () => parseInt(container.dataset.value || '0');
+            
+            return container;
+        }
+        
+        function createSingleWheel(min, max, initialValue, label) {
+            const wheelGroup = document.createElement('div');
+            wheelGroup.className = 'wheel-group';
+            
+            const wheel = document.createElement('div');
+            wheel.className = 'number-wheel';
+            
+            const scroll = document.createElement('div');
+            scroll.className = 'number-wheel-scroll';
+            scroll.dataset.value = initialValue;
+            
+            // 옵션들 생성
+            for (let i = min; i <= max; i++) {
+                const option = document.createElement('div');
+                option.className = 'number-option';
+                if (i === initialValue) option.classList.add('active');
+                option.textContent = i;
+                
+                // 터치 이벤트 추가
+                addTouchEventListener(option, function() {
+                    const index = Array.from(scroll.children).indexOf(this);
+                    scroll.scrollTop = index * 32;
+                });
+                
+                scroll.appendChild(option);
+            }
+            
+            // 초기 스크롤 위치 설정
+            setTimeout(() => {
+                scroll.scrollTop = initialValue * 32;
+            }, 100);
+            
+            wheel.appendChild(scroll);
+            
+            const labelEl = document.createElement('div');
+            labelEl.className = 'wheel-label';
+            labelEl.textContent = label;
+            
+            wheelGroup.appendChild(wheel);
+            wheelGroup.appendChild(labelEl);
+            
+            return wheelGroup;
+        }
+        
+        // 디바운스 함수
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
         function initializeTouchEvents() {
             debugLog('📱 터치 이벤트 초기화 시작', 'info');
 
@@ -2581,11 +3132,13 @@
             const cancelModalBtn = document.getElementById('cancelModalBtn');
             const confirmAddRoutineBtn = document.getElementById('confirmAddRoutineBtn');
             const closeAchievementBtn = document.getElementById('closeAchievementBtn');
+            const closeMemberDetailBtn = document.getElementById('closeMemberDetailBtn');
 
             if (closeModalBtn) addTouchEventListener(closeModalBtn, closeModal);
             if (cancelModalBtn) addTouchEventListener(cancelModalBtn, closeModal);
             if (confirmAddRoutineBtn) addTouchEventListener(confirmAddRoutineBtn, addRoutine);
             if (closeAchievementBtn) addTouchEventListener(closeAchievementBtn, closeAchievementModal);
+            if (closeMemberDetailBtn) addTouchEventListener(closeMemberDetailBtn, closeMemberDetail);
 
             // 가족 코드 복사 버튼
             const copyFamilyCodeBtn = document.getElementById('copyFamilyCodeBtn');
@@ -3047,6 +3600,11 @@
             debugLog('📄 페이지 전환: ' + page, 'info');
             showStatus('페이지 로드 중...', 1500);
             
+            // 가족 페이지에서 벗어날 때 자동 새로고침 중단
+            if (page !== 'family') {
+                stopFamilyPageAutoRefresh();
+            }
+            
             // 모든 페이지 숨기기
             document.querySelectorAll('.page').forEach(p => {
                 p.style.display = 'none';
@@ -3471,8 +4029,23 @@
                         `;
                         routineList.appendChild(timeHeader);
 
+                        // 완료되지 않은 루틴을 먼저, 완료된 루틴을 나중에 정렬
+                        const sortedRoutines = routines.sort((a, b) => {
+                            const aCompleted = todayCompletedRoutines.has(a.id);
+                            const bCompleted = todayCompletedRoutines.has(b.id);
+                            
+                            // 완료되지 않은 것을 위로
+                            if (aCompleted && !bCompleted) return 1;
+                            if (!aCompleted && bCompleted) return -1;
+                            
+                            // 같은 상태면 order로 정렬
+                            const orderA = a.order || (a.createdAt ? a.createdAt.toMillis() : 0);
+                            const orderB = b.order || (b.createdAt ? b.createdAt.toMillis() : 0);
+                            return orderA - orderB;
+                        });
+
                         // 해당 시간대의 루틴들 추가
-                        routines.forEach((routine, index) => {
+                        sortedRoutines.forEach((routine, index) => {
                             const routineElement = createRoutineElement(routine, index);
                             routineList.appendChild(routineElement);
                             totalRendered++;
@@ -3567,6 +4140,11 @@
             
             const isCompleted = todayCompletedRoutines.has(routine.id);
             
+            // 완료된 루틴은 completed 클래스 추가
+            if (isCompleted) {
+                routineDiv.classList.add('completed');
+            }
+            
             let controlsHTML = '';
             
             switch (routine.type) {
@@ -3590,10 +4168,9 @@
                     
                 case 'number':
                     controlsHTML = `
-                        <input type="number" class="number-input" 
-                               placeholder="숫자 입력" min="0" 
-                               data-routine-id="${routine.id}"
-                               ${isCompleted ? 'disabled' : ''}>
+                        <div class="number-routine-controls" data-routine-id="${routine.id}">
+                            <!-- 숫자 휠 피커가 여기에 동적으로 삽입됩니다 -->
+                        </div>
                         <button class="yes-btn ${isCompleted ? 'active' : ''}" 
                                 data-routine-id="${routine.id}"
                                 data-action="save-number"
@@ -3628,6 +4205,15 @@
                 </div>
             `;
 
+            // 숫자 루틴인 경우 휠 피커 추가
+            if (routine.type === 'number') {
+                const numberControls = routineDiv.querySelector('.number-routine-controls');
+                if (numberControls && !isCompleted) {
+                    const numberWheel = createNumberWheel(999, 0);
+                    numberControls.appendChild(numberWheel);
+                }
+            }
+
             // 루틴 컨트롤 버튼들에 터치 이벤트 추가
             routineDiv.querySelectorAll('button').forEach(button => {
                 addTouchEventListener(button, function(e) {
@@ -3654,17 +4240,24 @@
             return routineDiv;
         }
 
-        // 숫자 루틴 업데이트
-        async function updateRoutineNumber(routineId, button) {  
-            const input = button.parentElement.querySelector('.number-input');
-            const value = input.value;
+        // 숫자 루틴 업데이트 (휠 피커 사용)
+        async function updateRoutineNumber(routineId, button) {
+            const numberControls = button.parentElement.querySelector('.number-routine-controls');
+            const numberWheel = numberControls?.querySelector('.number-wheel-container');
             
-            if (!value || value === '') {
-                showNotification('숫자를 입력해주세요.', 'error');
+            if (!numberWheel) {
+                showNotification('숫자 선택기를 찾을 수 없습니다.', 'error');
                 return;
             }
             
-            await updateRoutine(routineId, parseInt(value));
+            const value = numberWheel.getValue();
+            
+            if (value === 0) {
+                showNotification('0보다 큰 숫자를 선택해주세요.', 'error');
+                return;
+            }
+            
+            await updateRoutine(routineId, value);
         }
 
         // 시간 루틴 업데이트
@@ -3895,10 +4488,10 @@
 
         // 가족 페이지 정보 로드
         async function loadFamilyPageInfo() {
-            console.log('👨‍👩‍👧‍👦 가족 페이지 정보 로드');
+            debugLog('👨‍👩‍👧‍👦 가족 페이지 정보 로드', 'info');
             
             if (!currentUser || !familyId) {
-                console.log('❌ 사용자 또는 가족 정보가 없습니다');
+                debugLog('❌ 사용자 또는 가족 정보가 없습니다', 'error');
                 return;
             }
 
@@ -3937,40 +4530,162 @@
                 
                 await loadFamilyMembers();
                 
+                // 가족 페이지가 활성화된 상태에서는 30초마다 정보 업데이트
+                startFamilyPageAutoRefresh();
+                
             } catch (error) {
-                console.error('❌ 가족 페이지 정보 로드 오류:', error);
+                debugLog('❌ 가족 페이지 정보 로드 오류: ' + error.message, 'error');
             }
         }
 
-        // 가족 구성원 로드
+        // 가족 페이지 자동 새로고침
+        let familyPageRefreshInterval = null;
+        
+        function startFamilyPageAutoRefresh() {
+            // 기존 인터벌 제거
+            if (familyPageRefreshInterval) {
+                clearInterval(familyPageRefreshInterval);
+            }
+            
+            // 30초마다 가족 구성원 정보 업데이트
+            familyPageRefreshInterval = setInterval(async () => {
+                const familyPage = document.getElementById('familyPage');
+                if (familyPage && familyPage.style.display === 'block') {
+                    debugLog('🔄 가족 정보 자동 새로고침', 'info');
+                    await loadFamilyMembers();
+                }
+            }, 30000); // 30초마다
+        }
+        
+        function stopFamilyPageAutoRefresh() {
+            if (familyPageRefreshInterval) {
+                clearInterval(familyPageRefreshInterval);
+                familyPageRefreshInterval = null;
+            }
+        }
+
+        // 가족 구성원 로드 (개선된 버전)
         async function loadFamilyMembers() {
             if (!familyId) return;
 
             try {
+                debugLog('👨‍👩‍👧‍👦 가족 구성원 로드 시작', 'info');
+                
                 const familyDoc = await db.collection('families').doc(familyId).get();
                 if (!familyDoc.exists) return;
 
                 const familyData = familyDoc.data();
                 const memberIds = familyData.members || [];
+                
+                debugLog('👥 구성원 ID 목록: ' + memberIds.join(', '), 'info');
 
                 const familyMembersContainer = document.getElementById('familyMembers');
-                familyMembersContainer.innerHTML = '';
+                familyMembersContainer.innerHTML = '<div class="loading-message">가족 구성원 정보를 불러오는 중...</div>';
+
+                const memberCards = [];
 
                 for (const memberId of memberIds) {
-                    const memberDoc = await db.collection('users').doc(memberId).get();
-                    if (memberDoc.exists) {
-                        const memberData = memberDoc.data();
-                        const memberCard = createMemberCard(memberData, memberId);
-                        familyMembersContainer.appendChild(memberCard);
+                    try {
+                        const memberDoc = await db.collection('users').doc(memberId).get();
+                        if (memberDoc.exists) {
+                            const memberData = memberDoc.data();
+                            debugLog('👤 구성원 로드: ' + memberData.email, 'info');
+                            
+                            // 해당 구성원의 오늘 진행율 계산
+                            const todayProgress = await calculateMemberTodayProgress(memberId);
+                            
+                            const memberCard = await createMemberCard(memberData, memberId, todayProgress);
+                            memberCards.push(memberCard);
+                        }
+                    } catch (memberError) {
+                        debugLog('❌ 구성원 로드 오류 (' + memberId + '): ' + memberError.message, 'error');
                     }
                 }
+
+                familyMembersContainer.innerHTML = '';
+                memberCards.forEach(card => {
+                    familyMembersContainer.appendChild(card);
+                });
+
+                debugLog('✅ 가족 구성원 로드 완료 (' + memberCards.length + '명)', 'success');
+                
             } catch (error) {
-                console.error('❌ 가족 구성원 로드 오류:', error);
+                debugLog('❌ 가족 구성원 로드 오류: ' + error.message, 'error');
+                const familyMembersContainer = document.getElementById('familyMembers');
+                familyMembersContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <div class="empty-state-title">가족 구성원 정보를 불러올 수 없습니다</div>
+                        <div class="empty-state-description">${error.message}</div>
+                    </div>
+                `;
             }
         }
 
-        // 가족 구성원 카드 생성
-        function createMemberCard(memberData, memberId) {
+        // 가족 구성원의 오늘 진행율 계산
+        async function calculateMemberTodayProgress(memberId) {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // 해당 구성원의 루틴들 가져오기
+                const routinesSnapshot = await db.collection('routines')
+                    .where('userId', '==', memberId)
+                    .where('familyId', '==', familyId)
+                    .get();
+
+                let totalTodayRoutines = 0;
+                const todayRoutines = [];
+                
+                routinesSnapshot.docs.forEach(doc => {
+                    const routine = { id: doc.id, ...doc.data() };
+                    if (shouldShowRoutineToday(routine)) {
+                        totalTodayRoutines++;
+                        todayRoutines.push(routine);
+                    }
+                });
+
+                if (totalTodayRoutines === 0) {
+                    return { percentage: 100, completed: 0, total: 0, routines: [] };
+                }
+
+                // 오늘 완료된 루틴들 확인
+                const logsSnapshot = await db.collection('routine_logs')
+                    .where('userId', '==', memberId)
+                    .where('date', '==', today)
+                    .get();
+
+                const completedRoutines = new Set();
+                const routineResults = {};
+                
+                logsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    routineResults[data.routineId] = data;
+                    if (data.completed) {
+                        completedRoutines.add(data.routineId);
+                    }
+                });
+
+                const completedCount = completedRoutines.size;
+                const percentage = Math.round((completedCount / totalTodayRoutines) * 100);
+
+                return {
+                    percentage,
+                    completed: completedCount,
+                    total: totalTodayRoutines,
+                    routines: todayRoutines.map(routine => ({
+                        ...routine,
+                        result: routineResults[routine.id] || null
+                    }))
+                };
+
+            } catch (error) {
+                debugLog('❌ 구성원 진행율 계산 오류: ' + error.message, 'error');
+                return { percentage: 0, completed: 0, total: 0, routines: [] };
+            }
+        }
+
+        // 가족 구성원 카드 생성 (개선된 버전)
+        async function createMemberCard(memberData, memberId, progress) {
             const card = document.createElement('div');
             card.className = 'member-card';
             
@@ -3978,6 +4693,12 @@
             const role = memberData.role === 'parent' ? '부모' : '자녀';
             const isOnline = memberId === currentUser?.uid;
             
+            // 진행률에 따른 색상 결정
+            let progressColor = 'var(--error)';
+            if (progress.percentage >= 80) progressColor = 'var(--success)';
+            else if (progress.percentage >= 60) progressColor = 'var(--warning)';
+            else if (progress.percentage >= 40) progressColor = 'var(--primary)';
+
             card.innerHTML = `
                 <div class="member-header">
                     <div class="member-info">
@@ -3988,14 +4709,153 @@
                         ${isOnline ? 'ONLINE' : 'OFFLINE'}
                     </div>
                 </div>
+                
+                <div class="member-progress-summary">
+                    <div class="progress-text">오늘의 진행 상황</div>
+                    <div class="progress-percentage" style="color: ${progressColor}">
+                        ${progress.percentage}%
+                    </div>
+                </div>
+                
                 <div class="routine-progress">
-                    <div class="routine-badge completed">운동 완료</div>
-                    <div class="routine-badge pending">물마시기 대기</div>
-                    <div class="routine-badge completed">수면시간 기록</div>
+                    <div class="routine-badge completed">${progress.completed}개 완료</div>
+                    <div class="routine-badge pending">${progress.total - progress.completed}개 대기</div>
+                    <div class="routine-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                        총 ${progress.total}개
+                    </div>
+                </div>
+
+                <div class="member-card-actions">
+                    <button class="member-detail-btn" data-member-id="${memberId}">
+                        📊 상세보기
+                    </button>
                 </div>
             `;
             
+            // 상세보기 버튼 이벤트 추가
+            const detailBtn = card.querySelector('.member-detail-btn');
+            if (detailBtn) {
+                addTouchEventListener(detailBtn, function() {
+                    const memberId = this.getAttribute('data-member-id');
+                    showMemberDetail(memberId, memberData, progress);
+                });
+            }
+            
             return card;
+        }
+
+        // 가족 구성원 상세보기 모달
+        async function showMemberDetail(memberId, memberData, progress) {
+            debugLog('👤 구성원 상세보기 표시: ' + memberData.email, 'info');
+            
+            const modal = document.getElementById('memberDetailModal');
+            const avatar = document.getElementById('memberDetailAvatar');
+            const name = document.getElementById('memberDetailName');
+            const role = document.getElementById('memberDetailRole');
+            const progressRing = document.getElementById('memberProgressRing');
+            const progressText = document.getElementById('memberProgressText');
+            const totalRoutines = document.getElementById('memberTotalRoutines');
+            const completedRoutines = document.getElementById('memberCompletedRoutines');
+            const pendingRoutines = document.getElementById('memberPendingRoutines');
+            const routinesList = document.getElementById('memberRoutinesList');
+
+            // 기본 정보 설정
+            const displayName = memberData.displayName || memberData.email.split('@')[0];
+            const memberRole = memberData.role === 'parent' ? '부모' : '자녀';
+            
+            avatar.textContent = displayName.charAt(0).toUpperCase();
+            name.textContent = displayName;
+            role.textContent = memberRole;
+            
+            // 통계 설정
+            totalRoutines.textContent = progress.total;
+            completedRoutines.textContent = progress.completed;
+            pendingRoutines.textContent = progress.total - progress.completed;
+            
+            // 진행률 링 설정
+            const circumference = 2 * Math.PI * 28; // r=28
+            const strokeDasharray = (progress.percentage / 100) * circumference;
+            progressRing.style.strokeDasharray = `${strokeDasharray} ${circumference}`;
+            progressText.textContent = `${progress.percentage}%`;
+            
+            // 루틴 목록 생성
+            routinesList.innerHTML = '';
+            
+            if (progress.routines.length === 0) {
+                routinesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-title">오늘 할 루틴이 없습니다</div>
+                    </div>
+                `;
+            } else {
+                progress.routines.forEach(routine => {
+                    const result = routine.result;
+                    const routineItem = createRoutineResultItem(routine, result);
+                    routinesList.appendChild(routineItem);
+                });
+            }
+            
+            modal.style.display = 'block';
+            
+            setTimeout(() => {
+                const content = modal.querySelector('.member-detail-content');
+                if (content) {
+                    content.style.animation = 'fadeInUp 0.3s ease-out';
+                }
+            }, 10);
+        }
+
+        // 루틴 결과 아이템 생성
+        function createRoutineResultItem(routine, result) {
+            const item = document.createElement('div');
+            item.className = 'routine-result-item';
+            
+            let status = 'pending';
+            let statusText = '대기중';
+            let valueText = '';
+            let timeText = '';
+            
+            if (result) {
+                if (result.completed && result.value !== false) {
+                    status = 'completed';
+                    statusText = '완료됨';
+                    
+                    if (routine.type === 'yesno') {
+                        valueText = '✅ 완료';
+                    } else if (routine.type === 'number') {
+                        valueText = `📊 ${result.value}`;
+                    } else if (routine.type === 'time') {
+                        valueText = `⏰ ${result.value}`;
+                    }
+                } else {
+                    status = 'skipped';
+                    statusText = '건너뜀';
+                }
+                
+                if (result.timestamp && result.timestamp.toDate) {
+                    timeText = result.timestamp.toDate().toLocaleTimeString('ko-KR');
+                }
+            }
+            
+            item.classList.add(status);
+            
+            item.innerHTML = `
+                <div class="routine-result-header">
+                    <div class="routine-result-name">${routine.name}</div>
+                    <div class="routine-result-status ${status}">${statusText}</div>
+                </div>
+                ${valueText ? `<div class="routine-result-value">${valueText}</div>` : ''}
+                ${timeText ? `<div class="routine-result-time">완료 시간: ${timeText}</div>` : ''}
+            `;
+            
+            return item;
+        }
+
+        // 구성원 상세 모달 닫기
+        function closeMemberDetail() {
+            const modal = document.getElementById('memberDetailModal');
+            modal.style.display = 'none';
         }
 
         // 가족 코드 복사
@@ -4360,9 +5220,15 @@
 
         // 모달 외부 클릭 시 닫기
         window.addEventListener('click', function(event) {
-            const modal = document.getElementById('addRoutineModal');
-            if (event.target === modal) {
+            const addRoutineModal = document.getElementById('addRoutineModal');
+            const memberDetailModal = document.getElementById('memberDetailModal');
+            
+            if (event.target === addRoutineModal) {
                 closeModal();
+            }
+            
+            if (event.target === memberDetailModal) {
+                closeMemberDetail();
             }
         });
 
