@@ -2,9 +2,2018 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>가족 루틴 트래커</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 전역 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --success: #10b981;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #ffffff;
+            position: relative;
+            overflow-x: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+            padding-bottom: 6rem;
+        }
+
+        /* 애니메이션 키프레임 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% { transform: translateY(0); }
+            40%, 43% { transform: translateY(-8px); }
+            70% { transform: translateY(-4px); }
+            90% { transform: translateY(-2px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            75% { transform: scale(1.1) rotate(-3deg); }
+        }
+
+        /* 로딩 스켈레톤 */
+        .skeleton {
+            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+            background-size: 200px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        /* 리플 효과 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        /* 로그인 페이지 */
+        .login-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .login-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInRight 0.8s ease-out 0.2s both;
+        }
+
+        .app-title {
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-btn {
+            padding: 1rem 0.75rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .role-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transition: left 0.5s;
+        }
+
+        .role-btn:hover::before {
+            left: 100%;
+        }
+
+        .role-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .role-btn.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .role-btn:active {
+            transform: scale(0.98) translateY(-1px);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            touch-action: manipulation;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .family-code-input {
+            display: none;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .family-code-display {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .family-code {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Google 로그인 버튼 */
+        .google-btn {
+            background: white;
+            color: var(--text-primary);
+            border: 2px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 48px;
+        }
+
+        .google-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .google-btn:active {
+            transform: scale(0.98);
+        }
+
+        .google-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .google-btn-text {
+            font-weight: 600;
+        }
+
+        .google-btn-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* 구분선 */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-200);
+        }
+
+        .divider span {
+            padding: 0 1rem;
+            background: white;
+        }
+
+        /* 이메일 로그인 섹션 */
+        .email-login-section {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 500px;
+            overflow: hidden;
+        }
+
+        .email-login-section.collapsed {
+            max-height: 0;
+            margin: 0;
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border-radius: var(--radius);
+            transition: all 0.3s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-text:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .btn-text:active {
+            transform: scale(0.98);
+        }
+
+        /* 로그인 도움말 */
+        .login-help {
+            margin: 1rem 0;
+            font-size: 0.875rem;
+        }
+
+        .login-help details {
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .login-help summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            touch-action: manipulation;
+        }
+
+        .login-help summary:active {
+            transform: scale(0.98);
+        }
+
+        .help-content {
+            margin-top: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .help-content p {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .help-content ul {
+            margin-left: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .help-content li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* 메인 앱 */
+        .main-app {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            padding-bottom: 6rem;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2rem 1.5rem 3rem;
+            text-align: center;
+            position: relative;
+            border-radius: 0 0 2rem 2rem;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 0 0 2rem 2rem;
+            transform: scaleY(0.5);
+            opacity: 0.3;
+        }
+
+        .user-info {
+            position: absolute;
+            right: 1.5rem;
+            top: 1.5rem;
+            font-size: 0.875rem;
+            text-align: right;
+        }
+
+        .user-role {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 32px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .logout-btn:active {
+            transform: scale(0.98);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        #currentDate {
+            opacity: 0.9;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* 스트릭 대시보드 */
+        .streak-dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: -2rem 1.5rem 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .streak-card {
+            background: white;
+            padding: 1.5rem 1rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .streak-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .streak-card:nth-child(1) { animation-delay: 0.1s; }
+        .streak-card:nth-child(2) { animation-delay: 0.2s; }
+        .streak-card:nth-child(3) { animation-delay: 0.3s; }
+
+        .streak-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .streak-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .streak-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* 주간 진행 상황 */
+        .weekly-progress {
+            background: white;
+            margin: 0 1.5rem 1.5rem;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-100);
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+
+        .weekly-progress h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .week-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 0.75rem 0.25rem;
+            border-radius: var(--radius);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .calendar-day.today {
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid var(--primary);
+        }
+
+        .day-name {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .day-number {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0.25rem 0;
+        }
+
+        .day-progress {
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+        }
+
+        .day-progress.level-0 { background: var(--gray-200); }
+        .day-progress.level-1 { background: rgba(16, 185, 129, 0.3); }
+        .day-progress.level-2 { background: rgba(16, 185, 129, 0.5); }
+        .day-progress.level-3 { background: rgba(16, 185, 129, 0.7); }
+        .day-progress.level-4 { background: var(--success); }
+
+        .sleep-info {
+            background: white;
+            margin: 0 1.5rem 1.5rem;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            animation: fadeInUp 0.6s ease-out 0.5s both;
+        }
+
+        .sleep-hours {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .sleep-info p {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .quote {
+            background: linear-gradient(135deg, var(--gray-50), white);
+            margin: 0 1.5rem 1.5rem;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border-left: 4px solid var(--primary);
+            font-style: italic;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
+            animation: fadeInUp 0.6s ease-out 0.6s both;
+        }
+
+        .quote::before {
+            content: '"';
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-size: 3rem;
+            color: var(--primary);
+            opacity: 0.3;
+        }
+
+        .routine-list {
+            padding: 0 1.5rem;
+        }
+
+        .time-header {
+            margin: 2rem 0 1rem 0;
+        }
+
+        .time-header h3 {
+            margin: 0;
+            padding: 0 0.5rem;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+
+        .routine-item {
+            background: white;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--gray-100);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .routine-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .routine-item:hover .routine-title {
+            color: var(--primary);
+            transition: color 0.3s ease;
+        }
+
+        .routine-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-size: 1.125rem;
+        }
+
+        .routine-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .time-input, .number-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+
+        .time-input:focus, .number-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .time-input:disabled, .number-input:disabled {
+            background: var(--gray-100);
+            color: var(--gray-500);
+            cursor: not-allowed;
+        }
+
+        .number-input {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .yes-no-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .yes-btn, .no-btn {
+            padding: 0.875rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.875rem;
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .yes-btn:disabled, .no-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .yes-btn {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 2px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .yes-btn:hover:not(:disabled) {
+            background: rgba(16, 185, 129, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .yes-btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .yes-btn.active {
+            background: var(--success);
+            color: white;
+            box-shadow: var(--shadow-md);
+            animation: bounce 0.6s ease-out;
+        }
+
+        .no-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 2px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .no-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .no-btn:active {
+            transform: scale(0.98);
+        }
+
+        .no-btn.active {
+            background: var(--error);
+            color: white;
+            box-shadow: var(--shadow-md);
+            animation: bounce 0.6s ease-out;
+        }
+
+        /* 가족 코드 카드 */
+        .family-code-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            margin: 1.5rem;
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .family-code-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s infinite;
+        }
+
+        .card-header h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .family-code-display-main {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .family-code-large {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            margin-bottom: 1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 44px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.98);
+        }
+
+        .family-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .info-value {
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        /* 페이지 */
+        .page {
+            display: none;
+            animation: fadeInUp 0.6s ease-out;
+            padding-bottom: 10rem;
+            min-height: calc(100vh - 10rem);
+            overflow-y: auto;
+        }
+
+        .family-page, .manage-page, .stats-page {
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            text-align: center;
+            letter-spacing: -0.02em;
+        }
+
+        .add-routine-btn {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 48px;
+        }
+
+        .add-routine-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .add-routine-btn:active {
+            transform: scale(0.98);
+        }
+
+        .add-routine-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .add-routine-btn:hover::before {
+            left: 100%;
+        }
+
+        /* 통계 페이지 */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem 1rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            text-align: center;
+            border: 1px solid var(--gray-100);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* 월간 히트맵 */
+        .monthly-heatmap {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--gray-100);
+        }
+
+        .monthly-heatmap h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 1rem;
+        }
+
+        .heatmap-day {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .heatmap-day:hover {
+            transform: scale(1.1);
+        }
+
+        .heatmap-day:active {
+            transform: scale(0.95);
+        }
+
+        .heatmap-day[data-level="0"] { background: var(--gray-200); color: var(--gray-500); }
+        .heatmap-day[data-level="1"] { background: rgba(16, 185, 129, 0.3); }
+        .heatmap-day[data-level="2"] { background: rgba(16, 185, 129, 0.5); }
+        .heatmap-day[data-level="3"] { background: rgba(16, 185, 129, 0.7); }
+        .heatmap-day[data-level="4"] { background: var(--success); }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-colors {
+            display: flex;
+            gap: 2px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color[data-level="0"] { background: var(--gray-200); }
+        .legend-color[data-level="1"] { background: rgba(16, 185, 129, 0.3); }
+        .legend-color[data-level="2"] { background: rgba(16, 185, 129, 0.5); }
+        .legend-color[data-level="3"] { background: rgba(16, 185, 129, 0.7); }
+        .legend-color[data-level="4"] { background: var(--success); }
+
+        /* 루틴별 통계 */
+        .routine-stats {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-100);
+        }
+
+        .routine-stats h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .routine-stat-card {
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        .routine-stat-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .routine-stat-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .routine-stat-name {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .routine-stat-rate {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .routine-stat-detail {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* 성취 모달 */
+        .achievement-modal {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .achievement-content {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-align: center;
+            border: none;
+            max-width: 320px;
+        }
+
+        .achievement-animation {
+            padding: 2rem;
+        }
+
+        .celebration-emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: celebration 1s ease-out;
+        }
+
+        .achievement-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .achievement-description {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .celebration-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            margin: 0;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .celebration-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .celebration-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 가족 구성원 */
+        .family-members {
+            margin-bottom: 2rem;
+        }
+
+        .member-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--gray-100);
+        }
+
+        .member-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .member-card:hover .member-name {
+            color: var(--primary);
+            transition: color 0.3s ease;
+        }
+
+        .member-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .member-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .member-name {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .member-role {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .member-status {
+            padding: 0.5rem 1rem;
+            border-radius: 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .member-status.online {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .member-status.offline {
+            background: var(--gray-100);
+            color: var(--gray-500);
+        }
+
+        .routine-progress {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .routine-badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .routine-badge.completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .routine-badge.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .routine-badge.skipped {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        /* 알림 */
+        .notification {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            max-width: 300px;
+        }
+
+        .notification.error {
+            background: var(--error);
+        }
+
+        .notification.warning {
+            background: var(--warning);
+        }
+
+        /* 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--gray-200);
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
+            border-radius: 1.5rem 1.5rem 0 0;
+            z-index: 9999;
+        }
+
+        .nav-item {
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            border-radius: var(--radius);
+            margin: 0 0.25rem;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            min-height: 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item:active {
+            transform: scale(0.95);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-item i {
+            display: block;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+            font-style: normal;
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            width: 90%;
+            max-width: 420px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.25rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            transition: all 0.3s;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .close-btn:hover {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .close-btn:active {
+            transform: scale(0.95);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .btn-cancel {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .btn-cancel:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-cancel:active {
+            transform: scale(0.98);
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state-description {
+            font-size: 0.875rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* 로딩 메시지 */
+        .loading-message {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* 디버그 콘솔 */
+        .debug-console {
+            position: fixed;
+            top: 10%;
+            left: 5%;
+            right: 5%;
+            bottom: 20%;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-radius: var(--radius);
+            padding: 1rem;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .debug-close {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .debug-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .debug-entry {
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+        }
+
+        .debug-time {
+            color: #666;
+            font-size: 10px;
+        }
+
+        .debug-entry.debug-error { color: #ff6b6b; }
+        .debug-entry.debug-warning { color: #feca57; }
+        .debug-entry.debug-success { color: #48cae4; }
+        .debug-entry.debug-info { color: #00ff00; }
+
+        .debug-clear {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .debug-toggle {
+            position: fixed;
+            top: 2rem;
+            left: 1rem;
+            width: 3rem;
+            height: 3rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ff00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 9999;
+            transition: all 0.3s;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .debug-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        .debug-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .status-indicator {
+            position: fixed;
+            bottom: 8rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            z-index: 9998;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        /* 유틸리티 클래스 */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .p-4 {
+            padding: 1rem;
+        }
+
+        /* 스크롤바 스타일링 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        /* 터치 피드백 개선 */
+        .btn:active,
+        .nav-item:active,
+        .role-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 성공/오류 상태 */
+        .input-success {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+
+        .input-error {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+                margin: 0;
+                padding-bottom: 8rem;
+            }
+            
+            .bottom-nav {
+                max-width: 100%;
+                left: 0;
+                transform: none;
+            }
+
+            .login-form {
+                margin: 1rem;
+                padding: 2rem 1.5rem;
+            }
+
+            .header {
+                padding: 1.5rem 1rem 2.5rem;
+            }
+
+            .user-info {
+                right: 1rem;
+                top: 1rem;
+            }
+
+            .streak-dashboard {
+                margin: -1.5rem 1rem 1rem;
+                gap: 0.75rem;
+            }
+
+            .streak-card {
+                padding: 1rem 0.75rem;
+            }
+
+            .streak-number {
+                font-size: 1.5rem;
+            }
+
+            .sleep-info {
+                margin: 0 1rem 1rem;
+                padding: 1.5rem;
+            }
+
+            .quote, .routine-list, .weekly-progress {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+
+            .family-code-card {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .notification {
+                top: 1rem;
+                right: 1rem;
+                left: 1rem;
+                max-width: none;
+            }
+            
+            .page {
+                padding-bottom: 12rem;
+            }
+            
+            .family-page, .manage-page, .stats-page {
+                padding: 1.5rem 1rem 8rem 1rem;
+            }
+
+            .stats-overview {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .heatmap-grid {
+                gap: 1px;
+            }
+
+            .heatmap-day {
+                font-size: 0.7rem;
+            }
+
+            .debug-toggle {
+                top: 1rem;
+                left: 0.5rem;
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1.25rem;
+            }
+
+            .debug-console {
+                top: 5%;
+                left: 2%;
+                right: 2%;
+                bottom: 15%;
+            }
+        }
+
+        /* 다크 모드 준비 */
+        @media (prefers-color-scheme: dark) {
+            /* 나중에 다크 모드 구현 시 사용 */
+        }
+
+        /* 프린트 스타일 */
+        @media print {
+            .bottom-nav,
+            .logout-btn,
+            .add-routine-btn,
+            .debug-toggle,
+            .debug-console {
+                display: none;
+            }
+        }
+
+        /* 접근성 개선 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 터치 디바이스 최적화 */
+        @media (pointer: coarse) {
+            .btn,
+            .nav-item,
+            .role-btn,
+            .yes-btn,
+            .no-btn,
+            .copy-btn,
+            .logout-btn,
+            .close-btn,
+            .btn-text,
+            .debug-toggle,
+            .debug-close,
+            .debug-clear {
+                min-height: 44px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -15,8 +2024,8 @@
                 
                 <!-- 역할 선택 -->
                 <div class="role-selector">
-                    <div class="role-btn active" onclick="selectRole('parent')">👨‍👩‍👧‍👦 부모</div>
-                    <div class="role-btn" onclick="selectRole('child')">👶 자녀</div>
+                    <div class="role-btn active" data-role="parent">👨‍👩‍👧‍👦 부모</div>
+                    <div class="role-btn" data-role="child">👶 자녀</div>
                 </div>
 
                 <!-- 가족 코드 입력 (자녀용) -->
@@ -26,10 +2035,12 @@
                 </div>
 
                 <!-- Google 로그인 버튼 -->
-                <button class="btn google-btn" onclick="signInWithGoogle()">
+                <button class="btn google-btn" id="googleSignInBtn">
                     <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
-                    <span class="google-btn-text">Google로 시작하기</span>
-                    <div class="google-btn-subtitle">안전하고 빠른 로그인</div>
+                    <div>
+                        <span class="google-btn-text">Google로 시작하기</span>
+                        <div class="google-btn-subtitle">안전하고 빠른 로그인</div>
+                    </div>
                 </button>
 
                 <!-- 로그인 문제 해결 안내 -->
@@ -66,11 +2077,11 @@
                         <label for="password">비밀번호</label>
                         <input type="password" id="password" placeholder="비밀번호 입력">
                     </div>
-                    <button class="btn" id="loginBtn" onclick="handleAuth('login')">로그인</button>
-                    <button class="btn btn-secondary" onclick="handleAuth('register')">회원가입</button>
+                    <button class="btn" id="loginBtn">로그인</button>
+                    <button class="btn btn-secondary" id="registerBtn">회원가입</button>
                 </div>
 
-                <button class="btn-text" onclick="toggleEmailLogin()">이메일로 로그인</button>
+                <button class="btn-text" id="toggleEmailLogin">이메일로 로그인</button>
 
                 <!-- 가족 코드 표시 (부모용 회원가입 후) -->
                 <div id="familyCodeDisplay" class="family-code-display hidden">
@@ -90,7 +2101,7 @@
                 <div class="user-info">
                     <span id="userEmail"></span>
                     <span class="user-role" id="userRole"></span>
-                    <button class="logout-btn" onclick="logout()">로그아웃</button>
+                    <button class="logout-btn" id="logoutBtn">로그아웃</button>
                 </div>
                 <h1>오늘의 루틴</h1>
                 <div id="currentDate"></div>
@@ -160,7 +2171,7 @@
                     </div>
                     <div class="family-code-display-main">
                         <div class="family-code-large" id="familyCodeMain">-</div>
-                        <button class="copy-btn" onclick="copyFamilyCode()">📋 복사</button>
+                        <button class="copy-btn" id="copyFamilyCodeBtn">📋 복사</button>
                     </div>
                     <div class="family-info">
                         <div class="info-item">
@@ -183,7 +2194,7 @@
             <!-- 관리 페이지 -->
             <div id="managePage" class="page manage-page">
                 <div class="page-title">루틴 관리</div>
-                <button class="add-routine-btn" onclick="openAddRoutineModal()">✨ 새 루틴 추가</button>
+                <button class="add-routine-btn" id="addRoutineBtn">✨ 새 루틴 추가</button>
                 <div id="manageRoutineList">
                     <!-- 관리용 루틴 목록 -->
                 </div>
@@ -239,23 +2250,23 @@
 
             <!-- 하단 네비게이션 -->
             <div class="bottom-nav">
-                <div class="nav-item active" onclick="showPage('home')">
+                <div class="nav-item active" data-page="home">
                     <i>🏠</i>
                     <span>홈</span>
                 </div>
-                <div class="nav-item" onclick="showPage('manage')">
+                <div class="nav-item" data-page="manage">
                     <i>⚙️</i>
                     <span>관리</span>
                 </div>
-                <div class="nav-item" onclick="showPage('stats')">
+                <div class="nav-item" data-page="stats">
                     <i>📈</i>
                     <span>통계</span>
                 </div>
-                <div class="nav-item" onclick="showPage('review')">
+                <div class="nav-item" data-page="review">
                     <i>📊</i>
                     <span>리뷰</span>
                 </div>
-                <div class="nav-item" onclick="showPage('family')">
+                <div class="nav-item" data-page="family">
                     <i>👨‍👩‍👧‍👦</i>
                     <span>가족</span>
                 </div>
@@ -265,7 +2276,7 @@
         <!-- 루틴 추가 모달 -->
         <div id="addRoutineModal" class="modal">
             <div class="modal-content">
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
                 <div class="modal-header">✨ 새 루틴 추가</div>
                 
                 <div class="form-group">
@@ -301,8 +2312,8 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-cancel" onclick="closeModal()">취소</button>
-                    <button class="btn" onclick="addRoutine()">추가</button>
+                    <button class="btn btn-cancel" id="cancelModalBtn">취소</button>
+                    <button class="btn" id="confirmAddRoutineBtn">추가</button>
                 </div>
             </div>
         </div>
@@ -314,7 +2325,7 @@
                     <div class="celebration-emoji">🎉</div>
                     <div class="achievement-title" id="achievementTitle">축하합니다!</div>
                     <div class="achievement-description" id="achievementDesc">새로운 기록을 달성했습니다!</div>
-                    <button class="btn celebration-btn" onclick="closeAchievementModal()">계속하기</button>
+                    <button class="btn celebration-btn" id="closeAchievementBtn">계속하기</button>
                 </div>
             </div>
         </div>
@@ -323,10 +2334,10 @@
         <div id="debugConsole" class="debug-console hidden">
             <div class="debug-header">
                 <span>🐛 디버그 로그</span>
-                <button class="debug-close">×</button>
+                <button class="debug-close" id="debugCloseBtn">×</button>
             </div>
             <div id="debugMessages" class="debug-messages"></div>
-            <button class="debug-clear">로그 지우기</button>
+            <button class="debug-clear" id="debugClearBtn">로그 지우기</button>
         </div>
 
         <!-- 디버그 토글 버튼 -->
@@ -448,80 +2459,98 @@
             }
         }
 
-        // 터치 이벤트 개선
-        function addTouchSupport() {
-            // 디버그 토글 버튼
-            const debugToggle = document.getElementById('debugToggle');
-            if (debugToggle) {
-                debugLog('🟢 디버그 토글 버튼 터치 이벤트 추가', 'info');
-                
-                // 기존 이벤트 제거
-                debugToggle.replaceWith(debugToggle.cloneNode(true));
-                const newDebugToggle = document.getElementById('debugToggle');
-                
-                // 터치 이벤트 추가
-                newDebugToggle.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    newDebugToggle.style.transform = 'scale(0.9)';
-                    debugLog('👆 디버그 버튼 터치 시작', 'info');
-                }, { passive: false });
-                
-                newDebugToggle.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    newDebugToggle.style.transform = 'scale(1)';
-                    debugLog('👆 디버그 버튼 터치 완료', 'info');
-                    setTimeout(() => {
-                        toggleDebugConsole();
-                    }, 100);
-                }, { passive: false });
-                
-                // 마우스 이벤트
-                newDebugToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    debugLog('🖱️ 디버그 버튼 클릭', 'info');
-                    toggleDebugConsole();
+        // 터치 이벤트 처리 함수
+        function addTouchEventListener(element, callback, useCapture = false) {
+            if (!element) return;
+
+            // 터치 이벤트 추가
+            element.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                this.style.transform = 'scale(0.98)';
+            }, { passive: false, capture: useCapture });
+
+            element.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.style.transform = '';
+                callback.call(this, e);
+            }, { passive: false, capture: useCapture });
+
+            // 마우스 이벤트도 추가 (데스크톱 지원)
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                callback.call(this, e);
+            }, { capture: useCapture });
+        }
+
+        // 터치 지원 초기화
+        function initializeTouchEvents() {
+            debugLog('📱 터치 이벤트 초기화 시작', 'info');
+
+            // 역할 선택 버튼들
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                addTouchEventListener(btn, function(e) {
+                    const role = this.getAttribute('data-role');
+                    selectRole(role);
                 });
-            } else {
-                debugLog('❌ 디버그 토글 버튼을 찾을 수 없습니다', 'error');
-            }
+            });
 
-            // 잠시 후 닫기/지우기 버튼 이벤트 추가 (모달이 나타날 때를 대비)
-            setTimeout(() => {
-                // 닫기 버튼 터치 지원
-                const debugClose = document.querySelector('.debug-close');
-                if (debugClose) {
-                    debugClose.addEventListener('touchend', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDebugConsole();
-                    }, { passive: false });
-                    
-                    debugClose.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleDebugConsole();
-                    });
-                }
+            // Google 로그인 버튼
+            const googleBtn = document.getElementById('googleSignInBtn');
+            addTouchEventListener(googleBtn, signInWithGoogle);
 
-                // 로그 지우기 버튼 터치 지원
-                const debugClear = document.querySelector('.debug-clear');
-                if (debugClear) {
-                    debugClear.addEventListener('touchend', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        clearDebugLog();
-                    }, { passive: false });
-                    
-                    debugClear.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        clearDebugLog();
-                    });
-                }
-            }, 1000);
+            // 이메일 로그인 토글
+            const toggleEmailBtn = document.getElementById('toggleEmailLogin');
+            addTouchEventListener(toggleEmailBtn, toggleEmailLogin);
+
+            // 로그인/회원가입 버튼
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            addTouchEventListener(loginBtn, () => handleAuth('login'));
+            addTouchEventListener(registerBtn, () => handleAuth('register'));
+
+            // 로그아웃 버튼
+            const logoutBtn = document.getElementById('logoutBtn');
+            addTouchEventListener(logoutBtn, logout);
+
+            // 네비게이션 버튼들
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                addTouchEventListener(navItem, function(e) {
+                    const page = this.getAttribute('data-page');
+                    showPage(page);
+                });
+            });
+
+            // 루틴 추가 버튼
+            const addRoutineBtn = document.getElementById('addRoutineBtn');
+            addTouchEventListener(addRoutineBtn, openAddRoutineModal);
+
+            // 모달 관련 버튼들
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            const confirmAddRoutineBtn = document.getElementById('confirmAddRoutineBtn');
+            const closeAchievementBtn = document.getElementById('closeAchievementBtn');
+
+            addTouchEventListener(closeModalBtn, closeModal);
+            addTouchEventListener(cancelModalBtn, closeModal);
+            addTouchEventListener(confirmAddRoutineBtn, addRoutine);
+            addTouchEventListener(closeAchievementBtn, closeAchievementModal);
+
+            // 가족 코드 복사 버튼
+            const copyFamilyCodeBtn = document.getElementById('copyFamilyCodeBtn');
+            addTouchEventListener(copyFamilyCodeBtn, copyFamilyCode);
+
+            // 디버그 버튼들
+            const debugToggle = document.getElementById('debugToggle');
+            const debugCloseBtn = document.getElementById('debugCloseBtn');
+            const debugClearBtn = document.getElementById('debugClearBtn');
+
+            addTouchEventListener(debugToggle, toggleDebugConsole);
+            addTouchEventListener(debugCloseBtn, toggleDebugConsole);
+            addTouchEventListener(debugClearBtn, clearDebugLog);
+
+            debugLog('✅ 터치 이벤트 초기화 완료', 'success');
         }
 
         // 기본 명언들
@@ -607,7 +2636,7 @@
         function selectRole(role) {
             userRole = role;
             document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelector(`[data-role="${role}"]`).classList.add('active');
             
             const familyCodeInput = document.getElementById('familyCodeInput');
             if (role === 'child') {
@@ -656,10 +2685,10 @@
                     // iOS에서는 리디렉션 방식 사용
                     debugLog('🍎 iOS 감지 - 리디렉션 방식 사용', 'info');
                     
-                    // 가족 코드를 localStorage에 임시 저장 (리디렉션 후 복원용)
+                    // 가족 코드를 sessionStorage에 임시 저장 (리디렉션 후 복원용)
                     if (familyCode) {
-                        localStorage.setItem('tempFamilyCode', familyCode);
-                        localStorage.setItem('tempUserRole', userRole);
+                        sessionStorage.setItem('tempFamilyCode', familyCode);
+                        sessionStorage.setItem('tempUserRole', userRole);
                     }
                     
                     await auth.signInWithRedirect(provider);
@@ -679,8 +2708,8 @@
                             
                             // 팝업이 차단되면 리디렉션 방식으로 전환
                             if (familyCode) {
-                                localStorage.setItem('tempFamilyCode', familyCode);
-                                localStorage.setItem('tempUserRole', userRole);
+                                sessionStorage.setItem('tempFamilyCode', familyCode);
+                                sessionStorage.setItem('tempUserRole', userRole);
                             }
                             
                             showNotification('팝업이 차단되어 페이지 이동 방식으로 로그인합니다.', 'warning');
@@ -769,17 +2798,17 @@
                 if (result && result.user) {
                     debugLog('🔄 리디렉션 로그인 결과 처리', 'info');
                     
-                    // localStorage에서 임시 저장된 정보 복원
-                    const tempFamilyCode = localStorage.getItem('tempFamilyCode');
-                    const tempUserRole = localStorage.getItem('tempUserRole');
+                    // sessionStorage에서 임시 저장된 정보 복원
+                    const tempFamilyCode = sessionStorage.getItem('tempFamilyCode');
+                    const tempUserRole = sessionStorage.getItem('tempUserRole');
                     
                     if (tempUserRole) {
                         userRole = tempUserRole;
-                        localStorage.removeItem('tempUserRole');
+                        sessionStorage.removeItem('tempUserRole');
                     }
                     
                     if (tempFamilyCode) {
-                        localStorage.removeItem('tempFamilyCode');
+                        sessionStorage.removeItem('tempFamilyCode');
                     }
                     
                     await handleGoogleSignInSuccess(result.user, tempFamilyCode);
@@ -793,7 +2822,7 @@
         // 이메일 로그인 토글
         function toggleEmailLogin() {
             const section = document.getElementById('emailLoginSection');
-            const button = event.target;
+            const button = document.getElementById('toggleEmailLogin');
             
             if (section.classList.contains('collapsed')) {
                 section.classList.remove('collapsed');
@@ -832,7 +2861,7 @@
 
         function setLoading(loading, type = 'email') {
             if (type === 'google') {
-                const googleBtn = document.querySelector('.google-btn');
+                const googleBtn = document.getElementById('googleSignInBtn');
                 
                 if (googleBtn) {
                     if (loading) {
@@ -846,8 +2875,10 @@
                         googleBtn.disabled = false;
                         googleBtn.innerHTML = `
                             <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
-                            <span class="google-btn-text">Google로 시작하기</span>
-                            <div class="google-btn-subtitle">안전하고 빠른 로그인</div>
+                            <div>
+                                <span class="google-btn-text">Google로 시작하기</span>
+                                <div class="google-btn-subtitle">안전하고 빠른 로그인</div>
+                            </div>
                         `;
                     }
                 }
@@ -906,19 +2937,19 @@
             // 선택된 페이지 및 네비게이션 활성화
             if (page === 'home') {
                 document.getElementById('homePage').style.display = 'block';
-                document.querySelectorAll('.nav-item')[0].classList.add('active');
+                document.querySelector('[data-page="home"]').classList.add('active');
                 loadHomeRoutines();
             } else if (page === 'manage') {
                 document.getElementById('managePage').style.display = 'block';
-                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                document.querySelector('[data-page="manage"]').classList.add('active');
                 loadUserRoutines();
             } else if (page === 'stats') {
                 document.getElementById('statsPage').style.display = 'block';
-                document.querySelectorAll('.nav-item')[2].classList.add('active');
+                document.querySelector('[data-page="stats"]').classList.add('active');
                 loadStatsPage();
             } else if (page === 'family') {
                 document.getElementById('familyPage').style.display = 'block';
-                document.querySelectorAll('.nav-item')[4].classList.add('active');
+                document.querySelector('[data-page="family"]').classList.add('active');
                 loadFamilyPageInfo();
             } else if (page === 'review') {
                 showNotification('📊 리뷰 페이지는 곧 준비됩니다!', 'warning');
@@ -1246,24 +3277,24 @@
                 };
 
                 // 루틴 데이터를 배열로 변환하고 order로 정렬
-                const routineList = [];
+                const routineArray = [];
                 routinesSnapshot.docs.forEach(doc => {
                     const data = doc.data();
                     const routine = {
                         id: doc.id,
                         ...data
                     };
-                    routineList.push(routine);
+                    routineArray.push(routine);
                 });
 
                 // order 필드로 정렬 (없으면 생성일 순)
-                routineList.sort((a, b) => {
+                routineArray.sort((a, b) => {
                     const orderA = a.order || (a.createdAt ? a.createdAt.toMillis() : 0);
                     const orderB = b.order || (b.createdAt ? b.createdAt.toMillis() : 0);
                     return orderA - orderB;
                 });
 
-                routineList.forEach(routine => {
+                routineArray.forEach(routine => {
                     // 주기 확인 (오늘이 해당 루틴을 해야 하는 날인지)
                     if (shouldShowRoutineToday(routine)) {
                         routinesByTime[routine.time].push(routine);
@@ -1283,9 +3314,7 @@
                         const timeHeader = document.createElement('div');
                         timeHeader.className = 'time-header';
                         timeHeader.innerHTML = `
-                            <h3 style="margin: 2rem 0 1rem 0; padding: 0 0.5rem; color: var(--primary); font-weight: 800; font-size: 1.25rem;">
-                                ${timeLabels[timeSlot]}
-                            </h3>
+                            <h3>${timeLabels[timeSlot]}</h3>
                         `;
                         routineList.appendChild(timeHeader);
 
@@ -1374,11 +3403,14 @@
                     controlsHTML = `
                         <div class="yes-no-btns">
                             <button class="yes-btn ${isCompleted ? 'active' : ''}" 
-                                    onclick="updateRoutine('${routine.id}', true)"
+                                    data-routine-id="${routine.id}"
+                                    data-action="complete"
                                     ${isCompleted ? 'disabled' : ''}>
                                 ✅ 완료
                             </button>
-                            <button class="no-btn" onclick="updateRoutine('${routine.id}', false)">
+                            <button class="no-btn" 
+                                    data-routine-id="${routine.id}"
+                                    data-action="skip">
                                 ❌ 건너뛰기
                             </button>
                         </div>
@@ -1389,9 +3421,11 @@
                     controlsHTML = `
                         <input type="number" class="number-input" 
                                placeholder="숫자 입력" min="0" 
+                               data-routine-id="${routine.id}"
                                ${isCompleted ? 'disabled' : ''}>
                         <button class="yes-btn ${isCompleted ? 'active' : ''}" 
-                                onclick="updateRoutineNumber('${routine.id}')"
+                                data-routine-id="${routine.id}"
+                                data-action="save-number"
                                 ${isCompleted ? 'disabled' : ''}>
                             저장
                         </button>
@@ -1401,9 +3435,11 @@
                 case 'time':
                     controlsHTML = `
                         <input type="time" class="time-input" 
+                               data-routine-id="${routine.id}"
                                ${isCompleted ? 'disabled' : ''}>
                         <button class="yes-btn ${isCompleted ? 'active' : ''}" 
-                                onclick="updateRoutineTime('${routine.id}')"
+                                data-routine-id="${routine.id}"
+                                data-action="save-time"
                                 ${isCompleted ? 'disabled' : ''}>
                             저장
                         </button>
@@ -1421,12 +3457,35 @@
                 </div>
             `;
 
+            // 루틴 컨트롤 버튼들에 터치 이벤트 추가
+            routineDiv.querySelectorAll('button').forEach(button => {
+                addTouchEventListener(button, function(e) {
+                    const routineId = this.getAttribute('data-routine-id');
+                    const action = this.getAttribute('data-action');
+                    
+                    switch (action) {
+                        case 'complete':
+                            updateRoutine(routineId, true);
+                            break;
+                        case 'skip':
+                            updateRoutine(routineId, false);
+                            break;
+                        case 'save-number':
+                            updateRoutineNumber(routineId, this);
+                            break;
+                        case 'save-time':
+                            updateRoutineTime(routineId, this);
+                            break;
+                    }
+                });
+            });
+
             return routineDiv;
         }
 
         // 숫자 루틴 업데이트
-        async function updateRoutineNumber(routineId) {
-            const input = event.target.parentElement.querySelector('.number-input');
+        async function updateRoutineNumber(routineId, button) {  
+            const input = button.parentElement.querySelector('.number-input');
             const value = input.value;
             
             if (!value || value === '') {
@@ -1438,8 +3497,8 @@
         }
 
         // 시간 루틴 업데이트
-        async function updateRoutineTime(routineId) {
-            const input = event.target.parentElement.querySelector('.time-input');
+        async function updateRoutineTime(routineId, button) {
+            const input = button.parentElement.querySelector('.time-input');
             const value = input.value;
             
             if (!value || value === '') {
@@ -1482,11 +3541,6 @@
                 // UI 업데이트
                 loadHomeRoutines();
                 
-                // 성공 애니메이션 효과
-                const targetElement = event.target;
-                if (targetElement.classList.contains('yes-btn') || targetElement.classList.contains('no-btn')) {
-                    triggerAnimation(targetElement, 'bounce');
-                }
             } catch (error) {
                 console.error('루틴 업데이트 오류:', error);
                 showNotification('루틴 업데이트에 실패했습니다.', 'error');
@@ -1668,8 +3722,6 @@
             }
         }
 
-        // 나머지 기존 함수들... (가족 페이지, 관리 페이지, 로그인 등)
-        
         // 가족 페이지 정보 로드
         async function loadFamilyPageInfo() {
             console.log('👨‍👩‍👧‍👦 가족 페이지 정보 로드');
@@ -1788,7 +3840,7 @@
                 await navigator.clipboard.writeText(familyCode);
                 showNotification(`🎉 가족 코드 "${familyCode}"가 클립보드에 복사되었습니다!`);
                 
-                const copyBtn = document.querySelector('.copy-btn');
+                const copyBtn = document.getElementById('copyFamilyCodeBtn');
                 if (copyBtn) {
                     const originalText = copyBtn.textContent;
                     copyBtn.textContent = '✅ 복사됨!';
@@ -2135,12 +4187,13 @@
             }, 300);
         }
 
-        window.onclick = function(event) {
+        // 모달 외부 클릭 시 닫기
+        window.addEventListener('click', function(event) {
             const modal = document.getElementById('addRoutineModal');
             if (event.target === modal) {
                 closeModal();
             }
-        }
+        });
 
         // 로그아웃
         async function logout() {
@@ -2297,15 +4350,6 @@
             debugLog('🔄 실시간 리스너 시작', 'info');
         }
 
-        // 버튼 클릭 이벤트에 리플 효과 추가
-        document.addEventListener('DOMContentLoaded', function() {
-            document.addEventListener('click', function(e) {
-                if (e.target.matches('.btn') || e.target.matches('.yes-btn') || e.target.matches('.no-btn')) {
-                    addRippleEffect(e.target, e);
-                }
-            });
-        });
-
         // DOM 로드 완료 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
             debugLog('📄 DOM 로드 완료', 'success');
@@ -2314,11 +4358,8 @@
             updateCurrentDate();
             updateDailyQuote();
             
-            // 터치 지원을 약간 지연 후 추가 (DOM 렌더링 완료 대기)
-            setTimeout(() => {
-                addTouchSupport();
-                debugLog('📱 터치 이벤트 활성화', 'info');
-            }, 500);
+            // 터치 이벤트를 먼저 초기화
+            initializeTouchEvents();
             
             setTimeout(() => {
                 if (typeof firebase !== 'undefined') {
