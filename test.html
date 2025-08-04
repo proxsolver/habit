@@ -1685,213 +1685,6 @@
             font-style: italic;
         }
 
-        /* 디버그 콘솔 */
-        .debug-console {
-            position: fixed;
-            top: 10%;
-            left: 5%;
-            right: 5%;
-            bottom: 20%;
-            background: rgba(0, 0, 0, 0.9);
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            border-radius: var(--radius);
-            padding: 1rem;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .debug-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #333;
-        }
-
-        .debug-close {
-            background: none;
-            border: none;
-            color: #ff6b6b;
-            font-size: 1.5rem;
-            cursor: pointer;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-        }
-
-        .debug-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0.5rem 0;
-        }
-
-        .debug-entry {
-            margin-bottom: 0.5rem;
-            word-break: break-all;
-        }
-
-        .debug-time {
-            color: #666;
-            font-size: 10px;
-        }
-
-        .debug-entry.debug-error { color: #ff6b6b; }
-        .debug-entry.debug-warning { color: #feca57; }
-        .debug-entry.debug-success { color: #48cae4; }
-        .debug-entry.debug-info { color: #00ff00; }
-
-        .debug-clear {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-        }
-
-        .debug-toggle {
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            width: 4rem;
-            height: 4rem;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            border: 3px solid white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            z-index: 9999;
-            transition: all 0.3s;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-            animation: pulse 2s infinite;
-        }
-
-        .debug-toggle:hover {
-            background: linear-gradient(135deg, #ee5a24, #ff6b6b);
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-        }
-
-        .debug-toggle:active {
-            transform: scale(0.95);
-        }
-
-        .status-indicator {
-            position: fixed;
-            bottom: 8rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 2rem;
-            font-size: 0.875rem;
-            z-index: 9998;
-            animation: fadeInUp 0.3s ease-out;
-        }
-
-        /* 숫자 휠 피커 스타일 */
-        .number-wheel-container {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            background: white;
-            border: 2px solid var(--gray-200);
-            border-radius: var(--radius);
-            padding: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .number-wheel-container:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .number-wheel {
-            width: 3rem;
-            height: 4rem;
-            overflow: hidden;
-            position: relative;
-            background: var(--gray-50);
-            border-radius: 0.5rem;
-            border: 1px solid var(--gray-200);
-        }
-
-        .number-wheel-scroll {
-            height: 100%;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        .number-wheel-scroll::-webkit-scrollbar {
-            display: none;
-        }
-
-        .number-option {
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.125rem;
-            font-weight: 600;
-            scroll-snap-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--gray-500);
-        }
-
-        .number-option.active {
-            color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
-            transform: scale(1.1);
-        }
-
-        .number-option:hover {
-            background: var(--gray-100);
-            color: var(--text-primary);
-        }
-
-        .wheel-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-align: center;
-            margin-top: 0.25rem;
-            font-weight: 600;
-        }
-
-        .wheel-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .number-display {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 0 1rem;
-            min-width: 3rem;
-            text-align: center;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
         /* 완료된 루틴 스타일 */
         .routine-item.completed {
             opacity: 0.7;
@@ -1907,279 +1700,6 @@
 
         .routine-item:not(.completed) {
             order: 0;
-        }
-
-        /* 가족 구성원 상세 정보 모달 */
-        .member-detail-modal {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-        }
-
-        .member-detail-content {
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .member-detail-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--gray-100);
-        }
-
-        .member-avatar {
-            width: 4rem;
-            height: 4rem;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-            font-weight: 800;
-        }
-
-        .member-detail-info {
-            flex: 1;
-        }
-
-        .member-detail-name {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .member-detail-role {
-            font-size: 0.875rem;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .member-progress-ring {
-            width: 4rem;
-            height: 4rem;
-            position: relative;
-        }
-
-        .progress-ring {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring-bg {
-            fill: none;
-            stroke: var(--gray-200);
-            stroke-width: 4;
-        }
-
-        .progress-ring-fill {
-            fill: none;
-            stroke: var(--primary);
-            stroke-width: 4;
-            stroke-linecap: round;
-            transition: stroke-dasharray 0.5s ease;
-        }
-
-        .progress-ring-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.875rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .member-routines-today {
-            margin-top: 1.5rem;
-        }
-
-        .member-routines-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .routine-result-item {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            transition: all 0.3s;
-        }
-
-        .routine-result-item:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
-        }
-
-        .routine-result-item.completed {
-            border-color: var(--success);
-            background: rgba(16, 185, 129, 0.05);
-        }
-
-        .routine-result-item.skipped {
-            border-color: var(--error);
-            background: rgba(239, 68, 68, 0.05);
-        }
-
-        .routine-result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .routine-result-name {
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .routine-result-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .routine-result-status.completed {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .routine-result-status.skipped {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-        }
-
-        .routine-result-status.pending {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .routine-result-value {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .routine-result-time {
-            font-size: 0.75rem;
-            color: var(--gray-400);
-            margin-top: 0.5rem;
-        }
-
-        .member-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .member-stat {
-            text-align: center;
-            padding: 1rem;
-            background: var(--gray-50);
-            border-radius: var(--radius);
-        }
-
-        .member-stat-number {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin-bottom: 0.25rem;
-        }
-
-        .member-stat-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        /* 가족 구성원 카드 개선 */
-        .member-card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .member-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
-            transition: left 0.5s;
-        }
-
-        .member-card:hover::before {
-            left: 100%;
-        }
-
-        .member-card-actions {
-            margin-top: 1rem;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .member-detail-btn {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            touch-action: manipulation;
-            -webkit-touch-callout: none;
-        }
-
-        .member-detail-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .member-detail-btn:active {
-            transform: scale(0.98);
-        }
-
-        .member-progress-summary {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--gray-200);
-        }
-
-        .progress-text {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .progress-percentage {
-            font-size: 1.125rem;
-            font-weight: 800;
-            color: var(--primary);
         }
 
         .hidden {
@@ -2330,21 +1850,6 @@
             .heatmap-day {
                 font-size: 0.7rem;
             }
-
-            .debug-toggle {
-                top: 1rem;
-                left: 0.5rem;
-                width: 2.5rem;
-                height: 2.5rem;
-                font-size: 1.25rem;
-            }
-
-            .debug-console {
-                top: 5%;
-                left: 2%;
-                right: 2%;
-                bottom: 15%;
-            }
         }
 
         /* 다크 모드 준비 */
@@ -2356,9 +1861,7 @@
         @media print {
             .bottom-nav,
             .logout-btn,
-            .add-routine-btn,
-            .debug-toggle,
-            .debug-console {
+            .add-routine-btn {
                 display: none;
             }
         }
@@ -2384,10 +1887,7 @@
             .copy-btn,
             .logout-btn,
             .close-btn,
-            .btn-text,
-            .debug-toggle,
-            .debug-close,
-            .debug-clear {
+            .btn-text {
                 min-height: 44px;
             }
         }
@@ -2655,7 +2155,6 @@
         <div id="addRoutineModal" class="modal">
             <div class="modal-content">
                 <button class="close-btn" id="closeModalBtn">&times;</button>
-                <div class="modal-mode-indicator" id="modalModeIndicator">추가</div>
                 <div class="modal-header" id="modalHeader">✨ 새 루틴 추가</div>
                 
                 <div class="form-group">
@@ -2690,15 +2189,9 @@
                     </select>
                 </div>
 
-                <div class="btn-group" id="addBtnGroup">
+                <div class="btn-group">
                     <button class="btn btn-cancel" id="cancelModalBtn">취소</button>
                     <button class="btn" id="confirmAddRoutineBtn">추가</button>
-                </div>
-
-                <div class="edit-btn-group hidden" id="editBtnGroup">
-                    <button class="btn btn-cancel" id="cancelEditBtn">취소</button>
-                    <button class="delete-btn" id="deleteRoutineBtn">삭제</button>
-                    <button class="btn" id="confirmEditRoutineBtn">수정</button>
                 </div>
             </div>
         </div>
@@ -2713,75 +2206,6 @@
                     <button class="btn celebration-btn" id="closeAchievementBtn">계속하기</button>
                 </div>
             </div>
-        </div>
-
-        <!-- 가족 구성원 상세 모달 -->
-        <div id="memberDetailModal" class="modal member-detail-modal">
-            <div class="modal-content member-detail-content">
-                <button class="close-btn" id="closeMemberDetailBtn">&times;</button>
-                
-                <div class="member-detail-header">
-                    <div class="member-avatar" id="memberDetailAvatar">👤</div>
-                    <div class="member-detail-info">
-                        <div class="member-detail-name" id="memberDetailName">구성원</div>
-                        <div class="member-detail-role" id="memberDetailRole">역할</div>
-                    </div>
-                    <div class="member-progress-ring">
-                        <svg class="progress-ring" width="64" height="64">
-                            <circle class="progress-ring-bg" cx="32" cy="32" r="28"></circle>
-                            <circle class="progress-ring-fill" cx="32" cy="32" r="28" 
-                                    id="memberProgressRing" 
-                                    stroke-dasharray="0 176"
-                                    stroke-dashoffset="0"></circle>
-                        </svg>
-                        <div class="progress-ring-text" id="memberProgressText">0%</div>
-                    </div>
-                </div>
-
-                <div class="member-stats">
-                    <div class="member-stat">
-                        <div class="member-stat-number" id="memberTotalRoutines">0</div>
-                        <div class="member-stat-label">총 루틴</div>
-                    </div>
-                    <div class="member-stat">
-                        <div class="member-stat-number" id="memberCompletedRoutines">0</div>
-                        <div class="member-stat-label">완료됨</div>
-                    </div>
-                    <div class="member-stat">
-                        <div class="member-stat-number" id="memberPendingRoutines">0</div>
-                        <div class="member-stat-label">대기중</div>
-                    </div>
-                </div>
-
-                <div class="member-routines-today">
-                    <div class="member-routines-title">
-                        📅 오늘의 루틴 현황
-                    </div>
-                    <div id="memberRoutinesList">
-                        <!-- 구성원의 오늘 루틴 결과들이 여기에 표시됩니다 -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 디버그 콘솔 (아이패드용) -->
-        <div id="debugConsole" class="debug-console hidden">
-            <div class="debug-header">
-                <span>🐛 디버그 로그</span>
-                <button class="debug-close" id="debugCloseBtn">×</button>
-            </div>
-            <div id="debugMessages" class="debug-messages"></div>
-            <button class="debug-clear" id="debugClearBtn">로그 지우기</button>
-        </div>
-
-        <!-- 디버그 토글 버튼 -->
-        <div id="debugToggle" class="debug-toggle">
-            🐛
-        </div>
-
-        <!-- 간단한 상태 표시기 -->
-        <div id="statusIndicator" class="status-indicator hidden">
-            <div id="statusText">상태 확인 중...</div>
         </div>
     </div>
 
@@ -2817,372 +2241,6 @@
             weeklyScore: 0,
             completionRate: 0
         };
-        let debugEnabled = false;
-        
-        // 새로 추가된 전역 변수들
-        let useScrollNumberInput = true; // true: 스크롤 방식, false: 타이핑 방식
-        let currentEditingRoutine = null; // 현재 수정 중인 루틴 정보
-        let modalMode = 'add'; // 'add' 또는 'edit'
-
-        // 디버그 로깅 함수
-        function debugLog(message, type = 'info') {
-            console.log(message);
-            
-            if (debugEnabled) {
-                const debugMessages = document.getElementById('debugMessages');
-                if (debugMessages) {
-                    const timestamp = new Date().toLocaleTimeString();
-                    const logEntry = document.createElement('div');
-                    logEntry.className = `debug-entry debug-${type}`;
-                    logEntry.innerHTML = `<span class="debug-time">${timestamp}</span> ${message}`;
-                    
-                    debugMessages.appendChild(logEntry);
-                    debugMessages.scrollTop = debugMessages.scrollHeight;
-                    
-                    // 최대 100개 메시지만 유지
-                    if (debugMessages.children.length > 100) {
-                        debugMessages.removeChild(debugMessages.firstChild);
-                    }
-                }
-            }
-        }
-
-        // 디버그 콘솔 토글
-        function toggleDebugConsole() {
-            debugLog('🔄 디버그 콘솔 토글 시도', 'info');
-            
-            const debugConsole = document.getElementById('debugConsole');
-            const debugToggle = document.getElementById('debugToggle');
-            
-            if (!debugConsole || !debugToggle) {
-                debugLog('❌ 디버그 요소를 찾을 수 없습니다', 'error');
-                return;
-            }
-            
-            if (debugConsole.classList.contains('hidden')) {
-                debugConsole.classList.remove('hidden');
-                debugToggle.style.display = 'none';
-                debugEnabled = true;
-                debugLog('🐛 디버그 모드 활성화', 'success');
-                showStatus('디버그 모드 ON', 2000);
-            } else {
-                debugConsole.classList.add('hidden');
-                debugToggle.style.display = 'block';
-                debugEnabled = false;
-                debugLog('🐛 디버그 모드 비활성화', 'info');
-                showStatus('디버그 모드 OFF', 2000);
-            }
-        }
-
-        // 디버그 로그 지우기
-        function clearDebugLog() {
-            const debugMessages = document.getElementById('debugMessages');
-            if (debugMessages) {
-                debugMessages.innerHTML = '';
-            }
-            debugLog('🧹 로그 지워짐', 'info');
-        }
-
-        // 상태 표시
-        function showStatus(message, duration = 3000) {
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            
-            if (statusIndicator && statusText) {
-                statusText.textContent = message;
-                statusIndicator.classList.remove('hidden');
-                
-                setTimeout(() => {
-                    statusIndicator.classList.add('hidden');
-                }, duration);
-            }
-        }
-
-        // 터치 이벤트 처리 함수
-        function addTouchEventListener(element, callback, useCapture = false) {
-            if (!element) {
-                debugLog('❌ 터치 이벤트 추가 실패: 요소가 없음', 'error');
-                return;
-            }
-
-            const elementInfo = element.id || element.className || element.tagName;
-            debugLog('📱 터치 이벤트 추가: ' + elementInfo, 'info');
-
-            // 터치 이벤트 추가
-            element.addEventListener('touchstart', function(e) {
-                debugLog('👆 터치 시작: ' + elementInfo, 'info');
-                e.preventDefault();
-                this.style.transform = 'scale(0.98)';
-            }, { passive: false, capture: useCapture });
-
-            element.addEventListener('touchend', function(e) {
-                debugLog('👆 터치 완료: ' + elementInfo, 'info');
-                e.preventDefault();
-                e.stopPropagation();
-                this.style.transform = '';
-                debugLog('🚀 콜백 실행: ' + elementInfo, 'info');
-                callback.call(this, e);
-            }, { passive: false, capture: useCapture });
-
-            // 마우스 이벤트도 추가 (데스크톱 지원)
-            element.addEventListener('click', function(e) {
-                debugLog('🖱️ 마우스 클릭: ' + elementInfo, 'info');
-                e.preventDefault();
-                e.stopPropagation();
-                debugLog('🚀 콜백 실행 (마우스): ' + elementInfo, 'info');
-                callback.call(this, e);
-            }, { capture: useCapture });
-        }
-
-        // 숫자 휠 피커 생성
-        function createNumberWheel(maxValue = 999, initialValue = 0) {
-            const container = document.createElement('div');
-            container.className = 'number-wheel-container';
-            
-            const hundreds = Math.floor(initialValue / 100);
-            const tens = Math.floor((initialValue % 100) / 10);
-            const ones = initialValue % 10;
-            
-            const maxHundreds = Math.floor(maxValue / 100);
-            
-            // 숫자 표시
-            const display = document.createElement('div');
-            display.className = 'number-display';
-            display.textContent = initialValue.toString().padStart(3, '0');
-            
-            // 100의 자리 휠
-            const hundredsWheel = createSingleWheel(0, maxHundreds, hundreds, '백');
-            const tensWheel = createSingleWheel(0, 9, tens, '십');
-            const onesWheel = createSingleWheel(0, 9, ones, '일');
-            
-            // 값 변경 이벤트
-            function updateValue() {
-                const h = parseInt(hundredsWheel.querySelector('.number-wheel-scroll').dataset.value || '0');
-                const t = parseInt(tensWheel.querySelector('.number-wheel-scroll').dataset.value || '0');
-                const o = parseInt(onesWheel.querySelector('.number-wheel-scroll').dataset.value || '0');
-                const total = h * 100 + t * 10 + o;
-                
-                display.textContent = total.toString().padStart(3, '0');
-                container.dataset.value = total;
-                
-                // 커스텀 이벤트 발생
-                container.dispatchEvent(new CustomEvent('valuechange', { detail: { value: total } }));
-            }
-            
-            [hundredsWheel, tensWheel, onesWheel].forEach(wheel => {
-                const scroll = wheel.querySelector('.number-wheel-scroll');
-                scroll.addEventListener('scroll', () => {
-                    debounce(() => {
-                        const scrollTop = scroll.scrollTop;
-                        const itemHeight = 32; // 2rem
-                        const index = Math.round(scrollTop / itemHeight);
-                        const maxIndex = scroll.children.length - 1;
-                        const clampedIndex = Math.max(0, Math.min(index, maxIndex));
-                        
-                        // 정확한 위치로 스냅
-                        scroll.scrollTop = clampedIndex * itemHeight;
-                        scroll.dataset.value = clampedIndex;
-                        
-                        // 활성 상태 업데이트
-                        Array.from(scroll.children).forEach((option, i) => {
-                            option.classList.toggle('active', i === clampedIndex);
-                        });
-                        
-                        updateValue();
-                    }, 100)();
-                });
-            });
-            
-            container.appendChild(hundredsWheel);
-            container.appendChild(display);
-            container.appendChild(tensWheel);
-            container.appendChild(onesWheel);
-            
-            // 초기값 설정
-            container.dataset.value = initialValue;
-            
-            // getValue 메서드 추가
-            container.getValue = () => parseInt(container.dataset.value || '0');
-            
-            return container;
-        }
-        
-        function createSingleWheel(min, max, initialValue, label) {
-            const wheelGroup = document.createElement('div');
-            wheelGroup.className = 'wheel-group';
-            
-            const wheel = document.createElement('div');
-            wheel.className = 'number-wheel';
-            
-            const scroll = document.createElement('div');
-            scroll.className = 'number-wheel-scroll';
-            scroll.dataset.value = initialValue;
-            
-            // 옵션들 생성
-            for (let i = min; i <= max; i++) {
-                const option = document.createElement('div');
-                option.className = 'number-option';
-                if (i === initialValue) option.classList.add('active');
-                option.textContent = i;
-                
-                // 터치 이벤트 추가
-                addTouchEventListener(option, function() {
-                    const index = Array.from(scroll.children).indexOf(this);
-                    scroll.scrollTop = index * 32;
-                });
-                
-                scroll.appendChild(option);
-            }
-            
-            // 초기 스크롤 위치 설정
-            setTimeout(() => {
-                scroll.scrollTop = initialValue * 32;
-            }, 100);
-            
-            wheel.appendChild(scroll);
-            
-            const labelEl = document.createElement('div');
-            labelEl.className = 'wheel-label';
-            labelEl.textContent = label;
-            
-            wheelGroup.appendChild(wheel);
-            wheelGroup.appendChild(labelEl);
-            
-            return wheelGroup;
-        }
-        
-        // 디바운스 함수
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-        function initializeTouchEvents() {
-            debugLog('📱 터치 이벤트 초기화 시작', 'info');
-
-            // 역할 선택 버튼들
-            const roleButtons = document.querySelectorAll('.role-btn');
-            debugLog('👥 역할 버튼 개수: ' + roleButtons.length, 'info');
-            roleButtons.forEach(btn => {
-                addTouchEventListener(btn, function(e) {
-                    const role = this.getAttribute('data-role');
-                    debugLog('👥 역할 선택됨: ' + role, 'info');
-                    selectRole(role);
-                });
-            });
-
-            // Google 로그인 버튼 - 특별히 주의깊게 처리
-            const googleBtn = document.getElementById('googleSignInBtn');
-            if (googleBtn) {
-                debugLog('✅ Google 로그인 버튼 발견됨', 'success');
-                debugLog('🔍 버튼 상태 - disabled: ' + googleBtn.disabled + ', style: ' + googleBtn.style.display, 'info');
-                
-                addTouchEventListener(googleBtn, function(e) {
-                    debugLog('🔑 Google 로그인 버튼 클릭됨!', 'success');
-                    signInWithGoogle();
-                });
-                
-                debugLog('✅ Google 로그인 터치 이벤트 추가 완료', 'success');
-            } else {
-                debugLog('❌ Google 로그인 버튼을 찾을 수 없습니다!', 'error');
-            }
-
-            // 이메일 로그인 토글
-            const toggleEmailBtn = document.getElementById('toggleEmailLogin');
-            if (toggleEmailBtn) {
-                debugLog('✅ 이메일 토글 버튼 발견됨', 'info');
-                addTouchEventListener(toggleEmailBtn, toggleEmailLogin);
-            } else {
-                debugLog('❌ 이메일 토글 버튼을 찾을 수 없습니다', 'error');
-            }
-
-            // 로그인/회원가입 버튼
-            const loginBtn = document.getElementById('loginBtn');
-            const registerBtn = document.getElementById('registerBtn');
-            if (loginBtn) {
-                addTouchEventListener(loginBtn, () => handleAuth('login'));
-                debugLog('✅ 이메일 로그인 버튼 이벤트 추가', 'info');
-            }
-            if (registerBtn) {
-                addTouchEventListener(registerBtn, () => handleAuth('register'));
-                debugLog('✅ 회원가입 버튼 이벤트 추가', 'info');
-            }
-
-            // 로그아웃 버튼
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                addTouchEventListener(logoutBtn, logout);
-                debugLog('✅ 로그아웃 버튼 이벤트 추가', 'info');
-            }
-
-            // 네비게이션 버튼들
-            const navItems = document.querySelectorAll('.nav-item');
-            debugLog('🧭 네비게이션 버튼 개수: ' + navItems.length, 'info');
-            navItems.forEach(navItem => {
-                addTouchEventListener(navItem, function(e) {
-                    const page = this.getAttribute('data-page');
-                    debugLog('🧭 네비게이션 클릭: ' + page, 'info');
-                    showPage(page);
-                });
-            });
-
-            // 루틴 추가 버튼
-            const addRoutineBtn = document.getElementById('addRoutineBtn');
-            if (addRoutineBtn) {
-                addTouchEventListener(addRoutineBtn, openAddRoutineModal);
-                debugLog('✅ 루틴 추가 버튼 이벤트 추가', 'info');
-            }
-
-            // 모달 관련 버튼들
-            const closeModalBtn = document.getElementById('closeModalBtn');
-            const cancelModalBtn = document.getElementById('cancelModalBtn');
-            const confirmAddRoutineBtn = document.getElementById('confirmAddRoutineBtn');
-            const closeAchievementBtn = document.getElementById('closeAchievementBtn');
-            const closeMemberDetailBtn = document.getElementById('closeMemberDetailBtn');
-            
-            // 수정 모달용 버튼들 추가
-            const cancelEditBtn = document.getElementById('cancelEditBtn');
-            const deleteRoutineBtn = document.getElementById('deleteRoutineBtn');
-            const confirmEditRoutineBtn = document.getElementById('confirmEditRoutineBtn');
-
-            if (closeModalBtn) addTouchEventListener(closeModalBtn, closeModal);
-            if (cancelModalBtn) addTouchEventListener(cancelModalBtn, closeModal);
-            if (confirmAddRoutineBtn) addTouchEventListener(confirmAddRoutineBtn, addRoutine);
-            if (closeAchievementBtn) addTouchEventListener(closeAchievementBtn, closeAchievementModal);
-            if (closeMemberDetailBtn) addTouchEventListener(closeMemberDetailBtn, closeMemberDetail);
-            
-            // 수정 모달 이벤트
-            if (cancelEditBtn) addTouchEventListener(cancelEditBtn, closeModal);
-            if (deleteRoutineBtn) addTouchEventListener(deleteRoutineBtn, deleteRoutine);
-            if (confirmEditRoutineBtn) addTouchEventListener(confirmEditRoutineBtn, editRoutine);
-
-            // 가족 코드 복사 버튼
-            const copyFamilyCodeBtn = document.getElementById('copyFamilyCodeBtn');
-            if (copyFamilyCodeBtn) {
-                addTouchEventListener(copyFamilyCodeBtn, copyFamilyCode);
-                debugLog('✅ 가족 코드 복사 버튼 이벤트 추가', 'info');
-            }
-
-            // 디버그 버튼들
-            const debugToggle = document.getElementById('debugToggle');
-            const debugCloseBtn = document.getElementById('debugCloseBtn');
-            const debugClearBtn = document.getElementById('debugClearBtn');
-
-            if (debugToggle) {
-                addTouchEventListener(debugToggle, toggleDebugConsole);
-                debugLog('✅ 디버그 토글 버튼 이벤트 추가', 'info');
-            }
-            if (debugCloseBtn) addTouchEventListener(debugCloseBtn, toggleDebugConsole);
-            if (debugClearBtn) addTouchEventListener(debugClearBtn, clearDebugLog);
-
-            debugLog('✅ 터치 이벤트 초기화 완료', 'success');
-        }
 
         // 기본 명언들
         const quotes = [
@@ -3201,273 +2259,41 @@
         // Firebase 초기화
         function initializeFirebase() {
             try {
-                debugLog('🔥 Firebase 초기화 시작...', 'info');
-                showStatus('Firebase 연결 중...', 2000);
-                
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
                 
-                debugLog('✅ Firebase 초기화 성공!', 'success');
-                showStatus('Firebase 연결 완료!', 2000);
-                
                 // 인증 상태 변경 감지
                 auth.onAuthStateChanged(async (user) => {
-                    debugLog('🔄 인증 상태 변경 감지됨!', 'info');
-                    debugLog('👤 사용자 정보: ' + (user ? user.email : '로그아웃됨'), 'info');
-                    
                     if (user) {
-                        debugLog('✅ 사용자 로그인 확인됨', 'success');
-                        debugLog('📧 이메일: ' + user.email, 'info');
-                        debugLog('🆔 UID: ' + user.uid, 'info');
-                        debugLog('🔍 인증 제공자: ' + (user.providerData[0]?.providerId || '알 수 없음'), 'info');
-                        
                         currentUser = user;
-                        showStatus('사용자 정보 로드 중...', 3000);
-                        
-                        try {
-                            debugLog('👤 사용자 프로필 로드 시작...', 'info');
-                            await loadUserProfile();
-                            debugLog('✅ 프로필 로드 완료, 메인 앱으로 전환', 'success');
-                            showMainApp();
-                            startRealtimeListeners();
-                        } catch (error) {
-                            debugLog('❌ 프로필 로드 실패: ' + error.message, 'error');
-                            debugLog('🔍 오류 상세: ' + JSON.stringify(error), 'error');
-                            // 프로필 로드 실패 시에도 메인 앱으로 전환 (새 사용자일 수 있음)
-                            debugLog('🆕 새 사용자로 처리 시작...', 'info');
-                            showStatus('새 사용자로 프로필 생성 중...', 2000);
-                            await handleNewUser(user);
-                        }
+                        await loadUserProfile();
+                        showMainApp();
+                        startRealtimeListeners();
                     } else {
                         currentUser = null;
-                        debugLog('👋 사용자 로그아웃됨', 'info');
                         showLoginPage();
                     }
                 });
                 
-                // 리디렉션 결과 처리 (페이지 로드 시)
+                // 리디렉션 결과 처리
                 handleRedirectResult();
                 
                 return true;
             } catch (error) {
-                debugLog('❌ Firebase 초기화 실패: ' + error.message, 'error');
-                showStatus('Firebase 연결 실패: ' + error.message, 5000);
+                console.error('❌ Firebase 초기화 실패:', error);
+                showNotification('Firebase 연결 실패: ' + error.message, 'error');
                 return false;
             }
         }
 
-        // 애니메이션 트리거 함수들
-        function triggerAnimation(element, animationClass) {
-            element.classList.add(animationClass);
-            setTimeout(() => {
-                element.classList.remove(animationClass);
-            }, 600);
-        }
-
-        function addRippleEffect(button, event) {
-            const ripple = document.createElement('span');
-            const rect = button.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = event.clientX - rect.left - size / 2;
-            const y = event.clientY - rect.top - size / 2;
-            
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-            ripple.classList.add('ripple');
-            
-            button.appendChild(ripple);
-            
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
-        }
-
-        // 역할 선택
-        function selectRole(role) {
-            userRole = role;
-            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-role="${role}"]`).classList.add('active');
-            
-            const familyCodeInput = document.getElementById('familyCodeInput');
-            if (role === 'child') {
-                familyCodeInput.style.display = 'block';
-                familyCodeInput.style.animation = 'fadeInUp 0.3s ease-out';
-            } else {
-                familyCodeInput.style.display = 'none';
-            }
-        }
-
-        // Google 로그인 (개선된 버전)
-        async function signInWithGoogle() {
-            debugLog('🔑 Google 로그인 함수 호출됨', 'info');
-            
-            const familyCode = document.getElementById('familyCode').value;
-            debugLog('👶 가족 코드 확인: ' + (familyCode || '없음'), 'info');
-            debugLog('👤 현재 역할: ' + userRole, 'info');
-            
-            if (userRole === 'child' && !familyCode) {
-                showNotification('자녀는 가족 코드를 먼저 입력해주세요.', 'error');
-                debugLog('❌ 자녀 로그인 시 가족 코드 누락', 'error');
-                return;
-            }
-
-            if (!auth) {
-                showNotification('Firebase가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
-                debugLog('❌ Firebase Auth가 초기화되지 않음', 'error');
-                return;
-            }
-
-            setLoading(true, 'google');
-            debugLog('🔑 Google 로그인 시작...', 'info');
-            debugLog('🌐 현재 도메인: ' + window.location.hostname, 'info');
-            debugLog('🔗 현재 URL: ' + window.location.href, 'info');
-            showStatus('Google 로그인 중...', 3000);
-            
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.addScope('email');
-                provider.addScope('profile');
-                debugLog('🔧 Google Auth Provider 생성 완료', 'info');
-                
-                let result;
-                
-                // iOS Safari나 팝업이 차단된 경우를 위한 리디렉션 방식 시도
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                
-                debugLog('📱 디바이스 감지 - 모바일: ' + isMobile + ', iOS: ' + isIOS, 'info');
-                debugLog('🌐 User Agent: ' + navigator.userAgent, 'info');
-                
-                // 디버그를 위해 우선 팝업 방식만 시도
-                debugLog('💻 팝업 방식으로 로그인 시도', 'info');
-                
-                try {
-                    debugLog('📝 signInWithPopup 호출 직전', 'info');
-                    result = await auth.signInWithPopup(provider);
-                    debugLog('✅ signInWithPopup 성공!', 'success');
-                    debugLog('👤 로그인 사용자: ' + result.user.email, 'info');
-                } catch (popupError) {
-                    debugLog('⚠️ 팝업 로그인 실패: ' + popupError.message, 'warning');
-                    debugLog('🔍 팝업 오류 코드: ' + popupError.code, 'warning');
-                    
-                    if (popupError.code === 'auth/popup-blocked' || 
-                        popupError.code === 'auth/popup-closed-by-user' ||
-                        popupError.code === 'auth/cancelled-popup-request') {
-                        
-                        debugLog('🔄 리디렉션 방식으로 전환', 'info');
-                        // 팝업이 차단되면 리디렉션 방식으로 전환
-                        if (familyCode) {
-                            sessionStorage.setItem('tempFamilyCode', familyCode);
-                            sessionStorage.setItem('tempUserRole', userRole);
-                            debugLog('💾 임시 데이터 저장 완료', 'info');
-                        }
-                        
-                        showNotification('팝업이 차단되어 페이지 이동 방식으로 로그인합니다.', 'warning');
-                        debugLog('🚀 signInWithRedirect 호출', 'info');
-                        await auth.signInWithRedirect(provider);
-                        return;
-                    } else {
-                        throw popupError;
-                    }
-                }
-                
-                if (result && result.user) {
-                    debugLog('🎉 로그인 결과 확인됨', 'success');
-                    await handleGoogleSignInSuccess(result.user, familyCode);
-                } else {
-                    debugLog('❌ 로그인 결과가 없음', 'error');
-                }
-                
-            } catch (error) {
-                debugLog('❌ Google 로그인 오류: ' + error.message, 'error');
-                debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'error');
-                debugLog('🔍 전체 오류 객체: ' + JSON.stringify(error), 'error');
-                
-                // Firebase Console 설정 가이드
-                if (error.code === 'auth/unauthorized-domain') {
-                    debugLog('🚨 도메인 승인 필요! Firebase Console → Authentication → Settings → Authorized domains에 ' + window.location.hostname + ' 추가', 'error');
-                    showNotification('❌ 도메인이 승인되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.', 'error');
-                    showStatus('도메인 승인 필요', 5000);
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    debugLog('🚨 Google 로그인이 비활성화됨! Firebase Console → Authentication → Sign-in method에서 Google 활성화', 'error');
-                    showNotification('❌ Google 로그인이 비활성화되어 있습니다. Firebase Console에서 활성화해주세요.', 'error');
-                    showStatus('Google 로그인 비활성화', 5000);
-                } else if (error.code === 'auth/popup-closed-by-user') {
-                    showNotification('로그인이 취소되었습니다.', 'error');
-                    showStatus('로그인 취소됨', 2000);
-                } else if (error.code === 'auth/popup-blocked') {
-                    showNotification('팝업이 차단되었습니다. 팝업을 허용하거나 다시 시도해주세요.', 'error');
-                    showStatus('팝업 차단됨', 3000);
-                } else if (error.code === 'auth/network-request-failed') {
-                    showNotification('네트워크 연결을 확인해주세요.', 'error');
-                    showStatus('네트워크 오류', 3000);
-                } else if (error.code === 'permission-denied') {
-                    showNotification('⚠️ Firebase 권한 설정을 확인해주세요.', 'error');
-                    showStatus('권한 오류', 3000);
-                } else {
-                    showNotification('Google 로그인에 실패했습니다: ' + error.message, 'error');
-                    showStatus('로그인 실패: ' + error.message, 5000);
-                }
-            } finally {
-                debugLog('🔄 로그인 시도 완료, 로딩 해제', 'info');
-                setLoading(false, 'google');
-            }
-        }
-
-        // Google 로그인 성공 처리
-        async function handleGoogleSignInSuccess(user, familyCode) {
-            debugLog('✅ Google 로그인 성공 처리 시작', 'success');
-            debugLog('👤 사용자 이메일: ' + user.email, 'info');
-            debugLog('🆔 사용자 UID: ' + user.uid, 'info');
-            debugLog('👶 가족 코드: ' + (familyCode || '없음'), 'info');
-            
-            showStatus('로그인 성공! 프로필 확인 중...', 2000);
-            
-            try {
-                debugLog('🔍 기존 사용자 확인 중...', 'info');
-                // 기존 사용자인지 확인
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    debugLog('🆕 새 사용자 감지 - 프로필 생성 시작', 'info');
-                    await createUserProfileFromGoogle(user, familyCode);
-                    showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
-                    showStatus('회원가입 완료!', 2000);
-                } else {
-                    debugLog('👤 기존 사용자 확인됨 - 로그인 완료', 'success');
-                    const userData = userDoc.data();
-                    debugLog('📋 기존 사용자 데이터: 역할=' + userData.role + ', 가족ID=' + userData.familyId, 'info');
-                    showNotification('Google 계정으로 로그인되었습니다! 👋');
-                    showStatus('로그인 완료!', 2000);
-                }
-                
-                debugLog('✅ Google 로그인 성공 처리 완료', 'success');
-                
-            } catch (permissionError) {
-                debugLog('⚠️ 권한 오류 발생: ' + permissionError.message, 'warning');
-                debugLog('🔍 오류 코드: ' + permissionError.code, 'warning');
-                
-                if (permissionError.code === 'permission-denied') {
-                    debugLog('⚠️ 권한 오류 - 새 사용자로 처리 시도', 'warning');
-                    await createUserProfileFromGoogle(user, familyCode);
-                    showNotification('새 계정이 생성되었습니다! 🎉');
-                    showStatus('계정 생성 완료!', 2000);
-                } else {
-                    debugLog('❌ 처리할 수 없는 오류, 다시 발생시킴', 'error');
-                    throw permissionError;
-                }
-            }
-        }
-
-        // 리디렉션 결과 처리 (페이지 로드 시 확인)
+        // 리디렉션 결과 처리
         async function handleRedirectResult() {
             try {
                 const result = await auth.getRedirectResult();
                 
                 if (result && result.user) {
-                    debugLog('🔄 리디렉션 로그인 결과 처리', 'info');
+                    console.log('🔄 리디렉션 로그인 결과 처리');
                     
                     // sessionStorage에서 임시 저장된 정보 복원
                     const tempFamilyCode = sessionStorage.getItem('tempFamilyCode');
@@ -3485,8 +2311,102 @@
                     await handleGoogleSignInSuccess(result.user, tempFamilyCode);
                 }
             } catch (error) {
-                debugLog('❌ 리디렉션 결과 처리 오류: ' + error.message, 'error');
+                console.error('❌ 리디렉션 결과 처리 오류:', error);
                 showNotification('로그인 처리 중 오류가 발생했습니다: ' + error.message, 'error');
+            }
+        }
+
+        // 역할 선택
+        function selectRole(role) {
+            userRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-role="${role}"]`).classList.add('active');
+            
+            const familyCodeInput = document.getElementById('familyCodeInput');
+            if (role === 'child') {
+                familyCodeInput.style.display = 'block';
+                familyCodeInput.style.animation = 'fadeInUp 0.3s ease-out';
+            } else {
+                familyCodeInput.style.display = 'none';
+            }
+        }
+
+        // Google 로그인
+        async function signInWithGoogle() {
+            const familyCode = document.getElementById('familyCode').value;
+            
+            if (userRole === 'child' && !familyCode) {
+                showNotification('자녀는 가족 코드를 먼저 입력해주세요.', 'error');
+                return;
+            }
+
+            if (!auth) {
+                showNotification('Firebase가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
+                return;
+            }
+
+            setLoading(true, 'google');
+            
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('email');
+                provider.addScope('profile');
+                
+                let result;
+                
+                try {
+                    result = await auth.signInWithPopup(provider);
+                } catch (popupError) {
+                    if (popupError.code === 'auth/popup-blocked' || 
+                        popupError.code === 'auth/popup-closed-by-user' ||
+                        popupError.code === 'auth/cancelled-popup-request') {
+                        
+                        // 팝업이 차단되면 리디렉션 방식으로 전환
+                        if (familyCode) {
+                            sessionStorage.setItem('tempFamilyCode', familyCode);
+                            sessionStorage.setItem('tempUserRole', userRole);
+                        }
+                        
+                        showNotification('팝업이 차단되어 페이지 이동 방식으로 로그인합니다.', 'warning');
+                        await auth.signInWithRedirect(provider);
+                        return;
+                    } else {
+                        throw popupError;
+                    }
+                }
+                
+                if (result && result.user) {
+                    await handleGoogleSignInSuccess(result.user, familyCode);
+                }
+                
+            } catch (error) {
+                console.error('❌ Google 로그인 오류:', error);
+                handleAuthError(error);
+            } finally {
+                setLoading(false, 'google');
+            }
+        }
+
+        // Google 로그인 성공 처리
+        async function handleGoogleSignInSuccess(user, familyCode) {
+            try {
+                // 기존 사용자인지 확인
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    await createUserProfileFromGoogle(user, familyCode);
+                    showNotification('Google 계정으로 성공적으로 가입되었습니다! 🎉');
+                } else {
+                    showNotification('Google 계정으로 로그인되었습니다! 👋');
+                }
+                
+            } catch (permissionError) {
+                if (permissionError.code === 'permission-denied') {
+                    await createUserProfileFromGoogle(user, familyCode);
+                    showNotification('새 계정이 생성되었습니다! 🎉');
+                } else {
+                    throw permissionError;
+                }
             }
         }
 
@@ -3557,43 +2477,26 @@
         }
 
         function showLoginPage() {
-            debugLog('🏠 로그인 페이지 표시', 'info');
             document.getElementById('loginPage').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
         }
 
         function showMainApp() {
-            debugLog('🚀 메인 앱 표시 시작', 'info');
+            const loginPage = document.getElementById('loginPage');
+            const mainApp = document.getElementById('mainApp');
             
-            try {
-                const loginPage = document.getElementById('loginPage');
-                const mainApp = document.getElementById('mainApp');
-                
-                if (!loginPage || !mainApp) {
-                    debugLog('❌ 페이지 요소를 찾을 수 없습니다', 'error');
-                    return;
-                }
-                
-                loginPage.style.display = 'none';
-                mainApp.style.display = 'block';
-                
-                const mainAppElement = document.getElementById('mainApp');
-                if (mainAppElement) {
-                    mainAppElement.style.animation = 'fadeInUp 0.6s ease-out';
-                }
-                
-                debugLog('✅ 메인 앱 표시 완료', 'success');
-                showStatus('메인 앱 로드 완료!', 2000);
-                
-                // 홈 페이지를 기본으로 표시
-                setTimeout(() => {
-                    showPage('home');
-                }, 500);
-                
-            } catch (error) {
-                debugLog('❌ 메인 앱 표시 오류: ' + error.message, 'error');
-                showStatus('앱 로드 중 오류 발생', 3000);
+            loginPage.style.display = 'none';
+            mainApp.style.display = 'block';
+            
+            const mainAppElement = document.getElementById('mainApp');
+            if (mainAppElement) {
+                mainAppElement.style.animation = 'fadeInUp 0.6s ease-out';
             }
+            
+            // 홈 페이지를 기본으로 표시
+            setTimeout(() => {
+                showPage('home');
+            }, 500);
         }
 
         // 현재 날짜 업데이트
@@ -3619,14 +2522,6 @@
 
         // 페이지 전환
         function showPage(page) {
-            debugLog('📄 페이지 전환: ' + page, 'info');
-            showStatus('페이지 로드 중...', 1500);
-            
-            // 가족 페이지에서 벗어날 때 자동 새로고침 중단
-            if (page !== 'family') {
-                stopFamilyPageAutoRefresh();
-            }
-            
             // 모든 페이지 숨기기
             document.querySelectorAll('.page').forEach(p => {
                 p.style.display = 'none';
@@ -3666,281 +2561,12 @@
             }
         }
 
-        // 스트릭 및 통계 로드
-        async function loadUserStats() {
-            if (!currentUser || !familyId) return;
-
-            try {
-                debugLog('📊 사용자 통계 로드 시작...', 'info');
-
-                // 지난 30일간의 루틴 로그 가져오기 (인덱스 오류 방지를 위해 단순 쿼리 사용)
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-                const logsSnapshot = await db.collection('routine_logs')
-                    .where('userId', '==', currentUser.uid)
-                    .where('date', '>=', thirtyDaysAgoStr)
-                    .get();
-
-                // 날짜별 완료 데이터 정리 (JavaScript에서 필터링)
-                const dailyCompletions = {};
-                const totalRoutinesPerDay = {};
-
-                logsSnapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    const date = data.date;
-                    
-                    // 30일 이내 데이터만 처리
-                    if (date >= thirtyDaysAgoStr) {
-                        if (!dailyCompletions[date]) {
-                            dailyCompletions[date] = 0;
-                            totalRoutinesPerDay[date] = 0;
-                        }
-                        
-                        totalRoutinesPerDay[date]++;
-                        if (data.completed) {
-                            dailyCompletions[date]++;
-                        }
-                    }
-                });
-
-                // 연속 일수 계산
-                userStats.currentStreak = calculateCurrentStreak(dailyCompletions, totalRoutinesPerDay);
-                userStats.bestStreak = calculateBestStreak(dailyCompletions, totalRoutinesPerDay);
-                userStats.totalDays = Object.keys(dailyCompletions).length;
-
-                // 주간 점수 계산 (이번 주)
-                userStats.weeklyScore = calculateWeeklyScore(dailyCompletions, totalRoutinesPerDay);
-
-                // 전체 완료율 계산
-                let totalCompleted = 0;
-                let totalPossible = 0;
-                Object.keys(dailyCompletions).forEach(date => {
-                    totalCompleted += dailyCompletions[date];
-                    totalPossible += totalRoutinesPerDay[date];
-                });
-                userStats.completionRate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
-
-                // UI 업데이트
-                updateStatsUI();
-
-                debugLog('✅ 사용자 통계 로드 완료: 스트릭 ' + userStats.currentStreak + '일', 'success');
-
-            } catch (error) {
-                debugLog('❌ 통계 로드 오류: ' + error.message, 'error');
-                if (error.code === 'permission-denied') {
-                    debugLog('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요', 'warning');
-                }
-            }
-        }
-
-        // 현재 연속 일수 계산
-        function calculateCurrentStreak(dailyCompletions, totalRoutinesPerDay) {
-            const today = new Date();
-            let streak = 0;
-            
-            for (let i = 0; i < 30; i++) {
-                const checkDate = new Date(today);
-                checkDate.setDate(today.getDate() - i);
-                const dateStr = checkDate.toISOString().split('T')[0];
-                
-                if (dailyCompletions[dateStr] && totalRoutinesPerDay[dateStr]) {
-                    const completionRate = dailyCompletions[dateStr] / totalRoutinesPerDay[dateStr];
-                    if (completionRate >= 0.8) { // 80% 이상 완료 시 성공한 날로 간주
-                        streak++;
-                    } else {
-                        break;
-                    }
-                } else if (i === 0) {
-                    // 오늘 아무것도 안 했으면 스트릭 0
-                    break;
-                } else {
-                    // 과거 날짜에 데이터가 없으면 스트릭 중단
-                    break;
-                }
-            }
-            
-            return streak;
-        }
-
-        // 최고 연속 일수 계산
-        function calculateBestStreak(dailyCompletions, totalRoutinesPerDay) {
-            const dates = Object.keys(dailyCompletions).sort();
-            let bestStreak = 0;
-            let currentStreak = 0;
-            
-            dates.forEach(date => {
-                const completionRate = dailyCompletions[date] / totalRoutinesPerDay[date];
-                if (completionRate >= 0.8) {
-                    currentStreak++;
-                    bestStreak = Math.max(bestStreak, currentStreak);
-                } else {
-                    currentStreak = 0;
-                }
-            });
-            
-            return bestStreak;
-        }
-
-        // 주간 점수 계산
-        function calculateWeeklyScore(dailyCompletions, totalRoutinesPerDay) {
-            const today = new Date();
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay()); // 이번 주 일요일
-            
-            let weekScore = 0;
-            for (let i = 0; i < 7; i++) {
-                const checkDate = new Date(startOfWeek);
-                checkDate.setDate(startOfWeek.getDate() + i);
-                const dateStr = checkDate.toISOString().split('T')[0];
-                
-                if (dailyCompletions[dateStr] && totalRoutinesPerDay[dateStr]) {
-                    const completionRate = dailyCompletions[dateStr] / totalRoutinesPerDay[dateStr];
-                    weekScore += Math.round(completionRate * 100);
-                }
-            }
-            
-            return Math.round(weekScore / 7); // 주간 평균
-        }
-
-        // 통계 UI 업데이트
-        function updateStatsUI() {
-            const currentStreakEl = document.getElementById('currentStreak');
-            const todayProgressEl = document.getElementById('todayProgress');
-            const weeklyScoreEl = document.getElementById('weeklyScore');
-
-            if (currentStreakEl) currentStreakEl.textContent = userStats.currentStreak;
-            if (weeklyScoreEl) weeklyScoreEl.textContent = userStats.weeklyScore;
-
-            // 오늘 진행률 계산
-            calculateTodayProgress().then(progress => {
-                if (todayProgressEl) todayProgressEl.textContent = `${progress}%`;
-            });
-
-            // 통계 페이지 업데이트
-            const totalDaysEl = document.getElementById('totalDays');
-            const bestStreakEl = document.getElementById('bestStreak');
-            const completionRateEl = document.getElementById('completionRate');
-
-            if (totalDaysEl) totalDaysEl.textContent = userStats.totalDays;
-            if (bestStreakEl) bestStreakEl.textContent = userStats.bestStreak;
-            if (completionRateEl) completionRateEl.textContent = `${userStats.completionRate}%`;
-        }
-
-        // 오늘 진행률 계산
-        async function calculateTodayProgress() {
-            if (!currentUser || !familyId) return 0;
-
-            try {
-                // 오늘 해야 할 루틴들 가져오기
-                const routinesSnapshot = await db.collection('routines')
-                    .where('userId', '==', currentUser.uid)
-                    .where('familyId', '==', familyId)
-                    .get();
-
-                let totalTodayRoutines = 0;
-                routinesSnapshot.docs.forEach(doc => {
-                    const routine = doc.data();
-                    if (shouldShowRoutineToday(routine)) {
-                        totalTodayRoutines++;
-                    }
-                });
-
-                if (totalTodayRoutines === 0) return 100;
-
-                const completedCount = todayCompletedRoutines.size;
-                return Math.round((completedCount / totalTodayRoutines) * 100);
-
-            } catch (error) {
-                console.error('❌ 오늘 진행률 계산 오류:', error);
-                return 0;
-            }
-        }
-
-        // 주간 캘린더 생성
-        async function loadWeekCalendar() {
-            const weekCalendar = document.getElementById('weekCalendar');
-            if (!weekCalendar) return;
-
-            const today = new Date();
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay()); // 이번 주 일요일
-
-            weekCalendar.innerHTML = '';
-
-            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(startOfWeek);
-                date.setDate(startOfWeek.getDate() + i);
-                const dateStr = date.toISOString().split('T')[0];
-                const isToday = dateStr === today.toISOString().split('T')[0];
-
-                // 해당 날짜의 완료율 계산
-                const completionRate = await getDayCompletionRate(dateStr);
-
-                const dayEl = document.createElement('div');
-                dayEl.className = 'calendar-day';
-                if (isToday) dayEl.classList.add('today');
-
-                let levelClass = 'level-0';
-                if (completionRate >= 80) levelClass = 'level-4';
-                else if (completionRate >= 60) levelClass = 'level-3';
-                else if (completionRate >= 40) levelClass = 'level-2';
-                else if (completionRate > 0) levelClass = 'level-1';
-
-                dayEl.innerHTML = `
-                    <div class="day-name">${dayNames[i]}</div>
-                    <div class="day-number">${date.getDate()}</div>
-                    <div class="day-progress ${levelClass}"></div>
-                `;
-
-                weekCalendar.appendChild(dayEl);
-            }
-        }
-
-        // 특정 날짜의 완료율 계산
-        async function getDayCompletionRate(dateStr) {
-            if (!currentUser || !familyId) return 0;
-
-            try {
-                const logsSnapshot = await db.collection('routine_logs')
-                    .where('userId', '==', currentUser.uid)
-                    .where('date', '==', dateStr)
-                    .get();
-
-                let totalRoutines = 0;
-                let completedRoutines = 0;
-
-                logsSnapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    totalRoutines++;
-                    if (data.completed) {
-                        completedRoutines++;
-                    }
-                });
-
-                return totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0;
-
-            } catch (error) {
-                console.error('❌ 날짜별 완료율 계산 오류:', error);
-                return 0;
-            }
-        }
-
         // 홈 페이지 루틴 로드
         async function loadHomeRoutines() {
-            debugLog('🏠 홈 페이지 루틴 로드 시작', 'info');
-            
             const routineList = document.getElementById('routineList');
-            if (!routineList) {
-                debugLog('❌ routineList 요소를 찾을 수 없습니다', 'error');
-                return;
-            }
+            if (!routineList) return;
             
             if (!currentUser) {
-                debugLog('❌ 사용자가 로그인되지 않음', 'error');
                 routineList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">👤</div>
@@ -3954,11 +2580,7 @@
             routineList.innerHTML = '<div class="loading-message">루틴을 불러오는 중...</div>';
 
             try {
-                debugLog('🔍 현재 사용자: ' + currentUser.uid, 'info');
-                debugLog('🔍 가족 ID: ' + (familyId || '없음'), 'info');
-                
                 if (!familyId) {
-                    debugLog('⚠️ 가족 ID가 없음 - 기본 루틴 표시', 'warning');
                     routineList.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">👨‍👩‍👧‍👦</div>
@@ -3970,13 +2592,10 @@
                 }
 
                 // 사용자의 루틴들 가져오기
-                debugLog('📊 Firestore에서 루틴 조회 중...', 'info');
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
                     .get();
-
-                debugLog('📊 조회된 루틴 수: ' + routinesSnapshot.size, 'info');
 
                 // 오늘 완료된 루틴들 확인
                 await loadTodayCompletedRoutines();
@@ -3990,7 +2609,6 @@
                 routineList.innerHTML = '';
 
                 if (routinesSnapshot.empty) {
-                    debugLog('📝 루틴이 없음 - 빈 상태 표시', 'info');
                     routineList.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-state-icon">📝</div>
@@ -4019,7 +2637,7 @@
                     routineArray.push(routine);
                 });
 
-                // order 필드로 정렬 (없으면 생성일 순)
+                // order 필드로 정렬
                 routineArray.sort((a, b) => {
                     const orderA = a.order || (a.createdAt ? a.createdAt.toMillis() : 0);
                     const orderB = b.order || (b.createdAt ? b.createdAt.toMillis() : 0);
@@ -4027,7 +2645,6 @@
                 });
 
                 routineArray.forEach(routine => {
-                    // 주기 확인 (오늘이 해당 루틴을 해야 하는 날인지)
                     if (shouldShowRoutineToday(routine)) {
                         routinesByTime[routine.time].push(routine);
                     }
@@ -4046,9 +2663,7 @@
                         // 시간대 제목 추가
                         const timeHeader = document.createElement('div');
                         timeHeader.className = 'time-header';
-                        timeHeader.innerHTML = `
-                            <h3>${timeLabels[timeSlot]}</h3>
-                        `;
+                        timeHeader.innerHTML = `<h3>${timeLabels[timeSlot]}</h3>`;
                         routineList.appendChild(timeHeader);
 
                         // 완료되지 않은 루틴을 먼저, 완료된 루틴을 나중에 정렬
@@ -4056,11 +2671,9 @@
                             const aCompleted = todayCompletedRoutines.has(a.id);
                             const bCompleted = todayCompletedRoutines.has(b.id);
                             
-                            // 완료되지 않은 것을 위로
                             if (aCompleted && !bCompleted) return 1;
                             if (!aCompleted && bCompleted) return -1;
                             
-                            // 같은 상태면 order로 정렬
                             const orderA = a.order || (a.createdAt ? a.createdAt.toMillis() : 0);
                             const orderB = b.order || (b.createdAt ? b.createdAt.toMillis() : 0);
                             return orderA - orderB;
@@ -4085,13 +2698,8 @@
                     `;
                 }
 
-                debugLog('✅ 홈 루틴 로드 완료 (총 ' + totalRendered + '개)', 'success');
-
             } catch (error) {
-                debugLog('❌ 홈 루틴 로드 오류: ' + error.message, 'error');
-                debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'warning');
-                
-                showStatus('루틴 로드 실패: ' + error.message, 5000);
+                console.error('❌ 홈 루틴 로드 오류:', error);
                 
                 if (error.code === 'permission-denied') {
                     routineList.innerHTML = `
@@ -4131,7 +2739,6 @@
                     }
                 });
 
-                console.log('📋 오늘 완료된 루틴들:', Array.from(todayCompletedRoutines));
             } catch (error) {
                 console.error('❌ 완료된 루틴 로드 오류:', error);
             }
@@ -4155,12 +2762,12 @@
         }
 
         // 루틴 요소 생성
-        function createRoutineElement(routine, index, isCompleted = false) {
+        function createRoutineElement(routine, index) {
             const routineDiv = document.createElement('div');
             routineDiv.className = 'routine-item';
             routineDiv.style.animationDelay = `${index * 0.1}s`;
             
-            // 완료된 루틴은 completed 클래스 추가
+            const isCompleted = todayCompletedRoutines.has(routine.id);
             if (isCompleted) {
                 routineDiv.classList.add('completed');
             }
@@ -4188,20 +2795,10 @@
                     
                 case 'number':
                     controlsHTML = `
-                        <div class="number-routine-controls" data-routine-id="${routine.id}">
-                            ${!isCompleted ? `
-                                <div class="number-input-toggle">
-                                    <span class="input-method-label">입력 방식:</span>
-                                    <div class="toggle-switch ${useScrollNumberInput ? 'active' : ''}" data-routine-id="${routine.id}">
-                                        <div class="toggle-slider"></div>
-                                    </div>
-                                    <span class="input-method-text">${useScrollNumberInput ? '스크롤' : '타이핑'}</span>
-                                </div>
-                                <div class="number-input-container">
-                                    <!-- 동적으로 생성됩니다 -->
-                                </div>
-                            ` : ''}
-                        </div>
+                        <input type="number" class="number-input" 
+                               data-routine-id="${routine.id}"
+                               placeholder="숫자 입력"
+                               ${isCompleted ? 'disabled' : ''}>
                         <button class="yes-btn ${isCompleted ? 'active' : ''}" 
                                 data-routine-id="${routine.id}"
                                 data-action="save-number"
@@ -4236,28 +2833,9 @@
                 </div>
             `;
 
-            // 숫자 루틴인 경우 입력 방식에 따라 컨트롤 생성
-            if (routine.type === 'number' && !isCompleted) {
-                const numberControls = routineDiv.querySelector('.number-routine-controls');
-                const inputContainer = routineDiv.querySelector('.number-input-container');
-                const toggle = routineDiv.querySelector('.toggle-switch');
-                
-                if (toggle) {
-                    addTouchEventListener(toggle, function() {
-                        useScrollNumberInput = !useScrollNumberInput;
-                        updateNumberInputMethod(routine.id, inputContainer);
-                        updateToggleState(this);
-                    });
-                }
-                
-                if (inputContainer) {
-                    updateNumberInputMethod(routine.id, inputContainer);
-                }
-            }
-
-            // 루틴 컨트롤 버튼들에 터치 이벤트 추가
+            // 루틴 컨트롤 버튼들에 이벤트 추가
             routineDiv.querySelectorAll('button[data-action]').forEach(button => {
-                addTouchEventListener(button, function(e) {
+                button.addEventListener('click', function(e) {
                     const routineId = this.getAttribute('data-routine-id');
                     const action = this.getAttribute('data-action');
                     
@@ -4281,62 +2859,10 @@
             return routineDiv;
         }
 
-        // 숫자 입력 방식 업데이트
-        function updateNumberInputMethod(routineId, container) {
-            container.innerHTML = '';
-            
-            if (useScrollNumberInput) {
-                // 스크롤 방식 (기존 휠 피커)
-                const numberWheel = createNumberWheel(999, 0);
-                container.appendChild(numberWheel);
-            } else {
-                // 타이핑 방식
-                const typingInput = document.createElement('input');
-                typingInput.type = 'number';
-                typingInput.className = 'typing-number-input';
-                typingInput.placeholder = '숫자 입력';
-                typingInput.min = '0';
-                typingInput.max = '999';
-                typingInput.dataset.routineId = routineId;
-                
-                // getValue 메서드 추가 (일관성을 위해)
-                typingInput.getValue = () => parseInt(typingInput.value) || 0;
-                
-                container.appendChild(typingInput);
-            }
-        }
-
-        // 토글 상태 업데이트
-        function updateToggleState(toggleElement) {
-            const slider = toggleElement.querySelector('.toggle-slider');
-            const methodText = toggleElement.parentElement.querySelector('.input-method-text');
-            
-            if (useScrollNumberInput) {
-                toggleElement.classList.add('active');
-                methodText.textContent = '스크롤';
-            } else {
-                toggleElement.classList.remove('active');
-                methodText.textContent = '타이핑';
-            }
-        }
-
-        // 숫자 루틴 업데이트 (개선된 버전)
+        // 숫자 루틴 업데이트
         async function updateRoutineNumber(routineId, button) {
-            const numberControls = button.parentElement.querySelector('.number-routine-controls');
-            
-            let value = 0;
-            
-            if (useScrollNumberInput) {
-                const numberWheel = numberControls?.querySelector('.number-wheel-container');
-                if (numberWheel && numberWheel.getValue) {
-                    value = numberWheel.getValue();
-                }
-            } else {
-                const typingInput = numberControls?.querySelector('.typing-number-input');
-                if (typingInput) {
-                    value = parseInt(typingInput.value) || 0;
-                }
-            }
+            const input = button.parentElement.querySelector('.number-input');
+            const value = parseInt(input.value) || 0;
             
             if (value === 0) {
                 showNotification('0보다 큰 숫자를 입력해주세요.', 'error');
@@ -4369,7 +2895,7 @@
                 userId: currentUser.uid,
                 familyId: familyId,
                 value: value,
-                completed: value !== false, // false가 아니면 완료로 간주
+                completed: value !== false,
                 date: today,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -4399,12 +2925,10 @@
 
         // 성취 확인 및 축하
         async function checkForAchievements() {
-            // 통계 다시 로드
             await loadUserStats();
             
-            // 새로운 스트릭 기록 달성 시
             if (userStats.currentStreak > 0 && userStats.currentStreak === userStats.bestStreak) {
-                if (userStats.currentStreak % 7 === 0) { // 7일 단위로 축하
+                if (userStats.currentStreak % 7 === 0) {
                     showAchievementModal(
                         `🔥 ${userStats.currentStreak}일 연속 달성!`,
                         '정말 대단해요! 꾸준함이 습관이 되고 있어요.'
@@ -4417,7 +2941,6 @@
                 }
             }
             
-            // 오늘 모든 루틴 완료 시
             const todayProgress = await calculateTodayProgress();
             if (todayProgress === 100) {
                 setTimeout(() => {
@@ -4454,651 +2977,99 @@
             modal.style.display = 'none';
         }
 
-        // 통계 페이지 로드
-        function loadStatsPage() {
-            console.log('📈 통계 페이지 로드');
-            loadUserStats();
-            loadMonthlyHeatmap();
-            loadRoutineStats();
-        }
-
-        // 월간 히트맵 로드
-        async function loadMonthlyHeatmap() {
-            const container = document.getElementById('heatmapContainer');
-            if (!container) return;
-
-            container.innerHTML = '히트맵을 불러오는 중...';
-
-            try {
-                const today = new Date();
-                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-                const heatmapHTML = [];
-                const currentDate = new Date(firstDay);
-
-                while (currentDate <= lastDay) {
-                    const dateStr = currentDate.toISOString().split('T')[0];
-                    const completionRate = await getDayCompletionRate(dateStr);
-                    
-                    let level = 0;
-                    if (completionRate >= 80) level = 4;
-                    else if (completionRate >= 60) level = 3;
-                    else if (completionRate >= 40) level = 2;
-                    else if (completionRate > 0) level = 1;
-
-                    heatmapHTML.push(`
-                        <div class="heatmap-day" data-level="${level}" title="${dateStr}: ${completionRate}%">
-                            ${currentDate.getDate()}
-                        </div>
-                    `);
-
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-
-                container.innerHTML = `<div class="heatmap-grid">${heatmapHTML.join('')}</div>`;
-
-            } catch (error) {
-                console.error('❌ 히트맵 로드 오류:', error);
-                container.innerHTML = '히트맵을 불러올 수 없습니다.';
-            }
-        }
-
-        // 루틴별 통계 로드
-        async function loadRoutineStats() {
-            const container = document.getElementById('routineStatsContainer');
-            if (!container || !currentUser || !familyId) return;
-
+        // 사용자 루틴 로드 (관리 페이지용)
+        async function loadUserRoutines() {
+            if (!currentUser || !familyId) return;
+            
             try {
                 const routinesSnapshot = await db.collection('routines')
                     .where('userId', '==', currentUser.uid)
                     .where('familyId', '==', familyId)
                     .get();
 
-                const statsHTML = [];
+                const manageList = document.getElementById('manageRoutineList');
+                if (!manageList) return;
+                
+                manageList.innerHTML = '';
 
-                for (const doc of routinesSnapshot.docs) {
-                    const routine = doc.data();
-                    const routineId = doc.id;
-
-                    // 지난 30일간의 해당 루틴 완료율 계산 (인덱스 오류 방지를 위해 단순 쿼리 사용)
-                    const thirtyDaysAgo = new Date();
-                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-                    const logsSnapshot = await db.collection('routine_logs')
-                        .where('routineId', '==', routineId)
-                        .where('userId', '==', currentUser.uid)
-                        .get();
-
-                    let totalDays = 0;
-                    let completedDays = 0;
-
-                    // JavaScript에서 날짜 필터링
-                    logsSnapshot.docs.forEach(doc => {
-                        const data = doc.data();
-                        if (data.date >= thirtyDaysAgoStr) {
-                            totalDays++;
-                            if (data.completed) {
-                                completedDays++;
-                            }
-                        }
-                    });
-
-                    const completionRate = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-
-                    statsHTML.push(`
-                        <div class="routine-stat-card">
-                            <div class="routine-stat-name">${routine.name}</div>
-                            <div class="routine-stat-rate">${completionRate}%</div>
-                            <div class="routine-stat-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${completionRate}%"></div>
-                                </div>
-                            </div>
-                            <div class="routine-stat-detail">${completedDays}/${totalDays}일 완료</div>
+                if (routinesSnapshot.empty) {
+                    manageList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div class="empty-state-title">아직 추가된 루틴이 없습니다</div>
+                            <div class="empty-state-description">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
                         </div>
-                    `);
+                    `;
+                    return;
                 }
 
-                container.innerHTML = statsHTML.join('');
-
-            } catch (error) {
-                debugLog('❌ 루틴별 통계 로드 오류: ' + error.message, 'error');
-                if (error.code === 'permission-denied') {
-                    debugLog('⚠️ Firebase 권한 오류 - Firestore 보안 규칙을 확인하세요', 'warning');
-                }
-                container.innerHTML = '통계를 불러올 수 없습니다.';
-            }
-        }
-
-        // 가족 페이지 정보 로드
-        async function loadFamilyPageInfo() {
-            debugLog('👨‍👩‍👧‍👦 가족 페이지 정보 로드', 'info');
-            
-            if (!currentUser || !familyId) {
-                debugLog('❌ 사용자 또는 가족 정보가 없습니다', 'error');
-                return;
-            }
-
-            try {
-                if (userRole === 'parent') {
-                    const familyDoc = await db.collection('families').doc(familyId).get();
-                    if (familyDoc.exists) {
-                        const familyData = familyDoc.data();
-                        const familyCode = familyData.familyCode || familyId;
-                        const memberCount = familyData.members ? familyData.members.length : 1;
-                        const createdDate = familyData.createdAt ? familyData.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
-                        
-                        const familyCodeCard = document.getElementById('familyCodeCard');
-                        const familyCodeMain = document.getElementById('familyCodeMain');
-                        const memberCountEl = document.getElementById('memberCount');
-                        const familyCreatedDateEl = document.getElementById('familyCreatedDate');
-                        
-                        if (familyCodeCard && familyCodeMain) {
-                            familyCodeMain.textContent = familyCode;
-                            if (memberCountEl) memberCountEl.textContent = `${memberCount}명`;
-                            if (familyCreatedDateEl) familyCreatedDateEl.textContent = createdDate;
-                            
-                            familyCodeCard.classList.remove('hidden');
-                            familyCodeCard.style.display = 'block';
-                        }
-                        
-                        window.currentFamilyCode = familyCode;
-                    }
-                } else {
-                    const familyCodeCard = document.getElementById('familyCodeCard');
-                    if (familyCodeCard) {
-                        familyCodeCard.classList.add('hidden');
-                        familyCodeCard.style.display = 'none';
-                    }
-                }
-                
-                await loadFamilyMembers();
-                
-                // 가족 페이지가 활성화된 상태에서는 30초마다 정보 업데이트
-                startFamilyPageAutoRefresh();
-                
-            } catch (error) {
-                debugLog('❌ 가족 페이지 정보 로드 오류: ' + error.message, 'error');
-            }
-        }
-
-        // 가족 페이지 자동 새로고침
-        let familyPageRefreshInterval = null;
-        
-        function startFamilyPageAutoRefresh() {
-            // 기존 인터벌 제거
-            if (familyPageRefreshInterval) {
-                clearInterval(familyPageRefreshInterval);
-            }
-            
-            // 30초마다 가족 구성원 정보 업데이트
-            familyPageRefreshInterval = setInterval(async () => {
-                const familyPage = document.getElementById('familyPage');
-                if (familyPage && familyPage.style.display === 'block') {
-                    debugLog('🔄 가족 정보 자동 새로고침', 'info');
-                    await loadFamilyMembers();
-                }
-            }, 30000); // 30초마다
-        }
-        
-        function stopFamilyPageAutoRefresh() {
-            if (familyPageRefreshInterval) {
-                clearInterval(familyPageRefreshInterval);
-                familyPageRefreshInterval = null;
-            }
-        }
-
-        // 가족 구성원 로드 (개선된 버전)
-        async function loadFamilyMembers() {
-            if (!familyId) return;
-
-            try {
-                debugLog('👨‍👩‍👧‍👦 가족 구성원 로드 시작', 'info');
-                
-                const familyDoc = await db.collection('families').doc(familyId).get();
-                if (!familyDoc.exists) return;
-
-                const familyData = familyDoc.data();
-                const memberIds = familyData.members || [];
-                
-                debugLog('👥 구성원 ID 목록: ' + memberIds.join(', '), 'info');
-
-                const familyMembersContainer = document.getElementById('familyMembers');
-                familyMembersContainer.innerHTML = '<div class="loading-message">가족 구성원 정보를 불러오는 중...</div>';
-
-                const memberCards = [];
-
-                for (const memberId of memberIds) {
-                    try {
-                        const memberDoc = await db.collection('users').doc(memberId).get();
-                        if (memberDoc.exists) {
-                            const memberData = memberDoc.data();
-                            debugLog('👤 구성원 로드: ' + memberData.email, 'info');
-                            
-                            // 해당 구성원의 오늘 진행율 계산
-                            const todayProgress = await calculateMemberTodayProgress(memberId);
-                            
-                            const memberCard = await createMemberCard(memberData, memberId, todayProgress);
-                            memberCards.push(memberCard);
-                        }
-                    } catch (memberError) {
-                        debugLog('❌ 구성원 로드 오류 (' + memberId + '): ' + memberError.message, 'error');
-                    }
-                }
-
-                familyMembersContainer.innerHTML = '';
-                memberCards.forEach(card => {
-                    familyMembersContainer.appendChild(card);
-                });
-
-                debugLog('✅ 가족 구성원 로드 완료 (' + memberCards.length + '명)', 'success');
-                
-            } catch (error) {
-                debugLog('❌ 가족 구성원 로드 오류: ' + error.message, 'error');
-                const familyMembersContainer = document.getElementById('familyMembers');
-                familyMembersContainer.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">❌</div>
-                        <div class="empty-state-title">가족 구성원 정보를 불러올 수 없습니다</div>
-                        <div class="empty-state-description">${error.message}</div>
-                    </div>
-                `;
-            }
-        }
-
-        // 가족 구성원의 오늘 진행율 계산
-        async function calculateMemberTodayProgress(memberId) {
-            try {
-                const today = new Date().toISOString().split('T')[0];
-                
-                // 해당 구성원의 루틴들 가져오기
-                const routinesSnapshot = await db.collection('routines')
-                    .where('userId', '==', memberId)
-                    .where('familyId', '==', familyId)
-                    .get();
-
-                let totalTodayRoutines = 0;
-                const todayRoutines = [];
-                
+                const routines = [];
                 routinesSnapshot.docs.forEach(doc => {
-                    const routine = { id: doc.id, ...doc.data() };
-                    if (shouldShowRoutineToday(routine)) {
-                        totalTodayRoutines++;
-                        todayRoutines.push(routine);
-                    }
-                });
-
-                if (totalTodayRoutines === 0) {
-                    return { percentage: 100, completed: 0, total: 0, routines: [] };
-                }
-
-                // 오늘 완료된 루틴들 확인
-                const logsSnapshot = await db.collection('routine_logs')
-                    .where('userId', '==', memberId)
-                    .where('date', '==', today)
-                    .get();
-
-                const completedRoutines = new Set();
-                const routineResults = {};
-                
-                logsSnapshot.docs.forEach(doc => {
                     const data = doc.data();
-                    routineResults[data.routineId] = data;
-                    if (data.completed) {
-                        completedRoutines.add(data.routineId);
-                    }
+                    routines.push({
+                        id: doc.id,
+                        ...data,
+                        createdAt: data.createdAt?.toDate() || new Date()
+                    });
                 });
 
-                const completedCount = completedRoutines.size;
-                const percentage = Math.round((completedCount / totalTodayRoutines) * 100);
+                routines.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-                return {
-                    percentage,
-                    completed: completedCount,
-                    total: totalTodayRoutines,
-                    routines: todayRoutines.map(routine => ({
-                        ...routine,
-                        result: routineResults[routine.id] || null
-                    }))
-                };
-
-            } catch (error) {
-                debugLog('❌ 구성원 진행율 계산 오류: ' + error.message, 'error');
-                return { percentage: 0, completed: 0, total: 0, routines: [] };
-            }
-        }
-
-        // 가족 구성원 카드 생성 (개선된 버전)
-        async function createMemberCard(memberData, memberId, progress) {
-            const card = document.createElement('div');
-            card.className = 'member-card';
-            
-            const displayName = memberData.displayName || memberData.email.split('@')[0];
-            const role = memberData.role === 'parent' ? '부모' : '자녀';
-            const isOnline = memberId === currentUser?.uid;
-            
-            // 진행률에 따른 색상 결정
-            let progressColor = 'var(--error)';
-            if (progress.percentage >= 80) progressColor = 'var(--success)';
-            else if (progress.percentage >= 60) progressColor = 'var(--warning)';
-            else if (progress.percentage >= 40) progressColor = 'var(--primary)';
-
-            card.innerHTML = `
-                <div class="member-header">
-                    <div class="member-info">
-                        <div class="member-name">${displayName}</div>
-                        <div class="member-role">${role}</div>
-                    </div>
-                    <div class="member-status ${isOnline ? 'online' : 'offline'}">
-                        ${isOnline ? 'ONLINE' : 'OFFLINE'}
-                    </div>
-                </div>
-                
-                <div class="member-progress-summary">
-                    <div class="progress-text">오늘의 진행 상황</div>
-                    <div class="progress-percentage" style="color: ${progressColor}">
-                        ${progress.percentage}%
-                    </div>
-                </div>
-                
-                <div class="routine-progress">
-                    <div class="routine-badge completed">${progress.completed}개 완료</div>
-                    <div class="routine-badge pending">${progress.total - progress.completed}개 대기</div>
-                    <div class="routine-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
-                        총 ${progress.total}개
-                    </div>
-                </div>
-
-                <div class="member-card-actions">
-                    <button class="member-detail-btn" data-member-id="${memberId}">
-                        📊 상세보기
-                    </button>
-                </div>
-            `;
-            
-            // 상세보기 버튼 이벤트 추가
-            const detailBtn = card.querySelector('.member-detail-btn');
-            if (detailBtn) {
-                addTouchEventListener(detailBtn, function() {
-                    const memberId = this.getAttribute('data-member-id');
-                    showMemberDetail(memberId, memberData, progress);
-                });
-            }
-            
-            return card;
-        }
-
-        // 가족 구성원 상세보기 모달
-        async function showMemberDetail(memberId, memberData, progress) {
-            debugLog('👤 구성원 상세보기 표시: ' + memberData.email, 'info');
-            
-            const modal = document.getElementById('memberDetailModal');
-            const avatar = document.getElementById('memberDetailAvatar');
-            const name = document.getElementById('memberDetailName');
-            const role = document.getElementById('memberDetailRole');
-            const progressRing = document.getElementById('memberProgressRing');
-            const progressText = document.getElementById('memberProgressText');
-            const totalRoutines = document.getElementById('memberTotalRoutines');
-            const completedRoutines = document.getElementById('memberCompletedRoutines');
-            const pendingRoutines = document.getElementById('memberPendingRoutines');
-            const routinesList = document.getElementById('memberRoutinesList');
-
-            // 기본 정보 설정
-            const displayName = memberData.displayName || memberData.email.split('@')[0];
-            const memberRole = memberData.role === 'parent' ? '부모' : '자녀';
-            
-            avatar.textContent = displayName.charAt(0).toUpperCase();
-            name.textContent = displayName;
-            role.textContent = memberRole;
-            
-            // 통계 설정
-            totalRoutines.textContent = progress.total;
-            completedRoutines.textContent = progress.completed;
-            pendingRoutines.textContent = progress.total - progress.completed;
-            
-            // 진행률 링 설정
-            const circumference = 2 * Math.PI * 28; // r=28
-            const strokeDasharray = (progress.percentage / 100) * circumference;
-            progressRing.style.strokeDasharray = `${strokeDasharray} ${circumference}`;
-            progressText.textContent = `${progress.percentage}%`;
-            
-            // 루틴 목록 생성
-            routinesList.innerHTML = '';
-            
-            if (progress.routines.length === 0) {
-                routinesList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📅</div>
-                        <div class="empty-state-title">오늘 할 루틴이 없습니다</div>
-                    </div>
-                `;
-            } else {
-                progress.routines.forEach(routine => {
-                    const result = routine.result;
-                    const routineItem = createRoutineResultItem(routine, result);
-                    routinesList.appendChild(routineItem);
-                });
-            }
-            
-            modal.style.display = 'block';
-            
-            setTimeout(() => {
-                const content = modal.querySelector('.member-detail-content');
-                if (content) {
-                    content.style.animation = 'fadeInUp 0.3s ease-out';
-                }
-            }, 10);
-        }
-
-        // 루틴 결과 아이템 생성
-        function createRoutineResultItem(routine, result) {
-            const item = document.createElement('div');
-            item.className = 'routine-result-item';
-            
-            let status = 'pending';
-            let statusText = '대기중';
-            let valueText = '';
-            let timeText = '';
-            
-            if (result) {
-                if (result.completed && result.value !== false) {
-                    status = 'completed';
-                    statusText = '완료됨';
+                routines.forEach((routine, index) => {
+                    const routineEl = document.createElement('div');
+                    routineEl.className = 'routine-item';
+                    routineEl.style.animationDelay = `${index * 0.1}s`;
                     
-                    if (routine.type === 'yesno') {
-                        valueText = '✅ 완료';
-                    } else if (routine.type === 'number') {
-                        valueText = `📊 ${result.value}`;
-                    } else if (routine.type === 'time') {
-                        valueText = `⏰ ${result.value}`;
-                    }
-                } else {
-                    status = 'skipped';
-                    statusText = '건너뜀';
-                }
-                
-                if (result.timestamp && result.timestamp.toDate) {
-                    timeText = result.timestamp.toDate().toLocaleTimeString('ko-KR');
-                }
-            }
-            
-            item.classList.add(status);
-            
-            item.innerHTML = `
-                <div class="routine-result-header">
-                    <div class="routine-result-name">${routine.name}</div>
-                    <div class="routine-result-status ${status}">${statusText}</div>
-                </div>
-                ${valueText ? `<div class="routine-result-value">${valueText}</div>` : ''}
-                ${timeText ? `<div class="routine-result-time">완료 시간: ${timeText}</div>` : ''}
-            `;
-            
-            return item;
-        }
-
-        // 구성원 상세 모달 닫기
-        function closeMemberDetail() {
-            const modal = document.getElementById('memberDetailModal');
-            modal.style.display = 'none';
-        }
-
-        // 가족 코드 복사
-        async function copyFamilyCode() {
-            const familyCode = window.currentFamilyCode || document.getElementById('familyCodeMain').textContent;
-            
-            if (!familyCode || familyCode === '-') {
-                showNotification('복사할 가족 코드가 없습니다.', 'error');
-                return;
-            }
-            
-            try {
-                await navigator.clipboard.writeText(familyCode);
-                showNotification(`🎉 가족 코드 "${familyCode}"가 클립보드에 복사되었습니다!`);
-                
-                const copyBtn = document.getElementById('copyFamilyCodeBtn');
-                if (copyBtn) {
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = '✅ 복사됨!';
-                    copyBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+                    const typeMap = {
+                        'yesno': '예/아니오',
+                        'number': '숫자 입력',
+                        'time': '시간 입력'
+                    };
                     
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                        copyBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-                    }, 2000);
-                }
+                    const timeMap = {
+                        'morning': '🌅 아침',
+                        'afternoon': '🌞 점심',
+                        'evening': '🌙 저녁'
+                    };
+                    
+                    const freqMap = {
+                        'daily': '매일',
+                        'weekday': '평일',
+                        'weekend': '주말'
+                    };
+                    
+                    routineEl.innerHTML = `
+                        <div class="routine-title">${routine.name}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.75rem 0;">
+                            <span style="background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.5rem; margin-right: 0.5rem; font-weight: 600;">${typeMap[routine.type]}</span>
+                            <span style="background: rgba(236, 72, 153, 0.1); color: var(--secondary); padding: 0.25rem 0.5rem; border-radius: 0.5rem; margin-right: 0.5rem; font-weight: 600;">${timeMap[routine.time]}</span>
+                            <span style="background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-weight: 600;">${freqMap[routine.frequency]}</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--gray-400);">
+                            생성일: ${routine.createdAt.toLocaleDateString('ko-KR')}
+                        </div>
+                    `;
+                    
+                    manageList.appendChild(routineEl);
+                });
                 
             } catch (error) {
-                console.error('클립보드 복사 실패:', error);
+                console.error('❌ 루틴 로드 오류:', error);
                 
-                const codeElement = document.getElementById('familyCodeMain');
-                if (codeElement) {
-                    const range = document.createRange();
-                    range.selectNode(codeElement);
-                    window.getSelection().removeAllRanges();
-                    window.getSelection().addRange(range);
-                    showNotification('가족 코드가 선택되었습니다. Ctrl+C로 복사하세요!');
+                const manageList = document.getElementById('manageRoutineList');
+                if (manageList) {
+                    manageList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div class="empty-state-title">루틴 목록을 불러오는데 실패했습니다</div>
+                        </div>
+                    `;
                 }
             }
         }
 
-        // 인증 처리 (이메일/비밀번호)
-        async function handleAuth(type) {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const familyCode = document.getElementById('familyCode').value;
-
-            if (!email || !password) {
-                showNotification('이메일과 비밀번호를 입력해주세요.', 'error');
-                return;
-            }
-
-            if (userRole === 'child' && type === 'register' && !familyCode) {
-                showNotification('가족 코드를 입력해주세요.', 'error');
-                return;
-            }
-
-            try {
-                let userCredential;
-                
-                if (type === 'login') {
-                    userCredential = await auth.signInWithEmailAndPassword(email, password);
-                } else {
-                    userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    await createUserProfile(userCredential.user, familyCode);
-                }
-
-                showNotification('✨ 성공적으로 ' + (type === 'login' ? '로그인' : '회원가입') + '되었습니다!');
-                
-            } catch (error) {
-                console.error('인증 오류:', error);
-                showNotification('오류가 발생했습니다: ' + error.message, 'error');
-            }
-        }
-
-        // 사용자 프로필 생성
-        async function createUserProfile(user, familyCode = null) {
-            const userData = {
-                email: user.email,
-                role: userRole,
-                authProvider: 'email',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            if (userRole === 'parent') {
-                const newFamilyId = generateFamilyCode();
-                userData.familyId = newFamilyId;
-                userData.isParent = true;
-
-                await db.collection('families').doc(newFamilyId).set({
-                    parentId: user.uid,
-                    parentName: user.email.split('@')[0],
-                    members: [user.uid],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    familyCode: newFamilyId
-                });
-
-                setTimeout(() => {
-                    document.getElementById('generatedFamilyCode').textContent = newFamilyId;
-                    document.getElementById('familyCodeDisplay').classList.remove('hidden');
-                    showNotification(`🔑 가족 코드가 생성되었습니다: ${newFamilyId}`);
-                }, 1000);
-                
-            } else {
-                if (familyCode) {
-                    const familyDoc = await db.collection('families').doc(familyCode).get();
-                    if (familyDoc.exists) {
-                        userData.familyId = familyCode;
-                        userData.isParent = false;
-
-                        await db.collection('families').doc(familyCode).update({
-                            members: firebase.firestore.FieldValue.arrayUnion(user.uid)
-                        });
-                    } else {
-                        throw new Error('존재하지 않는 가족 코드입니다.');
-                    }
-                }
-            }
-
-            await db.collection('users').doc(user.uid).set(userData);
-            await createDefaultRoutines(user.uid, userData.familyId);
-        }
-
-        // 기본 루틴 생성
-        async function createDefaultRoutines(userId, familyId) {
-            const defaultRoutines = [
-                { name: '🌙 취침 시간', type: 'time', time: 'evening', frequency: 'daily', order: 1 },
-                { name: '🌅 기상 시간', type: 'time', time: 'morning', frequency: 'daily', order: 2 },
-                { name: '💪 운동하기', type: 'yesno', time: 'morning', frequency: 'daily', order: 3 },
-                { name: '💧 물 마시기 (잔)', type: 'number', time: 'evening', frequency: 'daily', order: 4 }
-            ];
-
-            const batch = db.batch();
-            defaultRoutines.forEach((routine) => {
-                const routineRef = db.collection('routines').doc();
-                batch.set(routineRef, {
-                    ...routine,
-                    userId: userId,
-                    familyId: familyId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            });
-
-            await batch.commit();
-        }
-
-        // 루틴 추가 (modalMode에 따라 추가/수정 분기)
+        // 루틴 추가
         async function addRoutine() {
-            if (modalMode === 'edit') {
-                await editRoutine();
-                return;
-            }
-            
-            // 기존 추가 로직
-            debugLog('🔧 루틴 추가 시작', 'info');
-            
             if (!currentUser) {
                 showNotification('로그인이 필요합니다.', 'error');
                 return;
@@ -5189,179 +3160,16 @@
             }
         }
 
-        // 사용자 루틴 로드 (관리 페이지용) - 개선된 버전
-        async function loadUserRoutines() {
-            if (!currentUser || !familyId) {
-                console.log('❌ 루틴 로드 조건 불충족');
-                return;
-            }
-            
-            try {
-                const routinesSnapshot = await db.collection('routines')
-                    .where('userId', '==', currentUser.uid)
-                    .where('familyId', '==', familyId)
-                    .get();
-
-                const manageList = document.getElementById('manageRoutineList');
-                if (!manageList) {
-                    return;
-                }
-                
-                manageList.innerHTML = '';
-
-                if (routinesSnapshot.empty) {
-                    manageList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📝</div>
-                            <div class="empty-state-title">아직 추가된 루틴이 없습니다</div>
-                            <div class="empty-state-description">위의 버튼을 눌러 첫 번째 루틴을 추가해보세요!</div>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const routines = [];
-                routinesSnapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    routines.push({
-                        id: doc.id,
-                        ...data,
-                        createdAt: data.createdAt?.toDate() || new Date()
-                    });
-                });
-
-                routines.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-                // 수정 가능하다는 안내 추가
-                const hintDiv = document.createElement('div');
-                hintDiv.className = 'routine-edit-hint';
-                hintDiv.textContent = '💡 루틴을 클릭하면 수정하거나 삭제할 수 있습니다';
-                manageList.appendChild(hintDiv);
-
-                routines.forEach((routine, index) => {
-                    const routineEl = document.createElement('div');
-                    routineEl.className = 'routine-item manage-routine-item';
-                    routineEl.style.animationDelay = `${index * 0.1}s`;
-                    routineEl.dataset.routineId = routine.id;
-                    
-                    const typeMap = {
-                        'yesno': '예/아니오',
-                        'number': '숫자 입력',
-                        'time': '시간 입력'
-                    };
-                    
-                    const timeMap = {
-                        'morning': '🌅 아침',
-                        'afternoon': '🌞 점심',
-                        'evening': '🌙 저녁'
-                    };
-                    
-                    const freqMap = {
-                        'daily': '매일',
-                        'weekday': '평일',
-                        'weekend': '주말'
-                    };
-                    
-                    routineEl.innerHTML = `
-                        <div class="routine-title">${routine.name}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.75rem 0;">
-                            <span style="background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.25rem 0.5rem; border-radius: 0.5rem; margin-right: 0.5rem; font-weight: 600;">${typeMap[routine.type]}</span>
-                            <span style="background: rgba(236, 72, 153, 0.1); color: var(--secondary); padding: 0.25rem 0.5rem; border-radius: 0.5rem; margin-right: 0.5rem; font-weight: 600;">${timeMap[routine.time]}</span>
-                            <span style="background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-weight: 600;">${freqMap[routine.frequency]}</span>
-                        </div>
-                        <div style="font-size: 0.75rem; color: var(--gray-400);">
-                            생성일: ${routine.createdAt.toLocaleDateString('ko-KR')}
-                        </div>
-                    `;
-                    
-                    // 루틴 클릭 이벤트 추가
-                    addTouchEventListener(routineEl, function() {
-                        openEditRoutineModal(routine);
-                    });
-                    
-                    manageList.appendChild(routineEl);
-                });
-                
-            } catch (error) {
-                console.error('❌ 루틴 로드 오류:', error);
-                
-                const manageList = document.getElementById('manageRoutineList');
-                if (manageList) {
-                    manageList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">⚠️</div>
-                            <div class="empty-state-title">루틴 목록을 불러오는데 실패했습니다</div>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // 루틴 수정 모달 열기
-        function openEditRoutineModal(routine) {
-            debugLog('🔧 루틴 수정 모달 열기: ' + routine.name, 'info');
-            
-            modalMode = 'edit';
-            currentEditingRoutine = routine;
-            
-            // 모달 UI 업데이트
-            const modal = document.getElementById('addRoutineModal');
-            const modalHeader = document.getElementById('modalHeader');
-            const modalIndicator = document.getElementById('modalModeIndicator');
-            const addBtnGroup = document.getElementById('addBtnGroup');
-            const editBtnGroup = document.getElementById('editBtnGroup');
-            
-            modalHeader.textContent = '✏️ 루틴 수정';
-            modalIndicator.textContent = '수정';
-            modalIndicator.classList.add('edit');
-            
-            addBtnGroup.classList.add('hidden');
-            editBtnGroup.classList.remove('hidden');
-            
-            // 기존 값들로 폼 채우기
-            document.getElementById('routineName').value = routine.name;
-            document.getElementById('routineType').value = routine.type;
-            document.getElementById('routineTime').value = routine.time;
-            document.getElementById('routineFreq').value = routine.frequency;
-            
-            modal.style.display = 'block';
-            
-            setTimeout(() => {
-                const modalContent = modal.querySelector('.modal-content');
-                if (modalContent) {
-                    modalContent.style.animation = 'fadeInUp 0.3s ease-out';
-                }
-            }, 10);
-        }
-
-        // 모달 관련 - 개선된 버전
+        // 모달 관련
         function openAddRoutineModal() {
-            debugLog('✨ 루틴 추가 모달 열기', 'info');
-            
-            modalMode = 'add';
-            currentEditingRoutine = null;
-            
-            // 모달 UI 업데이트
             const modal = document.getElementById('addRoutineModal');
-            const modalHeader = document.getElementById('modalHeader');
-            const modalIndicator = document.getElementById('modalModeIndicator');
-            const addBtnGroup = document.getElementById('addBtnGroup');
-            const editBtnGroup = document.getElementById('editBtnGroup');
-            
-            modalHeader.textContent = '✨ 새 루틴 추가';
-            modalIndicator.textContent = '추가';
-            modalIndicator.classList.remove('edit');
-            
-            addBtnGroup.classList.remove('hidden');
-            editBtnGroup.classList.add('hidden');
+            modal.style.display = 'block';
             
             // 폼 초기화
             document.getElementById('routineName').value = '';
             document.getElementById('routineType').value = 'yesno';
             document.getElementById('routineTime').value = 'morning';
             document.getElementById('routineFreq').value = 'daily';
-            
-            modal.style.display = 'block';
             
             setTimeout(() => {
                 const modalContent = modal.querySelector('.modal-content');
@@ -5381,120 +3189,15 @@
             
             setTimeout(() => {
                 modal.style.display = 'none';
-                // 초기화
-                modalMode = 'add';
-                currentEditingRoutine = null;
             }, 300);
-        }
-
-        // 루틴 수정 함수
-        async function editRoutine() {
-            if (!currentEditingRoutine) {
-                showNotification('수정할 루틴 정보가 없습니다.', 'error');
-                return;
-            }
-            
-            const name = document.getElementById('routineName').value;
-            const type = document.getElementById('routineType').value;
-            const time = document.getElementById('routineTime').value;
-            const frequency = document.getElementById('routineFreq').value;
-            
-            if (!name.trim()) {
-                showNotification('루틴 이름을 입력해주세요.', 'error');
-                return;
-            }
-            
-            try {
-                debugLog('🔧 루틴 수정 시작: ' + currentEditingRoutine.id, 'info');
-                
-                const updateData = {
-                    name: name.trim(),
-                    type: type,
-                    time: time,
-                    frequency: frequency,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                await db.collection('routines').doc(currentEditingRoutine.id).update(updateData);
-                
-                showNotification(`✏️ 루틴 "${name}"이 수정되었습니다!`);
-                closeModal();
-                
-                setTimeout(() => {
-                    loadUserRoutines();
-                    // 홈 페이지가 활성화되어 있으면 새로고침
-                    if (document.getElementById('homePage').style.display === 'block') {
-                        loadHomeRoutines();
-                    }
-                }, 500);
-                
-                debugLog('✅ 루틴 수정 완료', 'success');
-                
-            } catch (error) {
-                debugLog('❌ 루틴 수정 오류: ' + error.message, 'error');
-                showNotification('루틴 수정에 실패했습니다: ' + error.message, 'error');
-            }
-        }
-
-        // 루틴 삭제 함수
-        async function deleteRoutine() {
-            if (!currentEditingRoutine) {
-                showNotification('삭제할 루틴 정보가 없습니다.', 'error');
-                return;
-            }
-            
-            // 확인 대화상자
-            if (!confirm(`"${currentEditingRoutine.name}" 루틴을 정말 삭제하시겠습니까?`)) {
-                return;
-            }
-            
-            try {
-                debugLog('🗑️ 루틴 삭제 시작: ' + currentEditingRoutine.id, 'info');
-                
-                // 루틴 문서 삭제
-                await db.collection('routines').doc(currentEditingRoutine.id).delete();
-                
-                // 관련 로그들도 삭제 (선택사항)
-                const logsSnapshot = await db.collection('routine_logs')
-                    .where('routineId', '==', currentEditingRoutine.id)
-                    .get();
-                
-                const batch = db.batch();
-                logsSnapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                
-                showNotification(`🗑️ 루틴 "${currentEditingRoutine.name}"이 삭제되었습니다.`);
-                closeModal();
-                
-                setTimeout(() => {
-                    loadUserRoutines();
-                    // 홈 페이지가 활성화되어 있으면 새로고침
-                    if (document.getElementById('homePage').style.display === 'block') {
-                        loadHomeRoutines();
-                    }
-                }, 500);
-                
-                debugLog('✅ 루틴 삭제 완료', 'success');
-                
-            } catch (error) {
-                debugLog('❌ 루틴 삭제 오류: ' + error.message, 'error');
-                showNotification('루틴 삭제에 실패했습니다: ' + error.message, 'error');
-            }
         }
 
         // 모달 외부 클릭 시 닫기
         window.addEventListener('click', function(event) {
             const addRoutineModal = document.getElementById('addRoutineModal');
-            const memberDetailModal = document.getElementById('memberDetailModal');
             
             if (event.target === addRoutineModal) {
                 closeModal();
-            }
-            
-            if (event.target === memberDetailModal) {
-                closeMemberDetail();
             }
         });
 
@@ -5511,8 +3214,6 @@
 
         // Google 프로필 생성
         async function createUserProfileFromGoogle(user, familyCode) {
-            console.log('🆕 Google 프로필 생성 시작:', user.email);
-            
             try {
                 const userData = {
                     email: user.email,
@@ -5592,87 +3293,39 @@
             }
         }
 
-        // 새 사용자 처리
-        async function handleNewUser(user) {
-            debugLog('🆕 새 사용자 처리 시작: ' + user.email, 'info');
-            
-            try {
-                // 임시로 기본값 설정
-                userRole = userRole || 'parent'; // 기본값은 부모
-                
-                // 사용자 프로필 생성
-                const userData = {
-                    email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0],
-                    photoURL: user.photoURL,
-                    role: userRole,
-                    authProvider: user.providerData[0]?.providerId === 'google.com' ? 'google' : 'email',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                };
+        // 기본 루틴 생성
+        async function createDefaultRoutines(userId, familyId) {
+            const defaultRoutines = [
+                { name: '🌙 취침 시간', type: 'time', time: 'evening', frequency: 'daily', order: 1 },
+                { name: '🌅 기상 시간', type: 'time', time: 'morning', frequency: 'daily', order: 2 },
+                { name: '💪 운동하기', type: 'yesno', time: 'morning', frequency: 'daily', order: 3 },
+                { name: '💧 물 마시기 (잔)', type: 'number', time: 'evening', frequency: 'daily', order: 4 }
+            ];
 
-                if (userRole === 'parent') {
-                    const newFamilyId = generateFamilyCode();
-                    userData.familyId = newFamilyId;
-                    userData.isParent = true;
-                    familyId = newFamilyId;
+            const batch = db.batch();
+            defaultRoutines.forEach((routine) => {
+                const routineRef = db.collection('routines').doc();
+                batch.set(routineRef, {
+                    ...routine,
+                    userId: userId,
+                    familyId: familyId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
 
-                    // 가족 문서 생성
-                    await db.collection('families').doc(newFamilyId).set({
-                        parentId: user.uid,
-                        parentName: userData.displayName,
-                        members: [user.uid],
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        familyCode: newFamilyId
-                    });
-
-                    debugLog('👨‍👩‍👧‍👦 부모 계정 및 가족 생성: ' + newFamilyId, 'success');
-                } else {
-                    // 자녀의 경우 가족 코드가 필요하지만, 일단 임시로 처리
-                    userData.familyId = null;
-                    userData.isParent = false;
-                    debugLog('👶 자녀 계정 생성 (가족 참여 대기)', 'info');
-                }
-
-                // 사용자 문서 생성
-                await db.collection('users').doc(user.uid).set(userData);
-                
-                // 기본 루틴 생성 (부모인 경우만)
-                if (userData.familyId) {
-                    await createDefaultRoutines(user.uid, userData.familyId);
-                }
-                
-                debugLog('✅ 새 사용자 프로필 생성 완료', 'success');
-                showNotification('새 계정이 생성되었습니다! 🎉');
-                
-                // 메인 앱으로 전환
-                showMainApp();
-                
-            } catch (error) {
-                debugLog('❌ 새 사용자 처리 실패: ' + error.message, 'error');
-                showNotification('계정 생성에 실패했습니다: ' + error.message, 'error');
-                
-                // 실패해도 메인 앱으로 전환 (최소한의 기능이라도 사용할 수 있도록)
-                showMainApp();
-            }
+            await batch.commit();
         }
 
         async function loadUserProfile() {
-            debugLog('👤 사용자 프로필 로드 시작', 'info');
-            
             if (!currentUser) {
-                debugLog('❌ currentUser가 없습니다', 'error');
                 throw new Error('사용자가 로그인되지 않았습니다');
             }
             
             try {
-                debugLog('🔍 Firestore에서 사용자 문서 조회: ' + currentUser.uid, 'info');
                 const userDoc = await db.collection('users').doc(currentUser.uid).get();
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    debugLog('📋 사용자 데이터 로드됨', 'info');
-                    debugLog('🔑 역할: ' + userData.role + ', 가족ID: ' + userData.familyId, 'info');
                     
                     userRole = userData.role || 'parent';
                     familyId = userData.familyId;
@@ -5683,133 +3336,540 @@
                     
                     if (userEmailEl) {
                         userEmailEl.textContent = displayName;
-                        debugLog('👤 UI 업데이트: ' + displayName, 'info');
                     }
                     if (userRoleEl) {
                         userRoleEl.textContent = userRole === 'parent' ? '부모' : '자녀';
                     }
                     
-                    // 부모이고 가족 ID가 있으면 가족 코드 표시
-                    if (userRole === 'parent' && familyId) {
-                        try {
-                            const familyDoc = await db.collection('families').doc(familyId).get();
-                            if (familyDoc.exists) {
-                                const familyData = familyDoc.data();
-                                const familyCode = familyData.familyCode || familyId;
-                                
-                                debugLog('👨‍👩‍👧‍👦 가족 코드: ' + familyCode, 'info');
-                                window.currentFamilyCode = familyCode;
-                            }
-                        } catch (familyError) {
-                            debugLog('⚠️ 가족 정보 로드 실패: ' + familyError.message, 'warning');
-                        }
-                    }
-                    
                     showNotification(`안녕하세요, ${displayName}님! 👋`);
-                    debugLog('✅ 프로필 로드 완료', 'success');
                 } else {
-                    debugLog('❌ 사용자 문서가 존재하지 않음 - 새 사용자로 처리', 'warning');
                     throw new Error('사용자 프로필이 없습니다');
                 }
             } catch (error) {
-                debugLog('❌ 프로필 로드 오류: ' + error.message + ' (코드: ' + (error.code || '없음') + ')', 'error');
+                console.error('❌ 프로필 로드 오류:', error);
                 
                 if (error.code === 'permission-denied') {
-                    debugLog('🚨 권한 거부 - Firestore 보안 규칙 확인 필요', 'error');
                     showNotification('⚠️ 데이터베이스 접근 권한이 없습니다. 잠시 후 다시 시도해주세요.', 'warning');
                     
-                    // 권한 문제여도 기본 정보로 앱 사용 가능하도록
                     const displayName = currentUser.displayName || currentUser.email.split('@')[0];
                     const userEmailEl = document.getElementById('userEmail');
                     if (userEmailEl) {
                         userEmailEl.textContent = displayName;
                     }
                     
-                    // 기본값 설정
                     userRole = 'parent';
                     familyId = generateFamilyCode();
                     
                     showNotification('임시 모드로 실행됩니다. 일부 기능이 제한될 수 있습니다.', 'warning');
-                    return; // 에러를 던지지 않고 계속 진행
+                    return;
                 }
                 
-                throw error; // 다른 에러는 새 사용자 처리로 넘김
+                throw error;
             }
         }
 
         function startRealtimeListeners() {
-            debugLog('🔄 실시간 리스너 시작', 'info');
+            console.log('🔄 실시간 리스너 시작');
+        }
+
+        // 인증 처리 (이메일/비밀번호)
+        async function handleAuth(type) {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const familyCode = document.getElementById('familyCode').value;
+
+            if (!email || !password) {
+                showNotification('이메일과 비밀번호를 입력해주세요.', 'error');
+                return;
+            }
+
+            if (userRole === 'child' && type === 'register' && !familyCode) {
+                showNotification('가족 코드를 입력해주세요.', 'error');
+                return;
+            }
+
+            try {
+                let userCredential;
+                
+                if (type === 'login') {
+                    userCredential = await auth.signInWithEmailAndPassword(email, password);
+                } else {
+                    userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    await createUserProfile(userCredential.user, familyCode);
+                }
+
+                showNotification('✨ 성공적으로 ' + (type === 'login' ? '로그인' : '회원가입') + '되었습니다!');
+                
+            } catch (error) {
+                console.error('인증 오류:', error);
+                handleAuthError(error);
+            }
+        }
+
+        // 사용자 프로필 생성
+        async function createUserProfile(user, familyCode = null) {
+            const userData = {
+                email: user.email,
+                role: userRole,
+                authProvider: 'email',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastActive: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (userRole === 'parent') {
+                const newFamilyId = generateFamilyCode();
+                userData.familyId = newFamilyId;
+                userData.isParent = true;
+
+                await db.collection('families').doc(newFamilyId).set({
+                    parentId: user.uid,
+                    parentName: user.email.split('@')[0],
+                    members: [user.uid],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    familyCode: newFamilyId
+                });
+
+                setTimeout(() => {
+                    document.getElementById('generatedFamilyCode').textContent = newFamilyId;
+                    document.getElementById('familyCodeDisplay').classList.remove('hidden');
+                    showNotification(`🔑 가족 코드가 생성되었습니다: ${newFamilyId}`);
+                }, 1000);
+                
+            } else {
+                if (familyCode) {
+                    const familyDoc = await db.collection('families').doc(familyCode).get();
+                    if (familyDoc.exists) {
+                        userData.familyId = familyCode;
+                        userData.isParent = false;
+
+                        await db.collection('families').doc(familyCode).update({
+                            members: firebase.firestore.FieldValue.arrayUnion(user.uid)
+                        });
+                    } else {
+                        throw new Error('존재하지 않는 가족 코드입니다.');
+                    }
+                }
+            }
+
+            await db.collection('users').doc(user.uid).set(userData);
+            await createDefaultRoutines(user.uid, userData.familyId);
+        }
+
+        // 에러 처리
+        function handleAuthError(error) {
+            const errorMessages = {
+                'auth/user-not-found': '등록되지 않은 이메일입니다',
+                'auth/wrong-password': '비밀번호가 올바르지 않습니다',
+                'auth/email-already-in-use': '이미 사용 중인 이메일입니다',
+                'auth/weak-password': '비밀번호는 6자 이상이어야 합니다',
+                'auth/invalid-email': '올바르지 않은 이메일 형식입니다',
+                'auth/too-many-requests': '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요',
+                'auth/network-request-failed': '네트워크 연결을 확인해주세요',
+                'auth/popup-closed-by-user': '로그인이 취소되었습니다',
+                'auth/popup-blocked': '팝업이 차단되었습니다. 팝업을 허용해주세요',
+                'auth/unauthorized-domain': '도메인이 승인되지 않았습니다',
+                'auth/operation-not-allowed': 'Google 로그인이 비활성화되어 있습니다'
+            };
+
+            const message = errorMessages[error.code] || error.message || '알 수 없는 오류가 발생했습니다';
+            showNotification(message, 'error');
+        }
+
+        // 스트릭 및 통계 로드
+        async function loadUserStats() {
+            if (!currentUser || !familyId) return;
+
+            try {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+                const logsSnapshot = await db.collection('routine_logs')
+                    .where('userId', '==', currentUser.uid)
+                    .where('date', '>=', thirtyDaysAgoStr)
+                    .get();
+
+                const dailyCompletions = {};
+                const totalRoutinesPerDay = {};
+
+                logsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const date = data.date;
+                    
+                    if (date >= thirtyDaysAgoStr) {
+                        if (!dailyCompletions[date]) {
+                            dailyCompletions[date] = 0;
+                            totalRoutinesPerDay[date] = 0;
+                        }
+                        
+                        totalRoutinesPerDay[date]++;
+                        if (data.completed) {
+                            dailyCompletions[date]++;
+                        }
+                    }
+                });
+
+                userStats.currentStreak = calculateCurrentStreak(dailyCompletions, totalRoutinesPerDay);
+                userStats.bestStreak = calculateBestStreak(dailyCompletions, totalRoutinesPerDay);
+                userStats.totalDays = Object.keys(dailyCompletions).length;
+                userStats.weeklyScore = calculateWeeklyScore(dailyCompletions, totalRoutinesPerDay);
+
+                let totalCompleted = 0;
+                let totalPossible = 0;
+                Object.keys(dailyCompletions).forEach(date => {
+                    totalCompleted += dailyCompletions[date];
+                    totalPossible += totalRoutinesPerDay[date];
+                });
+                userStats.completionRate = totalPossible > 0 ? Math.round((totalCompleted / totalPossible) * 100) : 0;
+
+                updateStatsUI();
+
+            } catch (error) {
+                console.error('❌ 통계 로드 오류:', error);
+            }
+        }
+
+        // 현재 연속 일수 계산
+        function calculateCurrentStreak(dailyCompletions, totalRoutinesPerDay) {
+            const today = new Date();
+            let streak = 0;
+            
+            for (let i = 0; i < 30; i++) {
+                const checkDate = new Date(today);
+                checkDate.setDate(today.getDate() - i);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                if (dailyCompletions[dateStr] && totalRoutinesPerDay[dateStr]) {
+                    const completionRate = dailyCompletions[dateStr] / totalRoutinesPerDay[dateStr];
+                    if (completionRate >= 0.8) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                } else if (i === 0) {
+                    break;
+                } else {
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
+        // 최고 연속 일수 계산
+        function calculateBestStreak(dailyCompletions, totalRoutinesPerDay) {
+            const dates = Object.keys(dailyCompletions).sort();
+            let bestStreak = 0;
+            let currentStreak = 0;
+            
+            dates.forEach(date => {
+                const completionRate = dailyCompletions[date] / totalRoutinesPerDay[date];
+                if (completionRate >= 0.8) {
+                    currentStreak++;
+                    bestStreak = Math.max(bestStreak, currentStreak);
+                } else {
+                    currentStreak = 0;
+                }
+            });
+            
+            return bestStreak;
+        }
+
+        // 주간 점수 계산
+        function calculateWeeklyScore(dailyCompletions, totalRoutinesPerDay) {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            
+            let weekScore = 0;
+            for (let i = 0; i < 7; i++) {
+                const checkDate = new Date(startOfWeek);
+                checkDate.setDate(startOfWeek.getDate() + i);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                if (dailyCompletions[dateStr] && totalRoutinesPerDay[dateStr]) {
+                    const completionRate = dailyCompletions[dateStr] / totalRoutinesPerDay[dateStr];
+                    weekScore += Math.round(completionRate * 100);
+                }
+            }
+            
+            return Math.round(weekScore / 7);
+        }
+
+        // 통계 UI 업데이트
+        function updateStatsUI() {
+            const currentStreakEl = document.getElementById('currentStreak');
+            const todayProgressEl = document.getElementById('todayProgress');
+            const weeklyScoreEl = document.getElementById('weeklyScore');
+
+            if (currentStreakEl) currentStreakEl.textContent = userStats.currentStreak;
+            if (weeklyScoreEl) weeklyScoreEl.textContent = userStats.weeklyScore;
+
+            calculateTodayProgress().then(progress => {
+                if (todayProgressEl) todayProgressEl.textContent = `${progress}%`;
+            });
+
+            const totalDaysEl = document.getElementById('totalDays');
+            const bestStreakEl = document.getElementById('bestStreak');
+            const completionRateEl = document.getElementById('completionRate');
+
+            if (totalDaysEl) totalDaysEl.textContent = userStats.totalDays;
+            if (bestStreakEl) bestStreakEl.textContent = userStats.bestStreak;
+            if (completionRateEl) completionRateEl.textContent = `${userStats.completionRate}%`;
+        }
+
+        // 오늘 진행률 계산
+        async function calculateTodayProgress() {
+            if (!currentUser || !familyId) return 0;
+
+            try {
+                const routinesSnapshot = await db.collection('routines')
+                    .where('userId', '==', currentUser.uid)
+                    .where('familyId', '==', familyId)
+                    .get();
+
+                let totalTodayRoutines = 0;
+                routinesSnapshot.docs.forEach(doc => {
+                    const routine = doc.data();
+                    if (shouldShowRoutineToday(routine)) {
+                        totalTodayRoutines++;
+                    }
+                });
+
+                if (totalTodayRoutines === 0) return 100;
+
+                const completedCount = todayCompletedRoutines.size;
+                return Math.round((completedCount / totalTodayRoutines) * 100);
+
+            } catch (error) {
+                console.error('❌ 오늘 진행률 계산 오류:', error);
+                return 0;
+            }
+        }
+
+        // 주간 캘린더 생성
+        async function loadWeekCalendar() {
+            const weekCalendar = document.getElementById('weekCalendar');
+            if (!weekCalendar) return;
+
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+
+            weekCalendar.innerHTML = '';
+
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startOfWeek);
+                date.setDate(startOfWeek.getDate() + i);
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = dateStr === today.toISOString().split('T')[0];
+
+                const completionRate = await getDayCompletionRate(dateStr);
+
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                if (isToday) dayEl.classList.add('today');
+
+                let levelClass = 'level-0';
+                if (completionRate >= 80) levelClass = 'level-4';
+                else if (completionRate >= 60) levelClass = 'level-3';
+                else if (completionRate >= 40) levelClass = 'level-2';
+                else if (completionRate > 0) levelClass = 'level-1';
+
+                dayEl.innerHTML = `
+                    <div class="day-name">${dayNames[i]}</div>
+                    <div class="day-number">${date.getDate()}</div>
+                    <div class="day-progress ${levelClass}"></div>
+                `;
+
+                weekCalendar.appendChild(dayEl);
+            }
+        }
+
+        // 특정 날짜의 완료율 계산
+        async function getDayCompletionRate(dateStr) {
+            if (!currentUser || !familyId) return 0;
+
+            try {
+                const logsSnapshot = await db.collection('routine_logs')
+                    .where('userId', '==', currentUser.uid)
+                    .where('date', '==', dateStr)
+                    .get();
+
+                let totalRoutines = 0;
+                let completedRoutines = 0;
+
+                logsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    totalRoutines++;
+                    if (data.completed) {
+                        completedRoutines++;
+                    }
+                });
+
+                return totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0;
+
+            } catch (error) {
+                console.error('❌ 날짜별 완료율 계산 오류:', error);
+                return 0;
+            }
+        }
+
+        // 통계 페이지 로드
+        function loadStatsPage() {
+            loadUserStats();
+        }
+
+        // 가족 페이지 정보 로드
+        async function loadFamilyPageInfo() {
+            if (!currentUser || !familyId) return;
+
+            try {
+                if (userRole === 'parent') {
+                    const familyDoc = await db.collection('families').doc(familyId).get();
+                    if (familyDoc.exists) {
+                        const familyData = familyDoc.data();
+                        const familyCode = familyData.familyCode || familyId;
+                        const memberCount = familyData.members ? familyData.members.length : 1;
+                        const createdDate = familyData.createdAt ? familyData.createdAt.toDate().toLocaleDateString('ko-KR') : '-';
+                        
+                        const familyCodeCard = document.getElementById('familyCodeCard');
+                        const familyCodeMain = document.getElementById('familyCodeMain');
+                        const memberCountEl = document.getElementById('memberCount');
+                        const familyCreatedDateEl = document.getElementById('familyCreatedDate');
+                        
+                        if (familyCodeCard && familyCodeMain) {
+                            familyCodeMain.textContent = familyCode;
+                            if (memberCountEl) memberCountEl.textContent = `${memberCount}명`;
+                            if (familyCreatedDateEl) familyCreatedDateEl.textContent = createdDate;
+                            
+                            familyCodeCard.classList.remove('hidden');
+                            familyCodeCard.style.display = 'block';
+                        }
+                        
+                        window.currentFamilyCode = familyCode;
+                    }
+                } else {
+                    const familyCodeCard = document.getElementById('familyCodeCard');
+                    if (familyCodeCard) {
+                        familyCodeCard.classList.add('hidden');
+                        familyCodeCard.style.display = 'none';
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ 가족 페이지 정보 로드 오류:', error);
+            }
+        }
+
+        // 가족 코드 복사
+        async function copyFamilyCode() {
+            const familyCode = window.currentFamilyCode || document.getElementById('familyCodeMain').textContent;
+            
+            if (!familyCode || familyCode === '-') {
+                showNotification('복사할 가족 코드가 없습니다.', 'error');
+                return;
+            }
+            
+            try {
+                await navigator.clipboard.writeText(familyCode);
+                showNotification(`🎉 가족 코드 "${familyCode}"가 클립보드에 복사되었습니다!`);
+                
+                const copyBtn = document.getElementById('copyFamilyCodeBtn');
+                if (copyBtn) {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✅ 복사됨!';
+                    copyBtn.style.background = 'rgba(16, 185, 129, 0.3)';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                        copyBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                console.error('클립보드 복사 실패:', error);
+                
+                const codeElement = document.getElementById('familyCodeMain');
+                if (codeElement) {
+                    const range = document.createRange();
+                    range.selectNode(codeElement);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    showNotification('가족 코드가 선택되었습니다. Ctrl+C로 복사하세요!');
+                }
+            }
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 역할 선택
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const role = e.target.getAttribute('data-role');
+                    selectRole(role);
+                });
+            });
+
+            // Google 로그인
+            document.getElementById('googleSignInBtn').addEventListener('click', signInWithGoogle);
+
+            // 이메일 로그인 토글
+            document.getElementById('toggleEmailLogin').addEventListener('click', toggleEmailLogin);
+
+            // 이메일 로그인/회원가입
+            document.getElementById('loginBtn').addEventListener('click', () => handleAuth('login'));
+            document.getElementById('registerBtn').addEventListener('click', () => handleAuth('register'));
+
+            // 로그아웃
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // 네비게이션
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const page = e.currentTarget.dataset.page;
+                    showPage(page);
+                });
+            });
+
+            // 루틴 관리
+            document.getElementById('addRoutineBtn').addEventListener('click', openAddRoutineModal);
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+            document.getElementById('confirmAddRoutineBtn').addEventListener('click', addRoutine);
+
+            // 성취 모달
+            document.getElementById('closeAchievementBtn').addEventListener('click', closeAchievementModal);
+
+            // 가족 코드 복사
+            const copyBtn = document.getElementById('copyFamilyCodeBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', copyFamilyCode);
+            }
         }
 
         // DOM 로드 완료 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog('📄 DOM 로드 완료 - 앱 초기화 시작', 'success');
-            showStatus('앱 초기화 중...', 2000);
-            
-            // 디버그 모드를 자동으로 켜서 로그 확인 가능
-            debugEnabled = true;
-            debugLog('🐛 디버그 모드 자동 활성화', 'info');
-            
-            // 기본 UI 요소 확인
-            const loginPage = document.getElementById('loginPage');
-            const mainApp = document.getElementById('mainApp');
-            const googleBtn = document.getElementById('googleSignInBtn');
-            
-            debugLog('🔍 UI 요소 확인:', 'info');
-            debugLog('  - 로그인 페이지: ' + (loginPage ? '존재' : '없음'), loginPage ? 'success' : 'error');
-            debugLog('  - 메인 앱: ' + (mainApp ? '존재' : '없음'), mainApp ? 'success' : 'error');
-            debugLog('  - Google 버튼: ' + (googleBtn ? '존재' : '없음'), googleBtn ? 'success' : 'error');
-            
-            if (!loginPage || !mainApp || !googleBtn) {
-                debugLog('❌ 필수 UI 요소가 누락되었습니다!', 'error');
-                showStatus('UI 로드 오류', 5000);
-                return;
-            }
-            
-            debugLog('📅 현재 날짜 업데이트', 'info');
             updateCurrentDate();
-            
-            debugLog('💭 일일 명언 업데이트', 'info');
             updateDailyQuote();
-            
-            debugLog('📱 터치 이벤트 초기화 시작', 'info');
-            // 터치 이벤트를 먼저 초기화
-            initializeTouchEvents();
-            
-            // Firebase 초기화 전 체크
-            debugLog('🔥 Firebase SDK 로드 상태 확인...', 'info');
+            setupEventListeners();
             
             setTimeout(() => {
                 if (typeof firebase !== 'undefined') {
-                    debugLog('✅ Firebase SDK 감지됨', 'success');
-                    debugLog('🔍 Firebase 버전: ' + (firebase.SDK_VERSION || '알 수 없음'), 'info');
-                    debugLog('🚀 Firebase 초기화 시작', 'info');
-                    
-                    const initResult = initializeFirebase();
-                    if (initResult) {
-                        debugLog('✅ Firebase 초기화 성공', 'success');
-                    } else {
-                        debugLog('❌ Firebase 초기화 실패', 'error');
-                    }
+                    initializeFirebase();
                 } else {
-                    debugLog('❌ Firebase SDK가 로드되지 않았습니다.', 'error');
-                    debugLog('🔄 1초 후 재시도...', 'warning');
-                    showStatus('Firebase 로드 실패 - 재시도 중...', 3000);
-                    
+                    console.error('❌ Firebase SDK가 로드되지 않았습니다.');
                     setTimeout(() => {
-                        debugLog('🔄 Firebase 초기화 재시도', 'info');
                         if (typeof firebase !== 'undefined') {
-                            debugLog('✅ 재시도에서 Firebase SDK 감지됨', 'success');
                             initializeFirebase();
                         } else {
-                            debugLog('❌ 재시도 실패 - Firebase SDK 여전히 없음', 'error');
-                            showStatus('Firebase SDK 로드 실패', 5000);
+                            showNotification('Firebase SDK 로드 실패', 'error');
                         }
                     }, 1000);
                 }
             }, 100);
-            
-            debugLog('🏁 DOM 초기화 완료', 'success');
         });
     </script>
 </body>
