@@ -2651,11 +2651,12 @@
             </div>
         </div>
 
-        <!-- 루틴 추가 모달 -->
+        <!-- 루틴 추가/수정 모달 -->
         <div id="addRoutineModal" class="modal">
             <div class="modal-content">
                 <button class="close-btn" id="closeModalBtn">&times;</button>
-                <div class="modal-header">✨ 새 루틴 추가</div>
+                <div class="modal-mode-indicator" id="modalModeIndicator">추가</div>
+                <div class="modal-header" id="modalHeader">✨ 새 루틴 추가</div>
                 
                 <div class="form-group">
                     <label for="routineName">루틴 이름</label>
@@ -2689,9 +2690,15 @@
                     </select>
                 </div>
 
-                <div class="btn-group">
+                <div class="btn-group" id="addBtnGroup">
                     <button class="btn btn-cancel" id="cancelModalBtn">취소</button>
                     <button class="btn" id="confirmAddRoutineBtn">추가</button>
+                </div>
+
+                <div class="edit-btn-group hidden" id="editBtnGroup">
+                    <button class="btn btn-cancel" id="cancelEditBtn">취소</button>
+                    <button class="delete-btn" id="deleteRoutineBtn">삭제</button>
+                    <button class="btn" id="confirmEditRoutineBtn">수정</button>
                 </div>
             </div>
         </div>
@@ -2811,6 +2818,11 @@
             completionRate: 0
         };
         let debugEnabled = false;
+        
+        // 새로 추가된 전역 변수들
+        let useScrollNumberInput = true; // true: 스크롤 방식, false: 타이핑 방식
+        let currentEditingRoutine = null; // 현재 수정 중인 루틴 정보
+        let modalMode = 'add'; // 'add' 또는 'edit'
 
         // 디버그 로깅 함수
         function debugLog(message, type = 'info') {
@@ -3133,12 +3145,22 @@
             const confirmAddRoutineBtn = document.getElementById('confirmAddRoutineBtn');
             const closeAchievementBtn = document.getElementById('closeAchievementBtn');
             const closeMemberDetailBtn = document.getElementById('closeMemberDetailBtn');
+            
+            // 수정 모달용 버튼들 추가
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const deleteRoutineBtn = document.getElementById('deleteRoutineBtn');
+            const confirmEditRoutineBtn = document.getElementById('confirmEditRoutineBtn');
 
             if (closeModalBtn) addTouchEventListener(closeModalBtn, closeModal);
             if (cancelModalBtn) addTouchEventListener(cancelModalBtn, closeModal);
             if (confirmAddRoutineBtn) addTouchEventListener(confirmAddRoutineBtn, addRoutine);
             if (closeAchievementBtn) addTouchEventListener(closeAchievementBtn, closeAchievementModal);
             if (closeMemberDetailBtn) addTouchEventListener(closeMemberDetailBtn, closeMemberDetail);
+            
+            // 수정 모달 이벤트
+            if (cancelEditBtn) addTouchEventListener(cancelEditBtn, closeModal);
+            if (deleteRoutineBtn) addTouchEventListener(deleteRoutineBtn, deleteRoutine);
+            if (confirmEditRoutineBtn) addTouchEventListener(confirmEditRoutineBtn, editRoutine);
 
             // 가족 코드 복사 버튼
             const copyFamilyCodeBtn = document.getElementById('copyFamilyCodeBtn');
@@ -4133,12 +4155,10 @@
         }
 
         // 루틴 요소 생성
-        function createRoutineElement(routine, index) {
+        function createRoutineElement(routine, index, isCompleted = false) {
             const routineDiv = document.createElement('div');
             routineDiv.className = 'routine-item';
             routineDiv.style.animationDelay = `${index * 0.1}s`;
-            
-            const isCompleted = todayCompletedRoutines.has(routine.id);
             
             // 완료된 루틴은 completed 클래스 추가
             if (isCompleted) {
@@ -4169,7 +4189,18 @@
                 case 'number':
                     controlsHTML = `
                         <div class="number-routine-controls" data-routine-id="${routine.id}">
-                            <!-- 숫자 휠 피커가 여기에 동적으로 삽입됩니다 -->
+                            ${!isCompleted ? `
+                                <div class="number-input-toggle">
+                                    <span class="input-method-label">입력 방식:</span>
+                                    <div class="toggle-switch ${useScrollNumberInput ? 'active' : ''}" data-routine-id="${routine.id}">
+                                        <div class="toggle-slider"></div>
+                                    </div>
+                                    <span class="input-method-text">${useScrollNumberInput ? '스크롤' : '타이핑'}</span>
+                                </div>
+                                <div class="number-input-container">
+                                    <!-- 동적으로 생성됩니다 -->
+                                </div>
+                            ` : ''}
                         </div>
                         <button class="yes-btn ${isCompleted ? 'active' : ''}" 
                                 data-routine-id="${routine.id}"
@@ -4205,17 +4236,27 @@
                 </div>
             `;
 
-            // 숫자 루틴인 경우 휠 피커 추가
-            if (routine.type === 'number') {
+            // 숫자 루틴인 경우 입력 방식에 따라 컨트롤 생성
+            if (routine.type === 'number' && !isCompleted) {
                 const numberControls = routineDiv.querySelector('.number-routine-controls');
-                if (numberControls && !isCompleted) {
-                    const numberWheel = createNumberWheel(999, 0);
-                    numberControls.appendChild(numberWheel);
+                const inputContainer = routineDiv.querySelector('.number-input-container');
+                const toggle = routineDiv.querySelector('.toggle-switch');
+                
+                if (toggle) {
+                    addTouchEventListener(toggle, function() {
+                        useScrollNumberInput = !useScrollNumberInput;
+                        updateNumberInputMethod(routine.id, inputContainer);
+                        updateToggleState(this);
+                    });
+                }
+                
+                if (inputContainer) {
+                    updateNumberInputMethod(routine.id, inputContainer);
                 }
             }
 
             // 루틴 컨트롤 버튼들에 터치 이벤트 추가
-            routineDiv.querySelectorAll('button').forEach(button => {
+            routineDiv.querySelectorAll('button[data-action]').forEach(button => {
                 addTouchEventListener(button, function(e) {
                     const routineId = this.getAttribute('data-routine-id');
                     const action = this.getAttribute('data-action');
@@ -4240,20 +4281,65 @@
             return routineDiv;
         }
 
-        // 숫자 루틴 업데이트 (휠 피커 사용)
+        // 숫자 입력 방식 업데이트
+        function updateNumberInputMethod(routineId, container) {
+            container.innerHTML = '';
+            
+            if (useScrollNumberInput) {
+                // 스크롤 방식 (기존 휠 피커)
+                const numberWheel = createNumberWheel(999, 0);
+                container.appendChild(numberWheel);
+            } else {
+                // 타이핑 방식
+                const typingInput = document.createElement('input');
+                typingInput.type = 'number';
+                typingInput.className = 'typing-number-input';
+                typingInput.placeholder = '숫자 입력';
+                typingInput.min = '0';
+                typingInput.max = '999';
+                typingInput.dataset.routineId = routineId;
+                
+                // getValue 메서드 추가 (일관성을 위해)
+                typingInput.getValue = () => parseInt(typingInput.value) || 0;
+                
+                container.appendChild(typingInput);
+            }
+        }
+
+        // 토글 상태 업데이트
+        function updateToggleState(toggleElement) {
+            const slider = toggleElement.querySelector('.toggle-slider');
+            const methodText = toggleElement.parentElement.querySelector('.input-method-text');
+            
+            if (useScrollNumberInput) {
+                toggleElement.classList.add('active');
+                methodText.textContent = '스크롤';
+            } else {
+                toggleElement.classList.remove('active');
+                methodText.textContent = '타이핑';
+            }
+        }
+
+        // 숫자 루틴 업데이트 (개선된 버전)
         async function updateRoutineNumber(routineId, button) {
             const numberControls = button.parentElement.querySelector('.number-routine-controls');
-            const numberWheel = numberControls?.querySelector('.number-wheel-container');
             
-            if (!numberWheel) {
-                showNotification('숫자 선택기를 찾을 수 없습니다.', 'error');
-                return;
+            let value = 0;
+            
+            if (useScrollNumberInput) {
+                const numberWheel = numberControls?.querySelector('.number-wheel-container');
+                if (numberWheel && numberWheel.getValue) {
+                    value = numberWheel.getValue();
+                }
+            } else {
+                const typingInput = numberControls?.querySelector('.typing-number-input');
+                if (typingInput) {
+                    value = parseInt(typingInput.value) || 0;
+                }
             }
             
-            const value = numberWheel.getValue();
-            
             if (value === 0) {
-                showNotification('0보다 큰 숫자를 선택해주세요.', 'error');
+                showNotification('0보다 큰 숫자를 입력해주세요.', 'error');
                 return;
             }
             
@@ -5003,9 +5089,15 @@
             await batch.commit();
         }
 
-        // 루틴 추가
+        // 루틴 추가 (modalMode에 따라 추가/수정 분기)
         async function addRoutine() {
-            console.log('🔧 루틴 추가 시작');
+            if (modalMode === 'edit') {
+                await editRoutine();
+                return;
+            }
+            
+            // 기존 추가 로직
+            debugLog('🔧 루틴 추가 시작', 'info');
             
             if (!currentUser) {
                 showNotification('로그인이 필요합니다.', 'error');
@@ -5097,7 +5189,7 @@
             }
         }
 
-        // 사용자 루틴 로드 (관리 페이지용)
+        // 사용자 루틴 로드 (관리 페이지용) - 개선된 버전
         async function loadUserRoutines() {
             if (!currentUser || !familyId) {
                 console.log('❌ 루틴 로드 조건 불충족');
@@ -5140,10 +5232,17 @@
 
                 routines.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+                // 수정 가능하다는 안내 추가
+                const hintDiv = document.createElement('div');
+                hintDiv.className = 'routine-edit-hint';
+                hintDiv.textContent = '💡 루틴을 클릭하면 수정하거나 삭제할 수 있습니다';
+                manageList.appendChild(hintDiv);
+
                 routines.forEach((routine, index) => {
                     const routineEl = document.createElement('div');
-                    routineEl.className = 'routine-item';
+                    routineEl.className = 'routine-item manage-routine-item';
                     routineEl.style.animationDelay = `${index * 0.1}s`;
+                    routineEl.dataset.routineId = routine.id;
                     
                     const typeMap = {
                         'yesno': '예/아니오',
@@ -5174,6 +5273,12 @@
                             생성일: ${routine.createdAt.toLocaleDateString('ko-KR')}
                         </div>
                     `;
+                    
+                    // 루틴 클릭 이벤트 추가
+                    addTouchEventListener(routineEl, function() {
+                        openEditRoutineModal(routine);
+                    });
+                    
                     manageList.appendChild(routineEl);
                 });
                 
@@ -5192,9 +5297,70 @@
             }
         }
 
-        // 모달 관련
-        function openAddRoutineModal() {
+        // 루틴 수정 모달 열기
+        function openEditRoutineModal(routine) {
+            debugLog('🔧 루틴 수정 모달 열기: ' + routine.name, 'info');
+            
+            modalMode = 'edit';
+            currentEditingRoutine = routine;
+            
+            // 모달 UI 업데이트
             const modal = document.getElementById('addRoutineModal');
+            const modalHeader = document.getElementById('modalHeader');
+            const modalIndicator = document.getElementById('modalModeIndicator');
+            const addBtnGroup = document.getElementById('addBtnGroup');
+            const editBtnGroup = document.getElementById('editBtnGroup');
+            
+            modalHeader.textContent = '✏️ 루틴 수정';
+            modalIndicator.textContent = '수정';
+            modalIndicator.classList.add('edit');
+            
+            addBtnGroup.classList.add('hidden');
+            editBtnGroup.classList.remove('hidden');
+            
+            // 기존 값들로 폼 채우기
+            document.getElementById('routineName').value = routine.name;
+            document.getElementById('routineType').value = routine.type;
+            document.getElementById('routineTime').value = routine.time;
+            document.getElementById('routineFreq').value = routine.frequency;
+            
+            modal.style.display = 'block';
+            
+            setTimeout(() => {
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.style.animation = 'fadeInUp 0.3s ease-out';
+                }
+            }, 10);
+        }
+
+        // 모달 관련 - 개선된 버전
+        function openAddRoutineModal() {
+            debugLog('✨ 루틴 추가 모달 열기', 'info');
+            
+            modalMode = 'add';
+            currentEditingRoutine = null;
+            
+            // 모달 UI 업데이트
+            const modal = document.getElementById('addRoutineModal');
+            const modalHeader = document.getElementById('modalHeader');
+            const modalIndicator = document.getElementById('modalModeIndicator');
+            const addBtnGroup = document.getElementById('addBtnGroup');
+            const editBtnGroup = document.getElementById('editBtnGroup');
+            
+            modalHeader.textContent = '✨ 새 루틴 추가';
+            modalIndicator.textContent = '추가';
+            modalIndicator.classList.remove('edit');
+            
+            addBtnGroup.classList.remove('hidden');
+            editBtnGroup.classList.add('hidden');
+            
+            // 폼 초기화
+            document.getElementById('routineName').value = '';
+            document.getElementById('routineType').value = 'yesno';
+            document.getElementById('routineTime').value = 'morning';
+            document.getElementById('routineFreq').value = 'daily';
+            
             modal.style.display = 'block';
             
             setTimeout(() => {
@@ -5215,7 +5381,107 @@
             
             setTimeout(() => {
                 modal.style.display = 'none';
+                // 초기화
+                modalMode = 'add';
+                currentEditingRoutine = null;
             }, 300);
+        }
+
+        // 루틴 수정 함수
+        async function editRoutine() {
+            if (!currentEditingRoutine) {
+                showNotification('수정할 루틴 정보가 없습니다.', 'error');
+                return;
+            }
+            
+            const name = document.getElementById('routineName').value;
+            const type = document.getElementById('routineType').value;
+            const time = document.getElementById('routineTime').value;
+            const frequency = document.getElementById('routineFreq').value;
+            
+            if (!name.trim()) {
+                showNotification('루틴 이름을 입력해주세요.', 'error');
+                return;
+            }
+            
+            try {
+                debugLog('🔧 루틴 수정 시작: ' + currentEditingRoutine.id, 'info');
+                
+                const updateData = {
+                    name: name.trim(),
+                    type: type,
+                    time: time,
+                    frequency: frequency,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('routines').doc(currentEditingRoutine.id).update(updateData);
+                
+                showNotification(`✏️ 루틴 "${name}"이 수정되었습니다!`);
+                closeModal();
+                
+                setTimeout(() => {
+                    loadUserRoutines();
+                    // 홈 페이지가 활성화되어 있으면 새로고침
+                    if (document.getElementById('homePage').style.display === 'block') {
+                        loadHomeRoutines();
+                    }
+                }, 500);
+                
+                debugLog('✅ 루틴 수정 완료', 'success');
+                
+            } catch (error) {
+                debugLog('❌ 루틴 수정 오류: ' + error.message, 'error');
+                showNotification('루틴 수정에 실패했습니다: ' + error.message, 'error');
+            }
+        }
+
+        // 루틴 삭제 함수
+        async function deleteRoutine() {
+            if (!currentEditingRoutine) {
+                showNotification('삭제할 루틴 정보가 없습니다.', 'error');
+                return;
+            }
+            
+            // 확인 대화상자
+            if (!confirm(`"${currentEditingRoutine.name}" 루틴을 정말 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            try {
+                debugLog('🗑️ 루틴 삭제 시작: ' + currentEditingRoutine.id, 'info');
+                
+                // 루틴 문서 삭제
+                await db.collection('routines').doc(currentEditingRoutine.id).delete();
+                
+                // 관련 로그들도 삭제 (선택사항)
+                const logsSnapshot = await db.collection('routine_logs')
+                    .where('routineId', '==', currentEditingRoutine.id)
+                    .get();
+                
+                const batch = db.batch();
+                logsSnapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                
+                showNotification(`🗑️ 루틴 "${currentEditingRoutine.name}"이 삭제되었습니다.`);
+                closeModal();
+                
+                setTimeout(() => {
+                    loadUserRoutines();
+                    // 홈 페이지가 활성화되어 있으면 새로고침
+                    if (document.getElementById('homePage').style.display === 'block') {
+                        loadHomeRoutines();
+                    }
+                }, 500);
+                
+                debugLog('✅ 루틴 삭제 완료', 'success');
+                
+            } catch (error) {
+                debugLog('❌ 루틴 삭제 오류: ' + error.message, 'error');
+                showNotification('루틴 삭제에 실패했습니다: ' + error.message, 'error');
+            }
         }
 
         // 모달 외부 클릭 시 닫기
