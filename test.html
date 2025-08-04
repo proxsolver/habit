@@ -303,15 +303,20 @@
         <div id="debugConsole" class="debug-console hidden">
             <div class="debug-header">
                 <span>🐛 디버그 로그</span>
-                <button onclick="toggleDebugConsole()" class="debug-close">×</button>
+                <button class="debug-close">×</button>
             </div>
             <div id="debugMessages" class="debug-messages"></div>
-            <button onclick="clearDebugLog()" class="debug-clear">로그 지우기</button>
+            <button class="debug-clear">로그 지우기</button>
         </div>
 
         <!-- 디버그 토글 버튼 -->
-        <div id="debugToggle" class="debug-toggle" onclick="toggleDebugConsole()">
+        <div id="debugToggle" class="debug-toggle">
             🐛
+        </div>
+
+        <!-- 간단한 상태 표시기 -->
+        <div id="statusIndicator" class="status-indicator hidden">
+            <div id="statusText">상태 확인 중...</div>
         </div>
     </div>
 
@@ -374,18 +379,28 @@
 
         // 디버그 콘솔 토글
         function toggleDebugConsole() {
+            debugLog('🔄 디버그 콘솔 토글 시도', 'info');
+            
             const debugConsole = document.getElementById('debugConsole');
             const debugToggle = document.getElementById('debugToggle');
+            
+            if (!debugConsole || !debugToggle) {
+                debugLog('❌ 디버그 요소를 찾을 수 없습니다', 'error');
+                return;
+            }
             
             if (debugConsole.classList.contains('hidden')) {
                 debugConsole.classList.remove('hidden');
                 debugToggle.style.display = 'none';
                 debugEnabled = true;
                 debugLog('🐛 디버그 모드 활성화', 'success');
+                showStatus('디버그 모드 ON', 2000);
             } else {
                 debugConsole.classList.add('hidden');
                 debugToggle.style.display = 'block';
                 debugEnabled = false;
+                debugLog('🐛 디버그 모드 비활성화', 'info');
+                showStatus('디버그 모드 OFF', 2000);
             }
         }
 
@@ -395,6 +410,98 @@
             if (debugMessages) {
                 debugMessages.innerHTML = '';
             }
+            debugLog('🧹 로그 지워짐', 'info');
+        }
+
+        // 상태 표시
+        function showStatus(message, duration = 3000) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            if (statusIndicator && statusText) {
+                statusText.textContent = message;
+                statusIndicator.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    statusIndicator.classList.add('hidden');
+                }, duration);
+            }
+        }
+
+        // 터치 이벤트 개선
+        function addTouchSupport() {
+            // 디버그 토글 버튼
+            const debugToggle = document.getElementById('debugToggle');
+            if (debugToggle) {
+                debugLog('🟢 디버그 토글 버튼 터치 이벤트 추가', 'info');
+                
+                // 기존 이벤트 제거
+                debugToggle.replaceWith(debugToggle.cloneNode(true));
+                const newDebugToggle = document.getElementById('debugToggle');
+                
+                // 터치 이벤트 추가
+                newDebugToggle.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    newDebugToggle.style.transform = 'scale(0.9)';
+                    debugLog('👆 디버그 버튼 터치 시작', 'info');
+                }, { passive: false });
+                
+                newDebugToggle.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    newDebugToggle.style.transform = 'scale(1)';
+                    debugLog('👆 디버그 버튼 터치 완료', 'info');
+                    setTimeout(() => {
+                        toggleDebugConsole();
+                    }, 100);
+                }, { passive: false });
+                
+                // 마우스 이벤트
+                newDebugToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    debugLog('🖱️ 디버그 버튼 클릭', 'info');
+                    toggleDebugConsole();
+                });
+            } else {
+                debugLog('❌ 디버그 토글 버튼을 찾을 수 없습니다', 'error');
+            }
+
+            // 잠시 후 닫기/지우기 버튼 이벤트 추가 (모달이 나타날 때를 대비)
+            setTimeout(() => {
+                // 닫기 버튼 터치 지원
+                const debugClose = document.querySelector('.debug-close');
+                if (debugClose) {
+                    debugClose.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleDebugConsole();
+                    }, { passive: false });
+                    
+                    debugClose.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleDebugConsole();
+                    });
+                }
+
+                // 로그 지우기 버튼 터치 지원
+                const debugClear = document.querySelector('.debug-clear');
+                if (debugClear) {
+                    debugClear.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        clearDebugLog();
+                    }, { passive: false });
+                    
+                    debugClear.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        clearDebugLog();
+                    });
+                }
+            }, 1000);
         }
 
         // 기본 명언들
@@ -415,16 +522,20 @@
         function initializeFirebase() {
             try {
                 debugLog('🔥 Firebase 초기화 시작...', 'info');
+                showStatus('Firebase 연결 중...', 2000);
+                
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
                 
                 debugLog('✅ Firebase 초기화 성공!', 'success');
+                showStatus('Firebase 연결 완료!', 2000);
                 
                 // 인증 상태 변경 감지
                 auth.onAuthStateChanged(async (user) => {
                     if (user) {
                         currentUser = user;
+                        showStatus('사용자 정보 로드 중...', 2000);
                         await loadUserProfile();
                         showMainApp();
                         startRealtimeListeners();
@@ -437,6 +548,7 @@
                 return true;
             } catch (error) {
                 debugLog('❌ Firebase 초기화 실패: ' + error.message, 'error');
+                showStatus('Firebase 연결 실패: ' + error.message, 5000);
                 return false;
             }
         }
@@ -645,6 +757,9 @@
 
         // 페이지 전환
         function showPage(page) {
+            debugLog('📄 페이지 전환: ' + page, 'info');
+            showStatus('페이지 로드 중...', 1500);
+            
             // 모든 페이지 숨기기
             document.querySelectorAll('.page').forEach(p => {
                 p.style.display = 'none';
@@ -674,6 +789,7 @@
                 loadFamilyPageInfo();
             } else if (page === 'review') {
                 showNotification('📊 리뷰 페이지는 곧 준비됩니다!', 'warning');
+                return;
             }
 
             // 페이지 전환 애니메이션
@@ -1052,11 +1168,18 @@
 
             } catch (error) {
                 debugLog('❌ 홈 루틴 로드 오류: ' + error.message, 'error');
+                debugLog('🔍 오류 코드: ' + (error.code || '없음'), 'warning');
+                debugLog('🧪 currentUser: ' + (currentUser ? currentUser.uid : 'null'), 'info');
+                debugLog('🧪 familyId: ' + (familyId || 'null'), 'info');
+                
+                showStatus('루틴 로드 실패: ' + error.message, 5000);
+                
                 const routineList = document.getElementById('routineList');
                 routineList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">⚠️</div>
                         <div class="empty-state-title">루틴을 불러오는데 실패했습니다</div>
+                        <div class="empty-state-description">오류: ${error.message}</div>
                     </div>
                 `;
             }
@@ -2053,14 +2176,23 @@
         // DOM 로드 완료 후 초기화
         document.addEventListener('DOMContentLoaded', function() {
             debugLog('📄 DOM 로드 완료', 'success');
+            showStatus('앱 초기화 중...', 2000);
+            
             updateCurrentDate();
             updateDailyQuote();
+            
+            // 터치 지원을 약간 지연 후 추가 (DOM 렌더링 완료 대기)
+            setTimeout(() => {
+                addTouchSupport();
+                debugLog('📱 터치 이벤트 활성화', 'info');
+            }, 500);
             
             setTimeout(() => {
                 if (typeof firebase !== 'undefined') {
                     initializeFirebase();
                 } else {
                     debugLog('❌ Firebase SDK가 로드되지 않았습니다.', 'error');
+                    showStatus('Firebase 로드 실패', 3000);
                     setTimeout(initializeFirebase, 1000);
                 }
             }, 100);
