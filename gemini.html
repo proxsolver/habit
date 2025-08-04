@@ -1,0 +1,84 @@
+// 복습용 단어 로드 (수정됨)
+async function loadReviewWord() {
+    console.log("loadReviewWord 호출됨 (수정 버전)");
+
+    // 1. userProgress에서 취약 단어 찾기
+    const strugglingWords = [];
+    for (const [wordId, progress] of Object.entries(userProgress)) {
+        const total = progress.correct + progress.incorrect;
+        // 최소 3번 풀었고, 오답이 정답보다 많아야 함
+        if (total >= 3 && progress.incorrect > progress.correct) {
+            strugglingWords.push(wordId);
+        }
+    }
+
+    // 2. 취약 단어가 없으면 알림 후 기본 난이도 1 문제 로드
+    if (strugglingWords.length === 0) {
+        console.log('복습할 단어가 없습니다. 기본 난이도 1로 이동합니다.');
+        alert('복습할 단어가 없습니다! 더 많은 문제를 풀어보세요.');
+        await loadWordForDifficulty(1);
+        return;
+    }
+
+    // 3. 취약 단어 중 하나를 랜덤 선택
+    console.log('취약 단어 목록:', strugglingWords);
+    const targetWordId = strugglingWords[Math.floor(Math.random() * strugglingWords.length)];
+    console.log(`복습할 대상 단어 선택됨: ${targetWordId}`);
+
+    // 4. 선택된 취약 단어를 기반으로, words 폴더의 JSON 파일에서 데이터 찾기
+    let foundInJson = false;
+    for (let difficulty = 1; difficulty <= 3; difficulty++) {
+        if (foundInJson) break;
+        try {
+            console.log(`레벨 ${difficulty} JSON 파일에서 "${targetWordId}" 검색 중...`);
+            const response = await fetch(`./words/level${difficulty}.json?t=${new Date().getTime()}`); // 캐시 무시
+            if (!response.ok) {
+                console.warn(`level${difficulty}.json 파일 로드 실패: ${response.status}`);
+                continue;
+            }
+            const data = await response.json();
+            // 영어 단어명이 일치하는 항목 찾기 (대소문자 구분 없음)
+            const wordEntry = data.words.find(w => w.english.toLowerCase() === targetWordId.toLowerCase());
+
+            if (wordEntry) {
+                // 5. 찾았으면 currentWordData 설정
+                currentWordData = {
+                    id: wordEntry.english.toLowerCase(),
+                    korean: wordEntry.korean,
+                    english: wordEntry.english,
+                    options: [...wordEntry.options], // 배열 복사
+                    difficulty: 'review',
+                    source: `level${difficulty}.json`
+                };
+                currentEnglishQuiz = {
+                    answer: currentWordData.english,
+                    wordId: currentWordData.id
+                };
+                console.log('복습 단어 로드 성공 (JSON):', currentWordData);
+                foundInJson = true;
+                break; // 찾았으므로 루프 종료
+            }
+        } catch (error) {
+            console.error(`level${difficulty}.json 처리 중 오류:`, error);
+        }
+    }
+
+    // 6. JSON 파일 어디에도 단어가 없으면 폴백
+    if (!foundInJson) {
+        console.warn(`"${targetWordId}"를 words 폴더의 JSON 파일에서 찾지 못했습니다. 폴백 데이터 사용.`);
+        // 폴백: userProgress에 저장된 wordId를 기반으로 매우 기본적인 퀴즈 생성
+        currentWordData = {
+            id: targetWordId.toLowerCase(),
+            korean: targetWordId, // 뜻이 없으므로 단어명 표시
+            english: targetWordId,
+            options: [targetWordId, `not-${targetWordId}`, `${targetWordId}-word`, `the-${targetWordId}`], // 매우 기본적인 옵션
+            difficulty: 'review',
+            source: 'fallback'
+        };
+        currentEnglishQuiz = {
+            answer: currentWordData.english,
+            wordId: currentWordData.id
+        };
+        console.log('복습 단어 로드 (폴백):', currentWordData);
+    }
+}
