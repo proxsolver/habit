@@ -747,18 +747,26 @@
             animation: fadeInUp 0.3s ease-out;
         }
 
+    /* === 모달 스타일 수정 === */
         .modal {
+            /* 기존 스타일 유지 */
             background: white;
             padding: 0;
             border-radius: var(--radius-lg);
             width: 90%;
             max-width: 400px;
-            max-height: 80vh;
-            overflow: hidden;
+            max-height: 80vh; /* 모달 전체의 최대 높이 */
             box-shadow: var(--shadow-xl);
             animation: slideInRight 0.3s ease-out;
+        
+            /* 추가 및 수정: Flexbox를 사용하여 내부 콘텐츠 레이아웃 제어 */
+            display: flex; /* Flex 컨테이너로 지정 */
+            flex-direction: column; /* 자식 요소들을 세로로 정렬 */
+            overflow: hidden; /* 모달 전체는 숨김으로 유지 (내부 바디에서 스크롤 처리) */
         }
 
+
+        /* 모달 헤더와 푸터는 변경 없음 (고정 높이 유지) */
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -766,6 +774,7 @@
             padding: 1.5rem;
             border-bottom: 1px solid var(--gray-200);
             background: linear-gradient(135deg, var(--gray-50), white);
+            flex-shrink: 0; /* 헤더는 크기가 줄어들지 않도록 고정 */
         }
 
         .modal-header h3 {
@@ -797,6 +806,10 @@
 
         .modal-body {
             padding: 1.5rem;
+            /* 추가: 남은 공간을 채우고, 내용이 넘치면 스크롤바 생성 */
+            flex-grow: 1; /* flex 컨테이너 내에서 남은 공간을 모두 차지 */
+            overflow-y: auto; /* 세로 스크롤바 자동 생성 */
+            -webkit-overflow-scrolling: touch; /* iOS에서 스크롤 부드럽게 */
         }
 
         .modal-footer {
@@ -806,8 +819,8 @@
             gap: 0.75rem;
             border-top: 1px solid var(--gray-200);
             background: var(--gray-50);
+            flex-shrink: 0; /* 푸터는 크기가 줄어들지 않도록 고정 */
         }
-
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
