@@ -1655,11 +1655,13 @@
                 return;
             }
             
-            debugLog('스테퍼 값 확인:', value, '루틴:', activeRoutineForModal.name);
+            // activeRoutineForModal 값을 미리 저장 (모달이 닫히기 전에)
+            const currentRoutine = activeRoutineForModal;
+            debugLog('스테퍼 값 확인:', value, '루틴:', currentRoutine.name);
             
             try {
                 // 루틴 데이터 즉시 업데이트
-                const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
+                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
                     routine.value = value;
                     routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
@@ -1667,9 +1669,9 @@
                     debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
                 }
                 
-                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
-                hideStepperModal();
-                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''} 저장되었습니다!`);
+                await updateRoutineValue(currentRoutine.id, value, 'number');
+                hideStepperModal(); // 여기서 activeRoutineForModal이 null이 됨
+                showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''} 저장되었습니다!`);
                 
                 // UI 즉시 업데이트
                 renderRoutines();
@@ -1736,11 +1738,13 @@
             }
             
             const value = wheel.getValue();
-            debugLog('휠 값 확인:', value, '루틴:', activeRoutineForModal.name);
+            // activeRoutineForModal 값을 미리 저장 (모달이 닫히기 전에)
+            const currentRoutine = activeRoutineForModal;
+            debugLog('휠 값 확인:', value, '루틴:', currentRoutine.name);
             
             try {
                 // 루틴 데이터 즉시 업데이트
-                const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
+                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
                     routine.value = value;
                     routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
@@ -1748,9 +1752,9 @@
                     debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
                 }
                 
-                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
-                hideWheelModal();
-                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''} 저장되었습니다!`);
+                await updateRoutineValue(currentRoutine.id, value, 'number');
+                hideWheelModal(); // 여기서 activeRoutineForModal이 null이 됨
+                showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''} 저장되었습니다!`);
                 
                 // UI 즉시 업데이트
                 renderRoutines();
@@ -1966,11 +1970,13 @@
                 return;
             }
             
-            debugLog('시간 값 확인:', value, '루틴:', activeRoutineForModal.name);
+            // activeRoutineForModal 값을 미리 저장 (모달이 닫히기 전에)
+            const currentRoutine = activeRoutineForModal;
+            debugLog('시간 값 확인:', value, '루틴:', currentRoutine.name);
             
             try {
                 // 루틴 데이터 즉시 업데이트
-                const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
+                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
                     routine.value = value;
                     routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
@@ -1978,9 +1984,9 @@
                     debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
                 }
                 
-                await updateRoutineValue(activeRoutineForModal.id, value, 'time');
-                hideTimeInputModal();
-                showNotification(`✅ ${activeRoutineForModal.name}: ${value} 저장되었습니다!`);
+                await updateRoutineValue(currentRoutine.id, value, 'time');
+                hideTimeInputModal(); // 여기서 activeRoutineForModal이 null이 됨
+                showNotification(`✅ ${currentRoutine.name}: ${value} 저장되었습니다!`);
                 
                 // UI 즉시 업데이트
                 renderRoutines();
