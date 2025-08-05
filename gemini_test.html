@@ -6,12 +6,10 @@
     <title>가족 루틴 트래커</title>
     <!-- Sortable.js 라이브러리 추가 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <!-- ✨ 새로 추가된 부분 시작 ✨ -->
-    <!-- Tailwind CSS CDN: 대시보드 디자인에 사용 -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN: 대시보드 그래프에 사용 -->
+    <!-- Chart.js CDN for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- ✨ 새로 추가된 부분 끝 ✨ -->
     <style>
         /* 전역 스타일 */
         * {
@@ -20,7 +18,6 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
 
         :root {
             --primary: #6366f1;
@@ -1573,51 +1570,65 @@
             .area-selection-grid {
                 grid-template-columns: 1fr; /* 모바일에서는 한 줄에 하나씩 */
             }
-        /* ✨ 대시보드 스타일 새로 추가 시작 ✨ */
-    .dashboard-container {
-        background-color: #ffffff;
-        border-radius: 1rem; /* rounded-xl */
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
-        padding: 2.5rem; /* p-10 */
-        width: 100%;
-        max-width: 960px; /* Increased max-width for better layout */
-        margin-top: 20px;
-    }
-    .progress-bar-container {
-        width: 100%;
-        background-color: #e5e7eb; /* gray-200 */
-        border-radius: 9999px; /* rounded-full */
-        height: 1.25rem; /* h-5 */
-        overflow: hidden;
-    }
-    .progress-bar-fill {
-        height: 100%;
-        background-color: #22c55e; /* green-500 */
-        border-radius: 9999px; /* rounded-full */
-        transition: width 0.5s ease-in-out;
-    }
-    .tab-button.active {
-        background-color: #ffffff;
-        color: #3b82f6; /* blue-500 */
-        border-bottom: 3px solid #3b82f6;
-    }
-    .tab-content {
-        display: none;
-    }
-    .tab-content.active {
-        display: block;
-    }
-    /* ✨ 대시보드 스타일 새로 추가 끝 ✨ */
-        
-        
         }
+
+        /* ✨ 대시보드 스타일 새로 추가 시작 ✨ */
+        .dashboard-container {
+            background-color: #ffffff;
+            border-radius: 1rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            padding: 2.5rem; /* p-10 */
+            width: 100%;
+            max-width: 960px; /* Increased max-width for better layout */
+            margin-top: 20px;
+        }
+        .dashboard-container .progress-bar-container { /* Specificity for dashboard's progress bar */
+            width: 100%;
+            background-color: #e5e7eb; /* gray-200 */
+            border-radius: 9999px; /* rounded-full */
+            height: 1.25rem; /* h-5 */
+            overflow: hidden;
+        }
+        .dashboard-container .progress-bar-fill { /* Specificity for dashboard's progress bar */
+            height: 100%;
+            background-color: #22c55e; /* green-500 */
+            border-radius: 9999px; /* rounded-full */
+            transition: width 0.5s ease-in-out;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 1rem; /* py-4 */
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #6b7280; /* gray-600 */
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            transition: color 0.2s, border-bottom 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button:hover {
+            color: #3b82f6; /* blue-500 */
+        }
+        .tab-button.active {
+            background-color: #ffffff;
+            color: #3b82f6; /* blue-500 */
+            border-bottom: 3px solid #3b82f6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* ✨ 대시보드 스타일 새로 추가 끝 ✨ */
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ✨ 기존 루틴 관리 홈/관리 페이지 섹션 시작 ✨ -->
-        <!-- 이 부분은 대시보드와 전환될 기존 콘텐츠입니다. -->
+        <!-- 기존 루틴 관리 홈/관리 페이지 섹션 -->
         <div id="main-app-content">
+            <!-- 일일 진행률 표시 -->
             <div class="daily-progress">
                 <div class="progress-content">
                     <div class="progress-percentage" id="dailyProgressPercentage">0%</div>
@@ -1627,100 +1638,98 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- 남은 루틴 섹션 -->
-        <div class="section-card" id="incomplete-section">
-            <h2>
-                <div class="section-header">
-                    <span>📋 남은 루틴</span>
-                </div>
-                <div class="section-progress" id="incompleteProgress">
-                    <span id="incompleteCount">0</span>개 남음
-                </div>
-            </h2>
-            <div class="routine-list" id="incompleteRoutineList">
-                <!-- 개선된 루틴 아이템들이 여기에 렌더링됩니다 -->
-            </div>
-            <div class="empty-state" id="emptyStateIncomplete" style="display: none;">
-                <div class="empty-state-icon">🎉</div>
-                <div class="empty-state-title">모든 루틴을 완료했습니다!</div>
-                <div class="empty-state-description">오늘 하루도 정말 수고하셨습니다.<br>꾸준한 노력이 큰 변화를 만들어냅니다!</div>
-            </div>
-        </div>
 
-        <!-- 진행 중 루틴 섹션 -->
-        <div class="section-card" id="inprogress-section" style="display: none;">
-            <h2>
-                <div class="section-header">
-                    <span>🔄 진행 중 루틴</span>
-                </div>
-                <div class="section-progress" id="inprogressProgress">
-                    <span id="inprogressCount">0</span>개 진행 중
-                </div>
-            </h2>
-            <div class="routine-list" id="inprogressRoutineList">
-                <!-- 진행 중인 루틴들이 여기에 렌더링됩니다 -->
-            </div>
-        </div>
-        <div class="section-card" id="completed-section" style="display: none;">
-            <h2>
-                <div class="section-header">
-                    <span>✅ 완료한 루틴</span>
-                </div>
-                <div class="section-progress" id="completedProgress">
-                    <span id="completedCount">0</span>개 완료
-                </div>
-            </h2>
-            <div class="routine-list" id="completedRoutineList">
-                <!-- 완료된 루틴들이 여기에 렌더링됩니다 -->
-            </div>
-        </div>
-
-        <!-- 건너뛴 루틴 섹션 -->
-        <div class="section-card" id="skipped-section" style="display: none;">
-            <h2>
-                <div class="section-header">
-                    <span>⏭️ 건너뛴 루틴</span>
-                </div>
-                <div class="section-progress" id="skippedProgress">
-                    <span id="skippedCount">0</span>개 건너뜀
-                </div>
-            </h2>
-            <div class="routine-list" id="skippedRoutineList">
-                <!-- 건너뛴 루틴들이 여기에 렌더링됩니다 -->
-            </div>
-        </div>
-
-        <!-- 관리 페이지 -->
-        <div class="section-card" id="manage-section" style="display: none;">
-            <h2>⚙️ 루틴 순서 관리</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                드래그하여 루틴 순서를 변경할 수 있습니다.
-            </p>
-            <!-- 5대 영역 통계 섹션 (관리 페이지로 이동) -->
-            <div class="section-card" id="area-stats-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 1.5rem;">
+            <!-- 남은 루틴 섹션 -->
+            <div class="section-card" id="incomplete-section">
                 <h2>
                     <div class="section-header">
-                        <span>✨ 영역별 포인트</span>
+                        <span>📋 남은 루틴</span>
                     </div>
-                    <button class="edit-btn" onclick="showManageAreasModal()">영역 관리</button>
+                    <div class="section-progress" id="incompleteProgress">
+                        <span id="incompleteCount">0</span>개 남음
+                    </div>
                 </h2>
-                <div class="area-stats-grid" id="areaStatsGrid">
-                    <!-- 영역별 통계 아이템들이 여기에 렌더링됩니다 -->
+                <div class="routine-list" id="incompleteRoutineList">
+                    <!-- 개선된 루틴 아이템들이 여기에 렌더링됩니다 -->
+                </div>
+                <div class="empty-state" id="emptyStateIncomplete" style="display: none;">
+                    <div class="empty-state-icon">🎉</div>
+                    <div class="empty-state-title">모든 루틴을 완료했습니다!</div>
+                    <div class="empty-state-description">오늘 하루도 정말 수고하셨습니다.<br>꾸준한 노력이 큰 변화를 만들어냅니다!</div>
                 </div>
             </div>
-            <div class="manage-routine-list" id="manageRoutineList">
-                <!-- 관리용 루틴들이 여기에 렌더링됩니다 -->
+
+            <!-- 진행 중 루틴 섹션 -->
+            <div class="section-card" id="inprogress-section" style="display: none;">
+                <h2>
+                    <div class="section-header">
+                        <span>🔄 진행 중 루틴</span>
+                    </div>
+                    <div class="section-progress" id="inprogressProgress">
+                        <span id="inprogressCount">0</span>개 진행 중
+                    </div>
+                </h2>
+                <div class="routine-list" id="inprogressRoutineList">
+                    <!-- 진행 중인 루틴들이 여기에 렌더링됩니다 -->
+                </div>
             </div>
-            <button class="save-order-btn" id="saveOrderBtn">
-                💾 순서 저장하기
-            </button>
-        </div
+            <div class="section-card" id="completed-section" style="display: none;">
+                <h2>
+                    <div class="section-header">
+                        <span>✅ 완료한 루틴</span>
+                    </div>
+                    <div class="section-progress" id="completedProgress">
+                        <span id="completedCount">0</span>개 완료
+                    </div>
+                </h2>
+                <div class="routine-list" id="completedRoutineList">
+                    <!-- 완료된 루틴들이 여기에 렌더링됩니다 -->
+                </div>
+            </div>
 
-        <!-- ✨ 기존 루틴 관리 홈/관리 페이지 섹션 끝 ✨ -->
+            <!-- 건너뛴 루틴 섹션 -->
+            <div class="section-card" id="skipped-section" style="display: none;">
+                <h2>
+                    <div class="section-header">
+                        <span>⏭️ 건너뛴 루틴</span>
+                    </div>
+                    <div class="section-progress" id="skippedProgress">
+                        <span id="skippedCount">0</span>개 건너뜜
+                    </div>
+                </h2>
+                <div class="routine-list" id="skippedRoutineList">
+                    <!-- 건너뛴 루틴들이 여기에 렌더링됩니다 -->
+                </div>
+            </div>
 
-        <!-- ✨ 대시보드 섹션 새로 추가 ✨ -->
-        <!-- 이 부분이 대시보드 콘텐츠를 담는 곳입니다. 초기에는 숨겨둡니다. -->
+            <!-- 관리 페이지 -->
+            <div class="section-card" id="manage-section" style="display: none;">
+                <h2>⚙️ 루틴 순서 관리</h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    드래그하여 루틴 순서를 변경할 수 있습니다.
+                </p>
+                <!-- 5대 영역 통계 섹션 (관리 페이지로 이동) -->
+                <div class="section-card" id="area-stats-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 1.5rem;">
+                    <h2>
+                        <div class="section-header">
+                            <span>✨ 영역별 포인트</span>
+                        </div>
+                        <button class="edit-btn" id="manageAreasBtn">영역 관리</button>
+                    </h2>
+                    <div class="area-stats-grid" id="areaStatsGrid">
+                        <!-- 영역별 통계 아이템들이 여기에 렌더링됩니다 -->
+                    </div>
+                </div>
+                <div class="manage-routine-list" id="manageRoutineList">
+                    <!-- 관리용 루틴들이 여기에 렌더링됩니다 -->
+                </div>
+                <button class="save-order-btn" id="saveOrderBtn">
+                    💾 순서 저장하기
+                </button>
+            </div>
+        </div>
+
+        <!-- 대시보드 섹션 새로 추가 -->
         <div id="dashboard-view" class="dashboard-container" style="display: none;">
             <h1 class="text-4xl font-extrabold text-gray-900 mb-10 text-center">
                 ✨ 핵심 영역 진취 대시보드 ✨
@@ -1793,27 +1802,21 @@
                 </div>
             </div>
         </div>
-        <!-- ✨ 대시보드 섹션 끝 ✨ -->
 
-
-            
-
-       <!-- 페이지 전환 버튼 -->
+        <!-- 페이지 전환 버튼 -->
         <div class="navigation-buttons">
-            <button onclick="showHomePage()" class="nav-btn home">
+            <button id="navHomeBtn" class="nav-btn home">
                 🏠 홈
             </button>
-            <button onclick="showManagePage()" class="nav-btn manage">
+            <button id="navManageBtn" class="nav-btn manage">
                 ⚙️ 관리
             </button>
-            <button onclick="showAddRoutineModal()" class="nav-btn add">
+            <button id="navAddRoutineBtn" class="nav-btn add">
                 ➕ 루틴 추가
             </button>
-            <!-- ✨ 대시보드 전환 버튼 추가 ✨ -->
-            <button onclick="showDashboardPage()" class="nav-btn stats">
+            <button id="navStatsBtn" class="nav-btn stats">
                 📊 통계
             </button>
-            <!-- ✨ 새로 추가된 부분 끝 ✨ -->
         </div>
 
         <!-- 숫자 입력 모달 -->
@@ -1920,7 +1923,7 @@
                         </div>
                         <div class="summary-item">
                             <span>예상 소요일:</span>
-                            <span>-</span>
+                            <span id="estimatedDays">-</span>
                         </div>
                         <div class="summary-item">
                             <span>완료 예정일:</span>
@@ -2126,220 +2129,179 @@
     </div>
 
     <script>
-<script>
-    // ✨ 대시보드 관련 데이터 및 함수 새로 추가 시작 ✨
-    // 대시보드 데이터를 시뮬레이션합니다. (추후 실제 앱 데이터로 연동됩니다)
-    // 독서 데이터 (임시 데이터)
-    let monthlyGoalBooks = 3; // 월간 목표 완독 권수 (사용자 설정 가능하도록 확장)
-    let currentCompletedBooks = 1.5; // 현재까지 완독한 권수 (실제 독서 데이터에서 계산)
-    let lastMonthCompletedBooks = 1.2; // 지난달 완독 권수 (실제 독서 데이터에서 계산)
-    let weeklyReadingData = [
-        { date: '7/8', pages: 50 }, { date: '7/9', pages: 30 }, { date: '7/10', pages: 60 }, { date: '7/11', pages: 40 }, { date: '7/12', pages: 70 }, { date: '7/13', pages: 0 }, { date: '7/14', pages: 20 },
-        { date: '7/15', pages: 45 }, { date: '7/16', pages: 55 }, { date: '7/17', pages: 35 }, { date: '7/18', pages: 65 }, { date: '7/19', pages: 0 }, { date: '7/20', pages: 25 }, { date: '7/21', pages: 50 },
-        { date: '7/22', pages: 60 }, { date: '7/23', pages: 40 }, { date: '7/24', pages: 70 }, { date: '7/25', pages: 30 }, { date: '7/26', pages: 50 }, { date: '7/27', pages: 0 }, { date: '7/28', pages: 40 },
-        { date: '7/29', pages: 70 }, { date: '7/30', pages: 50 }, { date: '7/31', pages: 80 }, { date: '8/1', pages: 60 }, { date: '8/2', pages: 40 }, { date: '8/3', pages: 0 }, { date: '8/4', pages: 30 }
-    ];
-    let completedBooks = [ // 완독 도서 데이터 (임시 데이터)
-        { title: '데미안', author: '헤르만 헤세', completedDate: '2025-07-20', cover: 'https://placehold.co/100x150/a78bfa/ffffff?text=Demian' },
-        { title: '사피엔스', author: '유발 하라리', completedDate: '2025-06-15', cover: 'https://placehold.co/100x150/f87171/ffffff?text=Sapiens' },
-        { title: '팩트풀니스', author: '한스 로슬링', completedDate: '2025-05-10', cover: 'https://placehold.co/100x150/34d399/ffffff?text=Factfulness' },
-        { title: '돈의 심리학', author: '모건 하우젤', completedDate: '2025-04-22', cover: 'https://placehold.co/100x150/60a5fa/ffffff?text=Money' },
-        { title: '클린 코드', author: '로버트 C. 마틴', completedDate: '2025-03-01', cover: 'https://placehold.co/100x150/fbbf24/ffffff?text=Clean+Code' },
-    ];
+        // Global variable for today's date string (YYYY-MM-DD)
+        const today = new Date();
+        const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    // --- 독서 습관 대시보드 함수 ---
-    // --- 독서 습관 대시보드 함수 ---
-function updateReadingDashboard() {
-    // ✨ 데이터 연동 로직 시작 ✨
-    // 1. 월간 독서 목표 및 현재 진행 상황 계산
-    // 예시: 독서 루틴 중 가장 최근에 추가된 독서 루틴의 목표를 사용하거나,
-    // 여러 독서 루틴의 평균/합계를 사용할 수 있습니다.
-    const readingRoutines = sampleRoutines.filter(r => r.type === 'reading' && r.active);
-    let totalMonthlyGoal = 0;
-    let totalCurrentCompleted = 0;
-    let totalLastMonthCompleted = 0; // 지난달 데이터는 별도 기록 필요
+        // 대시보드 데이터를 시뮬레이션합니다. (추후 실제 앱 데이터로 연동됩니다)
+        // 독서 데이터 (임시 데이터)
+        let monthlyGoalBooks = 3; // 월간 목표 완독 권수 (사용자 설정 가능하도록 확장)
+        let currentCompletedBooks = 1.5; // 현재까지 완독한 권수 (실제 독서 데이터에서 계산)
+        let lastMonthCompletedBooks = 1.2; // 지난달 완독 권수 (실제 독서 데이터에서 계산)
+        let weeklyReadingData = [
+            { date: '7/8', pages: 50 }, { date: '7/9', pages: 30 }, { date: '7/10', pages: 60 }, { date: '7/11', pages: 40 }, { date: '7/12', pages: 70 }, { date: '7/13', pages: 0 }, { date: '7/14', pages: 20 },
+            { date: '7/15', pages: 45 }, { date: '7/16', pages: 55 }, { date: '7/17', pages: 35 }, { date: '7/18', pages: 65 }, { date: '7/19', pages: 0 }, { date: '7/20', pages: 25 }, { date: '7/21', pages: 50 },
+            { date: '7/22', pages: 60 }, { date: '7/23', pages: 40 }, { date: '7/24', pages: 70 }, { date: '7/25', pages: 30 }, { date: '7/26', pages: 50 }, { date: '7/27', pages: 0 }, { date: '7/28', pages: 40 },
+            { date: '7/29', pages: 70 }, { date: '7/30', pages: 50 }, { date: '7/31', pages: 80 }, { date: '8/1', pages: 60 }, { date: '8/2', pages: 40 }, { date: '8/3', pages: 0 }, { date: '8/4', pages: 30 }
+        ];
+        let completedBooks = [ // 완독 도서 데이터 (임시 데이터)
+            { title: '데미안', author: '헤르만 헤세', completedDate: '2025-07-20', cover: 'https://placehold.co/100x150/a78bfa/ffffff?text=Demian' },
+            { title: '사피엔스', author: '유발 하라리', completedDate: '2025-06-15', cover: 'https://placehold.co/100x150/f87171/ffffff?text=Sapiens' },
+            { title: '팩트풀니스', author: '한스 로슬링', completedDate: '2025-05-10', cover: 'https://placehold.co/100x150/34d399/ffffff?text=Factfulness' },
+            { title: '돈의 심리학', author: '모건 하우젤', completedDate: '2025-04-22', cover: 'https://placehold.co/100x150/60a5fa/ffffff?text=Money' },
+            { title: '클린 코드', author: '로버트 C. 마틴', completedDate: '2025-03-01', cover: 'https://placehold.co/100x150/fbbf24/ffffff?text=Clean+Code' },
+        ];
 
-    // 이 부분은 챗님의 독서 루틴 데이터 구조와 월간 목표 설정 방식에 따라 달라집니다.
-    // 현재는 더미 데이터를 그대로 사용합니다.
-    // TODO: 실제 루틴 데이터에서 monthlyGoalBooks, currentCompletedBooks, lastMonthCompletedBooks 계산 로직 추가
-    // 예:
-    // if (readingRoutines.length > 0) {
-    //     totalMonthlyGoal = readingRoutines[0].monthlyGoal || 3; // 예시: 첫 독서 루틴의 월간 목표
-    //     totalCurrentCompleted = readingRoutines.reduce((sum, r) => sum + (r.currentPage >= r.endPage ? 1 : 0), 0); // 완독한 책 수
-    //     // 지난달 완독 권수는 별도의 기록 시스템이 필요합니다. (예: 월별 통계 데이터)
-    // }
-    // monthlyGoalBooks = totalMonthlyGoal;
-    // currentCompletedBooks = totalCurrentCompleted;
-    // lastMonthCompletedBooks = 1.2; // 임시값 유지 또는 실제 데이터에서 가져오기
+        // --- 독서 습관 대시보드 함수 ---
+        function updateReadingDashboard() {
+            // 1. 월간 독서 목표 달성 현황 업데이트 (현재는 더미 데이터 사용)
+            const percentage = (currentCompletedBooks / monthlyGoalBooks) * 100;
+            document.getElementById('monthlyGoalText').textContent =
+                `목표 ${monthlyGoalBooks}권 중 ${currentCompletedBooks}권 달성 (${percentage.toFixed(0)}%)`;
+            document.getElementById('monthlyProgressBar').style.width = `${percentage}%`;
 
-    // 2. 주간 독서량 추이 데이터 생성
-    // 이 부분은 루틴 완료 기록(history)이 필요합니다.
-    // 현재 sampleRoutines에는 일별 페이지 기록이 없으므로, 이 부분은 추후 루틴 완료 시 기록하는 로직이 추가되어야 합니다.
-    // TODO: 실제 루틴 완료 기록에서 weeklyReadingData 생성 로직 추가
-    // 예:
-    // const today = new Date();
-    // const sevenDaysAgo = new Date(today);
-    // sevenDaysAgo.setDate(today.getDate() - 7);
-    // weeklyReadingData = generateWeeklyReadingDataFromHistory(sampleRoutines, sevenDaysAgo, today); // 가상의 함수
-    // ✨ 데이터 연동 로직 끝 ✨
+            const comparisonText = `지난달 대비 +${(currentCompletedBooks - lastMonthCompletedBooks).toFixed(1)}권 증가`;
+            document.getElementById('monthlyComparison').textContent = comparisonText;
 
-    // 1. 월간 독서 목표 달성 현황 업데이트 (현재는 더미 데이터 사용)
-    const percentage = (currentCompletedBooks / monthlyGoalBooks) * 100;
-    document.getElementById('monthlyGoalText').textContent =
-        `목표 ${monthlyGoalBooks}권 중 ${currentCompletedBooks}권 달성 (${percentage.toFixed(0)}%)`;
-    document.getElementById('monthlyProgressBar').style.width = `${percentage}%`;
+            // 2. 주간 독서량 추이 차트 그리기 (현재는 더미 데이터 사용)
+            const labels = weeklyReadingData.map(data => data.date);
+            const data = weeklyReadingData.map(data => data.pages);
 
-    const comparisonText = `지난달 대비 +${(currentCompletedBooks - lastMonthCompletedBooks).toFixed(1)}권 증가`;
-    document.getElementById('monthlyComparison').textContent = comparisonText;
-
-   
-        // 2. 주간 독서량 추이 차트 그리기
-        const labels = weeklyReadingData.map(data => data.date);
-        const data = weeklyReadingData.map(data => data.pages);
-
-const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
-    if (window.weeklyReadingChartInstance) {
-        window.weeklyReadingChartInstance.destroy();
-    }
-    window.weeklyReadingChartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: '일별 독서 페이지 수',
-                    data: data,
-                    borderColor: '#3b82f6', // blue-500
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: '#3b82f6',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#3b82f6',
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false // 범례 숨기기
-                    },
-                    title: {
-                        display: true,
-                        text: '지난 4주간의 일별 독서량',
-                        font: {
-                            size: 16,
-                            weight: 'bold'
-                        }
-                    }
+            const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
+            // 기존 차트 인스턴스가 있다면 파괴하고 새로 그립니다. (탭 전환 시 차트 중복 생성 방지)
+            if (window.weeklyReadingChartInstance) {
+                window.weeklyReadingChartInstance.destroy();
+            }
+            window.weeklyReadingChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '일별 독서 페이지 수',
+                        data: data,
+                        borderColor: '#3b82f6', // blue-500
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#3b82f6',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#3b82f6',
+                    }]
                 },
-                scales: {
-                    x: {
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false // 범례 숨기기
+                        },
                         title: {
                             display: true,
-                            text: '날짜',
+                            text: '지난 4주간의 일별 독서량',
                             font: {
-                                size: 14
+                                size: 16,
+                                weight: 'bold'
                             }
-                        },
-                        grid: {
-                            display: false // x축 그리드 라인 숨기기
                         }
                     },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: '페이지 수',
-                            font: {
-                                size: 14
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '날짜',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            grid: {
+                                display: false // x축 그리드 라인 숨기기
                             }
                         },
-                        ticks: {
-                            callback: function(value) {
-                                return value + 'p';
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '페이지 수',
+                                font: {
+                                    size: 14
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'p';
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
 
- // 3. 완독 도서 목록 업데이트
-    const listContainer = document.getElementById('completedBooksList');
-    listContainer.innerHTML = '';
+            // 3. 완독 도서 목록 업데이트
+            const listContainer = document.getElementById('completedBooksList');
+            listContainer.innerHTML = ''; // 기존 목록 초기화
 
-    // ✨ 데이터 연동 로직 시작 ✨
-    // sampleRoutines에서 완독된 독서 루틴을 필터링하여 표시
-    const actualCompletedBooks = sampleRoutines.filter(r => r.type === 'reading' && r.currentPage >= r.endPage);
-    actualCompletedBooks.forEach(routine => {
-        const bookCard = document.createElement('div');
-        bookCard.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col items-center p-4 transform transition-transform hover:scale-105';
-        bookCard.innerHTML = `
-            <img src="${routine.cover || 'https://placehold.co/100x150/cccccc/333333?text=No+Cover'}" alt="${routine.bookTitle} 표지" class="w-24 h-36 object-cover rounded-md mb-3 shadow-sm">
-            <h3 class="text-lg font-semibold text-gray-800 text-center mb-1">${routine.bookTitle}</h3>
-            <p class="text-sm text-gray-600 text-center">현재 페이지: ${routine.currentPage}</p>
-            <p class="text-xs text-gray-500 mt-2">완독 예정: ${getEstimatedCompletionDate(routine)}</p>
-        `;
-        listContainer.appendChild(bookCard);
-    });
-    // ✨ 데이터 연동 로직 끝 ✨
-}
-
-    // --- 운동 대시보드 함수 (추후 구현 예정) ---
-    function updateExerciseDashboard() {
-        console.log("운동 대시보드 업데이트");
-        // 운동 대시보드 관련 데이터를 로드하고 시각화를 업데이트하는 로직이 여기에 들어갑니다.
-        // 예를 들어:
-        // const weeklyExerciseGoal = 3; // 주간 목표 운동 횟수
-        // const currentExerciseCount = 2; // 현재 운동 횟수
-        // const exerciseTypeData = [{ type: '걷기', minutes: 120 }, { type: '달리기', minutes: 60 }];
-        // ...
-        // 이곳에 운동 관련 HTML 요소들을 업데이트하는 코드를 추가합니다.
-    }
-
-    // --- 수면 시간 대시보드 함수 (추후 구현 예정) ---
-    function updateSleepDashboard() {
-        console.log("수면 시간 대시보드 업데이트");
-        // 수면 시간 대시보드 관련 데이터를 로드하고 시각화를 업데이트하는 로직이 여기에 들어갑니다.
-        // 예를 들어:
-        // const dailySleepGoal = 7; // 일일 목표 수면 시간 (시간)
-        // const weeklySleepData = [{ date: '월', hours: 6.5 }, { date: '화', hours: 7.2 }];
-        // ...
-        // 이곳에 수면 관련 HTML 요소들을 업데이트하는 코드를 추가합니다.
-    }
-
-    // --- 탭 전환 로직 ---
-    function openDashboardTab(tabName) {
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabContents.forEach(content => {
-            content.classList.remove('active');
-        });
-
-        const tabButtons = document.querySelectorAll('.tab-button');
-        tabButtons.forEach(button => {
-            button.classList.remove('active');
-        });
-
-        document.getElementById(tabName).classList.add('active');
-        document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('active');
-
-        // 탭 활성화 시 해당 대시보드 데이터 업데이트 함수 호출
-        if (tabName === 'reading') {
-            updateReadingDashboard();
-        } else if (tabName === 'exercise') {
-            updateExerciseDashboard();
-        } else if (tabName === 'sleep') {
-            updateSleepDashboard();
+            // sampleRoutines에서 완독된 독서 루틴을 필터링하여 표시
+            const actualCompletedBooks = sampleRoutines.filter(r => r.type === 'reading' && r.currentPage >= r.endPage);
+            actualCompletedBooks.forEach(routine => {
+                const bookCard = document.createElement('div');
+                bookCard.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col items-center p-4 transform transition-transform hover:scale-105';
+                bookCard.innerHTML = `
+                    <img src="${routine.cover || 'https://placehold.co/100x150/cccccc/333333?text=No+Cover'}" alt="${routine.bookTitle} 표지" class="w-24 h-36 object-cover rounded-md mb-3 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-800 text-center mb-1">${routine.bookTitle}</h3>
+                    <p class="text-sm text-gray-600 text-center">현재 페이지: ${routine.currentPage}</p>
+                    <p class="text-xs text-gray-500 mt-2">완독 예정: ${getEstimatedCompletionDate(routine)}</p>
+                `;
+                listContainer.appendChild(bookCard);
+            });
         }
-    }
-    // ✨ 대시보드 관련 데이터 및 함수 새로 추가 끝 ✨
 
-   
-     
-        // Global variable for today's date string (YYYY-MM-DD)
-        const today = new Date();
-        const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        // --- 운동 대시보드 함수 (추후 구현 예정) ---
+        function updateExerciseDashboard() {
+            console.log("운동 대시보드 업데이트");
+            // 운동 대시보드 관련 데이터를 로드하고 시각화를 업데이트하는 로직이 여기에 들어갑니다.
+            // 예를 들어:
+            // const weeklyExerciseGoal = 3; // 주간 목표 운동 횟수
+            // const currentExerciseCount = 2; // 현재 운동 횟수
+            // const exerciseTypeData = [{ type: '걷기', minutes: 120 }, { type: '달리기', minutes: 60 }];
+            // ...
+            // 이곳에 운동 관련 HTML 요소들을 업데이트하는 코드를 추가합니다.
+        }
+
+        // --- 수면 시간 대시보드 함수 (추후 구현 예정) ---
+        function updateSleepDashboard() {
+            console.log("수면 시간 대시보드 업데이트");
+            // 수면 시간 대시보드 관련 데이터를 로드하고 시각화를 업데이트하는 로직이 여기에 들어갑니다.
+            // 예를 들어:
+            // const dailySleepGoal = 7; // 일일 목표 수면 시간 (시간)
+            // const weeklySleepData = [{ date: '월', hours: 6.5 }, { date: '화', hours: 7.2 }];
+            // ...
+            // 이곳에 수면 관련 HTML 요소들을 업데이트하는 코드를 추가합니다.
+        }
+
+        // --- 탭 전환 로직 ---
+        function openDashboardTab(tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('active');
+
+            // 탭 활성화 시 해당 대시보드 데이터 업데이트 함수 호출
+            if (tabName === 'reading') {
+                updateReadingDashboard();
+            } else if (tabName === 'exercise') {
+                updateExerciseDashboard();
+            } else if (tabName === 'sleep') {
+                updateSleepDashboard();
+            }
+        }
 
         // 전역 변수
         let sampleRoutines = []; // Routine data
@@ -2664,6 +2626,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         }
                         routine.pointsGivenToday = true; // Mark points as given for today
                     }
+                    routine.lastUpdatedDate = todayDateString; // Update last updated date
                     saveData(); // Save data after all updates
                     debugLog('Routine updated:', routine.name, 'Value:', routine.value, 'Goal achieved:', isGoalAchieved(routine));
                 }
@@ -2912,6 +2875,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                             routine.pointsGivenToday = true; // Mark points as given for today
                         }
                     }
+                    routine.lastUpdatedDate = todayDateString; // Update last updated date
                     saveData(); // Save data after all updates
                     debugLog('독서 루틴 업데이트됨:', routine.name, '현재페이지:', routine.currentPage, '오늘 읽은 페이지:', routine.dailyReadPagesToday, '오늘 목표 달성:', routine.dailyGoalMetToday);
                 }
@@ -3008,6 +2972,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         }
                         routine.pointsGivenToday = true; // Mark points as given for today
                     }
+                    routine.lastUpdatedDate = todayDateString; // Update last updated date
                     saveData(); // Save data after all updates
                     debugLog('Routine updated:', routine.name, 'Value:', routine.value, 'Goal achieved:', isGoalAchieved(routine));
                 }
@@ -3172,10 +3137,11 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         }
                         routine.pointsGivenToday = true; // Mark points as given for today
                     }
+                    routine.lastUpdatedDate = todayDateString; // Update last updated date
                     saveData();
                 }
 
-                await updateRoutineValue(activeRoutineForModal.id, value, 'number'); // Simulate Firebase update
+                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
                 
                 hideNumberInputModal();
                 const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
@@ -3266,6 +3232,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         }
                         routine.pointsGivenToday = true; // Mark points as given for today
                     }
+                    routine.lastUpdatedDate = todayDateString; // Update last updated date
                     saveData(); // Save data after all updates
                     debugLog('Routine updated:', routine.name, 'Value:', routine.value);
                 }
@@ -3333,7 +3300,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
         function getTypeIcon(type) {
             const typeIcons = {
                 'yesno': '✅',
-                'number': '�',
+                'number': '🔢',
                 'time': '⏰',
                 'reading': '📚'
             };
@@ -3633,6 +3600,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                                 }
                                 routine.pointsGivenToday = true; // Mark points as given for today
                             }
+                            routine.lastUpdatedDate = todayDateString; // Update last updated date
                             saveData(); // Save data after changes
 
                             showCompletionEffect();
@@ -3670,6 +3638,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                             }
                             routine.pointsGivenToday = false; // Reset points given flag
                         }
+                        routine.lastUpdatedDate = todayDateString; // Update last updated date
                         saveData(); // Save data after changes
 
                         showNotification('루틴 완료가 취소되었습니다.', 'warning');
@@ -3806,7 +3775,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         <div style="font-size: 0.7rem; color: var(--text-secondary);">
                             완료 예정: ${estimatedCompletion}
                         </div>
-                        <button onclick="showReadingSetupModal(sampleRoutines.find(r => r.id === ${routine.id}))" 
+                        <button id="editReadingSetupBtn-${routine.id}" 
                                 style="margin-top: 0.25rem; padding: 0.125rem 0.5rem; background: var(--primary); color: white; border: none; border-radius: 3px; font-size: 0.7rem; cursor: pointer;">
                             설정 수정
                         </button>
@@ -3851,7 +3820,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         <input type="checkbox" ${routine.active ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
-                    <button class="edit-btn" onclick="editRoutine(${routine.id})">
+                    <button class="edit-btn" id="editRoutineBtn-${routine.id}">
                         편집
                     </button>
                 </div>
@@ -3907,6 +3876,22 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                         showNotification(`${routine.name}의 지속 업데이트가 ${routine.continuous ? '활성화' : '비활성화'}되었습니다.`);
                         renderRoutines(); // Update UI
                     }
+                });
+            }
+
+            // Edit button for all routines (generic edit modal or specific for reading)
+            const editBtn = routineDiv.querySelector(`#editRoutineBtn-${routine.id}`);
+            if (editBtn) {
+                editBtn.addEventListener('click', () => {
+                    editRoutine(routine.id);
+                });
+            }
+            
+            // Specific edit button for reading routine setup
+            const editReadingSetupBtn = routineDiv.querySelector(`#editReadingSetupBtn-${routine.id}`);
+            if (editReadingSetupBtn) {
+                editReadingSetupBtn.addEventListener('click', () => {
+                    showReadingSetupModal(sampleRoutines.find(r => r.id === routine.id));
                 });
             }
             
@@ -4025,7 +4010,9 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
                     showReadingSetupModal(routine);
                 } else {
                     // Other routine types use generic edit modal (to be implemented)
-                    alert(`Edit routine: ${routine.name}\n(Currently, only reading routines have a dedicated edit modal. Other routine edit functions are planned for future implementation.)`);
+                    // For now, we can show a simple notification or a placeholder modal
+                    showNotification(`'${routine.name}' 루틴 편집 기능은 아직 구현되지 않았습니다.`, 'info');
+                    // alert(`Edit routine: ${routine.name}\n(Currently, only reading routines have a dedicated edit modal. Other routine edit functions are planned for future implementation.)`);
                 }
             }
         }
@@ -4101,7 +4088,7 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
             
             // Check if all basic routines are completed
             const basicRoutinesCompleted = incompleteRoutines.length === 0 && 
-                                            inprogressRoutines.filter(r => !isContinuousRoutine(r) && !isReadingRoutine(r)).length === 0;
+                                           inprogressRoutines.filter(r => !isContinuousRoutine(r) && !isReadingRoutine(r)).length === 0;
             
             if (basicRoutinesCompleted && sortedRoutines.length > 0) {
                 emptyState.style.display = 'block';
@@ -4147,61 +4134,58 @@ const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
             showNotification(randomMessage, 'success');
         }
 
-       function showHomePage() {
-    // ✨ 수정된 부분 시작 ✨
-    document.getElementById('main-app-content').style.display = 'block';
-    document.getElementById('dashboard-view').style.display = 'none'; // 대시보드 숨김
-    // ✨ 수정된 부분 끝 ✨
+        // === Page Navigation Functions ===
+        function showHomePage() {
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('dashboard-view').style.display = 'none'; // 대시보드 숨김
 
-    // Hide all sections within main-app-content except the ones for home
-    document.getElementById('manage-section').style.display = 'none';
-    
-    // Show home page sections
-    const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
-    homeElements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) element.style.display = 'block';
-    });
-    
-    // Show daily progress section
-    const dailyProgress = document.querySelector('.daily-progress');
-    if (dailyProgress) dailyProgress.style.display = 'block';
-    
-    renderRoutines();
-}
+            // Hide all sections within main-app-content except the ones for home
+            document.getElementById('manage-section').style.display = 'none';
+            
+            // Show home page sections
+            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
+            homeElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'block';
+            });
+            
+            // Show daily progress section
+            const dailyProgress = document.querySelector('.daily-progress');
+            if (dailyProgress) dailyProgress.style.display = 'block';
+            
+            renderRoutines();
+        }
 
-function showManagePage() {
-    // ✨ 수정된 부분 시작 ✨
-    document.getElementById('main-app-content').style.display = 'block';
-    document.getElementById('dashboard-view').style.display = 'none'; // 대시보드 숨김
-    // ✨ 수정된 부분 끝 ✨
+        function showManagePage() {
+            document.getElementById('main-app-content').style.display = 'block';
+            document.getElementById('dashboard-view').style.display = 'none'; // 대시보드 숨김
 
-    // Hide home page sections
-    const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
-    homeElements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) element.style.display = 'none';
-    });
-    
-    // Hide daily progress section
-    const dailyProgress = document.querySelector('.daily-progress');
-    if (dailyProgress) dailyProgress.style.display = 'none';
-    
-    // Show manage page
-    document.getElementById('manage-section').style.display = 'block';
-    
-    renderManagePage();
-    renderAreaStats(); // Render area stats when navigating to manage page
-}
+            // Hide home page sections
+            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
+            homeElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'none';
+            });
+            
+            // Hide daily progress section
+            const dailyProgress = document.querySelector('.daily-progress');
+            if (dailyProgress) dailyProgress.style.display = 'none';
+            
+            // Show manage page
+            document.getElementById('manage-section').style.display = 'block';
+            
+            renderManagePage();
+            renderAreaStats(); // Render area stats when navigating to manage page
+        }
 
-// ✨ 대시보드 페이지 전환 함수 새로 추가 ✨
-function showDashboardPage() {
-    document.getElementById('main-app-content').style.display = 'none'; // 기존 앱 콘텐츠 숨김
-    document.getElementById('dashboard-view').style.display = 'block'; // 대시보드 표시
+        // 대시보드 페이지 전환 함수
+        function showDashboardPage() {
+            document.getElementById('main-app-content').style.display = 'none'; // 기존 앱 콘텐츠 숨김
+            document.getElementById('dashboard-view').style.display = 'block'; // 대시보드 표시
 
-    // 대시보드 탭을 초기화하고 독서 탭을 활성화합니다.
-    openDashboardTab('reading');
-}
+            // 대시보드 탭을 초기화하고 독서 탭을 활성화합니다.
+            openDashboardTab('reading');
+        }
 
         // === New Routine Add Modal (Add Routine Modal) Functions ===
         function showAddRoutineModal() {
@@ -4263,7 +4247,7 @@ function showDashboardPage() {
             const newRoutinePoints = parseInt(document.getElementById('newRoutinePoints').value);
             
             const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked'))
-                                       .map(cb => cb.value);
+                                           .map(cb => cb.value);
 
             if (!newRoutineName || !newRoutinePoints || newRoutinePoints <= 0 || selectedAreas.length === 0) {
                 showNotification('Please enter routine name, points, and select at least one area.', 'error');
@@ -4469,24 +4453,28 @@ function showDashboardPage() {
         }
 
         // Initialize on page load
-       document.addEventListener('DOMContentLoaded', () => {
-    loadData(); // Load data and perform daily reset
-    showHomePage(); // Set initial screen to Home (area stats hidden)
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData(); // Load data and perform daily reset
+            showHomePage(); // Set initial screen to Home (area stats hidden)
 
-    // Save button event listener
-    const saveBtn = document.getElementById('saveOrderBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', saveRoutineOrder);
-    }
-    
-    // ✨ 대시보드 탭 버튼 이벤트 리스너 설정 ✨
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', () => {
-            openDashboardTab(button.dataset.tab);
-        });
-    });
-    // ✨ 새로 추가된 부분 끝 ✨
-}
+            // Save button event listener
+            const saveBtn = document.getElementById('saveOrderBtn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveRoutineOrder);
+            }
+            
+            // 대시보드 탭 버튼 이벤트 리스너 설정
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    openDashboardTab(button.dataset.tab);
+                });
+            });
+
+            // 네비게이션 버튼 이벤트 리스너 설정
+            document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
+            document.getElementById('navManageBtn')?.addEventListener('click', showManagePage);
+            document.getElementById('navAddRoutineBtn')?.addEventListener('click', showAddRoutineModal);
+            document.getElementById('navStatsBtn')?.addEventListener('click', showDashboardPage);
             
             // === Number Input Modal Event Listeners ===
             document.getElementById('numberConfirmBtn')?.addEventListener('click', handleNumberInputConfirm);
@@ -4544,6 +4532,7 @@ function showDashboardPage() {
             document.getElementById('addRoutineConfirm')?.addEventListener('click', handleAddRoutineConfirm);
 
             // === Area Management Modal Event Listeners ===
+            document.getElementById('manageAreasBtn')?.addEventListener('click', showManageAreasModal); // '영역 관리' 버튼에 이벤트 리스너 추가
             document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
             document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
             document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
@@ -4554,18 +4543,6 @@ function showDashboardPage() {
                 showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
             }, 1000);
         });
-
-// Define as global functions (accessible from HTML onclick)
-window.showHomePage = showHomePage;
-window.showManagePage = showManagePage;
-window.editRoutine = editRoutine;
-window.showReadingSetupModal = showReadingSetupModal; // For editing existing reading routines
-window.showAddRoutineModal = showAddRoutineModal; // For adding new routines
-window.showManageAreasModal = showManageAreasModal; // For managing areas
-// ✨ 새로 추가된 부분 시작 ✨
-window.showDashboardPage = showDashboardPage; // 대시보드 페이지 전환 함수 등록
-// ✨ 새로 추가된 부분 끝 ✨
     </script>
 </body>
 </html>
-�
