@@ -1994,40 +1994,45 @@
     </div>
 
     <script>
+        // Global variable for today's date string (YYYY-MM-DD)
+        const today = new Date();
+        const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
         // 전역 변수
-        let sampleRoutines = []; // 루틴 데이터
-        let userAreas = [];      // 5대 영역 데이터
-        let userStats = {};      // 영역별 누적 포인트
+        let sampleRoutines = []; // Routine data
+        let userAreas = [];      // 5-area data
+        let userStats = {};      // Accumulated points per area
         let sortableInstance = null;
         let orderChanged = false;
         let activeRoutineForModal = null;
-        const DEBUG_MODE = true; // 디버깅 모드 (문제 해결 후 false로 변경)
+        const DEBUG_MODE = true; // Debugging mode (change to false after troubleshooting)
 
-        // 디버그 로그 함수
+        // Debug log function
         function debugLog(...args) {
             if (DEBUG_MODE) {
                 console.log(...args);
             }
         }
 
-        // === 데이터 로드 및 저장 (localStorage) ===
+        // === Data Load and Save (localStorage) ===
         const LOCAL_STORAGE_KEY_ROUTINES = 'familyRoutineTracker_routines';
         const LOCAL_STORAGE_KEY_AREAS = 'familyRoutineTracker_areas';
         const LOCAL_STORAGE_KEY_STATS = 'familyRoutineTracker_stats';
+        const LOCAL_STORAGE_KEY_LAST_RESET_DATE = 'familyRoutineTracker_lastResetDate';
 
-        // 기본 3대 영역 정의 (새로운 기본값)
+        // Default 3 areas (new default)
         const DEFAULT_AREAS = [
             { id: 'physical', name: '신체' },
             { id: 'mental', name: '정신' },
             { id: 'intellectual', name: '지적' }
         ];
-        const MAX_AREAS = 5; // 최대 영역 개수
+        const MAX_AREAS = 5; // Maximum number of areas
 
-        // 초기 샘플 루틴 (최초 로드 시에만 사용)
+        // Initial sample routines (used only on first load)
         const INITIAL_SAMPLE_ROUTINES = [
             { id: 1, name: '운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 5, order: 0, active: true, areas: ['physical'], basePoints: 10 },
             { id: 2, name: '물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 3, status: null, streak: 3, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
-            { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical', 'productivity'], basePoints: 8 }, // productivity는 기본 영역에 없으므로, 초기 데이터에서 제거하거나 기본 영역으로 추가해야 함
+            { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical'], basePoints: 8 }, // Adjusted 'productivity' to 'physical' for initial default areas
             { id: 4, name: '명상', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 10, order: 3, active: true, areas: ['mental'], basePoints: 10 },
             { id: 5, name: '걸음 수', time: 'evening', type: 'number', frequency: 'daily', value: 6500, status: null, streak: 2, unit: '걸음', order: 4, active: true, inputType: 'wheel', min: 1000, max: 30000, step: 500, continuous: true, dailyGoal: 10000, areas: ['physical'], basePoints: 15 },
             { id: 6, name: '취침 시간', time: 'evening', type: 'time', frequency: 'daily', value: null, status: null, streak: 7, order: 5, active: true, areas: ['physical', 'mental'], basePoints: 8 },
@@ -2035,17 +2040,76 @@
             { id: 8, name: 'JavaScript 완벽 가이드', time: 'evening', type: 'reading', frequency: 'daily', value: 120, status: null, streak: 12, unit: '페이지', order: 7, active: true, bookTitle: 'JavaScript 완벽 가이드', startPage: 1, endPage: 500, dailyPages: 10, currentPage: 120, startDate: '2024-01-01', areas: ['intellectual'], basePoints: 20 }
         ];
 
+        // Function to reset daily progress for routines
+        function resetDailyProgressForRoutines() {
+            debugLog("일일 진행 상황 초기화 시작...");
+            let needsSave = false;
+
+            sampleRoutines.forEach(routine => {
+                // Only reset if the routine was last updated on a previous day
+                if (routine.lastUpdatedDate !== todayDateString) {
+                    needsSave = true; // Changes were made, need to save
+
+                    if (routine.type === 'yesno' || routine.type === 'time') {
+                        // For non-continuous routines, reset value and status
+                        // Streak is reset if it wasn't completed yesterday
+                        if (!isGoalAchieved(routine)) { // Check against yesterday's state based on old value
+                            routine.streak = 0;
+                        }
+                        routine.value = null;
+                        routine.status = null;
+                    } else if (routine.type === 'number') {
+                        if (routine.continuous) {
+                            // Continuous number routines reset their value for daily accumulation
+                            // Streak reset if daily goal was not met yesterday
+                            if (!isGoalAchieved(routine)) { // Check against yesterday's state based on old value
+                                routine.streak = 0;
+                            }
+                            routine.value = 0; // Reset accumulated value for the day
+                            routine.status = null;
+                            routine.dailyGoalMetToday = false;
+                        } else {
+                            // Non-continuous number routines reset value and status
+                            if (!isGoalAchieved(routine)) { // Check against yesterday's state based on old value
+                                routine.streak = 0;
+                            }
+                            routine.value = null;
+                            routine.status = null;
+                        }
+                    } else if (routine.type === 'reading') {
+                        // Reading routines reset daily pages and daily goal met status
+                        // Streak reset if daily goal was not met yesterday (or book not completed)
+                        if (!isGoalAchieved(routine)) { // Check against yesterday's state based on old value
+                            routine.streak = 0;
+                        }
+                        routine.dailyReadPagesToday = 0;
+                        routine.dailyGoalMetToday = false;
+                        routine.status = null;
+                    }
+                    routine.pointsGivenToday = false; // Reset points given flag for all daily routines
+                    routine.lastUpdatedDate = todayDateString; // Update last updated date
+                }
+            });
+
+            if (needsSave) {
+                saveData();
+                debugLog("일일 진행 상황 초기화 완료 및 저장.");
+            } else {
+                debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
+            }
+        }
+
         function loadData() {
-            // 루틴 데이터 로드
+            // Load routine data
             const storedRoutines = localStorage.getItem(LOCAL_STORAGE_KEY_ROUTINES);
             if (storedRoutines) {
                 sampleRoutines = JSON.parse(storedRoutines);
             } else {
-                // 초기 샘플 루틴의 areas 속성을 DEFAULT_AREAS에 맞게 조정
+                // Adjust initial sample routines' areas to match DEFAULT_AREAS on first load
                 sampleRoutines = INITIAL_SAMPLE_ROUTINES.map(routine => {
                     const filteredAreas = routine.areas.filter(areaId => DEFAULT_AREAS.some(da => da.id === areaId));
                     if (filteredAreas.length === 0 && routine.areas.length > 0) {
-                        // 기존 루틴이 기본 영역에 없는 영역을 참조하는 경우, 첫 번째 기본 영역으로 대체
+                        // If existing routine refers to an area not in default, replace with first default area
                         routine.areas = [DEFAULT_AREAS[0].id];
                     } else {
                         routine.areas = filteredAreas;
@@ -2054,11 +2118,11 @@
                 });
             }
 
-            // 영역 데이터 로드
+            // Load area data
             const storedAreas = localStorage.getItem(LOCAL_STORAGE_KEY_AREAS);
             if (storedAreas) {
                 userAreas = JSON.parse(storedAreas);
-                // 기존 저장된 영역이 DEFAULT_AREAS보다 적을 경우, DEFAULT_AREAS로 채움
+                // If stored areas are less than default, fill with default areas
                 if (userAreas.length < DEFAULT_AREAS.length) {
                     const existingAreaIds = new Set(userAreas.map(a => a.id));
                     DEFAULT_AREAS.forEach(defaultArea => {
@@ -2068,24 +2132,45 @@
                     });
                 }
             } else {
-                userAreas = [...DEFAULT_AREAS]; // 최초 로드 시 기본 3대 영역 사용
+                userAreas = [...DEFAULT_AREAS]; // Use default 3 areas on first load
             }
 
-            // 통계 데이터 로드
+            // Load stats data
             const storedStats = localStorage.getItem(LOCAL_STORAGE_KEY_STATS);
             if (storedStats) {
                 userStats = JSON.parse(storedStats);
             } else {
-                // 최초 로드 시 모든 영역 포인트 0으로 초기화
+                // Initialize points to 0 for all areas on first load
                 userStats = {};
             }
-            // userAreas에 있는 영역만 userStats에 유지하고, 새 영역은 0으로 초기화
+            // Ensure userStats only contains areas present in userAreas and initialize new areas to 0
             const newUserStats = {};
             userAreas.forEach(area => {
                 newUserStats[area.id] = userStats[area.id] || 0;
             });
             userStats = newUserStats;
 
+            // Ensure all routines have necessary new properties (for old data loaded from localStorage)
+            sampleRoutines.forEach(routine => {
+                if (routine.type === 'reading') {
+                    if (routine.dailyReadPagesToday === undefined) routine.dailyReadPagesToday = 0;
+                    if (routine.dailyGoalMetToday === undefined) routine.dailyGoalMetToday = false;
+                }
+                if (routine.type === 'number' && routine.continuous) {
+                    if (routine.dailyGoalMetToday === undefined) routine.dailyGoalMetToday = false;
+                }
+                if (routine.pointsGivenToday === undefined) routine.pointsGivenToday = false;
+                if (routine.lastUpdatedDate === undefined) routine.lastUpdatedDate = todayDateString; // Set for old routines
+            });
+            
+            // Check for daily reset after loading all data
+            const lastResetDate = localStorage.getItem(LOCAL_STORAGE_KEY_LAST_RESET_DATE);
+            if (lastResetDate !== todayDateString) {
+                resetDailyProgressForRoutines();
+                localStorage.setItem(LOCAL_STORAGE_KEY_LAST_RESET_DATE, todayDateString);
+            }
+
+            saveData(); // Save updated structure for old routines and initial reset
             debugLog('데이터 로드 완료:', { sampleRoutines, userAreas, userStats });
         }
 
@@ -2096,9 +2181,9 @@
             debugLog('데이터 저장 완료:', { sampleRoutines, userAreas, userStats });
         }
 
-        // === 숫자 입력 모달 관련 함수들 ===
+        // === Number Input Modal Functions ===
         
-        // 숫자 입력 모달 표시 (입력 방식에 따라 분기)
+        // Show number input modal (branches based on input type)
         function showNumberInputModal(routine) {
             activeRoutineForModal = routine;
             
@@ -2111,7 +2196,7 @@
             }
         }
 
-        // === 스테퍼 방식 모달 ===
+        // === Stepper Modal ===
         function showStepperModal(routine) {
             const modal = document.getElementById('stepperInputModal');
             const title = document.getElementById('stepperModalTitle');
@@ -2123,21 +2208,21 @@
                 return;
             }
             
-            // 현재 값을 기준으로 시작 (지속 업데이트 루틴의 경우)
+            // Start value based on current value (for continuous routines) or min value
             let currentValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.value || routine.min || 1);
             const minValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.min || 1);
             const maxValue = routine.max || 100;
             const stepValue = routine.step || 1;
             
-            // UI 업데이트
+            // Update UI
             const titleText = routine.continuous ? `${routine.name} (현재: ${routine.value || 0}${routine.unit || ''})` : routine.name;
             title.textContent = titleText;
             valueDisplay.textContent = currentValue;
             unitDisplay.textContent = routine.unit || '';
             
-            // 목표 표시
+            // Display goal
             if (routine.dailyGoal) {
-                // 기존 목표 텍스트 제거
+                // Remove existing goal text
                 const existingGoal = modal.querySelector('.goal-text');
                 if (existingGoal) {
                     existingGoal.remove();
@@ -2159,18 +2244,18 @@
                 }
             }
             
-            // 버튼들 가져오기
+            // Get buttons
             const minusBtn = document.getElementById('stepperMinus');
             const plusBtn = document.getElementById('stepperPlus');
             
-            // 기존 이벤트 리스너 제거를 위해 복사본 생성
+            // Clone to remove existing event listeners
             const newMinusBtn = minusBtn.cloneNode(true);
             const newPlusBtn = plusBtn.cloneNode(true);
             
             minusBtn.parentNode.replaceChild(newMinusBtn, minusBtn);
             plusBtn.parentNode.replaceChild(newPlusBtn, plusBtn);
             
-            // 값 감소
+            // Decrease value
             newMinusBtn.addEventListener('click', () => {
                 if (currentValue > minValue) {
                     currentValue = Math.max(minValue, currentValue - stepValue);
@@ -2179,7 +2264,7 @@
                 }
             });
             
-            // 값 증가
+            // Increase value
             newPlusBtn.addEventListener('click', () => {
                 if (currentValue < maxValue) {
                     currentValue = Math.min(maxValue, currentValue + stepValue);
@@ -2188,7 +2273,7 @@
                 }
             });
             
-            // 버튼 상태 업데이트
+            // Update button states
             function updateStepperButtons() {
                 newMinusBtn.disabled = currentValue <= minValue;
                 newPlusBtn.disabled = currentValue >= maxValue;
@@ -2196,7 +2281,7 @@
             
             updateStepperButtons();
             
-            // 확인 버튼에 현재 값 전달
+            // Pass current value to confirm button
             const confirmBtn = document.getElementById('stepperConfirmBtn');
             confirmBtn.onclick = () => handleStepperConfirm(currentValue);
             
@@ -2213,52 +2298,39 @@
 
         async function handleStepperConfirm(value) {
             if (!activeRoutineForModal) {
-                console.error('활성 루틴이 없습니다.');
+                console.error('Active routine is missing.');
                 return;
             }
             
-            // activeRoutineForModal 값을 미리 저장 (모달이 닫히기 전에)
             const currentRoutine = activeRoutineForModal;
-            debugLog('스테퍼 값 확인:', value, '루틴:', currentRoutine.name);
+            debugLog('Stepper value confirmed:', value, 'Routine:', currentRoutine.name);
             
             try {
-                // 루틴 데이터 즉시 업데이트
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
-                    // 지속 업데이트 루틴이 아닌 경우에만 값을 직접 설정
-                    if (!routine.continuous) {
-                        routine.value = value;
-                    } else {
-                        // 지속 업데이트 루틴의 경우 입력된 값으로 설정 (스테퍼에서 이미 현재값+step으로 시작했으므로)
-                        routine.value = value;
-                    }
+                    routine.value = value;
+                    routine.status = null;
                     
-                    routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
-                    
-                    // 목표 달성 시에만 스트릭 증가
-                    if (isGoalAchieved(routine) && !routine.goalAchievedToday) {
+                    // Streak and points: only if daily goal is met for the first time today
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
                         routine.streak = (routine.streak || 0) + 1;
-                        routine.goalAchievedToday = true; // 오늘 목표 달성 플래그
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                            });
+                        }
+                        routine.pointsGivenToday = true; // Mark points as given for today
                     }
-                    
-                    // 포인트 적립
-                    if (routine.areas && routine.basePoints) {
-                        routine.areas.forEach(areaId => {
-                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                        });
-                        saveData(); // 포인트 변경 시 데이터 저장
-                    }
-
-                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value, '목표달성:', isGoalAchieved(routine));
+                    saveData(); // Save data after all updates
+                    debugLog('Routine updated:', routine.name, 'Value:', routine.value, 'Goal achieved:', isGoalAchieved(routine));
                 }
                 
-                await updateRoutineValue(currentRoutine.id, value, 'number');
-                hideStepperModal(); // 여기서 activeRoutineForModal이 null이 됨
+                await updateRoutineValue(currentRoutine.id, value, 'number'); // Simulate Firebase update
+                hideStepperModal();
                 
                 const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
                 showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
                 
-                // UI 즉시 업데이트
                 renderRoutines();
                 
                 if (isGoalAchieved(routine)) {
@@ -2269,14 +2341,14 @@
                 }
                 
             } catch (error) {
-                console.error('스테퍼 루틴 업데이트 실패:', error);
+                console.error('Failed to update stepper routine:', error);
                 showNotification('저장에 실패했습니다.', 'error');
             }
         }
 
-        // === 독서 모달 관련 함수들 ===
+        // === Reading Modal Functions ===
         
-        // 독서 설정 모달 표시 (기존 독서 루틴 수정용)
+        // Show reading setup modal (for editing existing reading routines)
         function showReadingSetupModal(routine = null) {
             const modal = document.getElementById('readingSetupModal');
             const title = document.getElementById('readingSetupTitle');
@@ -2288,20 +2360,20 @@
             if (!modal) return;
             
             if (routine) {
-                // 기존 독서 루틴 수정
-                activeRoutineForModal = routine; // 수정할 루틴 설정
+                // Editing existing reading routine
+                activeRoutineForModal = routine; // Set routine to be edited
                 title.textContent = '📚 독서 루틴 수정';
                 bookTitleInput.value = routine.bookTitle || '';
                 startPageInput.value = routine.startPage || 1;
                 endPageInput.value = routine.endPage || '';
                 dailyPagesInput.value = routine.dailyPages || 10;
             } else {
-                // 새 독서 루틴 추가는 addRoutineModal에서 처리
-                console.warn('새 독서 루틴 추가는 showAddRoutineModal()을 사용해주세요.');
+                // New reading routine creation is handled in addRoutineModal
+                console.warn('New reading routine creation should use showAddRoutineModal().');
                 return;
             }
             
-            // 실시간 요약 계산
+            // Calculate summary in real-time
             function updateSummary() {
                 const startPage = parseInt(startPageInput.value) || 1;
                 const endPage = parseInt(endPageInput.value) || 0;
@@ -2322,7 +2394,7 @@
                 }
             }
             
-            // 이벤트 리스너 추가
+            // Add event listeners
             [startPageInput, endPageInput, dailyPagesInput].forEach(input => {
                 input.addEventListener('input', updateSummary);
             });
@@ -2332,7 +2404,7 @@
             bookTitleInput.focus();
         }
 
-        // 독서 진행 모달 표시
+        // Show reading progress input modal
         function showReadingProgressModal(routine) {
             activeRoutineForModal = routine;
             
@@ -2347,7 +2419,7 @@
             
             title.textContent = `📖 ${routine.bookTitle}`;
             
-            // 현재 독서 정보 표시
+            // Display current reading info
             const todayRange = getTodayReadingRange(routine);
             const progress = getReadingProgress(routine);
             
@@ -2357,11 +2429,11 @@
                 <p><strong>현재 진행률:</strong> ${routine.currentPage}/${routine.endPage} 페이지 (${progress}%)</p>
             `;
             
-            // 권장 페이지 수 설정
+            // Set recommended pages
             readPagesInput.value = todayRange.pages;
             recommendedPages.textContent = todayRange.pages;
             
-            // 진행률 미리보기
+            // Preview progress
             function updateProgressPreview() {
                 const readPages = parseInt(readPagesInput.value) || 0;
                 const newCurrentPage = routine.currentPage + readPages;
@@ -2386,16 +2458,16 @@
             readPagesInput.focus();
         }
 
-        // 독서 설정 모달 숨김
+        // Hide reading setup modal
         function hideReadingSetupModal() {
             const modal = document.getElementById('readingSetupModal');
             if (modal) {
                 modal.style.display = 'none';
             }
-            activeRoutineForModal = null; // 모달 닫을 때 activeRoutineForModal 초기화
+            activeRoutineForModal = null; // Reset activeRoutineForModal when modal closes
         }
 
-        // 독서 진행 모달 숨김
+        // Hide reading progress modal
         function hideReadingProgressModal() {
             const modal = document.getElementById('readingProgressModal');
             if (modal) {
@@ -2404,7 +2476,7 @@
             activeRoutineForModal = null;
         }
 
-        // 독서 설정 확인 처리 (기존 독서 루틴 수정 완료 시)
+        // Handle reading setup confirmation (for editing existing reading routines)
         function handleReadingSetupConfirm() {
             if (!activeRoutineForModal) return;
 
@@ -2426,12 +2498,12 @@
             const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
             if (routine) {
                 routine.bookTitle = bookTitle;
-                routine.name = bookTitle; // 루틴 이름도 책 제목으로 업데이트
+                routine.name = bookTitle; // Update routine name with book title
                 routine.startPage = startPage;
                 routine.endPage = endPage;
                 routine.dailyPages = dailyPages;
-                // currentPage는 사용자가 직접 읽은 페이지를 나타내므로, 설정 수정 시에는 건드리지 않음
-                // 만약 시작 페이지가 변경되어 현재 페이지가 유효하지 않게 되면 조정 필요
+                // currentPage is user's read progress, so don't touch it on settings change
+                // Adjust currentPage if startPage changes and makes it invalid
                 if (routine.currentPage < startPage) {
                     routine.currentPage = startPage - 1;
                 } else if (routine.currentPage > endPage) {
@@ -2439,19 +2511,19 @@
                 }
             }
             
-            saveData(); // 데이터 변경 시 저장
+            saveData(); // Save data after changes
             hideReadingSetupModal();
             showNotification(`📚 "${bookTitle}" 독서 루틴 설정이 수정되었습니다!`);
             renderRoutines();
         }
 
-        // 독서 진행 확인 처리
+        // Handle reading progress confirmation
         async function handleReadingProgressConfirm() {
             if (!activeRoutineForModal) return;
             
             const readPages = parseInt(document.getElementById('readPages').value);
             
-            if (!readPages || readPages <= 0) {
+            if (isNaN(readPages) || readPages <= 0) {
                 showNotification('읽은 페이지 수를 입력해주세요.', 'error');
                 return;
             }
@@ -2462,46 +2534,59 @@
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
                     routine.currentPage = Math.min(routine.currentPage + readPages, routine.endPage);
-                    routine.value = routine.currentPage; // value 속성도 현재 페이지로 업데이트
+                    routine.value = routine.currentPage; // 'value' also tracks current page for display
                     routine.status = null;
-                    
-                    // 목표 달성 또는 완독 시 스트릭 증가 및 포인트 적립
-                    if (routine.currentPage >= routine.endPage) {
+
+                    // Update daily reading progress
+                    routine.dailyReadPagesToday = (routine.dailyReadPagesToday || 0) + readPages;
+                    if (routine.dailyReadPagesToday >= routine.dailyPages) {
+                        routine.dailyGoalMetToday = true;
+                    }
+
+                    // Streak increment: only if daily goal is met for the first time today
+                    // The isGoalAchieved function now correctly reflects daily goal for reading
+                    // The pointsGivenToday flag ensures streak/points are given only once per day
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
                         routine.streak = (routine.streak || 0) + 1;
+                    }
+
+                    // Check for full book completion (and give a special notification)
+                    if (routine.currentPage >= routine.endPage) {
                         showNotification(`🎉 "${routine.bookTitle}" 완독을 축하합니다! 🎊`);
                         showCompletionEffect();
+                        routine.dailyGoalMetToday = true; // Ensure daily goal is also considered met for final completion
                     } else {
-                        // 일일 목표 페이지를 읽었는지 확인하고 스트릭 증가
-                        const todayRange = getTodayReadingRange(routine);
-                        if (readPages >= todayRange.pages) {
-                            routine.streak = (routine.streak || 0) + 1;
-                        }
                         const progress = getReadingProgress(routine);
                         showNotification(`📖 ${readPages}페이지 읽기 완료! (${progress}%)`);
                     }
 
-                    // 포인트 적립
-                    if (routine.areas && routine.basePoints) {
-                        routine.areas.forEach(areaId => {
-                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                        });
-                        saveData(); // 포인트 변경 시 데이터 저장
+                    // Points are given only once per day when the daily goal is achieved (or book completed)
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                            });
+                            routine.pointsGivenToday = true; // Mark points as given for today
+                        }
                     }
-                    
-                    debugLog('독서 루틴 업데이트됨:', routine.name, '현재페이지:', routine.currentPage);
+                    saveData(); // Save data after all updates
+                    debugLog('독서 루틴 업데이트됨:', routine.name, '현재페이지:', routine.currentPage, '오늘 읽은 페이지:', routine.dailyReadPagesToday, '오늘 목표 달성:', routine.dailyGoalMetToday);
                 }
                 
-                await updateRoutineValue(currentRoutine.id, readPages, 'reading');
+                await updateRoutineValue(currentRoutine.id, readPages, 'reading'); // Simulate Firebase update
                 hideReadingProgressModal();
                 
                 renderRoutines();
                 
-                setTimeout(() => {
-                    showCelebrationMessage();
-                }, 300);
+                // Show celebration message only if a goal was truly achieved (daily or full book)
+                if (isGoalAchieved(routine)) { // Re-check after all updates
+                    setTimeout(() => {
+                        showCelebrationMessage();
+                    }, 300);
+                }
                 
             } catch (error) {
-                console.error('독서 루틴 업데이트 실패:', error);
+                console.error('Failed to update reading routine:', error);
                 showNotification('저장에 실패했습니다.', 'error');
             }
         }
@@ -2511,13 +2596,13 @@
             const wheelContainer = document.getElementById('wheelContainer');
             
             if (!modal || !title || !wheelContainer) {
-                console.error('휠 모달 요소를 찾을 수 없습니다.');
+                console.error('Wheel modal elements not found.');
                 return;
             }
             
             title.textContent = routine.name;
             
-            // 휠 생성
+            // Create wheel
             const minValue = routine.min || 1;
             const maxValue = routine.max || 100;
             const stepValue = routine.step || 1;
@@ -2527,7 +2612,7 @@
             const wheel = createNumberWheel(minValue, maxValue, stepValue, currentValue, routine.unit);
             wheelContainer.appendChild(wheel);
             
-            // 확인 버튼 이벤트
+            // Confirm button event
             const confirmBtn = document.getElementById('wheelConfirmBtn');
             confirmBtn.onclick = () => handleWheelConfirm();
             
@@ -2544,58 +2629,52 @@
 
         async function handleWheelConfirm() {
             if (!activeRoutineForModal) {
-                console.error('활성 루틴이 없습니다.');
+                console.error('Active routine is missing.');
                 return;
             }
             
             const wheel = document.querySelector('.number-wheel-container');
             if (!wheel || !wheel.getValue) {
-                showNotification('값을 선택해주세요.', 'error');
+                showNotification('Please select a value.', 'error');
                 return;
             }
             
             const value = wheel.getValue();
-            // activeRoutineForModal 값을 미리 저장 (모달이 닫히기 전에)
             const currentRoutine = activeRoutineForModal;
-            debugLog('휠 값 확인:', value, '루틴:', currentRoutine.name);
+            debugLog('Wheel value confirmed:', value, 'Routine:', currentRoutine.name);
             
             try {
-                // 루틴 데이터 즉시 업데이트
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
-                    // 지속 업데이트 루틴의 경우 현재값과 입력값 중 큰 값으로 설정
+                    // For continuous routines, set value to max of current and new value
                     if (routine.continuous) {
                         routine.value = Math.max(routine.value || 0, value);
                     } else {
                         routine.value = value;
                     }
                     
-                    routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
+                    routine.status = null; // Remove skipped status to make it completed
                     
-                    // 목표 달성 시에만 스트릭 증가
-                    if (isGoalAchieved(routine) && !routine.goalAchievedToday) {
+                    // Streak and points: only if daily goal is met for the first time today
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
                         routine.streak = (routine.streak || 0) + 1;
-                        routine.goalAchievedToday = true; // 오늘 목표 달성 플래그
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                            });
+                        }
+                        routine.pointsGivenToday = true; // Mark points as given for today
                     }
-
-                    // 포인트 적립
-                    if (routine.areas && routine.basePoints) {
-                        routine.areas.forEach(areaId => {
-                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                        });
-                        saveData(); // 포인트 변경 시 데이터 저장
-                    }
-                    
-                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value, '목표달성:', isGoalAchieved(routine));
+                    saveData(); // Save data after all updates
+                    debugLog('Routine updated:', routine.name, 'Value:', routine.value, 'Goal achieved:', isGoalAchieved(routine));
                 }
                 
-                await updateRoutineValue(currentRoutine.id, value, 'number');
-                hideWheelModal(); // 여기서 activeRoutineForModal이 null이 됨
+                await updateRoutineValue(currentRoutine.id, value, 'number'); // Simulate Firebase update
+                hideWheelModal();
                 
                 const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
                 showNotification(`✅ ${currentRoutine.name}: ${routine.value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
                 
-                // UI 즉시 업데이트
                 renderRoutines();
                 
                 if (isGoalAchieved(routine)) {
@@ -2606,25 +2685,25 @@
                 }
                 
             } catch (error) {
-                console.error('휠 루틴 업데이트 실패:', error);
+                console.error('Failed to update wheel routine:', error);
                 showNotification('저장에 실패했습니다.', 'error');
             }
         }
 
-        // === 간단한 숫자 입력 모달 (기본) ===
+        // === Simple Number Input Modal (default) ===
         function showSimpleNumberModal(routine) {
             const modal = document.getElementById('numberInputModal');
             const title = document.getElementById('numberModalTitle');
             const input = document.getElementById('numberInput');
             
             if (!modal || !title || !input) {
-                console.error('숫자 입력 모달 요소를 찾을 수 없습니다.');
+                console.error('Number input modal elements not found.');
                 return;
             }
             
             title.textContent = `${routine.name} - 값 입력`;
             input.value = routine.value || '';
-            input.placeholder = `${routine.name}의 값을 입력하세요`;
+            input.placeholder = `Enter value for ${routine.name}`;
             
             if (routine.unit) {
                 input.placeholder += ` (${routine.unit})`;
@@ -2634,7 +2713,7 @@
             input.focus();
         }
 
-        // === 숫자 휠 생성 함수 ===
+        // === Number Wheel Creation Function ===
         function createNumberWheel(min, max, step, initialValue, unit) {
             const container = document.createElement('div');
             container.className = 'number-wheel-container';
@@ -2645,7 +2724,7 @@
             const scroll = document.createElement('div');
             scroll.className = 'number-wheel-scroll';
             
-            // 옵션들 생성
+            // Create options
             const options = [];
             for (let i = min; i <= max; i += step) {
                 options.push(i);
@@ -2672,7 +2751,7 @@
                 scroll.appendChild(option);
             });
             
-            // 활성 옵션 설정 함수
+            // Set active option function
             function setActiveOption(index) {
                 scroll.querySelectorAll('.number-option').forEach((opt, i) => {
                     opt.classList.toggle('active', i === index);
@@ -2680,7 +2759,7 @@
                 currentIndex = index;
             }
             
-            // 스크롤 이벤트
+            // Scroll event
             let scrollTimeout;
             scroll.addEventListener('scroll', () => {
                 clearTimeout(scrollTimeout);
@@ -2695,7 +2774,7 @@
                 }, 100);
             });
             
-            // getValue 메서드
+            // getValue method
             container.getValue = () => {
                 return options[currentIndex];
             };
@@ -2703,7 +2782,7 @@
             wheel.appendChild(scroll);
             container.appendChild(wheel);
             
-            // 초기 스크롤 위치 설정
+            // Set initial scroll position
             setTimeout(() => {
                 scroll.scrollTop = currentIndex * 40;
             }, 50);
@@ -2711,7 +2790,7 @@
             return container;
         }
 
-        // 숫자 입력 모달 숨김
+        // Hide number input modal
         function hideNumberInputModal() {
             const modal = document.getElementById('numberInputModal');
             if (modal) {
@@ -2720,10 +2799,10 @@
             activeRoutineForModal = null;
         }
 
-        // 숫자 입력 확인 처리
+        // Handle number input confirmation
         async function handleNumberInputConfirm() {
             if (!activeRoutineForModal) {
-                console.error('활성 루틴이 없습니다.');
+                console.error('Active routine is missing.');
                 return;
             }
             
@@ -2731,45 +2810,51 @@
             const value = parseFloat(input.value);
             
             if (isNaN(value) || value <= 0) {
-                showNotification('유효한 숫자를 입력해주세요.', 'error');
+                showNotification('Please enter a valid number.', 'error');
                 return;
             }
             
             try {
-                // 루틴 데이터 업데이트
                 const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
                 if (routine) {
                     routine.value = value;
-                    routine.streak = (routine.streak || 0) + 1;
-
-                    // 포인트 적립
-                    if (routine.areas && routine.basePoints) {
-                        routine.areas.forEach(areaId => {
-                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                        });
-                        saveData(); // 포인트 변경 시 데이터 저장
+                    routine.status = null;
+                    // Streak and points: only if daily goal is met for the first time today
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
+                        routine.streak = (routine.streak || 0) + 1;
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                            });
+                        }
+                        routine.pointsGivenToday = true; // Mark points as given for today
                     }
+                    saveData();
                 }
 
-                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
+                await updateRoutineValue(activeRoutineForModal.id, value, 'number'); // Simulate Firebase update
                 
                 hideNumberInputModal();
-                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''} 저장되었습니다!`);
+                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
+                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''}${goalStatus} 저장되었습니다!`);
                 
-                setTimeout(() => {
-                    renderRoutines();
-                    showCelebrationMessage();
-                }, 300);
+                renderRoutines();
+                if (isGoalAchieved(routine)) {
+                    showCompletionEffect();
+                    setTimeout(() => {
+                        showCelebrationMessage();
+                    }, 300);
+                }
                 
             } catch (error) {
-                console.error('숫자 루틴 업데이트 실패:', error);
+                console.error('Failed to update number routine:', error);
                 showNotification('저장에 실패했습니다. 다시 시도해주세요.', 'error');
             }
         }
 
-        // === 시간 입력 모달 관련 함수들 ===
+        // === Time Input Modal Functions ===
         
-        // 시간 입력 모달 표시
+        // Show time input modal
         function showTimeInputModal(routine) {
             activeRoutineForModal = routine;
             
@@ -2778,7 +2863,7 @@
             const input = document.getElementById('timeInput');
             
             if (!modal || !title || !input) {
-                console.error('시간 입력 모달 요소를 찾을 수 없습니다.');
+                console.error('Time input modal elements not found.');
                 return;
             }
             
@@ -2789,7 +2874,7 @@
             input.focus();
         }
 
-        // 시간 입력 모달 숨김
+        // Hide time input modal
         function hideTimeInputModal() {
             const modal = document.getElementById('timeInputModal');
             if (modal) {
@@ -2798,16 +2883,16 @@
             activeRoutineForModal = null;
         }
 
-        // 현재 시간 가져오기
+        // Get current time
         function getCurrentTime() {
             const now = new Date();
             return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
 
-        // 시간 입력 확인 처리
+        // Handle time input confirmation
         async function handleTimeInputConfirm() {
             if (!activeRoutineForModal) {
-                console.error('활성 루틴이 없습니다.');
+                console.error('Active routine is missing.');
                 return;
             }
             
@@ -2815,62 +2900,66 @@
             const value = input.value;
             
             if (!value || value === '') {
-                showNotification('시간을 선택해주세요.', 'error');
+                showNotification('Please select a time.', 'error');
                 return;
             }
             
-            // activeRoutineForModal 값을 미리 저장 (모달이 닫히기 전에)
             const currentRoutine = activeRoutineForModal;
-            debugLog('시간 값 확인:', value, '루틴:', currentRoutine.name);
+            debugLog('Time value confirmed:', value, 'Routine:', currentRoutine.name);
             
             try {
-                // 루틴 데이터 즉시 업데이트
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
                     routine.value = value;
-                    routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
-                    routine.streak = (routine.streak || 0) + 1;
-
-                    // 포인트 적립
-                    if (routine.areas && routine.basePoints) {
-                        routine.areas.forEach(areaId => {
-                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                        });
-                        saveData(); // 포인트 변경 시 데이터 저장
+                    routine.status = null; // Remove skipped status to make it completed
+                    
+                    // Streak and points: only if daily goal is met for the first time today
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
+                        routine.streak = (routine.streak || 0) + 1;
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                            });
+                        }
+                        routine.pointsGivenToday = true; // Mark points as given for today
                     }
-                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
+                    saveData(); // Save data after all updates
+                    debugLog('Routine updated:', routine.name, 'Value:', routine.value);
                 }
                 
-                await updateRoutineValue(currentRoutine.id, value, 'time');
-                hideTimeInputModal(); // 여기서 activeRoutineForModal이 null이 됨
-                showNotification(`✅ ${currentRoutine.name}: ${value} 저장되었습니다!`);
+                await updateRoutineValue(currentRoutine.id, value, 'time'); // Simulate Firebase update
+                hideTimeInputModal();
                 
-                // UI 즉시 업데이트
+                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
+                showNotification(`✅ ${currentRoutine.name}: ${value}${goalStatus} 저장되었습니다!`);
+                
                 renderRoutines();
                 showCompletionEffect();
                 
-                setTimeout(() => {
-                    showCelebrationMessage();
-                }, 300);
+                if (isGoalAchieved(routine)) {
+                    setTimeout(() => {
+                        showCelebrationMessage();
+                    }, 300);
+                }
                 
             } catch (error) {
-                console.error('시간 루틴 업데이트 실패:', error);
-                showNotification('저장에 실패했습니다.', 'error');
+                console.error('Failed to update time routine:', error);
+                showNotification('저장에 실패했습니다. 다시 시도해주세요.', 'error');
             }
         }
 
-        // Firebase 업데이트 시뮬레이션 함수 (실제로는 Firebase API 호출)
+        // Simulate Firebase update function (in a real app, this would be a Firebase API call)
         async function updateRoutineValue(routineId, value, type) {
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    debugLog(`Firebase 업데이트 시뮬레이션: 루틴 ${routineId}, 값: ${value}, 타입: ${type}`);
-                    saveData(); // 데이터 변경 시 저장
+                    debugLog(`Firebase update simulation: Routine ${routineId}, Value: ${value}, Type: ${type}`);
+                    // saveData(); // Data is already saved in the calling functions
                     resolve({ success: true });
                 }, 300);
             });
         }
 
-        // 유틸리티 함수들
+        // Utility Functions
         function getTimeEmoji(time) {
             const timeEmojis = {
                 'morning': '🌅',
@@ -2901,7 +2990,7 @@
         function getTypeIcon(type) {
             const typeIcons = {
                 'yesno': '✅',
-                'number': '🔢',
+                'number': '�',
                 'time': '⏰',
                 'reading': '📚'
             };
@@ -2929,10 +3018,10 @@
             
             if (routine.type === 'reading') {
                 const progress = getReadingProgress(routine);
-                const todayRange = getTodayReadingRange(routine);
-                
-                if (todayRange) {
-                    return `${routine.currentPage}/${routine.endPage}p (${progress}%)`;
+                // Display today's reading progress or overall progress if daily goal not set/met
+                if (routine.dailyPages && routine.dailyReadPagesToday > 0) {
+                    const dailyProgressPercent = Math.min(100, Math.round((routine.dailyReadPagesToday / routine.dailyPages) * 100));
+                    return `${routine.dailyReadPagesToday}/${routine.dailyPages}p (${dailyProgressPercent}%)`;
                 }
                 return `${routine.currentPage}/${routine.endPage}p (${progress}%)`;
             }
@@ -2941,7 +3030,7 @@
                 if (routine.value !== null && routine.value !== undefined) {
                     const displayValue = `${routine.value} ${routine.unit || ''}`;
                     
-                    // 지속 업데이트 루틴이고 목표가 있는 경우
+                    // For continuous number routines with a goal, show progress towards daily goal
                     if (routine.continuous && routine.dailyGoal) {
                         const progress = Math.min(100, Math.round((routine.value / routine.dailyGoal) * 100));
                         return `${displayValue} (${progress}%)`;
@@ -2962,28 +3051,48 @@
             return '';
         }
 
+        // Checks if a routine's goal is achieved (daily goal for continuous/reading, or full completion for others)
+        function isGoalAchieved(routine) {
+            if (routine.status === 'skipped') return false; // Skipped routines never achieve goal
+
+            if (routine.type === 'reading') {
+                // Reading goal is achieved if book is fully read OR daily pages goal is met
+                return (routine.currentPage >= routine.endPage) || (routine.dailyReadPagesToday >= routine.dailyPages);
+            }
+            
+            if (routine.type === 'number' && routine.dailyGoal !== null && routine.dailyGoal !== undefined) {
+                // Number routine with a daily goal: achieved if current value meets or exceeds goal
+                return routine.value !== null && routine.value !== undefined && routine.value >= routine.dailyGoal;
+            }
+            
+            // For other types (yesno, time) or number routines without a specific dailyGoal,
+            // goal achievement is simply routine completion.
+            return isRoutineCompleted(routine);
+        }
+
+        // Determines if a routine is considered "completed" for display purposes (e.g., in completed section)
         function isRoutineCompleted(routine) {
             if (routine.status === 'skipped') {
                 debugLog(`루틴 ${routine.name}: 건너뜀 상태`);
                 return false;
             }
             
+            // For continuous number routines and reading routines, completion is based on daily goal achievement
+            if (isContinuousRoutine(routine) || isReadingRoutine(routine)) {
+                return routine.dailyGoalMetToday === true; // Use the specific daily goal met flag
+            }
+            
+            // Original logic for yesno, time, and non-continuous number routines
             if (routine.type === 'yesno') {
                 const completed = routine.value === true;
                 debugLog(`루틴 ${routine.name} (Yes/No): 값=${routine.value}, 완료=${completed}`);
                 return completed;
             }
             
-            if (routine.type === 'reading') {
-                const completed = routine.currentPage >= routine.endPage;
-                debugLog(`루틴 ${routine.name} (독서): 현재=${routine.currentPage}, 끝=${routine.endPage}, 완료=${completed}`);
-                return completed;
-            }
-            
             if (routine.type === 'number') {
-                const hasValue = routine.value !== null && routine.value !== undefined && routine.value > 0;
-                const completed = hasValue && (!routine.dailyGoal || routine.value >= routine.dailyGoal);
-                debugLog(`루틴 ${routine.name} (숫자): 값=${routine.value}, 목표=${routine.dailyGoal}, 완료=${completed}`);
+                // For non-continuous number routines, completion is just having any value
+                const completed = routine.value !== null && routine.value !== undefined && routine.value > 0;
+                debugLog(`루틴 ${routine.name} (숫자): 값=${routine.value}, 완료=${completed}`);
                 return completed;
             }
             
@@ -2997,13 +3106,13 @@
             return false;
         }
 
-        // 독서 루틴 관련 함수들
+        // Reading routine functions
         
-        // 오늘의 읽기 범위 계산
+        // Calculate today's reading range
         function getTodayReadingRange(routine) {
             if (routine.type !== 'reading') return null;
             
-            const currentPage = routine.currentPage || routine.startPage;
+            const currentPage = routine.currentPage || routine.startPage -1; // If not started, current page is startPage - 1
             const dailyPages = routine.dailyPages || 10;
             const todayStart = currentPage + 1;
             const todayEnd = Math.min(currentPage + dailyPages, routine.endPage);
@@ -3015,7 +3124,7 @@
             };
         }
 
-        // 독서 진행률 계산
+        // Calculate reading progress
         function getReadingProgress(routine) {
             if (routine.type !== 'reading') return 0;
             
@@ -3024,7 +3133,7 @@
             return Math.max(0, Math.min(100, Math.round((readPages / totalPages) * 100)));
         }
 
-        // 예상 완료일 계산
+        // Calculate estimated completion date
         function getEstimatedCompletionDate(routine) {
             if (routine.type !== 'reading') return null;
             
@@ -3032,58 +3141,46 @@
             const dailyPages = routine.dailyPages || 10;
             const remainingDays = Math.ceil(remainingPages / dailyPages);
             
-            const today = new Date();
             const completionDate = new Date(today);
             completionDate.setDate(today.getDate() + remainingDays);
             
             return completionDate.toLocaleDateString('ko-KR');
         }
 
-        // 독서 루틴인지 확인
+        // Check if it's a reading routine
         function isReadingRoutine(routine) {
             return routine.type === 'reading';
         }
 
-        // 지속 업데이트 루틴인지 확인
+        // Check if it's a continuous update routine
         function isContinuousRoutine(routine) {
             return routine.continuous === true;
         }
 
-        // 진행 중인 루틴인지 확인 (값은 있지만 목표 미달성)
+        // Check if a routine is in progress (has value but not yet fully completed/goal achieved)
         function isRoutineInProgress(routine) {
             if (routine.status === 'skipped') return false;
             
             if (routine.type === 'reading') {
-                return routine.currentPage > routine.startPage && routine.currentPage < routine.endPage;
+                // In progress if some pages read but not daily goal met and not book completed
+                return (routine.currentPage > (routine.startPage - 1)) && (routine.currentPage < routine.endPage) && (routine.dailyGoalMetToday !== true);
             }
             
-            if (routine.type === 'number') {
+            if (routine.type === 'number' && routine.continuous) {
+                // In progress if value > 0 but daily goal not met
                 const hasValue = routine.value !== null && routine.value !== undefined && routine.value > 0;
                 const goalNotReached = routine.dailyGoal ? routine.value < routine.dailyGoal : false;
-                return hasValue && goalNotReached;
+                return hasValue && goalNotReached && (routine.dailyGoalMetToday !== true);
             }
             
             return false;
         }
 
-        // 목표 달성 여부 확인
-        function isGoalAchieved(routine) {
-            if (routine.type === 'reading') {
-                return routine.currentPage >= routine.endPage;
-            }
-            
-            if (routine.type === 'number' && routine.dailyGoal && routine.value !== null && routine.value !== undefined) {
-                return routine.value >= routine.dailyGoal;
-            }
-            // 목표가 없는 숫자 루틴이거나 다른 타입의 루틴은 기본 완료 로직 사용
-            return isRoutineCompleted(routine);
-        }
-
-        // 개선된 루틴 아이템 생성 함수
+        // Create improved routine element
         function createImprovedRoutineElement(routine) {
-            const isCompleted = isRoutineCompleted(routine);
+            const isCompleted = isRoutineCompleted(routine); // Daily completion for reading/continuous
             const isSkipped = routine.status === 'skipped';
-            const isGoalReached = isGoalAchieved(routine);
+            const isGoalReachedOverall = isGoalAchieved(routine); // Overall goal (book or daily number goal)
             const isContinuous = isContinuousRoutine(routine);
             const isInProgress = isRoutineInProgress(routine);
             
@@ -3094,14 +3191,14 @@
             
             routineDiv.classList.add(routine.time);
             
-            // 상태별 스타일 적용
+            // Apply status-specific styles
             if (isSkipped) {
                 routineDiv.classList.add('skipped');
-            } else if (isContinuous && isGoalReached) {
+            } else if (isContinuous && isGoalReachedOverall) { // If continuous and daily goal met
                 routineDiv.classList.add('goal-achieved');
             } else if (isInProgress) {
                 routineDiv.classList.add('inprogress');
-            } else if (isCompleted && !isContinuous) {
+            } else if (isCompleted && !isContinuous) { // For non-continuous, simple completion
                 routineDiv.classList.add('completed');
             }
             
@@ -3112,31 +3209,23 @@
                 actionButton = `<div class="routine-checkbox">${checkIcon || skipIcon}</div>`;
             } else {
                 let buttonIcon = '';
-                if (isContinuous) {
-                    // 지속 업데이트 루틴: 항상 업데이트 가능
-                    if (isGoalReached) {
-                        buttonIcon = '🎯'; // 목표 달성했지만 계속 업데이트 가능
+                if (isContinuous || isReadingRoutine(routine)) {
+                    // For continuous/reading routines: always allow update
+                    if (isGoalReachedOverall) {
+                        buttonIcon = '🎯'; // Daily goal met
                     } else if (isInProgress) {
-                        buttonIcon = '⏳'; // 진행 중
+                        buttonIcon = '⏳'; // In progress
                     } else {
-                        buttonIcon = routine.type === 'number' ? '🔢' : '⏰';
+                        buttonIcon = routine.type === 'number' ? '🔢' : '📖'; // Default for number/reading
                     }
                 } else {
-                    // 일반 루틴
+                    // For other routine types (non-continuous)
                     if (isCompleted) {
                         buttonIcon = '✓';
                     } else if (isSkipped) {
                         buttonIcon = '⏭';
-                    } else if (isInProgress) {
-                        buttonIcon = '⏳';
                     } else {
-                        if (routine.type === 'number') {
-                            buttonIcon = '🔢';
-                        } else if (routine.type === 'time') {
-                            buttonIcon = '⏰';
-                        } else if (routine.type === 'reading') {
-                            buttonIcon = '📖';
-                        }
+                        buttonIcon = routine.type === 'number' ? '🔢' : '⏰'; // Default for number/time
                     }
                 }
                 actionButton = `<div class="routine-action-button">${buttonIcon}</div>`;
@@ -3151,7 +3240,7 @@
                 streakBadge = `<div class="streak-badge ${streakClass}">🔥 ${routine.streak}</div>`;
             }
             
-            // 지속 업데이트 루틴 표시
+            // Display continuous badge
             let continuousBadge = '';
             if (isContinuous) {
                 continuousBadge = `<div class="continuous-badge">🔄</div>`;
@@ -3183,21 +3272,25 @@
             const actionElement = routineDiv.querySelector('.routine-checkbox, .routine-action-button');
             if (actionElement) {
                 actionElement.addEventListener('click', () => {
-                    debugLog(`루틴 클릭됨: ${routine.name} (ID: ${routine.id}, 타입: ${routine.type})`);
+                    debugLog(`Routine clicked: ${routine.name} (ID: ${routine.id}, Type: ${routine.type})`);
                     
-                    // 지속 업데이트 루틴이거나 미완료/진행중 루틴인 경우
-                    if (isContinuous || (!isCompleted && !isSkipped) || isInProgress) {
+                    // If continuous or reading, or if not completed/skipped, open modal or toggle
+                    if (isContinuous || isReadingRoutine(routine) || (!isCompleted && !isSkipped)) {
                         if (routine.type === 'yesno') {
                             routine.value = true;
-                            routine.streak = (routine.streak || 0) + 1;
-                            
-                            // 포인트 적립
-                            if (routine.areas && routine.basePoints) {
-                                routine.areas.forEach(areaId => {
-                                    userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                                });
-                                saveData(); // 포인트 변경 시 데이터 저장
+                            routine.status = null; // Clear skipped status if any
+
+                            // Point and streak logic: only if daily goal is met for the first time today
+                            if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
+                                routine.streak = (routine.streak || 0) + 1;
+                                if (routine.areas && routine.basePoints) {
+                                    routine.areas.forEach(areaId => {
+                                        userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                                    });
+                                }
+                                routine.pointsGivenToday = true; // Mark points as given for today
                             }
+                            saveData(); // Save data after changes
 
                             showCompletionEffect();
                             setTimeout(() => {
@@ -3216,22 +3309,25 @@
                         }
                         
                     } else if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
-                        // 일반 루틴의 완료 취소 (독서 루틴은 완료 취소 불가)
+                        // For non-continuous, non-reading routines: allow undo completion
                         if (routine.type === 'yesno') {
                             routine.value = false;
                         } else {
                             routine.value = null;
                         }
-                        
-                        routine.streak = Math.max(0, (routine.streak || 0) - 1);
-                        
-                        // 포인트 차감 (취소 시)
-                        if (routine.areas && routine.basePoints) {
-                            routine.areas.forEach(areaId => {
-                                userStats[areaId] = Math.max(0, (userStats[areaId] || 0) - routine.basePoints);
-                            });
-                            saveData(); // 포인트 변경 시 데이터 저장
+                        routine.status = null; // Clear skipped status
+
+                        // Point and streak reversal (only if points were given today)
+                        if (routine.pointsGivenToday) { // Check if points were given today
+                            routine.streak = Math.max(0, (routine.streak || 0) - 1);
+                            if (routine.areas && routine.basePoints) {
+                                routine.areas.forEach(areaId => {
+                                    userStats[areaId] = Math.max(0, (userStats[areaId] || 0) - routine.basePoints);
+                                });
+                            }
+                            routine.pointsGivenToday = false; // Reset points given flag
                         }
+                        saveData(); // Save data after changes
 
                         showNotification('루틴 완료가 취소되었습니다.', 'warning');
                         renderRoutines();
@@ -3242,7 +3338,7 @@
             return routineDiv;
         }
 
-        // 완료 효과 표시
+        // Show completion effect
         function showCompletionEffect() {
             const effect = document.createElement('div');
             effect.className = 'completion-effect';
@@ -3263,18 +3359,15 @@
             }, 1000);
         }
 
-        // 진행률 계산 및 업데이트
+        // Calculate and update daily progress
         function updateDailyProgress() {
             const activeRoutines = sampleRoutines.filter(r => r.active);
             const totalRoutines = activeRoutines.length;
             
-            // 지속 업데이트/독서 루틴은 목표 달성 여부로, 일반 루틴은 완료 여부로 계산
+            // For continuous/reading routines, completion is based on daily goal achievement
+            // For others, it's simple completion
             const completedRoutines = activeRoutines.filter(r => {
-                if (isContinuousRoutine(r) || isReadingRoutine(r)) {
-                    return isGoalAchieved(r);
-                } else {
-                    return isRoutineCompleted(r);
-                }
+                return isRoutineCompleted(r);
             }).length;
             
             const inprogressRoutines = activeRoutines.filter(r => isRoutineInProgress(r)).length;
@@ -3310,7 +3403,7 @@
             };
         }
 
-        // === 관리 페이지용 루틴 아이템 생성 함수 ===
+        // === Manage Page Routine Item Creation Function ===
         function createManageRoutineElement(routine) {
             const routineDiv = document.createElement('div');
             routineDiv.className = 'manage-routine-item';
@@ -3319,14 +3412,14 @@
             
             let additionalControls = '';
             if (routine.type === 'number') {
-                const continuousToggle = routine.continuous ? `
+                const continuousToggle = `
                     <div style="margin-top: 0.5rem;">
                         <label style="font-size: 0.75rem; color: var(--text-secondary);">
                             <input type="checkbox" class="continuous-toggle" data-routine-id="${routine.id}" ${routine.continuous ? 'checked' : ''}> 
                             지속 업데이트 가능
                         </label>
                     </div>
-                ` : '';
+                `;
                 
                 const goalInput = routine.dailyGoal ? `
                     <div style="margin-top: 0.5rem;">
@@ -3378,7 +3471,7 @@
                 `;
             }
             
-            // 영역 표시
+            // Display areas
             const areaNames = routine.areas ? routine.areas.map(areaId => {
                 const area = userAreas.find(a => a.id === areaId);
                 return area ? area.name : areaId;
@@ -3424,8 +3517,8 @@
             const toggle = routineDiv.querySelector('input[type="checkbox"]');
             toggle.addEventListener('change', (e) => {
                 routine.active = e.target.checked;
-                saveData(); // 활성화 상태 변경 시 저장
-                debugLog(`루틴 ${routine.name} 활성화 상태: ${routine.active}`);
+                saveData(); // Save active status change
+                debugLog(`Routine ${routine.name} active status: ${routine.active}`);
             });
             
             const inputTypeSelect = routineDiv.querySelector('.input-type-select');
@@ -3437,8 +3530,8 @@
                     const routine = sampleRoutines.find(r => r.id === routineId);
                     if (routine) {
                         routine.inputType = newInputType;
-                        saveData(); // 입력 방식 변경 시 저장
-                        debugLog(`루틴 ${routine.name}의 입력 방식이 ${newInputType}로 변경됨`);
+                        saveData(); // Save input type change
+                        debugLog(`Routine ${routine.name}'s input type changed to ${newInputType}`);
                         showNotification(`${routine.name}의 입력 방식이 ${newInputType === 'stepper' ? '스테퍼' : '휠'}로 변경되었습니다.`);
                     }
                 });
@@ -3453,8 +3546,8 @@
                     const routine = sampleRoutines.find(r => r.id === routineId);
                     if (routine && newGoal > 0) {
                         routine.dailyGoal = newGoal;
-                        saveData(); // 목표 변경 시 저장
-                        debugLog(`루틴 ${routine.name}의 목표가 ${newGoal}로 변경됨`);
+                        saveData(); // Save goal change
+                        debugLog(`Routine ${routine.name}'s goal changed to ${newGoal}`);
                         showNotification(`${routine.name}의 목표가 ${newGoal}${routine.unit || ''}로 변경되었습니다.`);
                     }
                 });
@@ -3467,9 +3560,9 @@
                     const routine = sampleRoutines.find(r => r.id === routineId);
                     if (routine) {
                         routine.continuous = e.target.checked;
-                        saveData(); // 지속 업데이트 변경 시 저장
+                        saveData(); // Save continuous status change
                         showNotification(`${routine.name}의 지속 업데이트가 ${routine.continuous ? '활성화' : '비활성화'}되었습니다.`);
-                        renderRoutines(); // UI 갱신
+                        renderRoutines(); // Update UI
                     }
                 });
             }
@@ -3477,7 +3570,7 @@
             return routineDiv;
         }
 
-        // === 순서 조정 관련 함수들 ===
+        // === Order Management Functions ===
         
         function renderManagePage() {
             const manageList = document.getElementById('manageRoutineList');
@@ -3511,10 +3604,10 @@
                 ghostClass: 'sortable-ghost',
                 dragClass: 'sortable-drag',
                 onStart: function(evt) {
-                    debugLog('드래그 시작:', evt.oldIndex);
+                    debugLog('Drag started:', evt.oldIndex);
                 },
                 onEnd: function(evt) {
-                    debugLog('드래그 종료:', evt.oldIndex, '->', evt.newIndex);
+                    debugLog('Drag ended:', evt.oldIndex, '->', evt.newIndex);
                     
                     if (evt.oldIndex !== evt.newIndex) {
                         orderChanged = true;
@@ -3533,7 +3626,7 @@
                 routine.order = index;
             });
             
-            debugLog('순서 업데이트됨:', sampleRoutines.map(r => ({ name: r.name, order: r.order })));
+            debugLog('Order updated:', sampleRoutines.map(r => ({ name: r.name, order: r.order })));
         }
 
         function showSaveButton() {
@@ -3553,15 +3646,15 @@
         function saveRoutineOrder() {
             if (!orderChanged) return;
             
-            debugLog('Firebase에 순서 저장 중...'); // 실제 앱에서는 Firebase에 저장
-            saveData(); // localStorage에 저장
+            debugLog('Saving order to Firebase...'); // In a real app, save to Firebase
+            saveData(); // Save to localStorage
 
             setTimeout(() => {
-                debugLog('순서 저장 완료:');
+                debugLog('Order saved.');
                 orderChanged = false;
                 hideSaveButton();
                 
-                showNotification('✅ 루틴 순서가 저장되었습니다!');
+                showNotification('✅ Routine order saved!');
             }, 500);
         }
 
@@ -3584,17 +3677,17 @@
         function editRoutine(routineId) {
             const routine = sampleRoutines.find(r => r.id === routineId);
             if (routine) {
-                // 독서 루틴은 전용 수정 모달 사용
+                // Use dedicated edit modal for reading routines
                 if (routine.type === 'reading') {
                     showReadingSetupModal(routine);
                 } else {
-                    // 다른 루틴 타입은 일반 편집 모달 (추후 구현)
-                    alert(`루틴 편집: ${routine.name}\n(현재는 독서 루틴만 전용 수정 모달이 있습니다. 다른 루틴 편집 기능은 추후 구현 예정입니다.)`);
+                    // Other routine types use generic edit modal (to be implemented)
+                    alert(`Edit routine: ${routine.name}\n(Currently, only reading routines have a dedicated edit modal. Other routine edit functions are planned for future implementation.)`);
                 }
             }
         }
 
-        // 루틴 렌더링 함수
+        // Render routines function
         function renderRoutines() {
             const incompleteList = document.getElementById('incompleteRoutineList');
             const inprogressList = document.getElementById('inprogressRoutineList');
@@ -3607,7 +3700,7 @@
             const skippedSection = document.getElementById('skipped-section');
             const emptyState = document.getElementById('emptyStateIncomplete');
             
-            // 리스트 초기화
+            // Clear lists
             incompleteList.innerHTML = '';
             inprogressList.innerHTML = '';
             completedList.innerHTML = '';
@@ -3625,43 +3718,16 @@
             sortedRoutines.forEach(routine => {
                 if (routine.status === 'skipped') {
                     skippedRoutines.push(routine);
-                } else if (isRoutineInProgress(routine)) {
-                    // 진행 중인 루틴 (값은 있지만 목표 미달성)
-                    inprogressRoutines.push(routine);
-                } else if (isContinuousRoutine(routine)) {
-                    // 지속 업데이트 루틴
-                    if (isGoalAchieved(routine)) {
-                        // 목표 달성한 지속 루틴은 완료 섹션에
-                        completedRoutines.push(routine);
-                    } else if (routine.value > 0) {
-                        // 값이 있지만 목표 미달성이면 진행 중
-                        inprogressRoutines.push(routine);
-                    } else {
-                        // 값이 없으면 남은 루틴
-                        incompleteRoutines.push(routine);
-                    }
-                } else if (isReadingRoutine(routine)) {
-                    // 독서 루틴
-                    if (isGoalAchieved(routine)) {
-                        // 완독한 경우
-                        completedRoutines.push(routine);
-                    } else if (isRoutineInProgress(routine)) {
-                        // 진행 중인 경우
-                        inprogressRoutines.push(routine);
-                    } else {
-                        // 시작하지 않은 경우
-                        incompleteRoutines.push(routine);
-                    }
-                } else if (isRoutineCompleted(routine)) {
-                    // 일반 완료 루틴
+                } else if (isRoutineCompleted(routine)) { // Check if daily goal is met for reading/continuous
                     completedRoutines.push(routine);
+                } else if (isRoutineInProgress(routine)) {
+                    inprogressRoutines.push(routine);
                 } else {
-                    // 미완료 루틴
                     incompleteRoutines.push(routine);
                 }
             });
             
-            // 각 섹션에 루틴 렌더링
+            // Render routines in each section
             incompleteRoutines.forEach((routine, index) => {
                 const element = createImprovedRoutineElement(routine);
                 element.style.animationDelay = `${index * 0.1}s`;
@@ -3690,9 +3756,9 @@
                 skippedList.appendChild(element);
             });
             
-            // 모든 기본 루틴이 완료되었는지 확인
+            // Check if all basic routines are completed
             const basicRoutinesCompleted = incompleteRoutines.length === 0 && 
-                                            inprogressRoutines.filter(r => !isContinuousRoutine(r)).length === 0;
+                                            inprogressRoutines.filter(r => !isContinuousRoutine(r) && !isReadingRoutine(r)).length === 0;
             
             if (basicRoutinesCompleted && sortedRoutines.length > 0) {
                 emptyState.style.display = 'block';
@@ -3712,13 +3778,13 @@
                 incompleteSection.style.display = 'block';
             }
             
-            // 섹션 표시/숨김 처리
+            // Show/hide sections
             inprogressSection.style.display = inprogressRoutines.length > 0 ? 'block' : 'none';
             completedSection.style.display = completedRoutines.length > 0 ? 'block' : 'none';
             skippedSection.style.display = skippedRoutines.length > 0 ? 'block' : 'none';
             
             updateDailyProgress();
-            // renderAreaStats(); // 영역별 통계는 이제 관리 페이지에서만 렌더링
+            // renderAreaStats(); // Area stats are now rendered only on the manage page
         }
 
         const celebrationMessages = [
@@ -3732,25 +3798,25 @@
             "🔥 열정적이네요! 이런 자세가 성공을 만듭니다!"
         ];
 
-        // 랜덤 축하 메시지 표시
+        // Display random celebration message
         function showCelebrationMessage() {
             const randomMessage = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
             showNotification(randomMessage, 'success');
         }
 
-        // === 페이지 전환 함수들 ===
+        // === Page Navigation Functions ===
         function showHomePage() {
-            // 모든 섹션 숨김
+            // Hide all sections
             document.getElementById('manage-section').style.display = 'none';
             
-            // 홈 페이지 섹션들 표시
-            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section']; // area-stats-section 제거
+            // Show home page sections
+            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section']; // area-stats-section removed
             homeElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) element.style.display = 'block';
             });
             
-            // 일일 진행률 섹션 표시
+            // Show daily progress section
             const dailyProgress = document.querySelector('.daily-progress');
             if (dailyProgress) dailyProgress.style.display = 'block';
             
@@ -3758,25 +3824,25 @@
         }
 
         function showManagePage() {
-            // 홈 페이지 섹션들 숨김
+            // Hide home page sections
             const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
             homeElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) element.style.display = 'none';
             });
             
-            // 일일 진행률 섹션 숨김
+            // Hide daily progress section
             const dailyProgress = document.querySelector('.daily-progress');
             if (dailyProgress) dailyProgress.style.display = 'none';
             
-            // 관리 페이지 표시
+            // Show manage page
             document.getElementById('manage-section').style.display = 'block';
             
             renderManagePage();
-            renderAreaStats(); // 관리 페이지로 이동 시 영역별 통계 렌더링
+            renderAreaStats(); // Render area stats when navigating to manage page
         }
 
-        // === 새 루틴 추가 모달 (Add Routine Modal) 관련 함수 ===
+        // === New Routine Add Modal (Add Routine Modal) Functions ===
         function showAddRoutineModal() {
             const modal = document.getElementById('addRoutineModal');
             const newRoutineName = document.getElementById('newRoutineName');
@@ -3788,16 +3854,16 @@
             const newNumberOptions = document.getElementById('newNumberOptions');
             const newReadingOptions = document.getElementById('newReadingOptions');
 
-            // 폼 초기화
+            // Initialize form
             newRoutineName.value = '';
             newRoutineTime.value = 'morning';
             newRoutineType.value = 'yesno';
             newRoutineFreq.value = 'daily';
-            newRoutinePoints.value = 10; // 기본 포인트 설정
+            newRoutinePoints.value = 10; // Default points
             newNumberOptions.style.display = 'none';
             newReadingOptions.style.display = 'none';
 
-            // 영역 체크박스 동적 생성
+            // Dynamically create area checkboxes
             newRoutineAreasContainer.innerHTML = '';
             userAreas.forEach(area => {
                 const areaDiv = document.createElement('div');
@@ -3809,7 +3875,7 @@
                 newRoutineAreasContainer.appendChild(areaDiv);
             });
 
-            // 루틴 타입 변경 시 추가 옵션 표시/숨김
+            // Show/hide additional options based on routine type
             newRoutineType.onchange = () => {
                 newNumberOptions.style.display = 'none';
                 newReadingOptions.style.display = 'none';
@@ -3839,7 +3905,7 @@
                                        .map(cb => cb.value);
 
             if (!newRoutineName || !newRoutinePoints || newRoutinePoints <= 0 || selectedAreas.length === 0) {
-                showNotification('루틴 이름, 포인트, 그리고 최소 하나 이상의 영역을 선택해주세요.', 'error');
+                showNotification('Please enter routine name, points, and select at least one area.', 'error');
                 return;
             }
 
@@ -3855,10 +3921,12 @@
                 order: sampleRoutines.length,
                 active: true,
                 areas: selectedAreas,
-                basePoints: newRoutinePoints
+                basePoints: newRoutinePoints,
+                pointsGivenToday: false, // Initialize new flag
+                lastUpdatedDate: todayDateString // Initialize new property
             };
 
-            // 타입별 추가 데이터 처리
+            // Type-specific data handling
             if (newRoutineType === 'number') {
                 newRoutine.unit = document.getElementById('newNumberUnit').value.trim() || null;
                 newRoutine.min = parseInt(document.getElementById('newNumberMin').value) || 1;
@@ -3867,34 +3935,39 @@
                 newRoutine.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
                 newRoutine.continuous = document.getElementById('newNumberContinuous').checked;
                 newRoutine.inputType = document.getElementById('newNumberInputType').value;
-                if(newRoutine.continuous) newRoutine.value = 0; // 지속 루틴은 0부터 시작
+                if(newRoutine.continuous) {
+                    newRoutine.value = 0; // Continuous routines start at 0
+                    newRoutine.dailyGoalMetToday = false; // Initialize for continuous number routines
+                }
             } else if (newRoutineType === 'reading') {
                 newRoutine.bookTitle = document.getElementById('newBookTitle').value.trim();
                 newRoutine.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
                 newRoutine.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
                 newRoutine.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
-                newRoutine.currentPage = newRoutine.startPage - 1; // 아직 읽지 않은 상태
+                newRoutine.currentPage = newRoutine.startPage - 1; // Not yet read
                 newRoutine.startDate = new Date().toISOString().split('T')[0];
-                newRoutine.unit = '페이지'; // 독서 루틴의 단위는 페이지로 고정
+                newRoutine.unit = '페이지'; // Unit for reading routines is fixed to 'pages'
+                newRoutine.dailyReadPagesToday = 0; // Initialize for reading routines
+                newRoutine.dailyGoalMetToday = false; // Initialize for reading routines
                 if (!newRoutine.bookTitle || newRoutine.startPage >= newRoutine.endPage) {
-                    showNotification('독서 루틴 정보를 정확히 입력해주세요.', 'error');
+                    showNotification('Please enter accurate reading routine information.', 'error');
                     return;
                 }
             }
 
             sampleRoutines.push(newRoutine);
-            saveData(); // 새 루틴 추가 시 저장
+            saveData(); // Save new routine
             hideAddRoutineModal();
-            showNotification(`➕ "${newRoutineName}" 루틴이 추가되었습니다!`);
+            showNotification(`➕ "${newRoutineName}" routine added!`);
             renderRoutines();
         }
 
-        // === 영역 관리 모달 (Manage Areas Modal) 관련 함수 ===
+        // === Area Management Modal Functions ===
         function showManageAreasModal() {
             const modal = document.getElementById('manageAreasModal');
             const manageAreasList = document.getElementById('manageAreasList');
             const addAreaBtn = document.getElementById('addAreaBtn');
-            manageAreasList.innerHTML = ''; // 기존 내용 초기화
+            manageAreasList.innerHTML = ''; // Clear existing content
 
             userAreas.forEach(area => {
                 const areaGroup = document.createElement('div');
@@ -3907,7 +3980,7 @@
                 manageAreasList.appendChild(areaGroup);
             });
 
-            // '영역 추가' 버튼 활성화/비활성화
+            // Enable/disable 'Add Area' button
             if (userAreas.length < MAX_AREAS) {
                 addAreaBtn.style.display = 'block';
                 addAreaBtn.onclick = addAreaInput;
@@ -3915,7 +3988,7 @@
                 addAreaBtn.style.display = 'none';
             }
 
-            // '영역 삭제' 버튼 이벤트 리스너 추가
+            // Add event listeners for 'Remove Area' buttons
             document.querySelectorAll('.remove-area-btn').forEach(button => {
                 button.onclick = (e) => removeAreaInput(e.target.dataset.areaId);
             });
@@ -3925,11 +3998,11 @@
 
         function addAreaInput() {
             if (userAreas.length >= MAX_AREAS) {
-                showNotification(`영역은 최대 ${MAX_AREAS}개까지 추가할 수 있습니다.`, 'warning');
+                showNotification(`You can add up to ${MAX_AREAS} areas.`, 'warning');
                 return;
             }
 
-            const newAreaId = `customArea${userAreas.length - DEFAULT_AREAS.length + 1}`; // 예: customArea1, customArea2
+            const newAreaId = `customArea${Date.now()}`; // Unique ID for new custom area
             const newAreaName = `새 영역 ${userAreas.length + 1}`;
             
             const areaGroup = document.createElement('div');
@@ -3941,45 +4014,45 @@
             `;
             document.getElementById('manageAreasList').appendChild(areaGroup);
             
-            // 새로 추가된 버튼에 이벤트 리스너 연결
+            // Connect event listener to newly added button
             areaGroup.querySelector('.remove-area-btn').onclick = (e) => removeAreaInput(e.target.dataset.areaId);
 
-            // userAreas 배열에 임시로 추가 (저장 버튼 누르기 전까지는 실제 저장 안 됨)
+            // Temporarily add to userAreas array (not actually saved until confirm button is pressed)
             userAreas.push({ id: newAreaId, name: newAreaName });
             
             if (userAreas.length >= MAX_AREAS) {
                 document.getElementById('addAreaBtn').style.display = 'none';
             }
-            showNotification('새 영역이 추가되었습니다. 이름을 변경하고 저장하세요.', 'info');
+            showNotification('New area added. Change its name and save.', 'info');
         }
 
         function removeAreaInput(areaIdToRemove) {
             if (userAreas.length <= DEFAULT_AREAS.length) {
-                showNotification(`영역은 최소 ${DEFAULT_AREAS.length}개 이상이어야 합니다.`, 'error');
+                showNotification(`You must have at least ${DEFAULT_AREAS.length} areas.`, 'error');
                 return;
             }
 
-            // UI에서 제거
+            // Remove from UI
             const inputElement = document.getElementById(`area-name-${areaIdToRemove}`);
             if (inputElement && inputElement.parentNode) {
                 inputElement.parentNode.remove();
             }
 
-            // userAreas 배열에서 제거 (저장 버튼 누르기 전까지는 실제 저장 안 됨)
+            // Filter out from userAreas array (not actually saved until confirm button is pressed)
             userAreas = userAreas.filter(area => area.id !== areaIdToRemove);
 
-            // '영역 추가' 버튼 다시 활성화
+            // Re-enable 'Add Area' button
             if (userAreas.length < MAX_AREAS) {
                 document.getElementById('addAreaBtn').style.display = 'block';
             }
-            showNotification('영역이 삭제되었습니다. 저장 버튼을 눌러 확정하세요.', 'warning');
+            showNotification('Area deleted. Press save button to confirm.', 'warning');
         }
 
 
         function hideManageAreasModal() {
-            // 모달 닫기 전에 userAreas를 로드된 상태로 되돌림 (취소 시)
-            // 실제 저장된 데이터는 handleManageAreasConfirm에서만 변경
-            loadData(); // 취소 시에는 로컬 스토리지에서 다시 로드하여 변경사항 취소
+            // Revert userAreas to loaded state when modal is cancelled
+            // Actual saved data is only changed in handleManageAreasConfirm
+            loadData(); // Reload from localStorage to discard changes
             document.getElementById('manageAreasModal').style.display = 'none';
         }
 
@@ -3992,7 +4065,7 @@
                 const areaId = input.dataset.areaId;
                 const newName = input.value.trim();
                 if (!newName) {
-                    showNotification('영역 이름은 비워둘 수 없습니다.', 'error');
+                    showNotification('Area name cannot be empty.', 'error');
                     isValid = false;
                 }
                 updatedAreas.push({ id: areaId, name: newName });
@@ -4000,32 +4073,32 @@
 
             if (!isValid) return;
 
-            // userAreas 업데이트
+            // Update userAreas
             userAreas = updatedAreas;
 
-            // userStats 업데이트: 기존 포인트는 유지하고, 새 영역은 0으로 초기화
+            // Update userStats: keep existing points, initialize new areas to 0
             const newUserStats = {};
             userAreas.forEach(area => {
                 newUserStats[area.id] = userStats[area.id] || 0;
             });
             userStats = newUserStats;
 
-            saveData(); // 영역 이름 변경 시 저장
+            saveData(); // Save area name changes
 
             hideManageAreasModal();
-            showNotification('✅ 영역 이름이 저장되었습니다!');
-            renderRoutines(); // UI 갱신 (영역 이름이 루틴 표시에도 반영될 수 있으므로)
+            showNotification('✅ Area names saved!');
+            renderRoutines(); // Update UI (as area names might be reflected in routine display)
         }
 
-        // === 영역별 통계 렌더링 함수 ===
+        // === Area Stats Rendering Function ===
         function renderAreaStats() {
             const areaStatsGrid = document.getElementById('areaStatsGrid');
-            areaStatsGrid.innerHTML = ''; // 기존 내용 초기화
+            areaStatsGrid.innerHTML = ''; // Clear existing content
 
             userAreas.forEach(area => {
                 const points = userStats[area.id] || 0;
                 const statItem = document.createElement('div');
-                statItem.className = `area-stat-item ${area.id}`; // 영역 ID를 클래스로 추가하여 색상 적용
+                statItem.className = `area-stat-item ${area.id}`; // Add area ID as class for styling
                 statItem.innerHTML = `
                     <h4>${area.name}</h4>
                     <div class="points">${points} P</div>
@@ -4034,42 +4107,42 @@
             });
         }
 
-        // 페이지 로드 시 초기화
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            loadData(); // 데이터 로드
-            showHomePage(); // 초기 화면을 홈으로 설정 (영역별 통계는 숨김)
+            loadData(); // Load data and perform daily reset
+            showHomePage(); // Set initial screen to Home (area stats hidden)
 
-            // 저장 버튼 이벤트 리스너
+            // Save button event listener
             const saveBtn = document.getElementById('saveOrderBtn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', saveRoutineOrder);
             }
             
-            // === 숫자 입력 모달 이벤트 리스너 ===
+            // === Number Input Modal Event Listeners ===
             document.getElementById('numberConfirmBtn')?.addEventListener('click', handleNumberInputConfirm);
             document.getElementById('numberModalClose')?.addEventListener('click', hideNumberInputModal);
             document.getElementById('numberModalCancel')?.addEventListener('click', hideNumberInputModal);
             document.getElementById('numberInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideNumberInputModal(); });
             document.getElementById('numberInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleNumberInputConfirm(); });
             
-            // === 시간 입력 모달 이벤트 리스너 ===
+            // === Time Input Modal Event Listeners ===
             document.getElementById('timeConfirmBtn')?.addEventListener('click', handleTimeInputConfirm);
             document.getElementById('timeModalClose')?.addEventListener('click', hideTimeInputModal);
             document.getElementById('timeModalCancel')?.addEventListener('click', hideTimeInputModal);
             document.getElementById('timeInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideTimeInputModal(); });
             document.getElementById('timeInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTimeInputConfirm(); });
 
-            // === 스테퍼 모달 이벤트 리스너 ===
+            // === Stepper Modal Event Listeners ===
             document.getElementById('stepperModalClose')?.addEventListener('click', hideStepperModal);
             document.getElementById('stepperModalCancel')?.addEventListener('click', hideStepperModal);
             document.getElementById('stepperInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideStepperModal(); });
             
-            // === 휠 모달 이벤트 리스너 ===
+            // === Wheel Modal Event Listeners ===
             document.getElementById('wheelModalClose')?.addEventListener('click', hideWheelModal);
             document.getElementById('wheelModalCancel')?.addEventListener('click', hideWheelModal);
             document.getElementById('wheelInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideWheelModal(); });
             
-            // === 키보드 단축키 (ESC로 모달 닫기) ===
+            // === Keyboard Shortcuts (ESC to close modals) ===
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     hideNumberInputModal();
@@ -4078,47 +4151,48 @@
                     hideWheelModal();
                     hideReadingSetupModal();
                     hideReadingProgressModal();
-                    hideAddRoutineModal(); // 새 루틴 추가 모달
-                    hideManageAreasModal(); // 영역 관리 모달
+                    hideAddRoutineModal(); // New routine add modal
+                    hideManageAreasModal(); // Area management modal
                 }
             });
 
-            // === 독서 설정 모달 이벤트 리스너 (기존 독서 루틴 수정용) ===
+            // === Reading Setup Modal Event Listeners (for editing existing reading routines) ===
             document.getElementById('readingSetupConfirm')?.addEventListener('click', handleReadingSetupConfirm);
             document.getElementById('readingSetupClose')?.addEventListener('click', hideReadingSetupModal);
             document.getElementById('readingSetupCancel')?.addEventListener('click', hideReadingSetupModal);
             document.getElementById('readingSetupModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingSetupModal(); });
 
-            // === 독서 진행 모달 이벤트 리스너 ===
+            // === Reading Progress Modal Event Listeners ===
             document.getElementById('readingProgressConfirm')?.addEventListener('click', handleReadingProgressConfirm);
             document.getElementById('readingProgressClose')?.addEventListener('click', hideReadingProgressModal);
             document.getElementById('readingProgressCancel')?.addEventListener('click', hideReadingProgressModal);
             document.getElementById('readingProgressModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingProgressModal(); });
             
-            // === 새 루틴 추가 모달 이벤트 리스너 ===
+            // === New Routine Add Modal Event Listeners ===
             document.getElementById('addRoutineClose')?.addEventListener('click', hideAddRoutineModal);
             document.getElementById('addRoutineCancel')?.addEventListener('click', hideAddRoutineModal);
             document.getElementById('addRoutineConfirm')?.addEventListener('click', handleAddRoutineConfirm);
 
-            // === 영역 관리 모달 이벤트 리스너 ===
+            // === Area Management Modal Event Listeners ===
             document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
             document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
             document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
-            document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput); // 영역 추가 버튼 이벤트 리스너
+            document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput); // Area add button event listener
 
-            // 웰컴 메시지 표시
+            // Display welcome message
             setTimeout(() => {
                 showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
             }, 1000);
         });
 
-        // 전역 함수로 정의 (HTML onclick에서 접근 가능)
+        // Define as global functions (accessible from HTML onclick)
         window.showHomePage = showHomePage;
         window.showManagePage = showManagePage;
         window.editRoutine = editRoutine;
-        window.showReadingSetupModal = showReadingSetupModal; // 기존 독서 루틴 수정용
-        window.showAddRoutineModal = showAddRoutineModal; // 새 루틴 추가용
-        window.showManageAreasModal = showManageAreasModal; // 영역 관리용
+        window.showReadingSetupModal = showReadingSetupModal; // For editing existing reading routines
+        window.showAddRoutineModal = showAddRoutineModal; // For adding new routines
+        window.showManageAreasModal = showManageAreasModal; // For managing areas
     </script>
 </body>
 </html>
+�
