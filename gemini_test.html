@@ -331,6 +331,27 @@
             animation: bounce 2s infinite;
         }
 
+        /* 진행 중인 루틴 스타일 */
+        .routine-item.inprogress {
+            background: linear-gradient(145deg, #fefce8, #fef3c7);
+            border-color: var(--warning);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
+        .routine-item.inprogress .routine-name {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .routine-item.inprogress::after {
+            content: '⏳';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 1.2rem;
+            animation: pulse 2s infinite;
+        }
+
         /* 목표 달성한 지속 업데이트 루틴 스타일 */
         .routine-item.goal-achieved {
             background: linear-gradient(145deg, #fff7ed, #fed7aa);
@@ -1329,7 +1350,20 @@
             </div>
         </div>
 
-        <!-- 완료한 루틴 섹션 -->
+        <!-- 진행 중 루틴 섹션 -->
+        <div class="section-card" id="inprogress-section" style="display: none;">
+            <h2>
+                <div class="section-header">
+                    <span>🔄 진행 중 루틴</span>
+                </div>
+                <div class="section-progress" id="inprogressProgress">
+                    <span id="inprogressCount">0</span>개 진행 중
+                </div>
+            </h2>
+            <div class="routine-list" id="inprogressRoutineList">
+                <!-- 진행 중인 루틴들이 여기에 렌더링됩니다 -->
+            </div>
+        </div>
         <div class="section-card" id="completed-section" style="display: none;">
             <h2>
                 <div class="section-header">
@@ -1491,7 +1525,7 @@
                 time: 'afternoon',
                 type: 'number',
                 frequency: 'daily',
-                value: null,
+                value: 3, // 진행 중 상태를 보여주기 위해 3잔으로 설정
                 status: null,
                 streak: 3,
                 unit: '잔',
@@ -1534,7 +1568,7 @@
                 time: 'evening',
                 type: 'number',
                 frequency: 'daily',
-                value: null,
+                value: 6500, // 진행 중 상태를 보여주기 위해 6500걸음으로 설정
                 status: null,
                 streak: 2,
                 unit: '걸음',
@@ -1577,7 +1611,7 @@
                 time: 'evening',
                 type: 'number',
                 frequency: 'daily',
-                value: null,
+                value: 15, // 진행 중 상태를 보여주기 위해 15분으로 설정
                 status: null,
                 streak: 0,
                 unit: '분',
@@ -1587,7 +1621,8 @@
                 min: 5,
                 max: 180,
                 step: 5,
-                dailyGoal: 30 // 일일 목표 (지속 업데이트는 아님)
+                continuous: true, // 지속 업데이트 가능으로 변경
+                dailyGoal: 30 // 일일 목표
             }
         ];
 
@@ -2229,6 +2264,19 @@
             return routine.continuous === true;
         }
 
+        // 진행 중인 루틴인지 확인 (값은 있지만 목표 미달성)
+        function isRoutineInProgress(routine) {
+            if (routine.status === 'skipped') return false;
+            
+            if (routine.type === 'number') {
+                const hasValue = routine.value !== null && routine.value !== undefined && routine.value > 0;
+                const goalNotReached = routine.dailyGoal ? routine.value < routine.dailyGoal : false;
+                return hasValue && goalNotReached;
+            }
+            
+            return false;
+        }
+
         // 목표 달성 여부 확인
         function isGoalAchieved(routine) {
             if (routine.type === 'number' && routine.dailyGoal && routine.value !== null && routine.value !== undefined) {
@@ -2244,6 +2292,7 @@
             const isSkipped = routine.status === 'skipped';
             const isGoalReached = isGoalAchieved(routine);
             const isContinuous = isContinuousRoutine(routine);
+            const isInProgress = isRoutineInProgress(routine);
             
             const routineDiv = document.createElement('div');
             routineDiv.className = 'routine-item';
@@ -2252,14 +2301,16 @@
             
             routineDiv.classList.add(routine.time);
             
-            // 지속 업데이트 루틴의 경우 목표 달성 시 특별한 스타일
-            if (isContinuous && isGoalReached) {
+            // 상태별 스타일 적용
+            if (isSkipped) {
+                routineDiv.classList.add('skipped');
+            } else if (isContinuous && isGoalReached) {
                 routineDiv.classList.add('goal-achieved');
+            } else if (isInProgress) {
+                routineDiv.classList.add('inprogress');
             } else if (isCompleted && !isContinuous) {
                 routineDiv.classList.add('completed');
             }
-            
-            if (isSkipped) routineDiv.classList.add('skipped');
             
             let actionButton = '';
             if (routine.type === 'yesno') {
@@ -2272,6 +2323,8 @@
                     // 지속 업데이트 루틴: 항상 업데이트 가능
                     if (isGoalReached) {
                         buttonIcon = '🎯'; // 목표 달성했지만 계속 업데이트 가능
+                    } else if (isInProgress) {
+                        buttonIcon = '⏳'; // 진행 중
                     } else {
                         buttonIcon = routine.type === 'number' ? '🔢' : '⏰';
                     }
@@ -2281,6 +2334,8 @@
                         buttonIcon = '✓';
                     } else if (isSkipped) {
                         buttonIcon = '⏭';
+                    } else if (isInProgress) {
+                        buttonIcon = '⏳';
                     } else {
                         if (routine.type === 'number') {
                             buttonIcon = '🔢';
@@ -2335,8 +2390,8 @@
                 actionElement.addEventListener('click', () => {
                     debugLog(`루틴 클릭됨: ${routine.name} (ID: ${routine.id}, 타입: ${routine.type})`);
                     
-                    // 지속 업데이트 루틴이거나 미완료 루틴인 경우
-                    if (isContinuous || (!isCompleted && !isSkipped)) {
+                    // 지속 업데이트 루틴이거나 미완료/진행중 루틴인 경우
+                    if (isContinuous || (!isCompleted && !isSkipped) || isInProgress) {
                         if (routine.type === 'yesno') {
                             routine.value = true;
                             routine.streak = (routine.streak || 0) + 1;
@@ -2408,14 +2463,16 @@
                 }
             }).length;
             
+            const inprogressRoutines = activeRoutines.filter(r => isRoutineInProgress(r)).length;
             const skippedRoutines = activeRoutines.filter(r => r.status === 'skipped').length;
-            const incompleteRoutines = totalRoutines - completedRoutines - skippedRoutines;
+            const incompleteRoutines = totalRoutines - completedRoutines - inprogressRoutines - skippedRoutines;
             
             const progressPercentage = totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0;
             
             const progressEl = document.getElementById('dailyProgressPercentage');
             const progressBarEl = document.getElementById('dailyProgressBar');
             const incompleteCountEl = document.getElementById('incompleteCount');
+            const inprogressCountEl = document.getElementById('inprogressCount');
             const completedCountEl = document.getElementById('completedCount');
             const skippedCountEl = document.getElementById('skippedCount');
             
@@ -2425,12 +2482,14 @@
                 progressBarEl.style.width = `${progressPercentage}%`;
             }
             if (incompleteCountEl) incompleteCountEl.textContent = incompleteRoutines;
+            if (inprogressCountEl) inprogressCountEl.textContent = inprogressRoutines;
             if (completedCountEl) completedCountEl.textContent = completedRoutines;
             if (skippedCountEl) skippedCountEl.textContent = skippedRoutines;
             
             return {
                 total: totalRoutines,
                 completed: completedRoutines,
+                inprogress: inprogressRoutines,
                 skipped: skippedRoutines,
                 incomplete: incompleteRoutines,
                 percentage: progressPercentage
@@ -2670,19 +2729,24 @@
         // 루틴 렌더링 함수
         function renderRoutines() {
             const incompleteList = document.getElementById('incompleteRoutineList');
+            const inprogressList = document.getElementById('inprogressRoutineList');
             const completedList = document.getElementById('completedRoutineList');
             const skippedList = document.getElementById('skippedRoutineList');
             
             const incompleteSection = document.getElementById('incomplete-section');
+            const inprogressSection = document.getElementById('inprogress-section');
             const completedSection = document.getElementById('completed-section');
             const skippedSection = document.getElementById('skipped-section');
             const emptyState = document.getElementById('emptyStateIncomplete');
             
+            // 리스트 초기화
             incompleteList.innerHTML = '';
+            inprogressList.innerHTML = '';
             completedList.innerHTML = '';
             skippedList.innerHTML = '';
             
             const incompleteRoutines = [];
+            const inprogressRoutines = [];
             const completedRoutines = [];
             const skippedRoutines = [];
             
@@ -2693,21 +2757,43 @@
             sortedRoutines.forEach(routine => {
                 if (routine.status === 'skipped') {
                     skippedRoutines.push(routine);
+                } else if (isRoutineInProgress(routine)) {
+                    // 진행 중인 루틴 (값은 있지만 목표 미달성)
+                    inprogressRoutines.push(routine);
                 } else if (isContinuousRoutine(routine)) {
-                    // 지속 업데이트 루틴은 항상 "남은 루틴"에 표시
-                    incompleteRoutines.push(routine);
+                    // 지속 업데이트 루틴
+                    if (isGoalAchieved(routine)) {
+                        // 목표 달성한 지속 루틴은 완료 섹션에
+                        completedRoutines.push(routine);
+                    } else if (routine.value > 0) {
+                        // 값이 있지만 목표 미달성이면 진행 중
+                        inprogressRoutines.push(routine);
+                    } else {
+                        // 값이 없으면 남은 루틴
+                        incompleteRoutines.push(routine);
+                    }
                 } else if (isRoutineCompleted(routine)) {
+                    // 일반 완료 루틴
                     completedRoutines.push(routine);
                 } else {
+                    // 미완료 루틴
                     incompleteRoutines.push(routine);
                 }
             });
             
+            // 각 섹션에 루틴 렌더링
             incompleteRoutines.forEach((routine, index) => {
                 const element = createImprovedRoutineElement(routine);
                 element.style.animationDelay = `${index * 0.1}s`;
                 element.style.animation = 'fadeInUp 0.6s ease-out both';
                 incompleteList.appendChild(element);
+            });
+            
+            inprogressRoutines.forEach((routine, index) => {
+                const element = createImprovedRoutineElement(routine);
+                element.style.animationDelay = `${index * 0.1}s`;
+                element.style.animation = 'fadeInUp 0.6s ease-out both';
+                inprogressList.appendChild(element);
             });
             
             completedRoutines.forEach((routine, index) => {
@@ -2724,13 +2810,11 @@
                 skippedList.appendChild(element);
             });
             
-            // 모든 비지속 루틴이 완료되었는지 확인
-            const nonContinuousRoutines = sortedRoutines.filter(r => !isContinuousRoutine(r));
-            const nonContinuousCompleted = nonContinuousRoutines.filter(r => isRoutineCompleted(r) && r.status !== 'skipped');
-            const allNonContinuousCompleted = nonContinuousRoutines.length > 0 && 
-                                             nonContinuousCompleted.length === nonContinuousRoutines.length;
+            // 모든 기본 루틴이 완료되었는지 확인
+            const basicRoutinesCompleted = incompleteRoutines.length === 0 && 
+                                          inprogressRoutines.filter(r => !isContinuousRoutine(r)).length === 0;
             
-            if (allNonContinuousCompleted && incompleteRoutines.every(r => isContinuousRoutine(r))) {
+            if (basicRoutinesCompleted && sortedRoutines.length > 0) {
                 emptyState.style.display = 'block';
                 emptyState.querySelector('.empty-state-title').textContent = '기본 루틴을 모두 완료했습니다!';
                 emptyState.querySelector('.empty-state-description').innerHTML = '지속 업데이트 루틴은 계속 진행할 수 있습니다.<br>오늘도 정말 수고하셨습니다!';
@@ -2741,9 +2825,15 @@
                 }, 500);
             } else {
                 emptyState.style.display = incompleteRoutines.length === 0 ? 'block' : 'none';
+                if (incompleteRoutines.length === 0 && inprogressRoutines.length > 0) {
+                    emptyState.querySelector('.empty-state-title').textContent = '새로운 루틴을 시작해보세요!';
+                    emptyState.querySelector('.empty-state-description').innerHTML = '진행 중인 루틴들을 완료하거나<br>새로운 루틴을 추가해보세요!';
+                }
                 incompleteSection.style.display = 'block';
             }
             
+            // 섹션 표시/숨김 처리
+            inprogressSection.style.display = inprogressRoutines.length > 0 ? 'block' : 'none';
             completedSection.style.display = completedRoutines.length > 0 ? 'block' : 'none';
             skippedSection.style.display = skippedRoutines.length > 0 ? 'block' : 'none';
             
@@ -2773,7 +2863,7 @@
             document.getElementById('manage-section').style.display = 'none';
             
             // 홈 페이지 섹션들 표시
-            const homeElements = ['incomplete-section', 'completed-section', 'skipped-section'];
+            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
             homeElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) element.style.display = 'block';
@@ -2788,7 +2878,7 @@
 
         function showManagePage() {
             // 홈 페이지 섹션들 숨김
-            const homeElements = ['incomplete-section', 'completed-section', 'skipped-section'];
+            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
             homeElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) element.style.display = 'none';
