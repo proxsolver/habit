@@ -331,6 +331,27 @@
             animation: bounce 2s infinite;
         }
 
+        /* 목표 달성한 지속 업데이트 루틴 스타일 */
+        .routine-item.goal-achieved {
+            background: linear-gradient(145deg, #fff7ed, #fed7aa);
+            border-color: var(--warning);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .routine-item.goal-achieved .routine-name {
+            color: var(--warning);
+            font-weight: 700;
+        }
+
+        .routine-item.goal-achieved::after {
+            content: '🎯';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 1.2rem;
+            animation: glow 2s infinite;
+        }
+
         /* 건너뛴 루틴 스타일 */
         .routine-item.skipped {
             background: linear-gradient(145deg, #fef2f2, #fee2e2);
@@ -513,6 +534,25 @@
         .streak-badge.mega-streak {
             background: linear-gradient(135deg, #8b5cf6, #a78bfa, #c4b5fd);
             animation: bounce 1s infinite;
+        }
+
+        /* 지속 업데이트 배지 */
+        .continuous-badge {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            border-radius: 16px;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            box-shadow: var(--shadow-lg);
+            border: 2px solid white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
         /* 루틴 타입별 아이콘 스타일 */
@@ -1460,7 +1500,9 @@
                 inputType: 'stepper',
                 min: 1,
                 max: 20,
-                step: 1
+                step: 1,
+                continuous: true, // 지속 업데이트 가능
+                dailyGoal: 8 // 일일 목표
             },
             {
                 id: 3,
@@ -1501,7 +1543,9 @@
                 inputType: 'wheel',
                 min: 1000,
                 max: 30000,
-                step: 500
+                step: 500,
+                continuous: true, // 지속 업데이트 가능
+                dailyGoal: 10000 // 일일 목표
             },
             {
                 id: 6,
@@ -1542,7 +1586,8 @@
                 inputType: 'wheel',
                 min: 5,
                 max: 180,
-                step: 5
+                step: 5,
+                dailyGoal: 30 // 일일 목표 (지속 업데이트는 아님)
             }
         ];
 
@@ -1586,16 +1631,41 @@
                 return;
             }
             
-            // 초기값 설정
-            let currentValue = routine.value || routine.min || 1;
-            const minValue = routine.min || 1;
+            // 현재 값을 기준으로 시작 (지속 업데이트 루틴의 경우)
+            let currentValue = routine.continuous ? (routine.value || 0) + routine.step : (routine.value || routine.min || 1);
+            const minValue = routine.continuous ? (routine.value || 0) + routine.step : (routine.min || 1);
             const maxValue = routine.max || 100;
             const stepValue = routine.step || 1;
             
             // UI 업데이트
-            title.textContent = routine.name;
+            const titleText = routine.continuous ? `${routine.name} (현재: ${routine.value || 0}${routine.unit || ''})` : routine.name;
+            title.textContent = titleText;
             valueDisplay.textContent = currentValue;
             unitDisplay.textContent = routine.unit || '';
+            
+            // 목표 표시
+            if (routine.dailyGoal) {
+                // 기존 목표 텍스트 제거
+                const existingGoal = modal.querySelector('.goal-text');
+                if (existingGoal) {
+                    existingGoal.remove();
+                }
+                
+                const goalText = document.createElement('div');
+                goalText.className = 'goal-text';
+                goalText.style.cssText = `
+                    text-align: center;
+                    font-size: 0.8rem;
+                    color: var(--text-secondary);
+                    margin-top: 0.5rem;
+                `;
+                goalText.textContent = `목표: ${routine.dailyGoal}${routine.unit || ''}`;
+                
+                const stepperContainer = modal.querySelector('.stepper-container');
+                if (stepperContainer && stepperContainer.parentNode) {
+                    stepperContainer.parentNode.insertBefore(goalText, stepperContainer.nextSibling);
+                }
+            }
             
             // 버튼들 가져오기
             const minusBtn = document.getElementById('stepperMinus');
@@ -1663,23 +1733,40 @@
                 // 루틴 데이터 즉시 업데이트
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
-                    routine.value = value;
+                    // 지속 업데이트 루틴이 아닌 경우에만 값을 직접 설정
+                    if (!routine.continuous) {
+                        routine.value = value;
+                    } else {
+                        // 지속 업데이트 루틴의 경우 입력된 값으로 설정 (스테퍼에서 이미 현재값+step으로 시작했으므로)
+                        routine.value = value;
+                    }
+                    
                     routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
-                    routine.streak = (routine.streak || 0) + 1;
-                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
+                    
+                    // 목표 달성 시에만 스트릭 증가
+                    if (isGoalAchieved(routine) && !routine.goalAchievedToday) {
+                        routine.streak = (routine.streak || 0) + 1;
+                        routine.goalAchievedToday = true; // 오늘 목표 달성 플래그
+                    }
+                    
+                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value, '목표달성:', isGoalAchieved(routine));
                 }
                 
                 await updateRoutineValue(currentRoutine.id, value, 'number');
                 hideStepperModal(); // 여기서 activeRoutineForModal이 null이 됨
-                showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''} 저장되었습니다!`);
+                
+                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
+                showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
                 
                 // UI 즉시 업데이트
                 renderRoutines();
-                showCompletionEffect();
                 
-                setTimeout(() => {
-                    showCelebrationMessage();
-                }, 300);
+                if (isGoalAchieved(routine)) {
+                    showCompletionEffect();
+                    setTimeout(() => {
+                        showCelebrationMessage();
+                    }, 300);
+                }
                 
             } catch (error) {
                 console.error('스테퍼 루틴 업데이트 실패:', error);
@@ -1746,23 +1833,39 @@
                 // 루틴 데이터 즉시 업데이트
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
-                    routine.value = value;
+                    // 지속 업데이트 루틴의 경우 현재값과 입력값 중 큰 값으로 설정
+                    if (routine.continuous) {
+                        routine.value = Math.max(routine.value || 0, value);
+                    } else {
+                        routine.value = value;
+                    }
+                    
                     routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
-                    routine.streak = (routine.streak || 0) + 1;
-                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
+                    
+                    // 목표 달성 시에만 스트릭 증가
+                    if (isGoalAchieved(routine) && !routine.goalAchievedToday) {
+                        routine.streak = (routine.streak || 0) + 1;
+                        routine.goalAchievedToday = true; // 오늘 목표 달성 플래그
+                    }
+                    
+                    debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value, '목표달성:', isGoalAchieved(routine));
                 }
                 
                 await updateRoutineValue(currentRoutine.id, value, 'number');
                 hideWheelModal(); // 여기서 activeRoutineForModal이 null이 됨
-                showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''} 저장되었습니다!`);
+                
+                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
+                showNotification(`✅ ${currentRoutine.name}: ${routine.value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
                 
                 // UI 즉시 업데이트
                 renderRoutines();
-                showCompletionEffect();
                 
-                setTimeout(() => {
-                    showCelebrationMessage();
-                }, 300);
+                if (isGoalAchieved(routine)) {
+                    showCompletionEffect();
+                    setTimeout(() => {
+                        showCelebrationMessage();
+                    }, 300);
+                }
                 
             } catch (error) {
                 console.error('휠 루틴 업데이트 실패:', error);
@@ -2069,9 +2172,17 @@
             
             if (routine.type === 'number') {
                 if (routine.value !== null && routine.value !== undefined) {
-                    return `${routine.value} ${routine.unit || ''}`;
+                    const displayValue = `${routine.value} ${routine.unit || ''}`;
+                    
+                    // 지속 업데이트 루틴이고 목표가 있는 경우
+                    if (routine.continuous && routine.dailyGoal) {
+                        const progress = Math.min(100, Math.round((routine.value / routine.dailyGoal) * 100));
+                        return `${displayValue} (${progress}%)`;
+                    }
+                    
+                    return displayValue;
                 }
-                return '미완료';
+                return routine.continuous ? '0 ' + (routine.unit || '') : '미완료';
             }
             
             if (routine.type === 'time') {
@@ -2097,8 +2208,9 @@
             }
             
             if (routine.type === 'number') {
-                const completed = routine.value !== null && routine.value !== undefined && routine.value > 0;
-                debugLog(`루틴 ${routine.name} (숫자): 값=${routine.value}, 완료=${completed}`);
+                const hasValue = routine.value !== null && routine.value !== undefined && routine.value > 0;
+                const completed = hasValue && (!routine.dailyGoal || routine.value >= routine.dailyGoal);
+                debugLog(`루틴 ${routine.name} (숫자): 값=${routine.value}, 목표=${routine.dailyGoal}, 완료=${completed}`);
                 return completed;
             }
             
@@ -2112,10 +2224,26 @@
             return false;
         }
 
+        // 지속 업데이트 루틴인지 확인
+        function isContinuousRoutine(routine) {
+            return routine.continuous === true;
+        }
+
+        // 목표 달성 여부 확인
+        function isGoalAchieved(routine) {
+            if (routine.type === 'number' && routine.dailyGoal && routine.value !== null && routine.value !== undefined) {
+                return routine.value >= routine.dailyGoal;
+            }
+            // 목표가 없는 숫자 루틴이거나 다른 타입의 루틴은 기본 완료 로직 사용
+            return isRoutineCompleted(routine);
+        }
+
         // 개선된 루틴 아이템 생성 함수
         function createImprovedRoutineElement(routine) {
             const isCompleted = isRoutineCompleted(routine);
             const isSkipped = routine.status === 'skipped';
+            const isGoalReached = isGoalAchieved(routine);
+            const isContinuous = isContinuousRoutine(routine);
             
             const routineDiv = document.createElement('div');
             routineDiv.className = 'routine-item';
@@ -2124,7 +2252,13 @@
             
             routineDiv.classList.add(routine.time);
             
-            if (isCompleted) routineDiv.classList.add('completed');
+            // 지속 업데이트 루틴의 경우 목표 달성 시 특별한 스타일
+            if (isContinuous && isGoalReached) {
+                routineDiv.classList.add('goal-achieved');
+            } else if (isCompleted && !isContinuous) {
+                routineDiv.classList.add('completed');
+            }
+            
             if (isSkipped) routineDiv.classList.add('skipped');
             
             let actionButton = '';
@@ -2134,15 +2268,25 @@
                 actionButton = `<div class="routine-checkbox">${checkIcon || skipIcon}</div>`;
             } else {
                 let buttonIcon = '';
-                if (isCompleted) {
-                    buttonIcon = '✓';
-                } else if (isSkipped) {
-                    buttonIcon = '⏭';
+                if (isContinuous) {
+                    // 지속 업데이트 루틴: 항상 업데이트 가능
+                    if (isGoalReached) {
+                        buttonIcon = '🎯'; // 목표 달성했지만 계속 업데이트 가능
+                    } else {
+                        buttonIcon = routine.type === 'number' ? '🔢' : '⏰';
+                    }
                 } else {
-                    if (routine.type === 'number') {
-                        buttonIcon = '🔢';
-                    } else if (routine.type === 'time') {
-                        buttonIcon = '⏰';
+                    // 일반 루틴
+                    if (isCompleted) {
+                        buttonIcon = '✓';
+                    } else if (isSkipped) {
+                        buttonIcon = '⏭';
+                    } else {
+                        if (routine.type === 'number') {
+                            buttonIcon = '🔢';
+                        } else if (routine.type === 'time') {
+                            buttonIcon = '⏰';
+                        }
                     }
                 }
                 actionButton = `<div class="routine-action-button">${buttonIcon}</div>`;
@@ -2155,6 +2299,12 @@
                 else if (routine.streak >= 7) streakClass = 'high-streak';
                 
                 streakBadge = `<div class="streak-badge ${streakClass}">🔥 ${routine.streak}</div>`;
+            }
+            
+            // 지속 업데이트 루틴 표시
+            let continuousBadge = '';
+            if (isContinuous) {
+                continuousBadge = `<div class="continuous-badge">🔄</div>`;
             }
             
             routineDiv.innerHTML = `
@@ -2177,6 +2327,7 @@
                     ${getRoutineValueDisplay(routine)}
                 </div>
                 ${streakBadge}
+                ${continuousBadge}
             `;
             
             const actionElement = routineDiv.querySelector('.routine-checkbox, .routine-action-button');
@@ -2184,7 +2335,8 @@
                 actionElement.addEventListener('click', () => {
                     debugLog(`루틴 클릭됨: ${routine.name} (ID: ${routine.id}, 타입: ${routine.type})`);
                     
-                    if (!isCompleted && !isSkipped) {
+                    // 지속 업데이트 루틴이거나 미완료 루틴인 경우
+                    if (isContinuous || (!isCompleted && !isSkipped)) {
                         if (routine.type === 'yesno') {
                             routine.value = true;
                             routine.streak = (routine.streak || 0) + 1;
@@ -2202,7 +2354,8 @@
                             showTimeInputModal(routine);
                         }
                         
-                    } else if (isCompleted) {
+                    } else if (isCompleted && !isContinuous) {
+                        // 일반 루틴의 완료 취소
                         if (routine.type === 'yesno') {
                             routine.value = false;
                         } else {
@@ -2245,7 +2398,16 @@
         function updateDailyProgress() {
             const activeRoutines = sampleRoutines.filter(r => r.active);
             const totalRoutines = activeRoutines.length;
-            const completedRoutines = activeRoutines.filter(r => isRoutineCompleted(r)).length;
+            
+            // 지속 업데이트 루틴은 목표 달성 여부로, 일반 루틴은 완료 여부로 계산
+            const completedRoutines = activeRoutines.filter(r => {
+                if (isContinuousRoutine(r)) {
+                    return isGoalAchieved(r);
+                } else {
+                    return isRoutineCompleted(r);
+                }
+            }).length;
+            
             const skippedRoutines = activeRoutines.filter(r => r.status === 'skipped').length;
             const incompleteRoutines = totalRoutines - completedRoutines - skippedRoutines;
             
@@ -2284,6 +2446,25 @@
             
             let additionalControls = '';
             if (routine.type === 'number') {
+                const continuousToggle = routine.continuous ? `
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">
+                            <input type="checkbox" class="continuous-toggle" data-routine-id="${routine.id}" ${routine.continuous ? 'checked' : ''}> 
+                            지속 업데이트 가능
+                        </label>
+                    </div>
+                ` : '';
+                
+                const goalInput = routine.dailyGoal ? `
+                    <div style="margin-top: 0.5rem;">
+                        <label style="font-size: 0.75rem; color: var(--text-secondary);">목표:</label>
+                        <input type="number" class="goal-input" data-routine-id="${routine.id}" 
+                               value="${routine.dailyGoal}" min="1" max="1000"
+                               style="margin-left: 0.5rem; width: 60px; padding: 0.25rem; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 0.8rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${routine.unit || ''}</span>
+                    </div>
+                ` : '';
+                
                 additionalControls = `
                     <div style="margin-top: 0.5rem;">
                         <label style="font-size: 0.75rem; color: var(--text-secondary);">입력 방식:</label>
@@ -2293,6 +2474,8 @@
                             <option value="wheel" ${routine.inputType === 'wheel' ? 'selected' : ''}>휠 (스크롤)</option>
                         </select>
                     </div>
+                    ${continuousToggle}
+                    ${goalInput}
                 `;
             }
             
@@ -2303,6 +2486,7 @@
                         <div class="routine-main-name">
                             ${getTimeEmoji(routine.time)} ${routine.name}
                             <span class="type-icon">${getTypeIcon(routine.type)}</span>
+                            ${routine.continuous ? '<span style="margin-left: 0.5rem; font-size: 0.8rem;">🔄</span>' : ''}
                         </div>
                         <div class="routine-main-details">
                             <div class="time-period">
@@ -2346,6 +2530,21 @@
                         routine.inputType = newInputType;
                         debugLog(`루틴 ${routine.name}의 입력 방식이 ${newInputType}로 변경됨`);
                         showNotification(`${routine.name}의 입력 방식이 ${newInputType === 'stepper' ? '스테퍼' : '휠'}로 변경되었습니다.`);
+                    }
+                });
+            }
+            
+            const goalInput = routineDiv.querySelector('.goal-input');
+            if (goalInput) {
+                goalInput.addEventListener('change', (e) => {
+                    const routineId = parseInt(e.target.dataset.routineId);
+                    const newGoal = parseInt(e.target.value);
+                    
+                    const routine = sampleRoutines.find(r => r.id === routineId);
+                    if (routine && newGoal > 0) {
+                        routine.dailyGoal = newGoal;
+                        debugLog(`루틴 ${routine.name}의 목표가 ${newGoal}로 변경됨`);
+                        showNotification(`${routine.name}의 목표가 ${newGoal}${routine.unit || ''}로 변경되었습니다.`);
                     }
                 });
             }
@@ -2494,6 +2693,9 @@
             sortedRoutines.forEach(routine => {
                 if (routine.status === 'skipped') {
                     skippedRoutines.push(routine);
+                } else if (isContinuousRoutine(routine)) {
+                    // 지속 업데이트 루틴은 항상 "남은 루틴"에 표시
+                    incompleteRoutines.push(routine);
                 } else if (isRoutineCompleted(routine)) {
                     completedRoutines.push(routine);
                 } else {
@@ -2522,10 +2724,16 @@
                 skippedList.appendChild(element);
             });
             
-            const allRoutinesCompleted = incompleteRoutines.length === 0 && sortedRoutines.length > 0;
+            // 모든 비지속 루틴이 완료되었는지 확인
+            const nonContinuousRoutines = sortedRoutines.filter(r => !isContinuousRoutine(r));
+            const nonContinuousCompleted = nonContinuousRoutines.filter(r => isRoutineCompleted(r) && r.status !== 'skipped');
+            const allNonContinuousCompleted = nonContinuousRoutines.length > 0 && 
+                                             nonContinuousCompleted.length === nonContinuousRoutines.length;
             
-            if (allRoutinesCompleted) {
+            if (allNonContinuousCompleted && incompleteRoutines.every(r => isContinuousRoutine(r))) {
                 emptyState.style.display = 'block';
+                emptyState.querySelector('.empty-state-title').textContent = '기본 루틴을 모두 완료했습니다!';
+                emptyState.querySelector('.empty-state-description').innerHTML = '지속 업데이트 루틴은 계속 진행할 수 있습니다.<br>오늘도 정말 수고하셨습니다!';
                 incompleteSection.style.display = 'block';
                 
                 setTimeout(() => {
@@ -2547,7 +2755,10 @@
             "✨ 훌륭해요! 꾸준한 노력이 큰 변화를 만들어냅니다!",
             "🌟 대단해요! 오늘도 한 걸음 더 나아가셨네요!",
             "🎊 멋져요! 작은 실천이 모여 큰 성취가 됩니다!",
-            "🏆 완벽해요! 꾸준함이 성공의 열쇠입니다!"
+            "🏆 완벽해요! 꾸준함이 성공의 열쇠입니다!",
+            "🎯 목표 달성! 정말 대단한 의지력이에요!",
+            "💪 계속 이런 식으로 해나가세요! 최고입니다!",
+            "🔥 열정적이네요! 이런 자세가 성공을 만듭니다!"
         ];
 
         // 랜덤 축하 메시지 표시
