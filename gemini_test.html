@@ -1308,12 +1308,11 @@
             border: 1px solid var(--gray-200);
         }
 
-        /* 독서 설정 모달 내의 시작/끝 페이지 입력 칸 폭 조절 */
-        #readingSetupModal .form-row .form-group {
-            /* flex-grow: 0 (확장하지 않음) */
-            /* flex-shrink: 1 (필요시 축소 가능) */
-            /* flex-basis: 120px (기본 너비 설정 - 이 값을 조절하여 폭 변경) */
-            flex: 0 1 100px; !important; /* 이 값을 120px로 줄여보세요. */
+        /* 독서 설정 모달 내의 시작/끝 페이지 입력 필드 자체의 폭 강제 조절 */
+        #readingSetupModal .form-row .form-group input[type="number"] {
+            width: 100px !important; /* 원하는 너비로 설정 (예: 100px) */
+            max-width: 100px !important; /* 혹시 모를 max-width 제한도 함께 */
+            box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 (권장) */
         }
 
         
