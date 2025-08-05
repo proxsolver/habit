@@ -1477,6 +1477,21 @@
             border-radius: 6px;
         }
 
+        /* 새 루틴 추가 모달 내의 form-row 안의 form-group 폭 조절 */
+        #addRoutineModal .form-row .form-group {
+            /* flex-grow: 1 (공간이 남으면 커짐), flex-shrink: 1 (공간이 부족하면 줄어듦), flex-basis: 48% (기본 너비) */
+            flex: 1 1 48% !important; 
+        }
+        
+        /* (선택 사항) input/select 요소가 부모 너비를 꽉 채우도록 보장 */
+        #addRoutineModal .form-row .form-group input,
+        #addRoutineModal .form-row .form-group select {
+            width: 100% !important; /* 부모 form-group의 너비를 꽉 채움 */
+            box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 (권장) */
+        }
+
+
+        
         /* 반응형 디자인 */
         @media (max-width: 480px) {
             .container {
