@@ -1398,6 +1398,9 @@
         .area-stat-item.intellectual { background: linear-gradient(145deg, #e8f5e9, #c8e6c9); border-color: #4caf50; }
         .area-stat-item.relational { background: linear-gradient(145deg, #fff3e0, #ffe0b2); border-color: #ff9800; }
         .area-stat-item.productivity { background: linear-gradient(145deg, #e3f2fd, #bbdefb); border-color: #2196f3; }
+        /* 추가된 커스텀 영역을 위한 기본 스타일 (필요시 색상 추가) */
+        .area-stat-item.customArea1 { background: linear-gradient(145deg, #ffe0e0, #ffc0cb); border-color: #ff69b4; } /* 핑크 계열 */
+        .area-stat-item.customArea2 { background: linear-gradient(145deg, #e0ffe0, #c0ffc0); border-color: #00a000; } /* 연두 계열 */
 
 
         .area-stat-item h4 {
@@ -1452,6 +1455,20 @@
             cursor: pointer;
         }
 
+        /* 새 루틴 추가 모달 내의 form-row 안의 form-group 폭 조절 */
+        #addRoutineModal .form-row .form-group {
+            /* flex-grow: 1 (공간이 남으면 커짐), flex-shrink: 1 (공간이 부족하면 줄어듦), flex-basis: 48% (기본 너비) */
+            flex: 1 1 48% !important; 
+        }
+
+        /* (선택 사항) input/select 요소가 부모 너비를 꽉 채우도록 보장 */
+        #addRoutineModal .form-row .form-group input,
+        #addRoutineModal .form-row .form-group select {
+            width: 100% !important; /* 부모 form-group의 너비를 꽉 채움 */
+            box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 (권장) */
+        }
+
+
         /* === 영역 관리 모달 (Manage Areas Modal) 스타일 === */
         .manage-areas-list .form-group {
             flex-direction: row;
@@ -1477,21 +1494,39 @@
             border-radius: 6px;
         }
 
-        /* 새 루틴 추가 모달 내의 form-row 안의 form-group 폭 조절 */
-        #addRoutineModal .form-row .form-group {
-            /* flex-grow: 1 (공간이 남으면 커짐), flex-shrink: 1 (공간이 부족하면 줄어듦), flex-basis: 48% (기본 너비) */
-            flex: 1 1 48% !important; 
+        .manage-areas-list .remove-area-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            margin-left: 0.5rem;
         }
-        
-        /* (선택 사항) input/select 요소가 부모 너비를 꽉 채우도록 보장 */
-        #addRoutineModal .form-row .form-group input,
-        #addRoutineModal .form-row .form-group select {
-            width: 100% !important; /* 부모 form-group의 너비를 꽉 채움 */
-            box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 (권장) */
+
+        .manage-areas-list .remove-area-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .add-area-button-container {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .add-area-button-container .btn {
+            background: var(--accent);
+        }
+        .add-area-button-container .btn:hover {
+            background: #0d926b;
         }
 
 
-        
         /* 반응형 디자인 */
         @media (max-width: 480px) {
             .container {
@@ -1941,10 +1976,13 @@
                 </div>
                 <div class="modal-body">
                     <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                        5대 영역의 이름을 변경할 수 있습니다.
+                        영역 이름을 변경하거나, 최대 5개까지 영역을 추가할 수 있습니다.
                     </p>
                     <div class="manage-areas-list" id="manageAreasList">
                         <!-- 영역 입력 필드가 여기에 동적으로 렌더링됩니다 -->
+                    </div>
+                    <div class="add-area-button-container">
+                        <button id="addAreaBtn" class="btn">➕ 영역 추가</button>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1977,20 +2015,19 @@
         const LOCAL_STORAGE_KEY_AREAS = 'familyRoutineTracker_areas';
         const LOCAL_STORAGE_KEY_STATS = 'familyRoutineTracker_stats';
 
-        // 기본 5대 영역 정의
+        // 기본 3대 영역 정의 (새로운 기본값)
         const DEFAULT_AREAS = [
             { id: 'physical', name: '신체' },
             { id: 'mental', name: '정신' },
-            { id: 'intellectual', name: '지적' },
-            { id: 'relational', name: '관계' },
-            { id: 'productivity', name: '생산성/업무' }
+            { id: 'intellectual', name: '지적' }
         ];
+        const MAX_AREAS = 5; // 최대 영역 개수
 
         // 초기 샘플 루틴 (최초 로드 시에만 사용)
         const INITIAL_SAMPLE_ROUTINES = [
             { id: 1, name: '운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 5, order: 0, active: true, areas: ['physical'], basePoints: 10 },
             { id: 2, name: '물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 3, status: null, streak: 3, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
-            { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical', 'productivity'], basePoints: 8 },
+            { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical', 'productivity'], basePoints: 8 }, // productivity는 기본 영역에 없으므로, 초기 데이터에서 제거하거나 기본 영역으로 추가해야 함
             { id: 4, name: '명상', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 10, order: 3, active: true, areas: ['mental'], basePoints: 10 },
             { id: 5, name: '걸음 수', time: 'evening', type: 'number', frequency: 'daily', value: 6500, status: null, streak: 2, unit: '걸음', order: 4, active: true, inputType: 'wheel', min: 1000, max: 30000, step: 500, continuous: true, dailyGoal: 10000, areas: ['physical'], basePoints: 15 },
             { id: 6, name: '취침 시간', time: 'evening', type: 'time', frequency: 'daily', value: null, status: null, streak: 7, order: 5, active: true, areas: ['physical', 'mental'], basePoints: 8 },
@@ -2004,15 +2041,34 @@
             if (storedRoutines) {
                 sampleRoutines = JSON.parse(storedRoutines);
             } else {
-                sampleRoutines = INITIAL_SAMPLE_ROUTINES; // 최초 로드 시 샘플 데이터 사용
+                // 초기 샘플 루틴의 areas 속성을 DEFAULT_AREAS에 맞게 조정
+                sampleRoutines = INITIAL_SAMPLE_ROUTINES.map(routine => {
+                    const filteredAreas = routine.areas.filter(areaId => DEFAULT_AREAS.some(da => da.id === areaId));
+                    if (filteredAreas.length === 0 && routine.areas.length > 0) {
+                        // 기존 루틴이 기본 영역에 없는 영역을 참조하는 경우, 첫 번째 기본 영역으로 대체
+                        routine.areas = [DEFAULT_AREAS[0].id];
+                    } else {
+                        routine.areas = filteredAreas;
+                    }
+                    return routine;
+                });
             }
 
             // 영역 데이터 로드
             const storedAreas = localStorage.getItem(LOCAL_STORAGE_KEY_AREAS);
             if (storedAreas) {
                 userAreas = JSON.parse(storedAreas);
+                // 기존 저장된 영역이 DEFAULT_AREAS보다 적을 경우, DEFAULT_AREAS로 채움
+                if (userAreas.length < DEFAULT_AREAS.length) {
+                    const existingAreaIds = new Set(userAreas.map(a => a.id));
+                    DEFAULT_AREAS.forEach(defaultArea => {
+                        if (!existingAreaIds.has(defaultArea.id)) {
+                            userAreas.push(defaultArea);
+                        }
+                    });
+                }
             } else {
-                userAreas = DEFAULT_AREAS; // 최초 로드 시 기본 영역 사용
+                userAreas = [...DEFAULT_AREAS]; // 최초 로드 시 기본 3대 영역 사용
             }
 
             // 통계 데이터 로드
@@ -2022,10 +2078,14 @@
             } else {
                 // 최초 로드 시 모든 영역 포인트 0으로 초기화
                 userStats = {};
-                userAreas.forEach(area => {
-                    userStats[area.id] = 0;
-                });
             }
+            // userAreas에 있는 영역만 userStats에 유지하고, 새 영역은 0으로 초기화
+            const newUserStats = {};
+            userAreas.forEach(area => {
+                newUserStats[area.id] = userStats[area.id] || 0;
+            });
+            userStats = newUserStats;
+
             debugLog('데이터 로드 완료:', { sampleRoutines, userAreas, userStats });
         }
 
@@ -2795,7 +2855,7 @@
                 
             } catch (error) {
                 console.error('시간 루틴 업데이트 실패:', error);
-                showNotification('저장에 실패했습니다. 다시 시도해주세요.', 'error');
+                showNotification('저장에 실패했습니다.', 'error');
             }
         }
 
@@ -3833,6 +3893,7 @@
         function showManageAreasModal() {
             const modal = document.getElementById('manageAreasModal');
             const manageAreasList = document.getElementById('manageAreasList');
+            const addAreaBtn = document.getElementById('addAreaBtn');
             manageAreasList.innerHTML = ''; // 기존 내용 초기화
 
             userAreas.forEach(area => {
@@ -3841,14 +3902,84 @@
                 areaGroup.innerHTML = `
                     <label for="area-name-${area.id}">${area.name}</label>
                     <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
+                    ${userAreas.length > DEFAULT_AREAS.length ? `<button class="remove-area-btn" data-area-id="${area.id}">−</button>` : ''}
                 `;
                 manageAreasList.appendChild(areaGroup);
+            });
+
+            // '영역 추가' 버튼 활성화/비활성화
+            if (userAreas.length < MAX_AREAS) {
+                addAreaBtn.style.display = 'block';
+                addAreaBtn.onclick = addAreaInput;
+            } else {
+                addAreaBtn.style.display = 'none';
+            }
+
+            // '영역 삭제' 버튼 이벤트 리스너 추가
+            document.querySelectorAll('.remove-area-btn').forEach(button => {
+                button.onclick = (e) => removeAreaInput(e.target.dataset.areaId);
             });
 
             modal.style.display = 'flex';
         }
 
+        function addAreaInput() {
+            if (userAreas.length >= MAX_AREAS) {
+                showNotification(`영역은 최대 ${MAX_AREAS}개까지 추가할 수 있습니다.`, 'warning');
+                return;
+            }
+
+            const newAreaId = `customArea${userAreas.length - DEFAULT_AREAS.length + 1}`; // 예: customArea1, customArea2
+            const newAreaName = `새 영역 ${userAreas.length + 1}`;
+            
+            const areaGroup = document.createElement('div');
+            areaGroup.className = 'form-group';
+            areaGroup.innerHTML = `
+                <label for="area-name-${newAreaId}">${newAreaName}</label>
+                <input type="text" id="area-name-${newAreaId}" value="${newAreaName}" data-area-id="${newAreaId}">
+                <button class="remove-area-btn" data-area-id="${newAreaId}">−</button>
+            `;
+            document.getElementById('manageAreasList').appendChild(areaGroup);
+            
+            // 새로 추가된 버튼에 이벤트 리스너 연결
+            areaGroup.querySelector('.remove-area-btn').onclick = (e) => removeAreaInput(e.target.dataset.areaId);
+
+            // userAreas 배열에 임시로 추가 (저장 버튼 누르기 전까지는 실제 저장 안 됨)
+            userAreas.push({ id: newAreaId, name: newAreaName });
+            
+            if (userAreas.length >= MAX_AREAS) {
+                document.getElementById('addAreaBtn').style.display = 'none';
+            }
+            showNotification('새 영역이 추가되었습니다. 이름을 변경하고 저장하세요.', 'info');
+        }
+
+        function removeAreaInput(areaIdToRemove) {
+            if (userAreas.length <= DEFAULT_AREAS.length) {
+                showNotification(`영역은 최소 ${DEFAULT_AREAS.length}개 이상이어야 합니다.`, 'error');
+                return;
+            }
+
+            // UI에서 제거
+            const inputElement = document.getElementById(`area-name-${areaIdToRemove}`);
+            if (inputElement && inputElement.parentNode) {
+                inputElement.parentNode.remove();
+            }
+
+            // userAreas 배열에서 제거 (저장 버튼 누르기 전까지는 실제 저장 안 됨)
+            userAreas = userAreas.filter(area => area.id !== areaIdToRemove);
+
+            // '영역 추가' 버튼 다시 활성화
+            if (userAreas.length < MAX_AREAS) {
+                document.getElementById('addAreaBtn').style.display = 'block';
+            }
+            showNotification('영역이 삭제되었습니다. 저장 버튼을 눌러 확정하세요.', 'warning');
+        }
+
+
         function hideManageAreasModal() {
+            // 모달 닫기 전에 userAreas를 로드된 상태로 되돌림 (취소 시)
+            // 실제 저장된 데이터는 handleManageAreasConfirm에서만 변경
+            loadData(); // 취소 시에는 로컬 스토리지에서 다시 로드하여 변경사항 취소
             document.getElementById('manageAreasModal').style.display = 'none';
         }
 
@@ -3869,11 +4000,17 @@
 
             if (!isValid) return;
 
+            // userAreas 업데이트
             userAreas = updatedAreas;
-            saveData(); // 영역 이름 변경 시 저장
 
-            // userStats에 새로운 영역이 추가되거나 기존 영역이 삭제된 경우 처리 (현재는 5개 고정)
-            // 만약 영역 개수도 변경 가능하게 한다면 더 복잡한 로직 필요
+            // userStats 업데이트: 기존 포인트는 유지하고, 새 영역은 0으로 초기화
+            const newUserStats = {};
+            userAreas.forEach(area => {
+                newUserStats[area.id] = userStats[area.id] || 0;
+            });
+            userStats = newUserStats;
+
+            saveData(); // 영역 이름 변경 시 저장
 
             hideManageAreasModal();
             showNotification('✅ 영역 이름이 저장되었습니다!');
@@ -3967,6 +4104,7 @@
             document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
             document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
             document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
+            document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput); // 영역 추가 버튼 이벤트 리스너
 
             // 웰컴 메시지 표시
             setTimeout(() => {
