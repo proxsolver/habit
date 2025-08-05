@@ -1303,6 +1303,15 @@
             border: 1px solid var(--gray-200);
         }
 
+        /* 독서 설정 모달 내의 시작/끝 페이지 입력 칸 폭 조절 */
+        #readingSetupModal .form-row .form-group {
+            /* flex-grow: 0 (확장하지 않음) */
+            /* flex-shrink: 1 (필요시 축소 가능) */
+            /* flex-basis: 120px (기본 너비 설정 - 이 값을 조절하여 폭 변경) */
+            flex: 0 1 120px; /* 이 값을 120px로 줄여보세요. */
+        }
+
+        
         .reading-summary h4 {
             margin: 0 0 0.75rem 0;
             color: var(--text-primary);
