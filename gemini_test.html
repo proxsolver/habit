@@ -747,9 +747,7 @@
             animation: fadeInUp 0.3s ease-out;
         }
 
-    /* === 모달 스타일 수정 === */
         .modal {
-            /* 기존 스타일 유지 */
             background: white;
             padding: 0;
             border-radius: var(--radius-lg);
@@ -758,15 +756,13 @@
             max-height: 80vh; /* 모달 전체의 최대 높이 */
             box-shadow: var(--shadow-xl);
             animation: slideInRight 0.3s ease-out;
-        
+
             /* 추가 및 수정: Flexbox를 사용하여 내부 콘텐츠 레이아웃 제어 */
             display: flex; /* Flex 컨테이너로 지정 */
             flex-direction: column; /* 자식 요소들을 세로로 정렬 */
             overflow: hidden; /* 모달 전체는 숨김으로 유지 (내부 바디에서 스크롤 처리) */
         }
 
-
-        /* 모달 헤더와 푸터는 변경 없음 (고정 높이 유지) */
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -821,6 +817,7 @@
             background: var(--gray-50);
             flex-shrink: 0; /* 푸터는 크기가 줄어들지 않도록 고정 */
         }
+
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
@@ -1229,13 +1226,8 @@
             gap: 1rem;
         }
 
-        /* 기존 코드에서 이 부분을 찾아서 수정 */
         .form-row .form-group {
-            display: flex; /* 이미 있다면 유지 */
-            flex-direction: column; /* 이미 있다면 유지 */
-            gap: 0.5rem; /* 이미 있다면 유지 */
             flex: 0 1 auto; /* flex: 1; 대신 이 값으로 변경 */
-            /* 이 외의 다른 스타일은 그대로 유지 */
         }
 
         .form-actions {
@@ -1308,14 +1300,6 @@
             border: 1px solid var(--gray-200);
         }
 
-        /* 독서 설정 모달 내의 시작/끝 페이지 입력 필드 자체의 폭 강제 조절 */
-        #readingSetupModal .form-row .form-group input[type="number"] {
-            width: 120px !important; /* 원하는 너비로 설정 (예: 100px) */
-            max-width: 120px !important; /* 혹시 모를 max-width 제한도 함께 */
-            box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 (권장) */
-        }
-
-        
         .reading-summary h4 {
             margin: 0 0 0.75rem 0;
             color: var(--text-primary);
@@ -1378,6 +1362,121 @@
             color: var(--primary);
         }
 
+        /* 독서 설정 모달 내의 시작/끝 페이지 입력 필드 자체의 폭 강제 조절 */
+        #readingSetupModal .form-row .form-group input[type="number"] {
+            width: 100px !important; /* 원하는 너비로 설정 (예: 100px) */
+            max-width: 100px !important; /* 혹시 모를 max-width 제한도 함께 */
+            box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 (권장) */
+        }
+
+        /* === 5대 영역 통계 섹션 스타일 === */
+        .area-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .area-stat-item {
+            background: linear-gradient(145deg, #f0f9ff, #e0f2fe);
+            padding: 1rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .area-stat-item:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .area-stat-item.physical { background: linear-gradient(145deg, #e0f2f7, #b2ebf2); border-color: #00bcd4; }
+        .area-stat-item.mental { background: linear-gradient(145deg, #f3e5f5, #e1bee7); border-color: #9c27b0; }
+        .area-stat-item.intellectual { background: linear-gradient(145deg, #e8f5e9, #c8e6c9); border-color: #4caf50; }
+        .area-stat-item.relational { background: linear-gradient(145deg, #fff3e0, #ffe0b2); border-color: #ff9800; }
+        .area-stat-item.productivity { background: linear-gradient(145deg, #e3f2fd, #bbdefb); border-color: #2196f3; }
+
+
+        .area-stat-item h4 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .area-stat-item .points {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* === 새 루틴 추가 모달 (Add Routine Modal) 스타일 === */
+        .area-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .area-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--gray-100);
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .area-checkbox-item:hover {
+            background: var(--gray-200);
+            border-color: var(--primary);
+        }
+
+        .area-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .area-checkbox-item label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        /* === 영역 관리 모달 (Manage Areas Modal) 스타일 === */
+        .manage-areas-list .form-group {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--gray-200);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            background: var(--gray-50);
+            margin-bottom: 0.75rem;
+        }
+
+        .manage-areas-list .form-group label {
+            flex-shrink: 0;
+            margin-right: 1rem;
+            font-size: 1rem;
+        }
+
+        .manage-areas-list .form-group input {
+            flex-grow: 1;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+        }
+
         /* 반응형 디자인 */
         @media (max-width: 480px) {
             .container {
@@ -1412,6 +1511,10 @@
 
             .routine-controls {
                 gap: 0.5rem;
+            }
+
+            .area-selection-grid {
+                grid-template-columns: 1fr; /* 모바일에서는 한 줄에 하나씩 */
             }
         }
     </style>
@@ -1498,6 +1601,18 @@
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
                 드래그하여 루틴 순서를 변경할 수 있습니다.
             </p>
+            <!-- 5대 영역 통계 섹션 (관리 페이지로 이동) -->
+            <div class="section-card" id="area-stats-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 1.5rem;">
+                <h2>
+                    <div class="section-header">
+                        <span>✨ 영역별 포인트</span>
+                    </div>
+                    <button class="edit-btn" onclick="showManageAreasModal()">영역 관리</button>
+                </h2>
+                <div class="area-stats-grid" id="areaStatsGrid">
+                    <!-- 영역별 통계 아이템들이 여기에 렌더링됩니다 -->
+                </div>
+            </div>
             <div class="manage-routine-list" id="manageRoutineList">
                 <!-- 관리용 루틴들이 여기에 렌더링됩니다 -->
             </div>
@@ -1514,8 +1629,8 @@
             <button onclick="showManagePage()" class="nav-btn manage">
                 ⚙️ 관리
             </button>
-            <button onclick="showReadingSetupModal()" class="nav-btn add">
-                📚 독서추가
+            <button onclick="showAddRoutineModal()" class="nav-btn add">
+                ➕ 루틴 추가
             </button>
         </div>
 
@@ -1586,11 +1701,11 @@
             </div>
         </div>
 
-        <!-- 독서 설정 모달 -->
+        <!-- 독서 설정 모달 (기존 독서 루틴 수정용) -->
         <div id="readingSetupModal" class="modal-overlay" style="display: none;">
             <div class="modal">
                 <div class="modal-header">
-                    <h3 id="readingSetupTitle">📚 독서 루틴 설정</h3>
+                    <h3 id="readingSetupTitle">📚 독서 루틴 수정</h3>
                     <button id="readingSetupClose" class="modal-close">×</button>
                 </div>
                 <div class="modal-body">
@@ -1623,7 +1738,7 @@
                         </div>
                         <div class="summary-item">
                             <span>예상 소요일:</span>
-                            <span id="estimatedDays">-</span>
+                            <span>-</span>
                         </div>
                         <div class="summary-item">
                             <span>완료 예정일:</span>
@@ -1685,132 +1800,151 @@
                 </div>
             </div>
         </div>
+
+        <!-- 새 루틴 추가 모달 (Add Routine Modal) -->
+        <div id="addRoutineModal" class="modal-overlay" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>➕ 새 루틴 추가</h3>
+                    <button id="addRoutineClose" class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="newRoutineName">루틴 이름</label>
+                        <input type="text" id="newRoutineName" placeholder="예: 아침 독서, 물 8잔 마시기" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newRoutineTime">시간대</label>
+                            <select id="newRoutineTime" required>
+                                <option value="morning">아침</option>
+                                <option value="afternoon">점심</option>
+                                <option value="evening">저녁</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="newRoutineType">루틴 타입</label>
+                            <select id="newRoutineType" required>
+                                <option value="yesno">체크 (예/아니오)</option>
+                                <option value="number">숫자 (수량/횟수)</option>
+                                <option value="time">시간 (시각)</option>
+                                <option value="reading">독서 (페이지)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="newRoutineFreq">빈도</label>
+                        <select id="newRoutineFreq" required>
+                            <option value="daily">매일</option>
+                            <option value="weekday">평일</option>
+                            <option value="weekend">주말</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>영역 선택 (다중 선택 가능)</label>
+                        <div class="area-selection-grid" id="newRoutineAreas">
+                            <!-- 영역 체크박스가 여기에 동적으로 렌더링됩니다 -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="newRoutinePoints">기본 포인트 (루틴 완료 시)</label>
+                        <input type="number" id="newRoutinePoints" min="1" value="10" required>
+                    </div>
+                    <!-- 숫자 타입 루틴 추가 옵션 -->
+                    <div id="newNumberOptions" class="hidden-options">
+                        <div class="form-group">
+                            <label for="newNumberUnit">단위</label>
+                            <input type="text" id="newNumberUnit" placeholder="예: 잔, 걸음, 개">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newNumberMin">최소값</label>
+                                <input type="number" id="newNumberMin" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="newNumberMax">최대값</label>
+                                <input type="number" id="newNumberMax" value="100">
+                            </div>
+                            <div class="form-group">
+                                <label for="newNumberStep">단계</label>
+                                <input type="number" id="newNumberStep" value="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="newNumberGoal">일일 목표 (선택 사항)</label>
+                            <input type="number" id="newNumberGoal" placeholder="예: 8 (잔), 10000 (걸음)">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="newNumberContinuous"> 지속 업데이트 가능 (매일 목표 달성 시까지)
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="newNumberInputType">입력 방식</label>
+                            <select id="newNumberInputType">
+                                <option value="stepper">스테퍼 (± 버튼)</option>
+                                <option value="wheel">휠 (스크롤)</option>
+                                <option value="simple">간단 숫자 입력</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- 독서 타입 루틴 추가 옵션 -->
+                    <div id="newReadingOptions" class="hidden-options">
+                        <div class="form-group">
+                            <label for="newBookTitle">책 제목</label>
+                            <input type="text" id="newBookTitle" placeholder="예: JavaScript 완벽 가이드">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newStartPage">시작 페이지</label>
+                                <input type="number" id="newStartPage" min="1" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="newEndPage">끝 페이지</label>
+                                <input type="number" id="newEndPage" min="1" placeholder="500">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="newDailyPages">일일 목표 (페이지)</label>
+                            <input type="number" id="newDailyPages" min="1" value="10">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="addRoutineCancel" class="btn btn-secondary">취소</button>
+                    <button id="addRoutineConfirm" class="btn">루틴 추가</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 영역 관리 모달 (Manage Areas Modal) -->
+        <div id="manageAreasModal" class="modal-overlay" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>📝 영역 관리</h3>
+                    <button id="manageAreasClose" class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                        5대 영역의 이름을 변경할 수 있습니다.
+                    </p>
+                    <div class="manage-areas-list" id="manageAreasList">
+                        <!-- 영역 입력 필드가 여기에 동적으로 렌더링됩니다 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="manageAreasCancel" class="btn btn-secondary">취소</button>
+                    <button id="manageAreasConfirm" class="btn">저장</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // 샘플 데이터
-        const sampleRoutines = [
-            {
-                id: 1,
-                name: '운동하기',
-                time: 'morning',
-                type: 'yesno',
-                frequency: 'daily',
-                value: null,
-                status: null,
-                streak: 5,
-                order: 0,
-                active: true
-            },
-            {
-                id: 2,
-                name: '물 마시기',
-                time: 'afternoon',
-                type: 'number',
-                frequency: 'daily',
-                value: 3, // 진행 중 상태를 보여주기 위해 3잔으로 설정
-                status: null,
-                streak: 3,
-                unit: '잔',
-                order: 1,
-                active: true,
-                inputType: 'stepper',
-                min: 1,
-                max: 20,
-                step: 1,
-                continuous: true, // 지속 업데이트 가능
-                dailyGoal: 8 // 일일 목표
-            },
-            {
-                id: 3,
-                name: '기상 시간',
-                time: 'morning',
-                type: 'time',
-                frequency: 'daily',
-                value: null,
-                status: null,
-                streak: 0,
-                order: 2,
-                active: true
-            },
-            {
-                id: 4,
-                name: '명상',
-                time: 'morning',
-                type: 'yesno',
-                frequency: 'daily',
-                value: null,
-                status: null,
-                streak: 10,
-                order: 3,
-                active: true
-            },
-            {
-                id: 5,
-                name: '걸음 수',
-                time: 'evening',
-                type: 'number',
-                frequency: 'daily',
-                value: 6500, // 진행 중 상태를 보여주기 위해 6500걸음으로 설정
-                status: null,
-                streak: 2,
-                unit: '걸음',
-                order: 4,
-                active: true,
-                inputType: 'wheel',
-                min: 1000,
-                max: 30000,
-                step: 500,
-                continuous: true, // 지속 업데이트 가능
-                dailyGoal: 10000 // 일일 목표
-            },
-            {
-                id: 6,
-                name: '취침 시간',
-                time: 'evening',
-                type: 'time',
-                frequency: 'daily',
-                value: null,
-                status: null,
-                streak: 7,
-                order: 5,
-                active: true
-            },
-            {
-                id: 7,
-                name: '일기쓰기',
-                time: 'evening',
-                type: 'yesno',
-                frequency: 'daily',
-                value: false,
-                status: 'skipped',
-                streak: 2,
-                order: 6,
-                active: false
-            },
-            {
-                id: 8,
-                name: 'JavaScript 완벽 가이드',
-                time: 'evening',
-                type: 'reading',
-                frequency: 'daily',
-                value: 120, // 현재 읽은 페이지
-                status: null,
-                streak: 12,
-                unit: '페이지',
-                order: 7,
-                active: true,
-                // 독서 전용 필드
-                bookTitle: 'JavaScript 완벽 가이드',
-                startPage: 1,
-                endPage: 500,
-                dailyPages: 10,
-                currentPage: 120, // 현재까지 읽은 페이지
-                startDate: '2024-01-01' // 독서 시작일
-            }
-        ];
-
         // 전역 변수
+        let sampleRoutines = []; // 루틴 데이터
+        let userAreas = [];      // 5대 영역 데이터
+        let userStats = {};      // 영역별 누적 포인트
         let sortableInstance = null;
         let orderChanged = false;
         let activeRoutineForModal = null;
@@ -1821,6 +1955,70 @@
             if (DEBUG_MODE) {
                 console.log(...args);
             }
+        }
+
+        // === 데이터 로드 및 저장 (localStorage) ===
+        const LOCAL_STORAGE_KEY_ROUTINES = 'familyRoutineTracker_routines';
+        const LOCAL_STORAGE_KEY_AREAS = 'familyRoutineTracker_areas';
+        const LOCAL_STORAGE_KEY_STATS = 'familyRoutineTracker_stats';
+
+        // 기본 5대 영역 정의
+        const DEFAULT_AREAS = [
+            { id: 'physical', name: '신체' },
+            { id: 'mental', name: '정신' },
+            { id: 'intellectual', name: '지적' },
+            { id: 'relational', name: '관계' },
+            { id: 'productivity', name: '생산성/업무' }
+        ];
+
+        // 초기 샘플 루틴 (최초 로드 시에만 사용)
+        const INITIAL_SAMPLE_ROUTINES = [
+            { id: 1, name: '운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 5, order: 0, active: true, areas: ['physical'], basePoints: 10 },
+            { id: 2, name: '물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 3, status: null, streak: 3, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
+            { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical', 'productivity'], basePoints: 8 },
+            { id: 4, name: '명상', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 10, order: 3, active: true, areas: ['mental'], basePoints: 10 },
+            { id: 5, name: '걸음 수', time: 'evening', type: 'number', frequency: 'daily', value: 6500, status: null, streak: 2, unit: '걸음', order: 4, active: true, inputType: 'wheel', min: 1000, max: 30000, step: 500, continuous: true, dailyGoal: 10000, areas: ['physical'], basePoints: 15 },
+            { id: 6, name: '취침 시간', time: 'evening', type: 'time', frequency: 'daily', value: null, status: null, streak: 7, order: 5, active: true, areas: ['physical', 'mental'], basePoints: 8 },
+            { id: 7, name: '일기쓰기', time: 'evening', type: 'yesno', frequency: 'daily', value: false, status: 'skipped', streak: 2, order: 6, active: false, areas: ['mental'], basePoints: 7 },
+            { id: 8, name: 'JavaScript 완벽 가이드', time: 'evening', type: 'reading', frequency: 'daily', value: 120, status: null, streak: 12, unit: '페이지', order: 7, active: true, bookTitle: 'JavaScript 완벽 가이드', startPage: 1, endPage: 500, dailyPages: 10, currentPage: 120, startDate: '2024-01-01', areas: ['intellectual'], basePoints: 20 }
+        ];
+
+        function loadData() {
+            // 루틴 데이터 로드
+            const storedRoutines = localStorage.getItem(LOCAL_STORAGE_KEY_ROUTINES);
+            if (storedRoutines) {
+                sampleRoutines = JSON.parse(storedRoutines);
+            } else {
+                sampleRoutines = INITIAL_SAMPLE_ROUTINES; // 최초 로드 시 샘플 데이터 사용
+            }
+
+            // 영역 데이터 로드
+            const storedAreas = localStorage.getItem(LOCAL_STORAGE_KEY_AREAS);
+            if (storedAreas) {
+                userAreas = JSON.parse(storedAreas);
+            } else {
+                userAreas = DEFAULT_AREAS; // 최초 로드 시 기본 영역 사용
+            }
+
+            // 통계 데이터 로드
+            const storedStats = localStorage.getItem(LOCAL_STORAGE_KEY_STATS);
+            if (storedStats) {
+                userStats = JSON.parse(storedStats);
+            } else {
+                // 최초 로드 시 모든 영역 포인트 0으로 초기화
+                userStats = {};
+                userAreas.forEach(area => {
+                    userStats[area.id] = 0;
+                });
+            }
+            debugLog('데이터 로드 완료:', { sampleRoutines, userAreas, userStats });
+        }
+
+        function saveData() {
+            localStorage.setItem(LOCAL_STORAGE_KEY_ROUTINES, JSON.stringify(sampleRoutines));
+            localStorage.setItem(LOCAL_STORAGE_KEY_AREAS, JSON.stringify(userAreas));
+            localStorage.setItem(LOCAL_STORAGE_KEY_STATS, JSON.stringify(userStats));
+            debugLog('데이터 저장 완료:', { sampleRoutines, userAreas, userStats });
         }
 
         // === 숫자 입력 모달 관련 함수들 ===
@@ -1851,8 +2049,8 @@
             }
             
             // 현재 값을 기준으로 시작 (지속 업데이트 루틴의 경우)
-            let currentValue = routine.continuous ? (routine.value || 0) + routine.step : (routine.value || routine.min || 1);
-            const minValue = routine.continuous ? (routine.value || 0) + routine.step : (routine.min || 1);
+            let currentValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.value || routine.min || 1);
+            const minValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.min || 1);
             const maxValue = routine.max || 100;
             const stepValue = routine.step || 1;
             
@@ -1968,6 +2166,14 @@
                         routine.goalAchievedToday = true; // 오늘 목표 달성 플래그
                     }
                     
+                    // 포인트 적립
+                    if (routine.areas && routine.basePoints) {
+                        routine.areas.forEach(areaId => {
+                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                        });
+                        saveData(); // 포인트 변경 시 데이터 저장
+                    }
+
                     debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value, '목표달성:', isGoalAchieved(routine));
                 }
                 
@@ -1995,7 +2201,7 @@
 
         // === 독서 모달 관련 함수들 ===
         
-        // 독서 설정 모달 표시
+        // 독서 설정 모달 표시 (기존 독서 루틴 수정용)
         function showReadingSetupModal(routine = null) {
             const modal = document.getElementById('readingSetupModal');
             const title = document.getElementById('readingSetupTitle');
@@ -2007,17 +2213,17 @@
             if (!modal) return;
             
             if (routine) {
+                // 기존 독서 루틴 수정
+                activeRoutineForModal = routine; // 수정할 루틴 설정
                 title.textContent = '📚 독서 루틴 수정';
                 bookTitleInput.value = routine.bookTitle || '';
                 startPageInput.value = routine.startPage || 1;
                 endPageInput.value = routine.endPage || '';
                 dailyPagesInput.value = routine.dailyPages || 10;
             } else {
-                title.textContent = '📚 새 독서 루틴 추가';
-                bookTitleInput.value = '';
-                startPageInput.value = 1;
-                endPageInput.value = '';
-                dailyPagesInput.value = 10;
+                // 새 독서 루틴 추가는 addRoutineModal에서 처리
+                console.warn('새 독서 루틴 추가는 showAddRoutineModal()을 사용해주세요.');
+                return;
             }
             
             // 실시간 요약 계산
@@ -2111,6 +2317,7 @@
             if (modal) {
                 modal.style.display = 'none';
             }
+            activeRoutineForModal = null; // 모달 닫을 때 activeRoutineForModal 초기화
         }
 
         // 독서 진행 모달 숨김
@@ -2122,8 +2329,10 @@
             activeRoutineForModal = null;
         }
 
-        // 독서 설정 확인 처리
+        // 독서 설정 확인 처리 (기존 독서 루틴 수정 완료 시)
         function handleReadingSetupConfirm() {
+            if (!activeRoutineForModal) return;
+
             const bookTitle = document.getElementById('bookTitle').value.trim();
             const startPage = parseInt(document.getElementById('startPage').value);
             const endPage = parseInt(document.getElementById('endPage').value);
@@ -2138,32 +2347,26 @@
                 showNotification('끝 페이지는 시작 페이지보다 커야 합니다.', 'error');
                 return;
             }
+
+            const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
+            if (routine) {
+                routine.bookTitle = bookTitle;
+                routine.name = bookTitle; // 루틴 이름도 책 제목으로 업데이트
+                routine.startPage = startPage;
+                routine.endPage = endPage;
+                routine.dailyPages = dailyPages;
+                // currentPage는 사용자가 직접 읽은 페이지를 나타내므로, 설정 수정 시에는 건드리지 않음
+                // 만약 시작 페이지가 변경되어 현재 페이지가 유효하지 않게 되면 조정 필요
+                if (routine.currentPage < startPage) {
+                    routine.currentPage = startPage - 1;
+                } else if (routine.currentPage > endPage) {
+                    routine.currentPage = endPage;
+                }
+            }
             
-            // 새 독서 루틴 생성 (실제 앱에서는 서버에 저장)
-            const newRoutine = {
-                id: Date.now(), // 임시 ID
-                name: bookTitle,
-                time: 'evening',
-                type: 'reading',
-                frequency: 'daily',
-                value: startPage,
-                status: null,
-                streak: 0,
-                unit: '페이지',
-                order: sampleRoutines.length,
-                active: true,
-                bookTitle: bookTitle,
-                startPage: startPage,
-                endPage: endPage,
-                dailyPages: dailyPages,
-                currentPage: startPage - 1, // 아직 읽지 않은 상태
-                startDate: new Date().toISOString().split('T')[0]
-            };
-            
-            sampleRoutines.push(newRoutine);
-            
+            saveData(); // 데이터 변경 시 저장
             hideReadingSetupModal();
-            showNotification(`📚 "${bookTitle}" 독서 루틴이 추가되었습니다!`);
+            showNotification(`📚 "${bookTitle}" 독서 루틴 설정이 수정되었습니다!`);
             renderRoutines();
         }
 
@@ -2184,18 +2387,30 @@
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
                     routine.currentPage = Math.min(routine.currentPage + readPages, routine.endPage);
-                    routine.value = routine.currentPage;
+                    routine.value = routine.currentPage; // value 속성도 현재 페이지로 업데이트
                     routine.status = null;
                     
-                    // 목표 달성 또는 완독 시 스트릭 증가
+                    // 목표 달성 또는 완독 시 스트릭 증가 및 포인트 적립
                     if (routine.currentPage >= routine.endPage) {
                         routine.streak = (routine.streak || 0) + 1;
                         showNotification(`🎉 "${routine.bookTitle}" 완독을 축하합니다! 🎊`);
                         showCompletionEffect();
                     } else {
-                        routine.streak = (routine.streak || 0) + 1;
+                        // 일일 목표 페이지를 읽었는지 확인하고 스트릭 증가
+                        const todayRange = getTodayReadingRange(routine);
+                        if (readPages >= todayRange.pages) {
+                            routine.streak = (routine.streak || 0) + 1;
+                        }
                         const progress = getReadingProgress(routine);
                         showNotification(`📖 ${readPages}페이지 읽기 완료! (${progress}%)`);
+                    }
+
+                    // 포인트 적립
+                    if (routine.areas && routine.basePoints) {
+                        routine.areas.forEach(areaId => {
+                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                        });
+                        saveData(); // 포인트 변경 시 데이터 저장
                     }
                     
                     debugLog('독서 루틴 업데이트됨:', routine.name, '현재페이지:', routine.currentPage);
@@ -2286,6 +2501,14 @@
                     if (isGoalAchieved(routine) && !routine.goalAchievedToday) {
                         routine.streak = (routine.streak || 0) + 1;
                         routine.goalAchievedToday = true; // 오늘 목표 달성 플래그
+                    }
+
+                    // 포인트 적립
+                    if (routine.areas && routine.basePoints) {
+                        routine.areas.forEach(areaId => {
+                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                        });
+                        saveData(); // 포인트 변경 시 데이터 저장
                     }
                     
                     debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value, '목표달성:', isGoalAchieved(routine));
@@ -2438,17 +2661,25 @@
             }
             
             try {
-                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
-                
-                hideNumberInputModal();
-                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''} 저장되었습니다!`);
-                
                 // 루틴 데이터 업데이트
                 const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
                 if (routine) {
                     routine.value = value;
                     routine.streak = (routine.streak || 0) + 1;
+
+                    // 포인트 적립
+                    if (routine.areas && routine.basePoints) {
+                        routine.areas.forEach(areaId => {
+                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                        });
+                        saveData(); // 포인트 변경 시 데이터 저장
+                    }
                 }
+
+                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
+                
+                hideNumberInputModal();
+                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''} 저장되었습니다!`);
                 
                 setTimeout(() => {
                     renderRoutines();
@@ -2524,6 +2755,14 @@
                     routine.value = value;
                     routine.status = null; // 완료 상태로 만들기 위해 skipped 상태 제거
                     routine.streak = (routine.streak || 0) + 1;
+
+                    // 포인트 적립
+                    if (routine.areas && routine.basePoints) {
+                        routine.areas.forEach(areaId => {
+                            userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                        });
+                        saveData(); // 포인트 변경 시 데이터 저장
+                    }
                     debugLog('루틴 업데이트됨:', routine.name, '값:', routine.value);
                 }
                 
@@ -2545,11 +2784,12 @@
             }
         }
 
-        // Firebase 업데이트 시뮬레이션 함수
+        // Firebase 업데이트 시뮬레이션 함수 (실제로는 Firebase API 호출)
         async function updateRoutineValue(routineId, value, type) {
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    debugLog(`Firebase 업데이트: 루틴 ${routineId}, 값: ${value}, 타입: ${type}`);
+                    debugLog(`Firebase 업데이트 시뮬레이션: 루틴 ${routineId}, 값: ${value}, 타입: ${type}`);
+                    saveData(); // 데이터 변경 시 저장
                     resolve({ success: true });
                 }, 300);
             });
@@ -2617,7 +2857,7 @@
                 const todayRange = getTodayReadingRange(routine);
                 
                 if (todayRange) {
-                    return `${todayRange.start}~${todayRange.end}p (${progress}%)`;
+                    return `${routine.currentPage}/${routine.endPage}p (${progress}%)`;
                 }
                 return `${routine.currentPage}/${routine.endPage}p (${progress}%)`;
             }
@@ -2876,6 +3116,14 @@
                             routine.value = true;
                             routine.streak = (routine.streak || 0) + 1;
                             
+                            // 포인트 적립
+                            if (routine.areas && routine.basePoints) {
+                                routine.areas.forEach(areaId => {
+                                    userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                                });
+                                saveData(); // 포인트 변경 시 데이터 저장
+                            }
+
                             showCompletionEffect();
                             setTimeout(() => {
                                 showCelebrationMessage();
@@ -2902,6 +3150,14 @@
                         
                         routine.streak = Math.max(0, (routine.streak || 0) - 1);
                         
+                        // 포인트 차감 (취소 시)
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = Math.max(0, (userStats[areaId] || 0) - routine.basePoints);
+                            });
+                            saveData(); // 포인트 변경 시 데이터 저장
+                        }
+
                         showNotification('루틴 완료가 취소되었습니다.', 'warning');
                         renderRoutines();
                     }
@@ -3014,6 +3270,7 @@
                                 style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 0.8rem;">
                             <option value="stepper" ${routine.inputType === 'stepper' ? 'selected' : ''}>스테퍼 (±)</option>
                             <option value="wheel" ${routine.inputType === 'wheel' ? 'selected' : ''}>휠 (스크롤)</option>
+                            <option value="simple" ${routine.inputType === 'simple' ? 'selected' : ''}>간단 숫자 입력</option>
                         </select>
                     </div>
                     ${continuousToggle}
@@ -3046,6 +3303,12 @@
                 `;
             }
             
+            // 영역 표시
+            const areaNames = routine.areas ? routine.areas.map(areaId => {
+                const area = userAreas.find(a => a.id === areaId);
+                return area ? area.name : areaId;
+            }).join(', ') : '';
+
             routineDiv.innerHTML = `
                 <div class="routine-info-wrapper">
                     <div class="drag-handle">≡</div>
@@ -3065,6 +3328,9 @@
                             <div class="frequency-badge">
                                 ${getFrequencyLabel(routine.frequency)}
                             </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.75rem;">
+                                ${areaNames ? `[${areaNames}]` : ''} ${routine.basePoints ? `+${routine.basePoints}P` : ''}
+                            </div>
                         </div>
                         ${additionalControls}
                     </div>
@@ -3083,6 +3349,7 @@
             const toggle = routineDiv.querySelector('input[type="checkbox"]');
             toggle.addEventListener('change', (e) => {
                 routine.active = e.target.checked;
+                saveData(); // 활성화 상태 변경 시 저장
                 debugLog(`루틴 ${routine.name} 활성화 상태: ${routine.active}`);
             });
             
@@ -3095,6 +3362,7 @@
                     const routine = sampleRoutines.find(r => r.id === routineId);
                     if (routine) {
                         routine.inputType = newInputType;
+                        saveData(); // 입력 방식 변경 시 저장
                         debugLog(`루틴 ${routine.name}의 입력 방식이 ${newInputType}로 변경됨`);
                         showNotification(`${routine.name}의 입력 방식이 ${newInputType === 'stepper' ? '스테퍼' : '휠'}로 변경되었습니다.`);
                     }
@@ -3110,8 +3378,23 @@
                     const routine = sampleRoutines.find(r => r.id === routineId);
                     if (routine && newGoal > 0) {
                         routine.dailyGoal = newGoal;
+                        saveData(); // 목표 변경 시 저장
                         debugLog(`루틴 ${routine.name}의 목표가 ${newGoal}로 변경됨`);
                         showNotification(`${routine.name}의 목표가 ${newGoal}${routine.unit || ''}로 변경되었습니다.`);
+                    }
+                });
+            }
+
+            const continuousToggle = routineDiv.querySelector('.continuous-toggle');
+            if (continuousToggle) {
+                continuousToggle.addEventListener('change', (e) => {
+                    const routineId = parseInt(e.target.dataset.routineId);
+                    const routine = sampleRoutines.find(r => r.id === routineId);
+                    if (routine) {
+                        routine.continuous = e.target.checked;
+                        saveData(); // 지속 업데이트 변경 시 저장
+                        showNotification(`${routine.name}의 지속 업데이트가 ${routine.continuous ? '활성화' : '비활성화'}되었습니다.`);
+                        renderRoutines(); // UI 갱신
                     }
                 });
             }
@@ -3195,15 +3478,11 @@
         function saveRoutineOrder() {
             if (!orderChanged) return;
             
-            debugLog('Firebase에 순서 저장 중...');
-            
-            const orderUpdates = sampleRoutines.map(routine => ({
-                id: routine.id,
-                order: routine.order
-            }));
-            
+            debugLog('Firebase에 순서 저장 중...'); // 실제 앱에서는 Firebase에 저장
+            saveData(); // localStorage에 저장
+
             setTimeout(() => {
-                debugLog('순서 저장 완료:', orderUpdates);
+                debugLog('순서 저장 완료:');
                 orderChanged = false;
                 hideSaveButton();
                 
@@ -3230,7 +3509,13 @@
         function editRoutine(routineId) {
             const routine = sampleRoutines.find(r => r.id === routineId);
             if (routine) {
-                alert(`루틴 편집: ${routine.name}\n(실제 앱에서는 편집 모달이 열립니다)`);
+                // 독서 루틴은 전용 수정 모달 사용
+                if (routine.type === 'reading') {
+                    showReadingSetupModal(routine);
+                } else {
+                    // 다른 루틴 타입은 일반 편집 모달 (추후 구현)
+                    alert(`루틴 편집: ${routine.name}\n(현재는 독서 루틴만 전용 수정 모달이 있습니다. 다른 루틴 편집 기능은 추후 구현 예정입니다.)`);
+                }
             }
         }
 
@@ -3332,7 +3617,7 @@
             
             // 모든 기본 루틴이 완료되었는지 확인
             const basicRoutinesCompleted = incompleteRoutines.length === 0 && 
-                                          inprogressRoutines.filter(r => !isContinuousRoutine(r)).length === 0;
+                                            inprogressRoutines.filter(r => !isContinuousRoutine(r)).length === 0;
             
             if (basicRoutinesCompleted && sortedRoutines.length > 0) {
                 emptyState.style.display = 'block';
@@ -3358,6 +3643,7 @@
             skippedSection.style.display = skippedRoutines.length > 0 ? 'block' : 'none';
             
             updateDailyProgress();
+            // renderAreaStats(); // 영역별 통계는 이제 관리 페이지에서만 렌더링
         }
 
         const celebrationMessages = [
@@ -3383,7 +3669,7 @@
             document.getElementById('manage-section').style.display = 'none';
             
             // 홈 페이지 섹션들 표시
-            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
+            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section']; // area-stats-section 제거
             homeElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) element.style.display = 'block';
@@ -3412,13 +3698,195 @@
             document.getElementById('manage-section').style.display = 'block';
             
             renderManagePage();
+            renderAreaStats(); // 관리 페이지로 이동 시 영역별 통계 렌더링
         }
 
-        // 페이지 로드 시 렌더링
-        document.addEventListener('DOMContentLoaded', () => {
-            // 초기 렌더링
-            renderRoutines();
+        // === 새 루틴 추가 모달 (Add Routine Modal) 관련 함수 ===
+        function showAddRoutineModal() {
+            const modal = document.getElementById('addRoutineModal');
+            const newRoutineName = document.getElementById('newRoutineName');
+            const newRoutineTime = document.getElementById('newRoutineTime');
+            const newRoutineType = document.getElementById('newRoutineType');
+            const newRoutineFreq = document.getElementById('newRoutineFreq');
+            const newRoutinePoints = document.getElementById('newRoutinePoints');
+            const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
+            const newNumberOptions = document.getElementById('newNumberOptions');
+            const newReadingOptions = document.getElementById('newReadingOptions');
+
+            // 폼 초기화
+            newRoutineName.value = '';
+            newRoutineTime.value = 'morning';
+            newRoutineType.value = 'yesno';
+            newRoutineFreq.value = 'daily';
+            newRoutinePoints.value = 10; // 기본 포인트 설정
+            newNumberOptions.style.display = 'none';
+            newReadingOptions.style.display = 'none';
+
+            // 영역 체크박스 동적 생성
+            newRoutineAreasContainer.innerHTML = '';
+            userAreas.forEach(area => {
+                const areaDiv = document.createElement('div');
+                areaDiv.className = 'area-checkbox-item';
+                areaDiv.innerHTML = `
+                    <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox">
+                    <label for="area-${area.id}">${area.name}</label>
+                `;
+                newRoutineAreasContainer.appendChild(areaDiv);
+            });
+
+            // 루틴 타입 변경 시 추가 옵션 표시/숨김
+            newRoutineType.onchange = () => {
+                newNumberOptions.style.display = 'none';
+                newReadingOptions.style.display = 'none';
+                if (newRoutineType.value === 'number') {
+                    newNumberOptions.style.display = 'block';
+                } else if (newRoutineType.value === 'reading') {
+                    newReadingOptions.style.display = 'block';
+                }
+            };
+
+            modal.style.display = 'flex';
+            newRoutineName.focus();
+        }
+
+        function hideAddRoutineModal() {
+            document.getElementById('addRoutineModal').style.display = 'none';
+        }
+
+        function handleAddRoutineConfirm() {
+            const newRoutineName = document.getElementById('newRoutineName').value.trim();
+            const newRoutineTime = document.getElementById('newRoutineTime').value;
+            const newRoutineType = document.getElementById('newRoutineType').value;
+            const newRoutineFreq = document.getElementById('newRoutineFreq').value;
+            const newRoutinePoints = parseInt(document.getElementById('newRoutinePoints').value);
             
+            const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked'))
+                                       .map(cb => cb.value);
+
+            if (!newRoutineName || !newRoutinePoints || newRoutinePoints <= 0 || selectedAreas.length === 0) {
+                showNotification('루틴 이름, 포인트, 그리고 최소 하나 이상의 영역을 선택해주세요.', 'error');
+                return;
+            }
+
+            let newRoutine = {
+                id: Date.now(),
+                name: newRoutineName,
+                time: newRoutineTime,
+                type: newRoutineType,
+                frequency: newRoutineFreq,
+                value: null,
+                status: null,
+                streak: 0,
+                order: sampleRoutines.length,
+                active: true,
+                areas: selectedAreas,
+                basePoints: newRoutinePoints
+            };
+
+            // 타입별 추가 데이터 처리
+            if (newRoutineType === 'number') {
+                newRoutine.unit = document.getElementById('newNumberUnit').value.trim() || null;
+                newRoutine.min = parseInt(document.getElementById('newNumberMin').value) || 1;
+                newRoutine.max = parseInt(document.getElementById('newNumberMax').value) || 100;
+                newRoutine.step = parseInt(document.getElementById('newNumberStep').value) || 1;
+                newRoutine.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
+                newRoutine.continuous = document.getElementById('newNumberContinuous').checked;
+                newRoutine.inputType = document.getElementById('newNumberInputType').value;
+                if(newRoutine.continuous) newRoutine.value = 0; // 지속 루틴은 0부터 시작
+            } else if (newRoutineType === 'reading') {
+                newRoutine.bookTitle = document.getElementById('newBookTitle').value.trim();
+                newRoutine.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
+                newRoutine.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
+                newRoutine.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
+                newRoutine.currentPage = newRoutine.startPage - 1; // 아직 읽지 않은 상태
+                newRoutine.startDate = new Date().toISOString().split('T')[0];
+                newRoutine.unit = '페이지'; // 독서 루틴의 단위는 페이지로 고정
+                if (!newRoutine.bookTitle || newRoutine.startPage >= newRoutine.endPage) {
+                    showNotification('독서 루틴 정보를 정확히 입력해주세요.', 'error');
+                    return;
+                }
+            }
+
+            sampleRoutines.push(newRoutine);
+            saveData(); // 새 루틴 추가 시 저장
+            hideAddRoutineModal();
+            showNotification(`➕ "${newRoutineName}" 루틴이 추가되었습니다!`);
+            renderRoutines();
+        }
+
+        // === 영역 관리 모달 (Manage Areas Modal) 관련 함수 ===
+        function showManageAreasModal() {
+            const modal = document.getElementById('manageAreasModal');
+            const manageAreasList = document.getElementById('manageAreasList');
+            manageAreasList.innerHTML = ''; // 기존 내용 초기화
+
+            userAreas.forEach(area => {
+                const areaGroup = document.createElement('div');
+                areaGroup.className = 'form-group';
+                areaGroup.innerHTML = `
+                    <label for="area-name-${area.id}">${area.name}</label>
+                    <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
+                `;
+                manageAreasList.appendChild(areaGroup);
+            });
+
+            modal.style.display = 'flex';
+        }
+
+        function hideManageAreasModal() {
+            document.getElementById('manageAreasModal').style.display = 'none';
+        }
+
+        function handleManageAreasConfirm() {
+            const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
+            const updatedAreas = [];
+            let isValid = true;
+
+            areaInputs.forEach(input => {
+                const areaId = input.dataset.areaId;
+                const newName = input.value.trim();
+                if (!newName) {
+                    showNotification('영역 이름은 비워둘 수 없습니다.', 'error');
+                    isValid = false;
+                }
+                updatedAreas.push({ id: areaId, name: newName });
+            });
+
+            if (!isValid) return;
+
+            userAreas = updatedAreas;
+            saveData(); // 영역 이름 변경 시 저장
+
+            // userStats에 새로운 영역이 추가되거나 기존 영역이 삭제된 경우 처리 (현재는 5개 고정)
+            // 만약 영역 개수도 변경 가능하게 한다면 더 복잡한 로직 필요
+
+            hideManageAreasModal();
+            showNotification('✅ 영역 이름이 저장되었습니다!');
+            renderRoutines(); // UI 갱신 (영역 이름이 루틴 표시에도 반영될 수 있으므로)
+        }
+
+        // === 영역별 통계 렌더링 함수 ===
+        function renderAreaStats() {
+            const areaStatsGrid = document.getElementById('areaStatsGrid');
+            areaStatsGrid.innerHTML = ''; // 기존 내용 초기화
+
+            userAreas.forEach(area => {
+                const points = userStats[area.id] || 0;
+                const statItem = document.createElement('div');
+                statItem.className = `area-stat-item ${area.id}`; // 영역 ID를 클래스로 추가하여 색상 적용
+                statItem.innerHTML = `
+                    <h4>${area.name}</h4>
+                    <div class="points">${points} P</div>
+                `;
+                areaStatsGrid.appendChild(statItem);
+            });
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData(); // 데이터 로드
+            showHomePage(); // 초기 화면을 홈으로 설정 (영역별 통계는 숨김)
+
             // 저장 버튼 이벤트 리스너
             const saveBtn = document.getElementById('saveOrderBtn');
             if (saveBtn) {
@@ -3426,120 +3894,31 @@
             }
             
             // === 숫자 입력 모달 이벤트 리스너 ===
-            const numberConfirmBtn = document.getElementById('numberConfirmBtn');
-            const numberModalClose = document.getElementById('numberModalClose');
-            const numberModalCancel = document.getElementById('numberModalCancel');
-            const numberInputModal = document.getElementById('numberInputModal');
-            
-            if (numberConfirmBtn) {
-                numberConfirmBtn.addEventListener('click', handleNumberInputConfirm);
-            }
-            if (numberModalClose) {
-                numberModalClose.addEventListener('click', hideNumberInputModal);
-            }
-            if (numberModalCancel) {
-                numberModalCancel.addEventListener('click', hideNumberInputModal);
-            }
-            
-            // 모달 외부 클릭 시 닫기
-            if (numberInputModal) {
-                numberInputModal.addEventListener('click', (e) => {
-                    if (e.target === numberInputModal) {
-                        hideNumberInputModal();
-                    }
-                });
-            }
-            
-            // Enter 키로 확인
-            const numberInput = document.getElementById('numberInput');
-            if (numberInput) {
-                numberInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        handleNumberInputConfirm();
-                    }
-                });
-            }
+            document.getElementById('numberConfirmBtn')?.addEventListener('click', handleNumberInputConfirm);
+            document.getElementById('numberModalClose')?.addEventListener('click', hideNumberInputModal);
+            document.getElementById('numberModalCancel')?.addEventListener('click', hideNumberInputModal);
+            document.getElementById('numberInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideNumberInputModal(); });
+            document.getElementById('numberInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleNumberInputConfirm(); });
             
             // === 시간 입력 모달 이벤트 리스너 ===
-            const timeConfirmBtn = document.getElementById('timeConfirmBtn');
-            const timeModalClose = document.getElementById('timeModalClose');
-            const timeModalCancel = document.getElementById('timeModalCancel');
-            const timeInputModal = document.getElementById('timeInputModal');
-            
-            if (timeConfirmBtn) {
-                timeConfirmBtn.addEventListener('click', handleTimeInputConfirm);
-            }
-            if (timeModalClose) {
-                timeModalClose.addEventListener('click', hideTimeInputModal);
-            }
-            if (timeModalCancel) {
-                timeModalCancel.addEventListener('click', hideTimeInputModal);
-            }
-            
-            // 모달 외부 클릭 시 닫기
-            if (timeInputModal) {
-                timeInputModal.addEventListener('click', (e) => {
-                    if (e.target === timeInputModal) {
-                        hideTimeInputModal();
-                    }
-                });
-            }
-            
-            // Enter 키로 확인
-            const timeInput = document.getElementById('timeInput');
-            if (timeInput) {
-                timeInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        handleTimeInputConfirm();
-                    }
-                });
-            }
+            document.getElementById('timeConfirmBtn')?.addEventListener('click', handleTimeInputConfirm);
+            document.getElementById('timeModalClose')?.addEventListener('click', hideTimeInputModal);
+            document.getElementById('timeModalCancel')?.addEventListener('click', hideTimeInputModal);
+            document.getElementById('timeInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideTimeInputModal(); });
+            document.getElementById('timeInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTimeInputConfirm(); });
 
             // === 스테퍼 모달 이벤트 리스너 ===
-            const stepperModalClose = document.getElementById('stepperModalClose');
-            const stepperModalCancel = document.getElementById('stepperModalCancel');
-            const stepperInputModal = document.getElementById('stepperInputModal');
+            document.getElementById('stepperModalClose')?.addEventListener('click', hideStepperModal);
+            document.getElementById('stepperModalCancel')?.addEventListener('click', hideStepperModal);
+            document.getElementById('stepperInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideStepperModal(); });
             
-            if (stepperModalClose) {
-                stepperModalClose.addEventListener('click', hideStepperModal);
-            }
-            if (stepperModalCancel) {
-                stepperModalCancel.addEventListener('click', hideStepperModal);
-            }
-            
-            // 모달 외부 클릭 시 닫기
-            if (stepperInputModal) {
-                stepperInputModal.addEventListener('click', (e) => {
-                    if (e.target === stepperInputModal) {
-                        hideStepperModal();
-                    }
-                });
-            }
-
             // === 휠 모달 이벤트 리스너 ===
-            const wheelModalClose = document.getElementById('wheelModalClose');
-            const wheelModalCancel = document.getElementById('wheelModalCancel');
-            const wheelInputModal = document.getElementById('wheelInputModal');
+            document.getElementById('wheelModalClose')?.addEventListener('click', hideWheelModal);
+            document.getElementById('wheelModalCancel')?.addEventListener('click', hideWheelModal);
+            document.getElementById('wheelInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideWheelModal(); });
             
-            if (wheelModalClose) {
-                wheelModalClose.addEventListener('click', hideWheelModal);
-            }
-            if (wheelModalCancel) {
-                wheelModalCancel.addEventListener('click', hideWheelModal);
-            }
-            
-            // 모달 외부 클릭 시 닫기
-            if (wheelInputModal) {
-                wheelInputModal.addEventListener('click', (e) => {
-                    if (e.target === wheelInputModal) {
-                        hideWheelModal();
-                    }
-                });
-            }
-            
-            // === 키보드 단축키 ===
+            // === 키보드 단축키 (ESC로 모달 닫기) ===
             document.addEventListener('keydown', (e) => {
-                // ESC 키로 모달 닫기
                 if (e.key === 'Escape') {
                     hideNumberInputModal();
                     hideTimeInputModal();
@@ -3547,54 +3926,33 @@
                     hideWheelModal();
                     hideReadingSetupModal();
                     hideReadingProgressModal();
+                    hideAddRoutineModal(); // 새 루틴 추가 모달
+                    hideManageAreasModal(); // 영역 관리 모달
                 }
             });
 
-            // === 독서 모달 이벤트 리스너 ===
-            const readingSetupConfirm = document.getElementById('readingSetupConfirm');
-            const readingSetupClose = document.getElementById('readingSetupClose');
-            const readingSetupCancel = document.getElementById('readingSetupCancel');
-            const readingSetupModal = document.getElementById('readingSetupModal');
+            // === 독서 설정 모달 이벤트 리스너 (기존 독서 루틴 수정용) ===
+            document.getElementById('readingSetupConfirm')?.addEventListener('click', handleReadingSetupConfirm);
+            document.getElementById('readingSetupClose')?.addEventListener('click', hideReadingSetupModal);
+            document.getElementById('readingSetupCancel')?.addEventListener('click', hideReadingSetupModal);
+            document.getElementById('readingSetupModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingSetupModal(); });
 
-            if (readingSetupConfirm) {
-                readingSetupConfirm.addEventListener('click', handleReadingSetupConfirm);
-            }
-            if (readingSetupClose) {
-                readingSetupClose.addEventListener('click', hideReadingSetupModal);
-            }
-            if (readingSetupCancel) {
-                readingSetupCancel.addEventListener('click', hideReadingSetupModal);
-            }
-            if (readingSetupModal) {
-                readingSetupModal.addEventListener('click', (e) => {
-                    if (e.target === readingSetupModal) {
-                        hideReadingSetupModal();
-                    }
-                });
-            }
-
-            const readingProgressConfirm = document.getElementById('readingProgressConfirm');
-            const readingProgressClose = document.getElementById('readingProgressClose');
-            const readingProgressCancel = document.getElementById('readingProgressCancel');
-            const readingProgressModal = document.getElementById('readingProgressModal');
-
-            if (readingProgressConfirm) {
-                readingProgressConfirm.addEventListener('click', handleReadingProgressConfirm);
-            }
-            if (readingProgressClose) {
-                readingProgressClose.addEventListener('click', hideReadingProgressModal);
-            }
-            if (readingProgressCancel) {
-                readingProgressCancel.addEventListener('click', hideReadingProgressModal);
-            }
-            if (readingProgressModal) {
-                readingProgressModal.addEventListener('click', (e) => {
-                    if (e.target === readingProgressModal) {
-                        hideReadingProgressModal();
-                    }
-                });
-            }
+            // === 독서 진행 모달 이벤트 리스너 ===
+            document.getElementById('readingProgressConfirm')?.addEventListener('click', handleReadingProgressConfirm);
+            document.getElementById('readingProgressClose')?.addEventListener('click', hideReadingProgressModal);
+            document.getElementById('readingProgressCancel')?.addEventListener('click', hideReadingProgressModal);
+            document.getElementById('readingProgressModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingProgressModal(); });
             
+            // === 새 루틴 추가 모달 이벤트 리스너 ===
+            document.getElementById('addRoutineClose')?.addEventListener('click', hideAddRoutineModal);
+            document.getElementById('addRoutineCancel')?.addEventListener('click', hideAddRoutineModal);
+            document.getElementById('addRoutineConfirm')?.addEventListener('click', handleAddRoutineConfirm);
+
+            // === 영역 관리 모달 이벤트 리스너 ===
+            document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
+            document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
+            document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
+
             // 웰컴 메시지 표시
             setTimeout(() => {
                 showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
@@ -3605,7 +3963,9 @@
         window.showHomePage = showHomePage;
         window.showManagePage = showManagePage;
         window.editRoutine = editRoutine;
-        window.showReadingSetupModal = showReadingSetupModal;
+        window.showReadingSetupModal = showReadingSetupModal; // 기존 독서 루틴 수정용
+        window.showAddRoutineModal = showAddRoutineModal; // 새 루틴 추가용
+        window.showManageAreasModal = showManageAreasModal; // 영역 관리용
     </script>
 </body>
 </html>
