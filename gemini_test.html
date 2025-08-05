@@ -1229,8 +1229,13 @@
             gap: 1rem;
         }
 
+        /* 기존 코드에서 이 부분을 찾아서 수정 */
         .form-row .form-group {
-            flex: 1;
+            display: flex; /* 이미 있다면 유지 */
+            flex-direction: column; /* 이미 있다면 유지 */
+            gap: 0.5rem; /* 이미 있다면 유지 */
+            flex: 0 1 auto; /* flex: 1; 대신 이 값으로 변경 */
+            /* 이 외의 다른 스타일은 그대로 유지 */
         }
 
         .form-actions {
