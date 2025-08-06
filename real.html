@@ -4091,7 +4091,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return area ? area.name : areaId;
             }).join(', ') : '';
 
-            routineDiv.innerHTML = `
+            routineDiv.innerHTML = 
                 <div class="routine-info-wrapper">
                     <div class="drag-handle">≡</div>
                     <div class="routine-main-info">
@@ -4126,7 +4126,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         편집
                     </button>
                 </div>
-            `;
+            ;
             
 
             const toggle = routineDiv.querySelector('input[type="checkbox"]');
