@@ -2578,6 +2578,62 @@ async function uploadInitialSampleData(uploadRoutines = true, uploadAreas = true
 }
 
 
+
+// 초기 샘플 데이터를 Firestore에 업로드하는 함수
+async function uploadInitialSampleData(uploadRoutines = true, uploadAreas = true, uploadStats = true) {
+    debugLog("초기 샘플 데이터 업로드 시작...");
+    const batch = db.batch();
+    
+    // 1. routines 컬렉션에 초기 루틴 데이터 업로드
+    if (uploadRoutines) {
+        const routinesCollectionRef = db.collection('routines');
+        const initialRoutines = INITIAL_SAMPLE_ROUTINES.map(r => ({ ...r, lastUpdatedDate: todayDateString }));
+        initialRoutines.forEach(routine => {
+            const docRef = routinesCollectionRef.doc();
+            routine.id = docRef.id;
+            batch.set(docRef, routine);
+        });
+        sampleRoutines = initialRoutines;
+        debugLog("초기 루틴 데이터 업로드 준비 완료.");
+    }
+
+    // 2. areas 컬렉션에 초기 영역 데이터 업로드
+    if (uploadAreas) {
+        const areasCollectionRef = db.collection('areas');
+        DEFAULT_AREAS.forEach(area => {
+            const docRef = areasCollectionRef.doc(area.id);
+            batch.set(docRef, area);
+        });
+        userAreas = DEFAULT_AREAS;
+        debugLog("초기 영역 데이터 업로드 준비 완료.");
+    }
+
+    // 3. stats 컬렉션에 초기 통계 데이터 업로드
+    if (uploadStats) {
+        const statsRef = db.collection('stats').doc('userStats');
+        const initialStats = {};
+        DEFAULT_AREAS.forEach(area => {
+            initialStats[area.id] = 0;
+        });
+        batch.set(statsRef, initialStats);
+        userStats = initialStats;
+        debugLog("초기 통계 데이터 업로드 준비 완료.");
+    }
+
+    // 4. meta 컬렉션에 마지막 리셋 날짜 업로드
+    const metaRef = db.collection('meta').doc('lastReset');
+    batch.set(metaRef, { date: todayDateString });
+    debugLog("마지막 리셋 날짜 업로드 준비 완료.");
+
+    try {
+        await batch.commit();
+        debugLog("Firebase에 모든 초기 데이터 배치 업로드 완료.");
+    } catch (error) {
+        console.error("초기 데이터 배치 업로드 실패: ", error);
+    }
+}
+
+
 // 초기 샘플 루틴을 Firestore에 업로드하는 함수
 async function uploadInitialSampleData() {
     debugLog("초기 샘플 데이터 업로드 시작...");
