@@ -2319,10 +2319,11 @@
             }
         }
 
- // 전역 변수 선언만 남겨둡니다. (값 할당은 Firebase에서 가져옵니다)
-let sampleRoutines = []; 
-let userAreas = []; 
-let userStats = {}; 
+// 전역 변수 선언만 남겨둡니다. (값 할당은 Firebase에서 가져옵니다)
+// 기존에 전역으로 선언된 변수가 있다고 가정하고, 재할당만 수행합니다.
+sampleRoutines = []; 
+userAreas = []; 
+userStats = {};
 
 // 기존 localStorage 관련 상수들은 필요 없으므로 삭제합니다.
 
