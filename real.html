@@ -3859,290 +3859,41 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             routineDiv.innerHTML = `
-                ${actionButton}
-                <div class="routine-content">
-                    <div class="routine-name">
-                        ${routine.name}
-                        <span class="type-icon">${getTypeIcon(routine.type)}</span>
-                    </div>
-                    <div class="routine-details">
-                        <div class="time-period">
-                            ${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}
-                        </div>
-                        <div class="frequency-badge">
-                            ${getFrequencyLabel(routine.frequency)}
-                        </div>
-                    </div>
+    <div class="routine-info-wrapper">
+        <div class="drag-handle">≡</div>
+        <div class="routine-main-info">
+            <div class="routine-main-name">
+                ${getTimeEmoji(routine.time)} ${routine.name}
+                <span class="type-icon">${getTypeIcon(routine.type)}</span>
+                ${routine.continuous ? '<span style="margin-left: 0.5rem; font-size: 0.8rem;">🔄</span>' : ''}
+            </div>
+            <div class="routine-main-details">
+                <div class="time-period">
+                    ${getTimeLabel(routine.time)}
                 </div>
-                <div class="routine-value">
-                    ${getRoutineValueDisplay(routine)}
+                <div class="routine-type-badge">
+                    ${getTypeLabel(routine.type)}
                 </div>
-                ${streakBadge}
-                ${continuousBadge}
-            `;
-            
-            const actionElement = routineDiv.querySelector('.routine-checkbox, .routine-action-button');
-            if (actionElement) {
-                actionElement.addEventListener('click', () => {
-                    debugLog(`Routine clicked: ${routine.name} (ID: ${routine.id}, Type: ${routine.type})`);
-                    
-                    // If continuous or reading, or if not completed/skipped, open modal or toggle
-                    if (isContinuous || isReadingRoutine(routine) || (!isCompleted && !isSkipped)) {
-                        if (routine.type === 'yesno') {
-                            routine.value = true;
-                            routine.status = null; // Clear skipped status if any
-
-                            // Point and streak logic: only if daily goal is met for the first time today
-                            if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
-                                routine.streak = (routine.streak || 0) + 1;
-                                if (routine.areas && routine.basePoints) {
-                                    routine.areas.forEach(areaId => {
-                                        userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                                    });
-                                }
-                                routine.pointsGivenToday = true; // Mark points as given for today
-                            }
-                            routine.lastUpdatedDate = todayDateString; // Update last updated date
-                            updateAreasInFirebase(); // Save data after changes
-
-                            showCompletionEffect();
-                            setTimeout(() => {
-                                showCelebrationMessage();
-                                renderRoutines();
-                            }, 300);
-                            
-                        } else if (routine.type === 'reading') {
-                            showReadingProgressModal(routine);
-                            
-                        } else if (routine.type === 'number') {
-                            showNumberInputModal(routine);
-                            
-                        } else if (routine.type === 'time') {
-                            showTimeInputModal(routine);
-                        }
-                        
-                    } else if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
-                        // For non-continuous, non-reading routines: allow undo completion
-                        if (routine.type === 'yesno') {
-                            routine.value = false;
-                        } else {
-                            routine.value = null;
-                        }
-                        routine.status = null; // Clear skipped status
-
-                        // Point and streak reversal (only if points were given today)
-                        if (routine.pointsGivenToday) { // Check if points were given today
-                            routine.streak = Math.max(0, (routine.streak || 0) - 1);
-                            if (routine.areas && routine.basePoints) {
-                                routine.areas.forEach(areaId => {
-                                    userStats[areaId] = Math.max(0, (userStats[areaId] || 0) - routine.basePoints);
-                                });
-                            }
-                            routine.pointsGivenToday = false; // Reset points given flag
-                        }
-                        routine.lastUpdatedDate = todayDateString; // Update last updated date
-                        updateAreasInFirebase(); // Save data after changes
-
-                        showNotification('루틴 완료가 취소되었습니다.', 'warning');
-                        renderRoutines();
-                    }
-                });
-            }
-            
-            return routineDiv;
-        }
-
-        // Show completion effect
-        function showCompletionEffect() {
-            const effect = document.createElement('div');
-            effect.className = 'completion-effect';
-            
-            for (let i = 0; i < 12; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                piece.style.left = `${Math.random() * 100 - 50}px`;
-                piece.style.top = `${Math.random() * 100 - 50}px`;
-                piece.style.animationDelay = `${Math.random() * 0.5}s`;
-                effect.appendChild(piece);
-            }
-            
-            document.body.appendChild(effect);
-            
-            setTimeout(() => {
-                effect.remove();
-            }, 1000);
-        }
-
-        // Calculate and update daily progress
-        function updateDailyProgress() {
-            const activeRoutines = sampleRoutines.filter(r => r.active);
-            const totalRoutines = activeRoutines.length;
-            
-            // For continuous/reading routines, completion is based on daily goal achievement
-            // For others, it's simple completion
-            const completedRoutines = activeRoutines.filter(r => {
-                return isRoutineCompleted(r);
-            }).length;
-            
-            const inprogressRoutines = activeRoutines.filter(r => isRoutineInProgress(r)).length;
-            const skippedRoutines = activeRoutines.filter(r => r.status === 'skipped').length;
-            const incompleteRoutines = totalRoutines - completedRoutines - inprogressRoutines - skippedRoutines;
-            
-            const progressPercentage = totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0;
-            
-            const progressEl = document.getElementById('dailyProgressPercentage');
-            const progressBarEl = document.getElementById('dailyProgressBar');
-            const incompleteCountEl = document.getElementById('incompleteCount');
-            const inprogressCountEl = document.getElementById('inprogressCount');
-            const completedCountEl = document.getElementById('completedCount');
-            const skippedCountEl = document.getElementById('skippedCount');
-            
-            if (progressEl) progressEl.textContent = `${progressPercentage}%`;
-            if (progressBarEl) {
-                progressBarEl.style.setProperty('--progress-width', `${progressPercentage}%`);
-                progressBarEl.style.width = `${progressPercentage}%`;
-            }
-            if (incompleteCountEl) incompleteCountEl.textContent = incompleteRoutines;
-            if (inprogressCountEl) inprogressCountEl.textContent = inprogressRoutines;
-            if (completedCountEl) completedCountEl.textContent = completedRoutines;
-            if (skippedCountEl) skippedCountEl.textContent = skippedRoutines;
-            
-            return {
-                total: totalRoutines,
-                completed: completedRoutines,
-                inprogress: inprogressRoutines,
-                skipped: skippedRoutines,
-                incomplete: incompleteRoutines,
-                percentage: progressPercentage
-            };
-        }
-
-        // === Manage Page Routine Item Creation Function ===
-        function createManageRoutineElement(routine) {
-            const routineDiv = document.createElement('div');
-            routineDiv.className = 'manage-routine-item';
-            routineDiv.dataset.id = routine.id;
-            routineDiv.dataset.order = routine.order;
-            
-            let additionalControls = '';
-            if (routine.type === 'number') {
-                const continuousToggle = `
-                    <div style="margin-top: 0.5rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-secondary);">
-                            <input type="checkbox" class="continuous-toggle" data-routine-id="${routine.id}" ${routine.continuous ? 'checked' : ''}> 
-                            지속 업데이트 가능
-                        </label>
-                    </div>
-                `;
-                
-                const goalInput = routine.dailyGoal ? `
-                    <div style="margin-top: 0.5rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-secondary);">목표:</label>
-                        <input type="number" class="goal-input" data-routine-id="${routine.id}" 
-                               value="${routine.dailyGoal}" min="1" max="1000"
-                               style="margin-left: 0.5rem; width: 60px; padding: 0.25rem; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 0.8rem;">
-                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${routine.unit || ''}</span>
-                    </div>
-                ` : '';
-                
-                additionalControls = `
-                    <div style="margin-top: 0.5rem;">
-                        <label style="font-size: 0.75rem; color: var(--text-secondary);">입력 방식:</label>
-                        <select class="input-type-select" data-routine-id="${routine.id}" 
-                                style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 0.8rem;">
-                            <option value="stepper" ${routine.inputType === 'stepper' ? 'selected' : ''}>스테퍼 (±)</option>
-                            <option value="wheel" ${routine.inputType === 'wheel' ? 'selected' : ''}>휠 (스크롤)</option>
-                            <option value="simple" ${routine.inputType === 'simple' ? 'selected' : ''}>간단 숫자 입력</option>
-                        </select>
-                    </div>
-                    ${continuousToggle}
-                    ${goalInput}
-                `;
-            } else if (routine.type === 'reading') {
-                const progress = getReadingProgress(routine);
-                const todayRange = getTodayReadingRange(routine);
-                const estimatedCompletion = getEstimatedCompletionDate(routine);
-                
-                additionalControls = `
-                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: var(--gray-50); border-radius: 4px; border: 1px solid var(--gray-200);">
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
-                            📚 ${routine.bookTitle}
-                        </div>
-                        <div style="font-size: 0.7rem; color: var(--text-secondary);">
-                            진행률: ${routine.currentPage}/${routine.endPage}p (${progress}%)
-                        </div>
-                        <div style="font-size: 0.7rem; color: var(--text-secondary);">
-                            오늘: ${todayRange.start}~${todayRange.end}p (${todayRange.pages}p)
-                        </div>
-                        <div style="font-size: 0.7rem; color: var(--text-secondary);">
-                            완료 예정: ${estimatedCompletion}
-                        </div>
-                        <button id="editReadingSetupBtn-${routine.id}" 
-                                style="margin-top: 0.25rem; padding: 0.125rem 0.5rem; background: var(--primary); color: white; border: none; border-radius: 3px; font-size: 0.7rem; cursor: pointer;">
-                            설정 수정
-                        </button>
-                    </div>
-                `;
-            }
-            
-            // Display areas
-            const areaNames = routine.areas ? routine.areas.map(areaId => {
-                const area = userAreas.find(a => a.id === areaId);
-                return area ? area.name : areaId;
-            }).join(', ') : '';
-
-            routineDiv.innerHTML = 
-                <div class="routine-info-wrapper">
-                    <div class="drag-handle">≡</div>
-                    <div class="routine-main-info">
-                        <div class="routine-main-name">
-                            ${getTimeEmoji(routine.time)} ${routine.name}
-                            <span class="type-icon">${getTypeIcon(routine.type)}</span>
-                            ${routine.continuous ? '<span style="margin-left: 0.5rem; font-size: 0.8rem;">🔄</span>' : ''}
-                        </div>
-                        <div class="routine-main-details">
-                            <div class="time-period">
-                                ${getTimeLabel(routine.time)}
-                            </div>
-                            <div class="routine-type-badge">
-                                ${getTypeLabel(routine.type)}
-                            </div>
-                            <div class="frequency-badge">
-                                ${getFrequencyLabel(routine.frequency)}
-                            </div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.75rem;">
-                                ${areaNames ? `[${areaNames}]` : ''} ${routine.basePoints ? `+${routine.basePoints}P` : ''}
-                            </div>
-                        </div>
-                        ${additionalControls}
-                    </div>
+                <div class="frequency-badge">
+                    ${getFrequencyLabel(routine.frequency)}
                 </div>
-                <div class="routine-controls">
-                    <label class="routine-toggle">
-                        <input type="checkbox" ${routine.active ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <button class="edit-btn" id="editRoutineBtn-${routine.id}">
-                        편집
-                    </button>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.75rem;">
+                    ${areaNames ? `[${areaNames}]` : ''} ${routine.basePoints ? `+${routine.basePoints}P` : ''}
                 </div>
-            ;
-            
-
-            const toggle = routineDiv.querySelector('input[type="checkbox"]');
-toggle.addEventListener('change', async (e) => {
-    const newActiveStatus = e.target.checked;
-    try {
-        await updateRoutineInFirebase(routine.id, { active: newActiveStatus });
-        debugLog(`Routine ${routine.name} active status: ${newActiveStatus}`);
-        showNotification(`${routine.name} 루틴이 ${newActiveStatus ? '활성화' : '비활성화'}되었습니다.`);
-    } catch (error) {
-        console.error('Failed to update routine active status:', error);
-        // 실패시 토글 상태를 되돌림
-        e.target.checked = routine.active;
-        showNotification('루틴 상태 변경에 실패했습니다.', 'error');
-    }
-});
+            </div>
+            ${additionalControls}
+        </div>
+    </div>
+    <div class="routine-controls">
+        <label class="routine-toggle">
+            <input type="checkbox" ${routine.active ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+        </label>
+        <button class="edit-btn" id="editRoutineBtn-${routine.id}">
+            편집
+        </button>
+    </div>
+`;
 
 
             // 8월 6일 수정 
