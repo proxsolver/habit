@@ -3788,7 +3788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        // Create improved routine element
+        // Create improved routine element 8월 6일 업데이트
         function createImprovedRoutineElement(routine) {
     const isCompleted = isRoutineCompleted(routine);
     const isSkipped = routine.status === 'skipped';
@@ -4619,95 +4619,96 @@ function showRoutineModal(routine = null) {
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            loadAllDataFromFirebase();
-            showHomePage(); // Set initial screen to Home (area stats hidden)
+    loadAllDataFromFirebase();
+    showHomePage(); // Set initial screen to Home (area stats hidden)
 
-            // Save button event listener
-            const saveBtn = document.getElementById('saveOrderBtn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', saveRoutineOrder);
-            }
-            
-            // 대시보드 탭 버튼 이벤트 리스너 설정
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    openDashboardTab(button.dataset.tab);
-                });
-            });
-
-            // 네비게이션 버튼 이벤트 리스너 설정
-            document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
-            document.getElementById('navManageBtn')?.addEventListener('click', showManagePage);
-            document.getElementById('navAddRoutineBtn')?.addEventListener('click', showAddRoutineModal);
-            document.getElementById('navStatsBtn')?.addEventListener('click', showDashboardPage);
-            
-            // === Number Input Modal Event Listeners ===
-            document.getElementById('numberConfirmBtn')?.addEventListener('click', handleNumberInputConfirm);
-            document.getElementById('numberModalClose')?.addEventListener('click', hideNumberInputModal);
-            document.getElementById('numberModalCancel')?.addEventListener('click', hideNumberInputModal);
-            document.getElementById('numberInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideNumberInputModal(); });
-            document.getElementById('numberInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleNumberInputConfirm(); });
-            
-            // === Time Input Modal Event Listeners ===
-            document.getElementById('timeConfirmBtn')?.addEventListener('click', handleTimeInputConfirm);
-            document.getElementById('timeModalClose')?.addEventListener('click', hideTimeInputModal);
-            document.getElementById('timeModalCancel')?.addEventListener('click', hideTimeInputModal);
-            document.getElementById('timeInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideTimeInputModal(); });
-            document.getElementById('timeInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTimeInputConfirm(); });
-
-            // === Stepper Modal Event Listeners ===
-            document.getElementById('stepperModalClose')?.addEventListener('click', hideStepperModal);
-            document.getElementById('stepperModalCancel')?.addEventListener('click', hideStepperModal);
-            document.getElementById('stepperInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideStepperModal(); });
-            
-            // === Wheel Modal Event Listeners ===
-            document.getElementById('wheelModalClose')?.addEventListener('click', hideWheelModal);
-            document.getElementById('wheelModalCancel')?.addEventListener('click', hideWheelModal);
-            document.getElementById('wheelInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideWheelModal(); });
-            
-            // === Keyboard Shortcuts (ESC to close modals) ===
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    hideNumberInputModal();
-                    hideTimeInputModal();
-                    hideStepperModal();
-                    hideWheelModal();
-                    hideReadingSetupModal();
-                    hideReadingProgressModal();
-                    hideAddRoutineModal(); // New routine add modal
-                    hideManageAreasModal(); // Area management modal
-                }
-            });
-
-            // === Reading Setup Modal Event Listeners (for editing existing reading routines) ===
-            document.getElementById('readingSetupConfirm')?.addEventListener('click', handleReadingSetupConfirm);
-            document.getElementById('readingSetupClose')?.addEventListener('click', hideReadingSetupModal);
-            document.getElementById('readingSetupCancel')?.addEventListener('click', hideReadingSetupModal);
-            document.getElementById('readingSetupModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingSetupModal(); });
-
-            // === Reading Progress Modal Event Listeners ===
-            document.getElementById('readingProgressConfirm')?.addEventListener('click', handleReadingProgressConfirm);
-            document.getElementById('readingProgressClose')?.addEventListener('click', hideReadingProgressModal);
-            document.getElementById('readingProgressCancel')?.addEventListener('click', hideReadingProgressModal);
-            document.getElementById('readingProgressModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingProgressModal(); });
-            
-            // === New Routine Add Modal Event Listeners ===
-            document.getElementById('addRoutineClose')?.addEventListener('click', hideAddRoutineModal);
-            document.getElementById('addRoutineCancel')?.addEventListener('click', hideAddRoutineModal);
-            document.getElementById('addRoutineConfirm')?.addEventListener('click', handleAddRoutineConfirm);
-
-            // === Area Management Modal Event Listeners ===
-            document.getElementById('manageAreasBtn')?.addEventListener('click', showManageAreasModal); // '영역 관리' 버튼에 이벤트 리스너 추가
-            document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
-            document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
-            document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
-            document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput); // Area add button event listener
-
-            // Display welcome message
-            setTimeout(() => {
-                showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
-            }, 1000);
+    // Save button event listener
+    const saveBtn = document.getElementById('saveOrderBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveRoutineOrder);
+    }
+    
+    // 대시보드 탭 버튼 이벤트 리스너 설정
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', () => {
+            openDashboardTab(button.dataset.tab);
         });
-    </script>
+    });
+
+    // 네비게이션 버튼 이벤트 리스너 설정
+    document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
+    document.getElementById('navManageBtn')?.addEventListener('click', showManagePage);
+    document.getElementById('navAddRoutineBtn')?.addEventListener('click', showAddRoutineModal);
+    document.getElementById('navStatsBtn')?.addEventListener('click', showDashboardPage);
+    
+    // === Number Input Modal Event Listeners ===
+    document.getElementById('numberConfirmBtn')?.addEventListener('click', handleNumberInputConfirm);
+    document.getElementById('numberModalClose')?.addEventListener('click', hideNumberInputModal);
+    document.getElementById('numberModalCancel')?.addEventListener('click', hideNumberInputModal);
+    document.getElementById('numberInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideNumberInputModal(); });
+    document.getElementById('numberInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleNumberInputConfirm(); });
+    
+    // === Time Input Modal Event Listeners ===
+    document.getElementById('timeConfirmBtn')?.addEventListener('click', handleTimeInputConfirm);
+    document.getElementById('timeModalClose')?.addEventListener('click', hideTimeInputModal);
+    document.getElementById('timeModalCancel')?.addEventListener('click', hideTimeInputModal);
+    document.getElementById('timeInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideTimeInputModal(); });
+    document.getElementById('timeInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTimeInputConfirm(); });
+
+    // === Stepper Modal Event Listeners ===
+    document.getElementById('stepperModalClose')?.addEventListener('click', hideStepperModal);
+    document.getElementById('stepperModalCancel')?.addEventListener('click', hideStepperModal);
+    document.getElementById('stepperInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideStepperModal(); });
+    
+    // === Wheel Modal Event Listeners ===
+    document.getElementById('wheelModalClose')?.addEventListener('click', hideWheelModal);
+    document.getElementById('wheelModalCancel')?.addEventListener('click', hideWheelModal);
+    document.getElementById('wheelInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideWheelModal(); });
+    
+    // === Keyboard Shortcuts (ESC to close modals) ===
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideNumberInputModal();
+            hideTimeInputModal();
+            hideStepperModal();
+            hideWheelModal();
+            hideReadingSetupModal();
+            hideReadingProgressModal();
+            hideAddRoutineModal();
+            hideManageAreasModal();
+        }
+    });
+
+    // === Reading Setup Modal Event Listeners ===
+    document.getElementById('readingSetupConfirm')?.addEventListener('click', handleReadingSetupConfirm);
+    document.getElementById('readingSetupClose')?.addEventListener('click', hideReadingSetupModal);
+    document.getElementById('readingSetupCancel')?.addEventListener('click', hideReadingSetupModal);
+    document.getElementById('readingSetupModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingSetupModal(); });
+
+    // === Reading Progress Modal Event Listeners ===
+    document.getElementById('readingProgressConfirm')?.addEventListener('click', handleReadingProgressConfirm);
+    document.getElementById('readingProgressClose')?.addEventListener('click', hideReadingProgressModal);
+    document.getElementById('readingProgressCancel')?.addEventListener('click', hideReadingProgressModal);
+    document.getElementById('readingProgressModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingProgressModal(); });
+    
+    // === New Routine Add Modal Event Listeners ===
+    document.getElementById('addRoutineClose')?.addEventListener('click', hideAddRoutineModal);
+    document.getElementById('addRoutineCancel')?.addEventListener('click', hideAddRoutineModal);
+    document.getElementById('addRoutineConfirm')?.addEventListener('click', handleAddRoutineConfirm);
+
+    // === Area Management Modal Event Listeners ===
+    document.getElementById('manageAreasBtn')?.addEventListener('click', showManageAreasModal);
+    document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
+    document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
+    document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
+    document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput);
+
+    // Display welcome message
+    setTimeout(() => {
+        showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
+    }, 1000);
+}); // Closing brace and parentheses added here
+
+</script>
 </body>
 </html>
