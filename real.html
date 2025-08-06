@@ -4128,58 +4128,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             
-            const toggle = routineDiv.querySelector('input[type="checkbox"]');
-            toggle.addEventListener('change', (e) => {
-                routine.active = e.target.checked;
-                updateAreasInFirebase(); // Save active status change
-                debugLog(`Routine ${routine.name} active status: ${routine.active}`);
-            });
-            
-            const inputTypeSelect = routineDiv.querySelector('.input-type-select');
-            if (inputTypeSelect) {
-                inputTypeSelect.addEventListener('change', (e) => {
-                    const routineId = parseInt(e.target.dataset.routineId);
-                    const newInputType = e.target.value;
-                    
-                    const routine = sampleRoutines.find(r => r.id === routineId);
-                    if (routine) {
-                        routine.inputType = newInputType;
-                        updateAreasInFirebase(); // Save input type change
-                        debugLog(`Routine ${routine.name}'s input type changed to ${newInputType}`);
-                        showNotification(`${routine.name}의 입력 방식이 ${newInputType === 'stepper' ? '스테퍼' : '휠'}로 변경되었습니다.`);
-                    }
-                });
-            }
-            
-            const goalInput = routineDiv.querySelector('.goal-input');
-            if (goalInput) {
-                goalInput.addEventListener('change', (e) => {
-                    const routineId = parseInt(e.target.dataset.routineId);
-                    const newGoal = parseInt(e.target.value);
-                    
-                    const routine = sampleRoutines.find(r => r.id === routineId);
-                    if (routine && newGoal > 0) {
-                        routine.dailyGoal = newGoal;
-                        updateAreasInFirebase(); // Save goal change
-                        debugLog(`Routine ${routine.name}'s goal changed to ${newGoal}`);
-                        showNotification(`${routine.name}의 목표가 ${newGoal}${routine.unit || ''}로 변경되었습니다.`);
-                    }
-                });
-            }
 
-            const continuousToggle = routineDiv.querySelector('.continuous-toggle');
-            if (continuousToggle) {
-                continuousToggle.addEventListener('change', (e) => {
-                    const routineId = parseInt(e.target.dataset.routineId);
-                    const routine = sampleRoutines.find(r => r.id === routineId);
-                    if (routine) {
-                        routine.continuous = e.target.checked;
-                        updateAreasInFirebase(); // Save continuous status change
-                        showNotification(`${routine.name}의 지속 업데이트가 ${routine.continuous ? '활성화' : '비활성화'}되었습니다.`);
-                        renderRoutines(); // Update UI
-                    }
-                });
+            const toggle = routineDiv.querySelector('input[type="checkbox"]');
+toggle.addEventListener('change', async (e) => {
+    const newActiveStatus = e.target.checked;
+    try {
+        await updateRoutineInFirebase(routine.id, { active: newActiveStatus });
+        debugLog(`Routine ${routine.name} active status: ${newActiveStatus}`);
+        showNotification(`${routine.name} 루틴이 ${newActiveStatus ? '활성화' : '비활성화'}되었습니다.`);
+    } catch (error) {
+        console.error('Failed to update routine active status:', error);
+        // 실패시 토글 상태를 되돌림
+        e.target.checked = routine.active;
+        showNotification('루틴 상태 변경에 실패했습니다.', 'error');
+    }
+});
+
+
+            // 8월 6일 수정 
+const inputTypeSelect = routineDiv.querySelector('.input-type-select');
+if (inputTypeSelect) {
+    inputTypeSelect.addEventListener('change', async (e) => {
+        const routineId = parseInt(e.target.dataset.routineId);
+        const newInputType = e.target.value;
+        
+        try {
+            await updateRoutineInFirebase(routineId, { inputType: newInputType });
+            debugLog(`Routine input type changed to ${newInputType}`);
+            showNotification(`입력 방식이 변경되었습니다.`);
+        } catch (error) {
+            console.error('Failed to update input type:', error);
+            showNotification('입력 방식 변경에 실패했습니다.', 'error');
+        }
+    });
+}
+
+
+ // 8월 6일 수정 - 목표 변경 기능 추가           
+
+const goalInput = routineDiv.querySelector('.goal-input');
+if (goalInput) {
+    goalInput.addEventListener('change', async (e) => {
+        const routineId = parseInt(e.target.dataset.routineId);
+        const newGoal = parseInt(e.target.value);
+        
+        if (newGoal > 0) {
+            try {
+                await updateRoutineInFirebase(routineId, { dailyGoal: newGoal });
+                debugLog(`Routine goal changed to ${newGoal}`);
+                showNotification(`목표가 변경되었습니다.`);
+            } catch (error) {
+                console.error('Failed to update goal:', error);
+                showNotification('목표 변경에 실패했습니다.', 'error');
             }
+        }
+    });
+}
+
+// 8월 6일 수정 - 지속 업데이트 토글 기능 추가
+
+const continuousToggle = routineDiv.querySelector('.continuous-toggle');
+if (continuousToggle) {
+    continuousToggle.addEventListener('change', async (e) => {
+        const routineId = parseInt(e.target.dataset.routineId);
+        const newContinuousStatus = e.target.checked;
+        
+        try {
+            await updateRoutineInFirebase(routineId, { continuous: newContinuousStatus });
+            showNotification(`지속 업데이트가 ${newContinuousStatus ? '활성화' : '비활성화'}되었습니다.`);
+            renderRoutines(); // Update UI
+        } catch (error) {
+            console.error('Failed to update continuous status:', error);
+            e.target.checked = !newContinuousStatus; // 실패시 되돌림
+            showNotification('지속 업데이트 설정 변경에 실패했습니다.', 'error');
+        }
+    });
+}
+
 
             // Edit button for all routines (generic edit modal or specific for reading)
             const editBtn = routineDiv.querySelector(`#editRoutineBtn-${routine.id}`);
