@@ -2669,52 +2669,97 @@
             activeRoutineForModal = null;
         }
     
-        async function handleStepperConfirm(value) {
-            if (!activeRoutineForModal) return;
-            
-            const currentRoutine = activeRoutineForModal;
-            
-            try {
-                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
-                if (routine) {
-                    const updatedFields = {
-                        value: value,
-                        status: null,
-                        lastUpdatedDate: todayDateString
-                    };
-                    
-                    let pointsAwarded = false;
-                    
-                    if (isGoalAchieved({ ...routine, value: value }) && !routine.pointsGivenToday) {
-                        updatedFields.streak = (routine.streak || 0) + 1;
-                        if (routine.areas && routine.basePoints) {
-                            const newStats = { ...userStats };
-                            routine.areas.forEach(areaId => {
-                                newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
-                            });
-                            await updateUserStatsInFirebase(newStats);
-                        }
-                        updatedFields.pointsGivenToday = true;
-                        pointsAwarded = true;
-                    }
-                    
-                    await updateRoutineInFirebase(currentRoutine.id, updatedFields);
-                    
-                    hideStepperModal();
-                    
-                    const goalStatus = isGoalAchieved({ ...routine, value: value }) ? ' 🎯 목표 달성!' : '';
-                    showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
-                    
-                    if (pointsAwarded) {
-                        showCompletionEffect();
-                        setTimeout(showCelebrationMessage, 300);
-                    }
+      // 1. Stepper(± 버튼) 루틴 완료 처리 함수
+async function handleStepperConfirm(value) {
+    if (!activeRoutineForModal) return;
+    const currentRoutine = activeRoutineForModal;
+    try {
+        const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
+        if (routine) {
+            const updatedFields = {
+                value: value,
+                status: null,
+                lastUpdatedDate: todayDateString
+            };
+            let pointsAwarded = false;
+            const tempRoutineForCheck = { ...routine, value: value };
+
+            if (isGoalAchieved(tempRoutineForCheck) && !routine.pointsGivenToday) {
+                updatedFields.streak = (routine.streak || 0) + 1;
+                if (routine.areas && routine.basePoints) {
+                    const newStats = { ...userStats };
+                    routine.areas.forEach(areaId => {
+                        newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                    });
+                    await updateUserStatsInFirebase(newStats);
                 }
-            } catch (error) {
-                console.error('Failed to update stepper routine:', error);
-                showNotification('저장에 실패했습니다.', 'error');
+                updatedFields.pointsGivenToday = true;
+                updatedFields.dailyGoalMetToday = true; // 수정된 부분
+                pointsAwarded = true;
+            }
+            await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+            hideStepperModal();
+            const goalStatus = isGoalAchieved(tempRoutineForCheck) ? ' 🎯 목표 달성!' : '';
+            showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
+            if (pointsAwarded) {
+                showCompletionEffect();
+                setTimeout(showCelebrationMessage, 300);
             }
         }
+    } catch (error) {
+        console.error('Failed to update stepper routine:', error);
+        showNotification('저장에 실패했습니다.', 'error');
+    }
+}
+
+// 2. Wheel(스크롤) 및 Simple(직접입력) 루틴 완료 처리 통합 함수
+async function handleNumberConfirm(value, inputType) {
+    if (!activeRoutineForModal) return;
+    const currentRoutine = activeRoutineForModal;
+    try {
+        const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
+        if (routine) {
+            const finalValue = routine.continuous ? Math.max(routine.value || 0, value) : value;
+            const updatedFields = {
+                value: finalValue,
+                status: null,
+                lastUpdatedDate: todayDateString
+            };
+            let pointsAwarded = false;
+            const tempRoutineForCheck = { ...routine, value: finalValue };
+
+            if (isGoalAchieved(tempRoutineForCheck) && !routine.pointsGivenToday) {
+                updatedFields.streak = (routine.streak || 0) + 1;
+                if (routine.areas && routine.basePoints) {
+                    const newStats = { ...userStats };
+                    routine.areas.forEach(areaId => {
+                        newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                    });
+                    await updateUserStatsInFirebase(newStats);
+                }
+                updatedFields.pointsGivenToday = true;
+                updatedFields.dailyGoalMetToday = true; // 수정된 부분
+                pointsAwarded = true;
+            }
+
+            await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+            if (inputType === 'simple') hideNumberInputModal();
+            if (inputType === 'wheel') hideWheelModal();
+            const goalStatus = isGoalAchieved(tempRoutineForCheck) ? ' 🎯 목표 달성!' : '';
+            showNotification(`✅ ${currentRoutine.name}: ${finalValue}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
+            if (pointsAwarded) {
+                showCompletionEffect();
+                setTimeout(showCelebrationMessage, 300);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to update number routine:', error);
+        showNotification('저장에 실패했습니다.', 'error');
+    }
+}
+
+
+
         
         // === Reading Modal Functions ===
         function showReadingSetupModal(routine = null) {
