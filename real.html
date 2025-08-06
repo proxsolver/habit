@@ -2135,7 +2135,7 @@
         // Global variable for today's date string (YYYY-MM-DD)
         const today = new Date();
         const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
+    
         // 대시보드 데이터를 시뮬레이션합니다. (추후 실제 앱 데이터로 연동됩니다)
         // 독서 데이터 (임시 데이터)
         let monthlyGoalBooks = 3; // 월간 목표 완독 권수 (사용자 설정 가능하도록 확장)
@@ -2154,7 +2154,7 @@
             { title: '돈의 심리학', author: '모건 하우젤', completedDate: '2025-04-22', cover: 'https://placehold.co/100x150/60a5fa/ffffff?text=Money' },
             { title: '클린 코드', author: '로버트 C. 마틴', completedDate: '2025-03-01', cover: 'https://placehold.co/100x150/fbbf24/ffffff?text=Clean+Code' },
         ];
-
+    
         // --- 독서 습관 대시보드 함수 ---
         function updateReadingDashboard() {
             // 1. 월간 독서 목표 달성 현황 업데이트 (현재는 더미 데이터 사용)
@@ -2162,14 +2162,14 @@
             document.getElementById('monthlyGoalText').textContent =
                 `목표 ${monthlyGoalBooks}권 중 ${currentCompletedBooks}권 달성 (${percentage.toFixed(0)}%)`;
             document.getElementById('monthlyProgressBar').style.width = `${percentage}%`;
-
+    
             const comparisonText = `지난달 대비 +${(currentCompletedBooks - lastMonthCompletedBooks).toFixed(1)}권 증가`;
             document.getElementById('monthlyComparison').textContent = comparisonText;
-
+    
             // 2. 주간 독서량 추이 차트 그리기 (현재는 더미 데이터 사용)
             const labels = weeklyReadingData.map(data => data.date);
             const data = weeklyReadingData.map(data => data.pages);
-
+    
             const ctx = document.getElementById('weeklyReadingChart').getContext('2d');
             // 기존 차트 인스턴스가 있다면 파괴하고 새로 그립니다. (탭 전환 시 차트 중복 생성 방지)
             if (window.weeklyReadingChartInstance) {
@@ -2238,11 +2238,11 @@
                     }
                 }
             });
-
+    
             // 3. 완독 도서 목록 업데이트
             const listContainer = document.getElementById('completedBooksList');
             listContainer.innerHTML = ''; // 기존 목록 초기화
-
+    
             // sampleRoutines에서 완독된 독서 루틴을 필터링하여 표시
             const actualCompletedBooks = sampleRoutines.filter(r => r.type === 'reading' && r.currentPage >= r.endPage);
             actualCompletedBooks.forEach(routine => {
@@ -2257,45 +2257,34 @@
                 listContainer.appendChild(bookCard);
             });
         }
-
+    
         // --- 운동 대시보드 함수 (추후 구현 예정) ---
         function updateExerciseDashboard() {
             console.log("운동 대시보드 업데이트");
             // 운동 대시보드 관련 데이터를 로드하고 시각화를 업데이트하는 로직이 여기에 들어갑니다.
-            // 예를 들어:
-            // const weeklyExerciseGoal = 3; // 주간 목표 운동 횟수
-            // const currentExerciseCount = 2; // 현재 운동 횟수
-            // const exerciseTypeData = [{ type: '걷기', minutes: 120 }, { type: '달리기', minutes: 60 }];
-            // ...
-            // 이곳에 운동 관련 HTML 요소들을 업데이트하는 코드를 추가합니다.
         }
-
+    
         // --- 수면 시간 대시보드 함수 (추후 구현 예정) ---
         function updateSleepDashboard() {
             console.log("수면 시간 대시보드 업데이트");
             // 수면 시간 대시보드 관련 데이터를 로드하고 시각화를 업데이트하는 로직이 여기에 들어갑니다.
-            // 예를 들어:
-            // const dailySleepGoal = 7; // 일일 목표 수면 시간 (시간)
-            // const weeklySleepData = [{ date: '월', hours: 6.5 }, { date: '화', hours: 7.2 }];
-            // ...
-            // 이곳에 수면 관련 HTML 요소들을 업데이트하는 코드를 추가합니다.
         }
-
+    
         // --- 탭 전환 로직 ---
         function openDashboardTab(tabName) {
             const tabContents = document.querySelectorAll('.tab-content');
             tabContents.forEach(content => {
                 content.classList.remove('active');
             });
-
+    
             const tabButtons = document.querySelectorAll('.tab-button');
             tabButtons.forEach(button => {
                 button.classList.remove('active');
             });
-
+    
             document.getElementById(tabName).classList.add('active');
             document.querySelector(`.tab-button[data-tab="${tabName}"]`).classList.add('active');
-
+    
             // 탭 활성화 시 해당 대시보드 데이터 업데이트 함수 호출
             if (tabName === 'reading') {
                 updateReadingDashboard();
@@ -2305,363 +2294,295 @@
                 updateSleepDashboard();
             }
         }
-
+    
         // 전역 변수
         let sampleRoutines = []; // Routine data
-        let userAreas = [];      // 5-area data
-        let userStats = {};      // Accumulated points per area
+        let userAreas = [];     // 5-area data
+        let userStats = {};     // Accumulated points per area
         let sortableInstance = null;
         let orderChanged = false;
         let activeRoutineForModal = null;
-        const DEBUG_MODE = true; // Debugging mode (change to false after troubleshooting)
-
+        const DEBUG_MODE = true; // Debugging mode
+    
         // Debug log function
         function debugLog(...args) {
             if (DEBUG_MODE) {
                 console.log(...args);
             }
         }
-
-// 전역 변수 선언만 남겨둡니다. (값 할당은 Firebase에서 가져옵니다)
-// 기존에 전역으로 선언된 변수가 있다고 가정하고, 재할당만 수행합니다.
-sampleRoutines = []; 
-userAreas = []; 
-userStats = {};
-
-// 기존 localStorage 관련 상수들은 필요 없으므로 삭제합니다.
-
-// Default 3 areas (new default)
-const DEFAULT_AREAS = [
-    { id: 'physical', name: '신체' },
-    { id: 'mental', name: '정신' },
-    { id: 'intellectual', name: '지적' }
-];
-const MAX_AREAS = 5; // Maximum number of areas
-
-// Initial sample routines (used only on first load)
-const INITIAL_SAMPLE_ROUTINES = [
-    { id: 1, name: '운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 5, order: 0, active: true, areas: ['physical'], basePoints: 10 },
-    { id: 2, name: '물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 3, status: null, streak: 3, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
-    { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical'], basePoints: 8 },
-    { id: 4, name: '명상', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 10, order: 3, active: true, areas: ['mental'], basePoints: 10 },
-    { id: 5, name: '걸음 수', time: 'evening', type: 'number', frequency: 'daily', value: 6500, status: null, streak: 2, unit: '걸음', order: 4, active: true, inputType: 'wheel', min: 1000, max: 30000, step: 500, continuous: true, dailyGoal: 10000, areas: ['physical'], basePoints: 15 },
-    { id: 6, name: '취침 시간', time: 'evening', type: 'time', frequency: 'daily', value: null, status: null, streak: 7, order: 5, active: true, areas: ['physical', 'mental'], basePoints: 8 },
-    { id: 7, name: '일기쓰기', time: 'evening', type: 'yesno', frequency: 'daily', value: false, status: 'skipped', streak: 2, order: 6, active: false, areas: ['mental'], basePoints: 7 },
-    { id: 8, name: 'JavaScript 완벽 가이드', time: 'evening', type: 'reading', frequency: 'daily', value: 120, status: null, streak: 12, unit: '페이지', order: 7, active: true, bookTitle: 'JavaScript 완벽 가이드', startPage: 1, endPage: 500, dailyPages: 10, currentPage: 120, startDate: '2024-01-01', areas: ['intellectual'], basePoints: 20 }
-];
-
-// Firebase 초기화 코드
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
-  authDomain: "habit-dc62a.firebaseapp.com",
-  projectId: "habit-dc62a",
-  storageBucket: "habit-dc62a.firebasestorage.app",
-  messagingSenderId: "668374525477",
-  appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc",
-  measurementId: "G-DV5Z9YVTZG"
-};
-
-
-
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// Function to reset daily progress for routines
-async function resetDailyProgressForRoutines() {
-    debugLog("일일 진행 상황 초기화 시작...");
-    let needsSave = false;
-    const batch = db.batch();
-
-    const lastResetDoc = await db.collection('meta').doc('lastReset').get();
-    const lastResetDate = lastResetDoc.exists ? lastResetDoc.data().date : null;
-
-    if (lastResetDate !== todayDateString) {
-        sampleRoutines.forEach(routine => {
-            const routineRef = db.collection('routines').doc(routine.id);
-            const updatedFields = {};
-
-            // Streak logic (for the previous day)
-            if (!isGoalAchieved(routine)) {
-                routine.streak = 0;
-                updatedFields.streak = 0;
-            }
-
-            // Resetting daily values
-            if (routine.type === 'yesno' || routine.type === 'time') {
-                routine.value = null;
-                routine.status = null;
-                updatedFields.value = null;
-                updatedFields.status = null;
-            } else if (routine.type === 'number') {
-                if (routine.continuous) {
-                    routine.value = 0;
-                    routine.status = null;
-                    routine.dailyGoalMetToday = false;
-                    updatedFields.value = 0;
-                    updatedFields.status = null;
-                    updatedFields.dailyGoalMetToday = false;
-                } else {
-                    routine.value = null;
-                    routine.status = null;
-                    updatedFields.value = null;
-                    updatedFields.status = null;
-                }
-            } else if (routine.type === 'reading') {
-                routine.dailyReadPagesToday = 0;
-                routine.dailyGoalMetToday = false;
-                routine.status = null;
-                updatedFields.dailyReadPagesToday = 0;
-                updatedFields.dailyGoalMetToday = false;
-                updatedFields.status = null;
-            }
-            routine.pointsGivenToday = false; // Reset points given flag for all daily routines
-            updatedFields.pointsGivenToday = false;
-            
-            // Only update if there are changes
-            if (Object.keys(updatedFields).length > 0) {
-                batch.update(routineRef, updatedFields);
-            }
-        });
-
-        // Update the last reset date
-        batch.set(db.collection('meta').doc('lastReset'), { date: todayDateString });
-
-        try {
-            await batch.commit();
-            debugLog("일일 진행 상황 초기화 완료 및 Firebase에 저장.");
-        } catch (error) {
-            console.error("일일 진행 상황 초기화 및 저장 실패: ", error);
-        }
-    } else {
-        debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
-    }
-}
-
-// 비동기 함수로 Firebase에서 모든 데이터를 불러오기
-
-// 비동기 함수로 Firebase에서 모든 데이터를 불러오기
-// 비동기 함수로 Firebase에서 모든 데이터를 불러오기
-async function loadAllDataFromFirebase() {
-    try {
-        debugLog("Firebase에서 모든 데이터 로드 시작...");
-        
-        let allDataLoaded = false;
-
-        // 루틴 데이터를 실시간으로 불러옵니다.
-        const routinesRef = db.collection('routines');
-        const routinesListener = routinesRef.orderBy('order').onSnapshot(async (routinesSnapshot) => {
-            if (!routinesSnapshot.empty) {
-                sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                debugLog('Routines data loaded/updated via snapshot.');
-            } else {
-                debugLog('Routines collection is empty, attempting to upload initial data.');
-                // 초기 데이터가 업로드되면 리스너가 다시 트리거됩니다.
-            }
-            
-            if (allDataLoaded) {
-                await resetDailyProgressForRoutines();
-                renderRoutines();
-            }
-        });
-
-        // 영역 데이터를 실시간으로 불러옵니다.
-        const areasRef = db.collection('areas');
-        const areasListener = areasRef.onSnapshot((areasSnapshot) => {
-            if (!areasSnapshot.empty) {
-                userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } else {
-                debugLog('Areas collection is empty. Using default areas.');
-                userAreas = [...DEFAULT_AREAS]; 
-            }
-            debugLog('Areas data loaded/updated via snapshot.');
-            if (allDataLoaded) {
-                renderRoutines();
-                renderAreaStats();
-            }
-        });
-
-        // 통계 데이터를 실시간으로 불러옵니다.
-        const statsRef = db.collection('stats').doc('userStats');
-        const statsListener = statsRef.onSnapshot((statsDoc) => {
-            if (statsDoc.exists) {
-                userStats = statsDoc.data();
-            } else {
-                debugLog('Stats document is missing. Using empty stats.');
-                userStats = {};
-            }
-            debugLog('Stats data loaded/updated via snapshot.');
-            if (allDataLoaded) {
-                renderRoutines();
-                renderAreaStats();
-            }
-        });
-
-        // 데이터가 모두 로드될 때까지 기다린 후 초기 데이터 업로드 로직 실행
-        const checkInitialData = async () => {
-            const routinesCheck = await routinesRef.get();
-            const areasCheck = await areasRef.get();
-            const statsCheck = await statsRef.get();
-
-            if (routinesCheck.empty || areasCheck.empty || !statsCheck.exists) {
-                await uploadInitialSampleData(routinesCheck.empty, areasCheck.empty, !statsCheck.exists);
-            }
-            allDataLoaded = true;
-            await resetDailyProgressForRoutines();
-            renderRoutines();
-            renderAreaStats();
+    
+        // Default 3 areas
+        const DEFAULT_AREAS = [
+            { id: 'physical', name: '신체' },
+            { id: 'mental', name: '정신' },
+            { id: 'intellectual', name: '지적' }
+        ];
+        const MAX_AREAS = 5; // Maximum number of areas
+    
+        // Initial sample routines (used only on first load)
+        const INITIAL_SAMPLE_ROUTINES = [
+            { id: 1, name: '운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 5, order: 0, active: true, areas: ['physical'], basePoints: 10 },
+            { id: 2, name: '물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 3, status: null, streak: 3, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
+            { id: 3, name: '기상 시간', time: 'morning', type: 'time', frequency: 'daily', value: null, status: null, streak: 0, order: 2, active: true, areas: ['physical'], basePoints: 8 },
+            { id: 4, name: '명상', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 10, order: 3, active: true, areas: ['mental'], basePoints: 10 },
+            { id: 5, name: '걸음 수', time: 'evening', type: 'number', frequency: 'daily', value: 6500, status: null, streak: 2, unit: '걸음', order: 4, active: true, inputType: 'wheel', min: 1000, max: 30000, step: 500, continuous: true, dailyGoal: 10000, areas: ['physical'], basePoints: 15 },
+            { id: 6, name: '취침 시간', time: 'evening', type: 'time', frequency: 'daily', value: null, status: null, streak: 7, order: 5, active: true, areas: ['physical', 'mental'], basePoints: 8 },
+            { id: 7, name: '일기쓰기', time: 'evening', type: 'yesno', frequency: 'daily', value: false, status: 'skipped', streak: 2, order: 6, active: false, areas: ['mental'], basePoints: 7 },
+            { id: 8, name: 'JavaScript 완벽 가이드', time: 'evening', type: 'reading', frequency: 'daily', value: 120, status: null, streak: 12, unit: '페이지', order: 7, active: true, bookTitle: 'JavaScript 완벽 가이드', startPage: 1, endPage: 500, dailyPages: 10, currentPage: 120, startDate: '2024-01-01', areas: ['intellectual'], basePoints: 20 }
+        ];
+    
+        // Firebase 초기화 코드
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
+            authDomain: "habit-dc62a.firebaseapp.com",
+            projectId: "habit-dc62a",
+            storageBucket: "habit-dc62a.firebasestorage.app",
+            messagingSenderId: "668374525477",
+            appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc",
+            measurementId: "G-DV5Z9YVTZG"
         };
-
-        checkInitialData();
-
-        debugLog('Firebase 실시간 리스너 등록 완료.');
-
-    } catch (error) {
-        console.error("Firebase 데이터 로드 실패: ", error);
-        showNotification("데이터를 불러오지 못했습니다. 앱을 새로고침해주세요.", "error");
-    }
-}
-
-
-// 초기 샘플 루틴을 Firestore에 업로드하는 함수
-async function uploadInitialSampleData() {
-    debugLog("초기 샘플 데이터 업로드 시작...");
-    const batch = db.batch();
-
-    // 1. routines 컬렉션에 초기 루틴 데이터 업로드
-    const routinesCollectionRef = db.collection('routines');
-    const initialRoutines = INITIAL_SAMPLE_ROUTINES.map(r => ({ ...r, lastUpdatedDate: todayDateString }));
-    initialRoutines.forEach(routine => {
-        const docRef = routinesCollectionRef.doc();
-        routine.id = docRef.id;
-        batch.set(docRef, routine);
-    });
-
-    // 2. areas 컬렉션에 초기 영역 데이터 업로드
-    const areasCollectionRef = db.collection('areas');
-    DEFAULT_AREAS.forEach(area => {
-        const docRef = areasCollectionRef.doc(area.id);
-        batch.set(docRef, area);
-    });
-
-    // 3. stats 컬렉션에 초기 통계 데이터 업로드
-    const statsRef = db.collection('stats').doc('userStats');
-    const initialStats = {};
-    DEFAULT_AREAS.forEach(area => {
-        initialStats[area.id] = 0;
-    });
-    batch.set(statsRef, initialStats);
-
-    // 4. meta 컬렉션에 마지막 리셋 날짜 업로드
-    const metaRef = db.collection('meta').doc('lastReset');
-    batch.set(metaRef, { date: todayDateString });
-
-    await batch.commit();
-    sampleRoutines = initialRoutines;
-    userAreas = DEFAULT_AREAS;
-    userStats = initialStats;
-    debugLog("초기 샘플 데이터 업로드 완료.");
-}
-
-// 루틴 하나를 업데이트하는 함수
-async function updateRoutineInFirebase(routineId, updatedFields) {
-    try {
-        const routineRef = db.collection('routines').doc(String(routineId));
-        await routineRef.update(updatedFields);
-        debugLog(`Routine ${routineId} 업데이트 성공.`);
-    } catch (error) {
-        console.error(`Routine ${routineId} 업데이트 실패: `, error);
-        throw error;
-    }
-}
-
-// 모든 루틴의 순서를 업데이트하는 함수 (batch write 사용)
-async function updateRoutineOrderInFirebase(orderedRoutines) {
-    const batch = db.batch();
-    orderedRoutines.forEach((routine, index) => {
-        const routineRef = db.collection('routines').doc(String(routine.id));
-        batch.update(routineRef, { order: index });
-    });
-    try {
-        await batch.commit();
-        debugLog("루틴 순서 업데이트 성공.");
-    } catch (error) {
-        console.error("루틴 순서 업데이트 실패: ", error);
-        throw error;
-    }
-}
-
-// 영역별 포인트를 업데이트하는 함수
-async function updateUserStatsInFirebase(updatedStats) {
-    try {
-        const statsRef = db.collection('stats').doc('userStats');
-        await statsRef.set(updatedStats);
-        debugLog("영역 포인트 업데이트 성공.");
-    } catch (error) {
-        console.error("영역 포인트 업데이트 실패: ", error);
-        throw error;
-    }
-}
-
-// 새로운 루틴을 Firebase에 추가하는 함수
-async function addRoutineToFirebase(newRoutine) {
-    try {
-        const docRef = await db.collection('routines').add(newRoutine);
-        debugLog(`새 루틴 추가 성공, ID: ${docRef.id}`);
-        return { ...newRoutine, id: docRef.id };
-    } catch (error) {
-        console.error("새 루틴 추가 실패: ", error);
-        throw error;
-    }
-}
-
-// 영역 이름/개수를 Firebase에 업데이트하는 함수 클로드 버젼
-async function updateAreasInFirebase(updatedAreas = null) {
-    try {
-        // 인자가 없으면 현재 userAreas를 사용
-        const areasToUpdate = updatedAreas || userAreas;
-        
-        if (!areasToUpdate || !Array.isArray(areasToUpdate)) {
-            debugLog("영역 데이터가 없거나 올바르지 않음, 업데이트 건너뜀.");
-            return;
+    
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    
+        // Function to reset daily progress for routines
+        async function resetDailyProgressForRoutines() {
+            debugLog("일일 진행 상황 초기화 시작...");
+            const batch = db.batch();
+    
+            const lastResetDoc = await db.collection('meta').doc('lastReset').get();
+            const lastResetDate = lastResetDoc.exists ? lastResetDoc.data().date : null;
+    
+            if (lastResetDate !== todayDateString) {
+                sampleRoutines.forEach(routine => {
+                    const routineRef = db.collection('routines').doc(String(routine.id));
+                    const updatedFields = {};
+    
+                    // Streak logic (for the previous day)
+                    if (!isGoalAchieved(routine)) {
+                        routine.streak = 0;
+                        updatedFields.streak = 0;
+                    }
+    
+                    // Resetting daily values
+                    if (routine.type === 'yesno' || routine.type === 'time' || (routine.type === 'number' && !routine.continuous)) {
+                        updatedFields.value = null;
+                        updatedFields.status = null;
+                    } else if (routine.type === 'number' && routine.continuous) {
+                        updatedFields.value = 0;
+                        updatedFields.status = null;
+                        updatedFields.dailyGoalMetToday = false;
+                    } else if (routine.type === 'reading') {
+                        updatedFields.dailyReadPagesToday = 0;
+                        updatedFields.dailyGoalMetToday = false;
+                        updatedFields.status = null;
+                    }
+                    updatedFields.pointsGivenToday = false;
+                    
+                    if (Object.keys(updatedFields).length > 0) {
+                        batch.update(routineRef, updatedFields);
+                    }
+                });
+    
+                batch.set(db.collection('meta').doc('lastReset'), { date: todayDateString });
+    
+                try {
+                    await batch.commit();
+                    debugLog("일일 진행 상황 초기화 완료 및 Firebase에 저장.");
+                } catch (error) {
+                    console.error("일일 진행 상황 초기화 및 저장 실패: ", error);
+                }
+            } else {
+                debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
+            }
         }
-        
-        const batch = db.batch();
-        const areasRef = db.collection('areas');
-        // 기존 영역 삭제 (간소화를 위해 전체 삭제 후 재추가)
-        const oldAreas = await areasRef.get();
-        oldAreas.docs.forEach(doc => batch.delete(areasRef.doc(doc.id)));
-        // 새로운 영역 추가
-        areasToUpdate.forEach(area => {
-            const areaRef = areasRef.doc(area.id);
-            batch.set(areaRef, area);
-        });
-        await batch.commit();
-        debugLog("영역 목록 업데이트 성공.");
-    } catch (error) {
-        console.error("영역 목록 업데이트 실패: ", error);
-        throw error;
-    }
-}
-
-// DOMContentLoaded 이벤트 리스너에서 loadData() 대신 loadAllDataFromFirebase()를 호출하도록 수정 필요
-document.addEventListener('DOMContentLoaded', () => {
-    // ... 기존 loadData() 호출 부분을 아래 함수로 변경
-    loadAllDataFromFirebase().then(() => {
-        // 데이터 로드 후 초기화 및 렌더링
-        renderRoutines();
-        renderAreaStats();
-    });
-    // ... 나머지 코드 유지
-});
-
-
-
-
+    
+        async function loadAllDataFromFirebase() {
+            try {
+                debugLog("Firebase에서 모든 데이터 로드 시작...");
+                
+                // 모든 데이터 로드를 위한 프로미스 배열
+                const promises = [
+                    db.collection('routines').orderBy('order').get(),
+                    db.collection('areas').get(),
+                    db.collection('stats').doc('userStats').get()
+                ];
+    
+                const [routinesSnapshot, areasSnapshot, statsDoc] = await Promise.all(promises);
+    
+                let initialDataNeeded = false;
+    
+                // 루틴 데이터 처리
+                if (!routinesSnapshot.empty) {
+                    sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    debugLog('Routines data loaded from Firebase.');
+                } else {
+                    initialDataNeeded = true;
+                    debugLog('Routines collection is empty.');
+                }
+    
+                // 영역 데이터 처리
+                if (!areasSnapshot.empty) {
+                    userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                     debugLog('Areas data loaded from Firebase.');
+                } else {
+                    initialDataNeeded = true;
+                    debugLog('Areas collection is empty.');
+                }
+    
+                // 통계 데이터 처리
+                if (statsDoc.exists) {
+                    userStats = statsDoc.data();
+                    debugLog('Stats data loaded from Firebase.');
+                } else {
+                    initialDataNeeded = true;
+                    debugLog('Stats document is missing.');
+                }
+    
+                // 초기 데이터가 하나라도 없으면 업로드
+                if (initialDataNeeded) {
+                    await uploadInitialSampleData();
+                }
+    
+                // 일일 진행 상황 초기화
+                await resetDailyProgressForRoutines();
+    
+                debugLog('모든 데이터 로드 및 초기화 완료.');
+    
+            } catch (error) {
+                console.error("Firebase 데이터 로드 실패: ", error);
+                showNotification("데이터를 불러오지 못했습니다. 앱을 새로고침해주세요.", "error");
+            }
+        }
+    
+        async function uploadInitialSampleData() {
+            debugLog("초기 샘플 데이터 업로드 시작...");
+            const batch = db.batch();
+    
+            const routinesCollectionRef = db.collection('routines');
+            INITIAL_SAMPLE_ROUTINES.forEach(routine => {
+                const docRef = routinesCollectionRef.doc(String(routine.id)); // ID를 명시적으로 설정
+                batch.set(docRef, { ...routine, lastUpdatedDate: todayDateString });
+            });
+            sampleRoutines = INITIAL_SAMPLE_ROUTINES;
+    
+            const areasCollectionRef = db.collection('areas');
+            DEFAULT_AREAS.forEach(area => {
+                const docRef = areasCollectionRef.doc(area.id);
+                batch.set(docRef, area);
+            });
+            userAreas = DEFAULT_AREAS;
+    
+            const statsRef = db.collection('stats').doc('userStats');
+            const initialStats = {};
+            DEFAULT_AREAS.forEach(area => {
+                initialStats[area.id] = 0;
+            });
+            batch.set(statsRef, initialStats);
+            userStats = initialStats;
+            
+            const metaRef = db.collection('meta').doc('lastReset');
+            batch.set(metaRef, { date: todayDateString });
+    
+            await batch.commit();
+            debugLog("초기 샘플 데이터 업로드 완료.");
+        }
+    
+        async function updateRoutineInFirebase(routineId, updatedFields) {
+            try {
+                const routineRef = db.collection('routines').doc(String(routineId));
+                await routineRef.update(updatedFields);
+                debugLog(`Routine ${routineId} 업데이트 성공.`);
+                // 로컬 데이터도 즉시 업데이트하여 반응성 향상
+                const index = sampleRoutines.findIndex(r => r.id === routineId);
+                if(index !== -1) {
+                    sampleRoutines[index] = { ...sampleRoutines[index], ...updatedFields };
+                    renderRoutines(); // 즉시 화면 재렌더링
+                }
+            } catch (error) {
+                console.error(`Routine ${routineId} 업데이트 실패: `, error);
+                throw error;
+            }
+        }
+    
+        async function updateRoutineOrderInFirebase(orderedRoutines) {
+            const batch = db.batch();
+            orderedRoutines.forEach((routine, index) => {
+                const routineRef = db.collection('routines').doc(String(routine.id));
+                batch.update(routineRef, { order: index });
+            });
+            try {
+                await batch.commit();
+                debugLog("루틴 순서 업데이트 성공.");
+                // 로컬 데이터 순서 업데이트
+                sampleRoutines = orderedRoutines;
+            } catch (error) {
+                console.error("루틴 순서 업데이트 실패: ", error);
+                throw error;
+            }
+        }
+    
+        async function updateUserStatsInFirebase(updatedStats) {
+            try {
+                const statsRef = db.collection('stats').doc('userStats');
+                await statsRef.set(updatedStats);
+                userStats = updatedStats; // 로컬 데이터 업데이트
+                renderAreaStats(); // 즉시 화면 재렌더링
+                debugLog("영역 포인트 업데이트 성공.");
+            } catch (error) {
+                console.error("영역 포인트 업데이트 실패: ", error);
+                throw error;
+            }
+        }
+    
+        async function addRoutineToFirebase(newRoutineData) {
+            try {
+                const docRef = db.collection('routines').doc();
+                const newRoutine = { ...newRoutineData, id: docRef.id };
+                await docRef.set(newRoutine);
+                debugLog(`새 루틴 추가 성공, ID: ${docRef.id}`);
+                sampleRoutines.push(newRoutine); // 로컬 데이터에 추가
+                renderRoutines();
+                showManagePage(); // 관리 페이지로 이동하여 순서 확인
+                return newRoutine;
+            } catch (error) {
+                console.error("새 루틴 추가 실패: ", error);
+                throw error;
+            }
+        }
+    
+        async function updateAreasInFirebase(updatedAreas) {
+            try {
+                const batch = db.batch();
+                const areasRef = db.collection('areas');
+    
+                // 기존 영역 문서들을 가져와서 삭제 목록 생성
+                const oldAreasSnapshot = await areasRef.get();
+                const oldAreaIds = oldAreasSnapshot.docs.map(doc => doc.id);
+                const newAreaIds = updatedAreas.map(area => area.id);
+                
+                const idsToDelete = oldAreaIds.filter(id => !newAreaIds.includes(id));
+                idsToDelete.forEach(id => {
+                    batch.delete(areasRef.doc(id));
+                });
+    
+                // 새로운/업데이트된 영역 추가/수정
+                updatedAreas.forEach(area => {
+                    const areaRef = areasRef.doc(area.id);
+                    batch.set(areaRef, area);
+                });
+    
+                await batch.commit();
+                userAreas = updatedAreas; // 로컬 데이터 업데이트
+                renderAreaStats();
+                debugLog("영역 목록 업데이트 성공.");
+            } catch (error) {
+                console.error("영역 목록 업데이트 실패: ", error);
+                throw error;
+            }
+        }
+    
         // === Number Input Modal Functions ===
-        
-        // Show number input modal (branches based on input type)
         function showNumberInputModal(routine) {
             activeRoutineForModal = routine;
             
@@ -2673,8 +2594,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showSimpleNumberModal(routine);
             }
         }
-
-        // === Stepper Modal ===
+    
         function showStepperModal(routine) {
             const modal = document.getElementById('stepperInputModal');
             const title = document.getElementById('stepperModalTitle');
@@ -2686,54 +2606,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // Start value based on current value (for continuous routines) or min value
             let currentValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.value || routine.min || 1);
             const minValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.min || 1);
             const maxValue = routine.max || 100;
             const stepValue = routine.step || 1;
             
-            // Update UI
             const titleText = routine.continuous ? `${routine.name} (현재: ${routine.value || 0}${routine.unit || ''})` : routine.name;
             title.textContent = titleText;
             valueDisplay.textContent = currentValue;
             unitDisplay.textContent = routine.unit || '';
             
-            // Display goal
+            const existingGoal = modal.querySelector('.goal-text');
+            if (existingGoal) existingGoal.remove();
+            
             if (routine.dailyGoal) {
-                // Remove existing goal text
-                const existingGoal = modal.querySelector('.goal-text');
-                if (existingGoal) {
-                    existingGoal.remove();
-                }
-                
                 const goalText = document.createElement('div');
                 goalText.className = 'goal-text';
-                goalText.style.cssText = `
-                    text-align: center;
-                    font-size: 0.8rem;
-                    color: var(--text-secondary);
-                    margin-top: 0.5rem;
-                `;
+                goalText.style.cssText = `text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;`;
                 goalText.textContent = `목표: ${routine.dailyGoal}${routine.unit || ''}`;
-                
-                const stepperContainer = modal.querySelector('.stepper-container');
-                if (stepperContainer && stepperContainer.parentNode) {
-                    stepperContainer.parentNode.insertBefore(goalText, stepperContainer.nextSibling);
-                }
+                modal.querySelector('.stepper-container').parentNode.insertBefore(goalText, modal.querySelector('.stepper-container').nextSibling);
             }
             
-            // Get buttons
             const minusBtn = document.getElementById('stepperMinus');
             const plusBtn = document.getElementById('stepperPlus');
-            
-            // Clone to remove existing event listeners
             const newMinusBtn = minusBtn.cloneNode(true);
             const newPlusBtn = plusBtn.cloneNode(true);
             
             minusBtn.parentNode.replaceChild(newMinusBtn, minusBtn);
             plusBtn.parentNode.replaceChild(newPlusBtn, plusBtn);
             
-            // Decrease value
+            function updateStepperButtons() {
+                newMinusBtn.disabled = currentValue <= minValue;
+                newPlusBtn.disabled = currentValue >= maxValue;
+            }
+    
             newMinusBtn.addEventListener('click', () => {
                 if (currentValue > minValue) {
                     currentValue = Math.max(minValue, currentValue - stepValue);
@@ -2742,7 +2648,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // Increase value
             newPlusBtn.addEventListener('click', () => {
                 if (currentValue < maxValue) {
                     currentValue = Math.min(maxValue, currentValue + stepValue);
@@ -2751,96 +2656,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // Update button states
-            function updateStepperButtons() {
-                newMinusBtn.disabled = currentValue <= minValue;
-                newPlusBtn.disabled = currentValue >= maxValue;
-            }
-            
             updateStepperButtons();
             
-            // Pass current value to confirm button
-            const confirmBtn = document.getElementById('stepperConfirmBtn');
-            confirmBtn.onclick = () => handleStepperConfirm(currentValue);
+            document.getElementById('stepperConfirmBtn').onclick = () => handleStepperConfirm(currentValue);
             
             modal.style.display = 'flex';
         }
-
+    
         function hideStepperModal() {
             const modal = document.getElementById('stepperInputModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
+            if (modal) modal.style.display = 'none';
             activeRoutineForModal = null;
         }
-
+    
         async function handleStepperConfirm(value) {
-    if (!activeRoutineForModal) {
-        console.error('Active routine is missing.');
-        return;
-    }
-    
-    const currentRoutine = activeRoutineForModal;
-    debugLog('Stepper value confirmed:', value, 'Routine:', currentRoutine.name);
-    
-    try {
-        const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
-        if (routine) {
-            const updatedFields = {
-                value: value,
-                status: null,
-                lastUpdatedDate: todayDateString
-            };
+            if (!activeRoutineForModal) return;
             
-            let pointsAwarded = false;
-
-            // Streak and points: only if daily goal is met for the first time today
-            if (isGoalAchieved({ ...routine, value: value }) && !routine.pointsGivenToday) {
-                routine.streak = (routine.streak || 0) + 1;
-                updatedFields.streak = routine.streak;
-
-                if (routine.areas && routine.basePoints) {
-                    const newStats = { ...userStats };
-                    routine.areas.forEach(areaId => {
-                        newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
-                    });
-                    // Firestore에 통계 업데이트
-                    await updateUserStatsInFirebase(newStats);
+            const currentRoutine = activeRoutineForModal;
+            
+            try {
+                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
+                if (routine) {
+                    const updatedFields = {
+                        value: value,
+                        status: null,
+                        lastUpdatedDate: todayDateString
+                    };
+                    
+                    let pointsAwarded = false;
+                    
+                    if (isGoalAchieved({ ...routine, value: value }) && !routine.pointsGivenToday) {
+                        updatedFields.streak = (routine.streak || 0) + 1;
+                        if (routine.areas && routine.basePoints) {
+                            const newStats = { ...userStats };
+                            routine.areas.forEach(areaId => {
+                                newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                            });
+                            await updateUserStatsInFirebase(newStats);
+                        }
+                        updatedFields.pointsGivenToday = true;
+                        pointsAwarded = true;
+                    }
+                    
+                    await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+                    
+                    hideStepperModal();
+                    
+                    const goalStatus = isGoalAchieved({ ...routine, value: value }) ? ' 🎯 목표 달성!' : '';
+                    showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
+                    
+                    if (pointsAwarded) {
+                        showCompletionEffect();
+                        setTimeout(showCelebrationMessage, 300);
+                    }
                 }
-                routine.pointsGivenToday = true;
-                updatedFields.pointsGivenToday = true;
-                pointsAwarded = true;
-            }
-            
-            // 클라이언트 측 데이터는 리스너가 업데이트하도록 맡깁니다.
-            await updateRoutineInFirebase(currentRoutine.id, updatedFields);
-        
-            debugLog('Routine updated:', routine.name, 'Value:', value, 'Goal achieved:', isGoalAchieved({ ...routine, value: value }));
-
-            hideStepperModal();
-            
-            const goalStatus = isGoalAchieved({ ...routine, value: value }) ? ' 🎯 목표 달성!' : '';
-            showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
-            
-            if (pointsAwarded) {
-                showCompletionEffect();
-                setTimeout(() => {
-                    showCelebrationMessage();
-                }, 300);
+            } catch (error) {
+                console.error('Failed to update stepper routine:', error);
+                showNotification('저장에 실패했습니다.', 'error');
             }
         }
         
-    } catch (error) {
-        console.error('Failed to update stepper routine:', error);
-        showNotification('저장에 실패했습니다.', 'error');
-    }
-}
-
-
-
         // === Reading Modal Functions ===
-        
-        // Show reading setup modal (for editing existing reading routines)
         function showReadingSetupModal(routine = null) {
             const modal = document.getElementById('readingSetupModal');
             const title = document.getElementById('readingSetupTitle');
@@ -2852,20 +2728,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!modal) return;
             
             if (routine) {
-                // Editing existing reading routine
-                activeRoutineForModal = routine; // Set routine to be edited
+                activeRoutineForModal = routine;
                 title.textContent = '📚 독서 루틴 수정';
                 bookTitleInput.value = routine.bookTitle || '';
                 startPageInput.value = routine.startPage || 1;
                 endPageInput.value = routine.endPage || '';
                 dailyPagesInput.value = routine.dailyPages || 10;
             } else {
-                // New reading routine creation is handled in addRoutineModal
                 console.warn('New reading routine creation should use showAddRoutineModal().');
                 return;
             }
             
-            // Calculate summary in real-time
             function updateSummary() {
                 const startPage = parseInt(startPageInput.value) || 1;
                 const endPage = parseInt(endPageInput.value) || 0;
@@ -2886,8 +2759,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Add event listeners
             [startPageInput, endPageInput, dailyPagesInput].forEach(input => {
+                input.removeEventListener('input', updateSummary);
                 input.addEventListener('input', updateSummary);
             });
             
@@ -2895,8 +2768,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.style.display = 'flex';
             bookTitleInput.focus();
         }
-
-        // Show reading progress input modal
+    
         function showReadingProgressModal(routine) {
             activeRoutineForModal = routine;
             
@@ -2911,7 +2783,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             title.textContent = `📖 ${routine.bookTitle}`;
             
-            // Display current reading info
             const todayRange = getTodayReadingRange(routine);
             const progress = getReadingProgress(routine);
             
@@ -2921,11 +2792,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>현재 진행률:</strong> ${routine.currentPage}/${routine.endPage} 페이지 (${progress}%)</p>
             `;
             
-            // Set recommended pages
             readPagesInput.value = todayRange.pages;
             recommendedPages.textContent = todayRange.pages;
             
-            // Preview progress
             function updateProgressPreview() {
                 const readPages = parseInt(readPagesInput.value) || 0;
                 const newCurrentPage = routine.currentPage + readPages;
@@ -2943,165 +2812,131 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
             
+            readPagesInput.removeEventListener('input', updateProgressPreview);
             readPagesInput.addEventListener('input', updateProgressPreview);
             updateProgressPreview();
             
             modal.style.display = 'flex';
             readPagesInput.focus();
         }
-
-        // Hide reading setup modal
+    
         function hideReadingSetupModal() {
             const modal = document.getElementById('readingSetupModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            activeRoutineForModal = null; // Reset activeRoutineForModal when modal closes
-        }
-
-        // Hide reading progress modal
-        function hideReadingProgressModal() {
-            const modal = document.getElementById('readingProgressModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
+            if (modal) modal.style.display = 'none';
             activeRoutineForModal = null;
         }
-
-        // Handle reading setup confirmation (for editing existing reading routines)
-        function handleReadingSetupConfirm() {
+    
+        function hideReadingProgressModal() {
+            const modal = document.getElementById('readingProgressModal');
+            if (modal) modal.style.display = 'none';
+            activeRoutineForModal = null;
+        }
+    
+        async function handleReadingSetupConfirm() {
             if (!activeRoutineForModal) return;
-
+    
             const bookTitle = document.getElementById('bookTitle').value.trim();
             const startPage = parseInt(document.getElementById('startPage').value);
             const endPage = parseInt(document.getElementById('endPage').value);
             const dailyPages = parseInt(document.getElementById('dailyPages').value);
             
-            if (!bookTitle || !startPage || !endPage || !dailyPages) {
-                showNotification('모든 항목을 입력해주세요.', 'error');
+            if (!bookTitle || !startPage || !endPage || !dailyPages || startPage >= endPage) {
+                showNotification('모든 항목을 정확히 입력해주세요.', 'error');
                 return;
             }
-            
-            if (startPage >= endPage) {
-                showNotification('끝 페이지는 시작 페이지보다 커야 합니다.', 'error');
-                return;
-            }
-
+    
             const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
             if (routine) {
-                routine.bookTitle = bookTitle;
-                routine.name = bookTitle; // Update routine name with book title
-                routine.startPage = startPage;
-                routine.endPage = endPage;
-                routine.dailyPages = dailyPages;
-                // currentPage is user's read progress, so don't touch it on settings change
-                // Adjust currentPage if startPage changes and makes it invalid
-                if (routine.currentPage < startPage) {
-                    routine.currentPage = startPage - 1;
-                } else if (routine.currentPage > endPage) {
-                    routine.currentPage = endPage;
-                }
+                const updatedFields = {
+                    bookTitle: bookTitle,
+                    name: bookTitle,
+                    startPage: startPage,
+                    endPage: endPage,
+                    dailyPages: dailyPages,
+                    currentPage: Math.max(startPage - 1, Math.min(routine.currentPage, endPage)),
+                    lastUpdatedDate: todayDateString
+                };
+                await updateRoutineInFirebase(routine.id, updatedFields);
             }
             
-            updateAreasInFirebase(); // Save data after changes
             hideReadingSetupModal();
             showNotification(`📚 "${bookTitle}" 독서 루틴 설정이 수정되었습니다!`);
-            renderRoutines();
         }
-
-        // Handle reading progress confirmation
-        
+    
         async function handleReadingProgressConfirm() {
-    if (!activeRoutineForModal) return;
-    
-    const readPages = parseInt(document.getElementById('readPages').value);
-    
-    if (isNaN(readPages) || readPages <= 0) {
-        showNotification('읽은 페이지 수를 입력해주세요.', 'error');
-        return;
-    }
-    
-    const currentRoutine = activeRoutineForModal;
-    
-    try {
-        const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
-        if (routine) {
-            const newCurrentPage = Math.min(routine.currentPage + readPages, routine.endPage);
-            const newDailyReadPagesToday = (routine.dailyReadPagesToday || 0) + readPages;
-            const newDailyGoalMetToday = newDailyReadPagesToday >= routine.dailyPages;
+            if (!activeRoutineForModal) return;
             
-            const updatedFields = {
-                currentPage: newCurrentPage,
-                value: newCurrentPage,
-                status: null,
-                dailyReadPagesToday: newDailyReadPagesToday,
-                dailyGoalMetToday: newDailyGoalMetToday,
-                lastUpdatedDate: todayDateString
-            };
-
-            let pointsAwarded = false;
-            // Streak and points: only if daily goal is met for the first time today
-            if (newDailyGoalMetToday && !routine.pointsGivenToday) {
-                routine.streak = (routine.streak || 0) + 1;
-                updatedFields.streak = routine.streak;
-
-                if (routine.areas && routine.basePoints) {
-                    const newStats = { ...userStats };
-                    routine.areas.forEach(areaId => {
-                        newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
-                    });
-                    // Firestore에 통계 업데이트
-                    await updateUserStatsInFirebase(newStats);
+            const readPages = parseInt(document.getElementById('readPages').value);
+            
+            if (isNaN(readPages) || readPages <= 0) {
+                showNotification('읽은 페이지 수를 입력해주세요.', 'error');
+                return;
+            }
+            
+            const currentRoutine = activeRoutineForModal;
+            
+            try {
+                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
+                if (routine) {
+                    const newCurrentPage = Math.min(routine.currentPage + readPages, routine.endPage);
+                    const newDailyReadPagesToday = (routine.dailyReadPagesToday || 0) + readPages;
+                    const newDailyGoalMetToday = newDailyReadPagesToday >= routine.dailyPages;
+                    
+                    const updatedFields = {
+                        currentPage: newCurrentPage,
+                        value: newCurrentPage,
+                        status: null,
+                        dailyReadPagesToday: newDailyReadPagesToday,
+                        dailyGoalMetToday: newDailyGoalMetToday,
+                        lastUpdatedDate: todayDateString
+                    };
+    
+                    let pointsAwarded = false;
+                    if (newDailyGoalMetToday && !routine.pointsGivenToday) {
+                        updatedFields.streak = (routine.streak || 0) + 1;
+                        if (routine.areas && routine.basePoints) {
+                            const newStats = { ...userStats };
+                            routine.areas.forEach(areaId => {
+                                newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                            });
+                            await updateUserStatsInFirebase(newStats);
+                        }
+                        updatedFields.pointsGivenToday = true;
+                        pointsAwarded = true;
+                    }
+                    
+                    await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+                    
+                    hideReadingProgressModal();
+                    
+                    if (newCurrentPage >= routine.endPage) {
+                        showNotification(`🎉 "${routine.bookTitle}" 완독을 축하합니다! 🎊`);
+                        showCompletionEffect();
+                    } else {
+                        const progress = getReadingProgress({ ...routine, ...updatedFields });
+                        showNotification(`📖 ${readPages}페이지 읽기 완료! (${progress}%)`);
+                    }
+    
+                    if (pointsAwarded) {
+                        setTimeout(showCelebrationMessage, 300);
+                    }
                 }
-                updatedFields.pointsGivenToday = true;
-                pointsAwarded = true;
-            }
-            
-            // 클라이언트 측 데이터는 리스너가 업데이트하도록 맡깁니다.
-            await updateRoutineInFirebase(currentRoutine.id, updatedFields);
-            
-            debugLog('독서 루틴 업데이트됨:', routine.name, '현재페이지:', newCurrentPage, '오늘 읽은 페이지:', newDailyReadPagesToday, '오늘 목표 달성:', newDailyGoalMetToday);
-
-            // Check for full book completion (and give a special notification)
-            if (newCurrentPage >= routine.endPage) {
-                showNotification(`🎉 "${routine.bookTitle}" 완독을 축하합니다! 🎊`);
-                showCompletionEffect();
-            } else {
-                const progress = Math.round(((newCurrentPage - routine.startPage + 1) / (routine.endPage - routine.startPage + 1)) * 100);
-                showNotification(`📖 ${readPages}페이지 읽기 완료! (${progress}%)`);
+            } catch (error) {
+                console.error('Failed to update reading routine:', error);
+                showNotification('저장에 실패했습니다.', 'error');
             }
         }
         
-        hideReadingProgressModal();
-        
-        if (pointsAwarded) {
-            setTimeout(() => {
-                showCelebrationMessage();
-            }, 300);
-        }
-    
-    } catch (error) {
-        console.error('Failed to update reading routine:', error);
-        showNotification('저장에 실패했습니다.', 'error');
-    }
-}
-
-
-
-
+        // === Wheel and Simple Number Modals ===
         function showWheelModal(routine) {
             const modal = document.getElementById('wheelInputModal');
             const title = document.getElementById('wheelModalTitle');
             const wheelContainer = document.getElementById('wheelContainer');
             
-            if (!modal || !title || !wheelContainer) {
-                console.error('Wheel modal elements not found.');
-                return;
-            }
+            if (!modal || !title || !wheelContainer) return;
             
             title.textContent = routine.name;
             
-            // Create wheel
             const minValue = routine.min || 1;
             const maxValue = routine.max || 100;
             const stepValue = routine.step || 1;
@@ -3111,109 +2946,104 @@ document.addEventListener('DOMContentLoaded', () => {
             const wheel = createNumberWheel(minValue, maxValue, stepValue, currentValue, routine.unit);
             wheelContainer.appendChild(wheel);
             
-            // Confirm button event
-            const confirmBtn = document.getElementById('wheelConfirmBtn');
-            confirmBtn.onclick = () => handleWheelConfirm();
-            
+            document.getElementById('wheelConfirmBtn').onclick = () => handleWheelConfirm();
             modal.style.display = 'flex';
         }
-
+    
         function hideWheelModal() {
-            const modal = document.getElementById('wheelInputModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
+            document.getElementById('wheelInputModal').style.display = 'none';
             activeRoutineForModal = null;
         }
-
+    
         async function handleWheelConfirm() {
-            if (!activeRoutineForModal) {
-                console.error('Active routine is missing.');
-                return;
-            }
-            
+            if (!activeRoutineForModal) return;
             const wheel = document.querySelector('.number-wheel-container');
-            if (!wheel || !wheel.getValue) {
-                showNotification('Please select a value.', 'error');
-                return;
-            }
-            
+            if (!wheel || !wheel.getValue) return;
             const value = wheel.getValue();
-            const currentRoutine = activeRoutineForModal;
-            debugLog('Wheel value confirmed:', value, 'Routine:', currentRoutine.name);
-            
-            try {
-                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
-                if (routine) {
-                    // For continuous routines, set value to max of current and new value
-                    if (routine.continuous) {
-                        routine.value = Math.max(routine.value || 0, value);
-                    } else {
-                        routine.value = value;
-                    }
-                    
-                    routine.status = null; // Remove skipped status to make it completed
-                    
-                    // Streak and points: only if daily goal is met for the first time today
-                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
-                        routine.streak = (routine.streak || 0) + 1;
-                        if (routine.areas && routine.basePoints) {
-                            routine.areas.forEach(areaId => {
-                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                            });
-                        }
-                        routine.pointsGivenToday = true; // Mark points as given for today
-                    }
-                    routine.lastUpdatedDate = todayDateString; // Update last updated date
-                    updateAreasInFirebase(); // Save data after all updates
-                    debugLog('Routine updated:', routine.name, 'Value:', routine.value, 'Goal achieved:', isGoalAchieved(routine));
-                }
-                
-                await updateRoutineValue(currentRoutine.id, value, 'number'); // Simulate Firebase update
-                hideWheelModal();
-                
-                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
-                showNotification(`✅ ${currentRoutine.name}: ${routine.value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
-                
-                renderRoutines();
-                
-                if (isGoalAchieved(routine)) {
-                    showCompletionEffect();
-                    setTimeout(() => {
-                        showCelebrationMessage();
-                    }, 300);
-                }
-                
-            } catch (error) {
-                console.error('Failed to update wheel routine:', error);
-                showNotification('저장에 실패했습니다.', 'error');
-            }
+            await handleNumberConfirm(value, 'wheel');
         }
-
-        // === Simple Number Input Modal (default) ===
+    
         function showSimpleNumberModal(routine) {
             const modal = document.getElementById('numberInputModal');
             const title = document.getElementById('numberModalTitle');
             const input = document.getElementById('numberInput');
             
-            if (!modal || !title || !input) {
-                console.error('Number input modal elements not found.');
-                return;
-            }
-            
+            if (!modal || !title || !input) return;
+    
             title.textContent = `${routine.name} - 값 입력`;
             input.value = routine.value || '';
             input.placeholder = `Enter value for ${routine.name}`;
-            
-            if (routine.unit) {
-                input.placeholder += ` (${routine.unit})`;
-            }
+            if (routine.unit) input.placeholder += ` (${routine.unit})`;
             
             modal.style.display = 'flex';
             input.focus();
         }
-
-        // === Number Wheel Creation Function ===
+    
+        function hideNumberInputModal() {
+            document.getElementById('numberInputModal').style.display = 'none';
+            activeRoutineForModal = null;
+        }
+    
+        async function handleNumberInputConfirm() {
+            if (!activeRoutineForModal) return;
+            const input = document.getElementById('numberInput');
+            const value = parseFloat(input.value);
+            if (isNaN(value) || value <= 0) {
+                showNotification('Please enter a valid number.', 'error');
+                return;
+            }
+            await handleNumberConfirm(value, 'simple');
+        }
+        
+        async function handleNumberConfirm(value, inputType) {
+            if (!activeRoutineForModal) return;
+            
+            const currentRoutine = activeRoutineForModal;
+            
+            try {
+                const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
+                if (routine) {
+                    const finalValue = routine.continuous ? Math.max(routine.value || 0, value) : value;
+                    const updatedFields = {
+                        value: finalValue,
+                        status: null,
+                        lastUpdatedDate: todayDateString
+                    };
+                    
+                    let pointsAwarded = false;
+                    const tempRoutineForCheck = { ...routine, value: finalValue };
+                    if (isGoalAchieved(tempRoutineForCheck) && !routine.pointsGivenToday) {
+                        updatedFields.streak = (routine.streak || 0) + 1;
+                         if (routine.areas && routine.basePoints) {
+                            const newStats = { ...userStats };
+                            routine.areas.forEach(areaId => {
+                                newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                            });
+                            await updateUserStatsInFirebase(newStats);
+                        }
+                        updatedFields.pointsGivenToday = true;
+                        pointsAwarded = true;
+                    }
+    
+                    await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+                    
+                    if (inputType === 'simple') hideNumberInputModal();
+                    if (inputType === 'wheel') hideWheelModal();
+                    
+                    const goalStatus = isGoalAchieved(tempRoutineForCheck) ? ' 🎯 목표 달성!' : '';
+                    showNotification(`✅ ${currentRoutine.name}: ${finalValue}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
+                    
+                    if (pointsAwarded) {
+                        showCompletionEffect();
+                        setTimeout(showCelebrationMessage, 300);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to update number routine:', error);
+                showNotification('저장에 실패했습니다.', 'error');
+            }
+        }
+        
         function createNumberWheel(min, max, step, initialValue, unit) {
             const container = document.createElement('div');
             container.className = 'number-wheel-container';
@@ -3224,7 +3054,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const scroll = document.createElement('div');
             scroll.className = 'number-wheel-scroll';
             
-            // Create options
             const options = [];
             for (let i = min; i <= max; i += step) {
                 options.push(i);
@@ -3238,20 +3067,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.className = 'number-option';
                 option.textContent = `${value} ${unit || ''}`;
                 option.dataset.value = value;
-                
-                if (index === currentIndex) {
-                    option.classList.add('active');
-                }
-                
+                if (index === currentIndex) option.classList.add('active');
                 option.addEventListener('click', () => {
                     setActiveOption(index);
                     scroll.scrollTop = index * 40;
                 });
-                
                 scroll.appendChild(option);
             });
             
-            // Set active option function
             function setActiveOption(index) {
                 scroll.querySelectorAll('.number-option').forEach((opt, i) => {
                     opt.classList.toggle('active', i === index);
@@ -3259,103 +3082,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentIndex = index;
             }
             
-            // Scroll event
             let scrollTimeout;
             scroll.addEventListener('scroll', () => {
                 clearTimeout(scrollTimeout);
                 scrollTimeout = setTimeout(() => {
-                    const scrollTop = scroll.scrollTop;
-                    const itemHeight = 40;
-                    const newIndex = Math.round(scrollTop / itemHeight);
+                    const newIndex = Math.round(scroll.scrollTop / 40);
                     const clampedIndex = Math.max(0, Math.min(newIndex, options.length - 1));
-                    
                     setActiveOption(clampedIndex);
-                    scroll.scrollTop = clampedIndex * itemHeight;
+                    scroll.scrollTop = clampedIndex * 40;
                 }, 100);
             });
             
-            // getValue method
-            container.getValue = () => {
-                return options[currentIndex];
-            };
+            container.getValue = () => options[currentIndex];
             
             wheel.appendChild(scroll);
             container.appendChild(wheel);
             
-            // Set initial scroll position
-            setTimeout(() => {
-                scroll.scrollTop = currentIndex * 40;
-            }, 50);
+            setTimeout(() => { scroll.scrollTop = currentIndex * 40; }, 50);
             
             return container;
         }
-
-        // Hide number input modal
-        function hideNumberInputModal() {
-            const modal = document.getElementById('numberInputModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-            activeRoutineForModal = null;
-        }
-
-        // Handle number input confirmation
-        async function handleNumberInputConfirm() {
-            if (!activeRoutineForModal) {
-                console.error('Active routine is missing.');
-                return;
-            }
-            
-            const input = document.getElementById('numberInput');
-            const value = parseFloat(input.value);
-            
-            if (isNaN(value) || value <= 0) {
-                showNotification('Please enter a valid number.', 'error');
-                return;
-            }
-            
-            try {
-                const routine = sampleRoutines.find(r => r.id === activeRoutineForModal.id);
-                if (routine) {
-                    routine.value = value;
-                    routine.status = null;
-                    // Streak and points: only if daily goal is met for the first time today
-                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
-                        routine.streak = (routine.streak || 0) + 1;
-                        if (routine.areas && routine.basePoints) {
-                            routine.areas.forEach(areaId => {
-                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                            });
-                        }
-                        routine.pointsGivenToday = true; // Mark points as given for today
-                    }
-                    routine.lastUpdatedDate = todayDateString; // Update last updated date
-                    updateAreasInFirebase();
-                }
-
-                await updateRoutineValue(activeRoutineForModal.id, value, 'number');
-                
-                hideNumberInputModal();
-                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
-                showNotification(`✅ ${activeRoutineForModal.name}: ${value}${activeRoutineForModal.unit || ''}${goalStatus} 저장되었습니다!`);
-                
-                renderRoutines();
-                if (isGoalAchieved(routine)) {
-                    showCompletionEffect();
-                    setTimeout(() => {
-                        showCelebrationMessage();
-                    }, 300);
-                }
-                
-            } catch (error) {
-                console.error('Failed to update number routine:', error);
-                showNotification('저장에 실패했습니다. 다시 시도해주세요.', 'error');
-            }
-        }
-
+    
         // === Time Input Modal Functions ===
-        
-        // Show time input modal
         function showTimeInputModal(routine) {
             activeRoutineForModal = routine;
             
@@ -3363,10 +3111,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = document.getElementById('timeModalTitle');
             const input = document.getElementById('timeInput');
             
-            if (!modal || !title || !input) {
-                console.error('Time input modal elements not found.');
-                return;
-            }
+            if (!modal || !title || !input) return;
             
             title.textContent = `${routine.name} - 시간 입력`;
             input.value = routine.value || getCurrentTime();
@@ -3374,153 +3119,80 @@ document.addEventListener('DOMContentLoaded', () => {
             modal.style.display = 'flex';
             input.focus();
         }
-
-        // Hide time input modal
+    
         function hideTimeInputModal() {
-            const modal = document.getElementById('timeInputModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
+            document.getElementById('timeInputModal').style.display = 'none';
             activeRoutineForModal = null;
         }
-
-        // Get current time
+    
         function getCurrentTime() {
             const now = new Date();
             return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
-
-        // Handle time input confirmation
+    
         async function handleTimeInputConfirm() {
-            if (!activeRoutineForModal) {
-                console.error('Active routine is missing.');
-                return;
-            }
+            if (!activeRoutineForModal) return;
             
-            const input = document.getElementById('timeInput');
-            const value = input.value;
-            
-            if (!value || value === '') {
+            const value = document.getElementById('timeInput').value;
+            if (!value) {
                 showNotification('Please select a time.', 'error');
                 return;
             }
             
             const currentRoutine = activeRoutineForModal;
-            debugLog('Time value confirmed:', value, 'Routine:', currentRoutine.name);
             
             try {
                 const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
                 if (routine) {
-                    routine.value = value;
-                    routine.status = null; // Remove skipped status to make it completed
+                    const updatedFields = {
+                        value: value,
+                        status: null,
+                        lastUpdatedDate: todayDateString
+                    };
                     
-                    // Streak and points: only if daily goal is met for the first time today
-                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
-                        routine.streak = (routine.streak || 0) + 1;
+                    let pointsAwarded = false;
+                    if (isGoalAchieved({ ...routine, value: value }) && !routine.pointsGivenToday) {
+                        updatedFields.streak = (routine.streak || 0) + 1;
                         if (routine.areas && routine.basePoints) {
+                            const newStats = { ...userStats };
                             routine.areas.forEach(areaId => {
-                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                                newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
                             });
+                            await updateUserStatsInFirebase(newStats);
                         }
-                        routine.pointsGivenToday = true; // Mark points as given for today
+                        updatedFields.pointsGivenToday = true;
+                        pointsAwarded = true;
                     }
-                    routine.lastUpdatedDate = todayDateString; // Update last updated date
-                    updateAreasInFirebase(); // Save data after all updates
-                    debugLog('Routine updated:', routine.name, 'Value:', routine.value);
+    
+                    await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+    
+                    hideTimeInputModal();
+                    showNotification(`✅ ${currentRoutine.name}: ${value} 저장되었습니다!`);
+                    
+                    if(pointsAwarded){
+                        showCompletionEffect();
+                        setTimeout(showCelebrationMessage, 300);
+                    }
                 }
-                
-                await updateRoutineValue(currentRoutine.id, value, 'time'); // Simulate Firebase update
-                hideTimeInputModal();
-                
-                const goalStatus = isGoalAchieved(routine) ? ' 🎯 목표 달성!' : '';
-                showNotification(`✅ ${currentRoutine.name}: ${value}${goalStatus} 저장되었습니다!`);
-                
-                renderRoutines();
-                showCompletionEffect();
-                
-                if (isGoalAchieved(routine)) {
-                    setTimeout(() => {
-                        showCelebrationMessage();
-                    }, 300);
-                }
-                
             } catch (error) {
                 console.error('Failed to update time routine:', error);
-                showNotification('저장에 실패했습니다. 다시 시도해주세요.', 'error');
+                showNotification('저장에 실패했습니다.', 'error');
             }
         }
-
-        // Simulate Firebase update function (in a real app, this would be a Firebase API call)
-        async function updateRoutineValue(routineId, value, type) {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    debugLog(`Firebase update simulation: Routine ${routineId}, Value: ${value}, Type: ${type}`);
-                    // updateAreasInFirebase(); // Data is already saved in the calling functions
-                    resolve({ success: true });
-                }, 300);
-            });
-        }
-
-        // Utility Functions
-        function getTimeEmoji(time) {
-            const timeEmojis = {
-                'morning': '🌅',
-                'afternoon': '🌞',
-                'evening': '🌙'
-            };
-            return timeEmojis[time] || '⏰';
-        }
-
-        function getTimeLabel(time) {
-            const timeLabels = {
-                'morning': '아침',
-                'afternoon': '점심',
-                'evening': '저녁'
-            };
-            return timeLabels[time] || '시간';
-        }
-
-        function getFrequencyLabel(frequency) {
-            const frequencyLabels = {
-                'daily': '매일',
-                'weekday': '평일',
-                'weekend': '주말'
-            };
-            return frequencyLabels[frequency] || frequency;
-        }
-
-        function getTypeIcon(type) {
-            const typeIcons = {
-                'yesno': '✅',
-                'number': '🔢',
-                'time': '⏰',
-                'reading': '📚'
-            };
-            return typeIcons[type] || '📝';
-        }
-
-        function getTypeLabel(type) {
-            const typeLabels = {
-                'yesno': '체크',
-                'number': '숫자',
-                'time': '시간',
-                'reading': '독서'
-            };
-            return typeLabels[type] || type;
-        }
-
+    
+        // === Utility Functions ===
+        function getTimeEmoji(time) { return { 'morning': '🌅', 'afternoon': '🌞', 'evening': '🌙' }[time] || '⏰'; }
+        function getTimeLabel(time) { return { 'morning': '아침', 'afternoon': '점심', 'evening': '저녁' }[time] || '시간'; }
+        function getFrequencyLabel(frequency) { return { 'daily': '매일', 'weekday': '평일', 'weekend': '주말' }[frequency] || frequency; }
+        function getTypeIcon(type) { return { 'yesno': '✅', 'number': '🔢', 'time': '⏰', 'reading': '📚' }[type] || '📝'; }
+        function getTypeLabel(type) { return { 'yesno': '체크', 'number': '숫자', 'time': '시간', 'reading': '독서' }[type] || type; }
+    
         function getRoutineValueDisplay(routine) {
-            if (routine.status === 'skipped') {
-                return '건너뜀';
-            }
-            
-            if (routine.type === 'yesno') {
-                return routine.value === true ? '완료' : '미완료';
-            }
+            if (routine.status === 'skipped') return '건너뜀';
+            if (routine.type === 'yesno') return routine.value === true ? '완료' : '미완료';
             
             if (routine.type === 'reading') {
                 const progress = getReadingProgress(routine);
-                // Display today's reading progress or overall progress if daily goal not set/met
                 if (routine.dailyPages && routine.dailyReadPagesToday > 0) {
                     const dailyProgressPercent = Math.min(100, Math.round((routine.dailyReadPagesToday / routine.dailyPages) * 100));
                     return `${routine.dailyReadPagesToday}/${routine.dailyPages}p (${dailyProgressPercent}%)`;
@@ -3531,315 +3203,338 @@ document.addEventListener('DOMContentLoaded', () => {
             if (routine.type === 'number') {
                 if (routine.value !== null && routine.value !== undefined) {
                     const displayValue = `${routine.value} ${routine.unit || ''}`;
-                    
-                    // For continuous number routines with a goal, show progress towards daily goal
                     if (routine.continuous && routine.dailyGoal) {
                         const progress = Math.min(100, Math.round((routine.value / routine.dailyGoal) * 100));
                         return `${displayValue} (${progress}%)`;
                     }
-                    
                     return displayValue;
                 }
                 return routine.continuous ? '0 ' + (routine.unit || '') : '미완료';
             }
             
-            if (routine.type === 'time') {
-                if (routine.value) {
-                    return routine.value;
-                }
-                return '미완료';
-            }
+            if (routine.type === 'time') return routine.value || '미완료';
             
             return '';
         }
-
-        // Checks if a routine's goal is achieved (daily goal for continuous/reading, or full completion for others)
+    
         function isGoalAchieved(routine) {
-            if (routine.status === 'skipped') return false; // Skipped routines never achieve goal
-
-            if (routine.type === 'reading') {
-                // Reading goal is achieved if book is fully read OR daily pages goal is met
-                return (routine.currentPage >= routine.endPage) || (routine.dailyReadPagesToday >= routine.dailyPages);
-            }
-            
-            if (routine.type === 'number' && routine.dailyGoal !== null && routine.dailyGoal !== undefined) {
-                // Number routine with a daily goal: achieved if current value meets or exceeds goal
-                return routine.value !== null && routine.value !== undefined && routine.value >= routine.dailyGoal;
-            }
-            
-            // For other types (yesno, time) or number routines without a specific dailyGoal,
-            // goal achievement is simply routine completion.
+            if (routine.status === 'skipped') return false;
+            if (routine.type === 'reading') return (routine.currentPage >= routine.endPage) || ((routine.dailyReadPagesToday || 0) >= routine.dailyPages);
+            if (routine.type === 'number' && routine.dailyGoal !== null && routine.dailyGoal !== undefined) return routine.value !== null && routine.value >= routine.dailyGoal;
             return isRoutineCompleted(routine);
         }
-
-        // Determines if a routine is considered "completed" for display purposes (e.g., in completed section)
+    
         function isRoutineCompleted(routine) {
-            if (routine.status === 'skipped') {
-                debugLog(`루틴 ${routine.name}: 건너뜀 상태`);
-                return false;
-            }
-            
-            // For continuous number routines and reading routines, completion is based on daily goal achievement
-            if (isContinuousRoutine(routine) || isReadingRoutine(routine)) {
-                return routine.dailyGoalMetToday === true; // Use the specific daily goal met flag
-            }
-            
-            // Original logic for yesno, time, and non-continuous number routines
-            if (routine.type === 'yesno') {
-                const completed = routine.value === true;
-                debugLog(`루틴 ${routine.name} (Yes/No): 값=${routine.value}, 완료=${completed}`);
-                return completed;
-            }
-            
-            if (routine.type === 'number') {
-                // For non-continuous number routines, completion is just having any value
-                const completed = routine.value !== null && routine.value !== undefined && routine.value > 0;
-                debugLog(`루틴 ${routine.name} (숫자): 값=${routine.value}, 완료=${completed}`);
-                return completed;
-            }
-            
-            if (routine.type === 'time') {
-                const completed = routine.value !== null && routine.value !== undefined && routine.value !== '';
-                debugLog(`루틴 ${routine.name} (시간): 값="${routine.value}", 완료=${completed}`);
-                return completed;
-            }
-            
-            debugLog(`루틴 ${routine.name}: 알 수 없는 타입 (${routine.type})`);
+            if (routine.status === 'skipped') return false;
+            if (isContinuousRoutine(routine) || isReadingRoutine(routine)) return routine.dailyGoalMetToday === true;
+            if (routine.type === 'yesno') return routine.value === true;
+            if (routine.type === 'number') return routine.value !== null && routine.value > 0;
+            if (routine.type === 'time') return !!routine.value;
             return false;
         }
-
-        // Reading routine functions
         
-        // Calculate today's reading range
-        function getTodayReadingRange(routine) {
-            if (routine.type !== 'reading') return null;
-            
-            const currentPage = routine.currentPage || routine.startPage -1; // If not started, current page is startPage - 1
-            const dailyPages = routine.dailyPages || 10;
-            const todayStart = currentPage + 1;
-            const todayEnd = Math.min(currentPage + dailyPages, routine.endPage);
-            
-            return {
-                start: todayStart,
-                end: todayEnd,
-                pages: todayEnd - todayStart + 1
-            };
-        }
-
-        // Calculate reading progress
         function getReadingProgress(routine) {
-            if (routine.type !== 'reading') return 0;
-            
+            if (routine.type !== 'reading' || !routine.endPage) return 0;
             const totalPages = routine.endPage - routine.startPage + 1;
             const readPages = routine.currentPage - routine.startPage + 1;
             return Math.max(0, Math.min(100, Math.round((readPages / totalPages) * 100)));
         }
-
-        // Calculate estimated completion date
-        function getEstimatedCompletionDate(routine) {
+    
+        function getTodayReadingRange(routine) {
             if (routine.type !== 'reading') return null;
-            
-            const remainingPages = routine.endPage - routine.currentPage;
+            const currentPage = routine.currentPage || routine.startPage - 1;
             const dailyPages = routine.dailyPages || 10;
-            const remainingDays = Math.ceil(remainingPages / dailyPages);
-            
-            const completionDate = new Date(today);
+            const todayStart = currentPage + 1;
+            const todayEnd = Math.min(currentPage + dailyPages, routine.endPage);
+            return { start: todayStart, end: todayEnd, pages: Math.max(0, todayEnd - todayStart + 1) };
+        }
+    
+        function getEstimatedCompletionDate(routine) {
+            if (routine.type !== 'reading' || routine.currentPage >= routine.endPage) return '완료';
+            const remainingPages = routine.endPage - routine.currentPage;
+            const remainingDays = Math.ceil(remainingPages / (routine.dailyPages || 10));
+            const completionDate = new Date();
             completionDate.setDate(today.getDate() + remainingDays);
-            
             return completionDate.toLocaleDateString('ko-KR');
         }
-
-        // Check if it's a reading routine
-        function isReadingRoutine(routine) {
-            return routine.type === 'reading';
-        }
-
-        // Check if it's a continuous update routine
-        function isContinuousRoutine(routine) {
-            return routine.continuous === true;
-        }
-
-        // Check if a routine is in progress (has value but not yet fully completed/goal achieved)
+    
+        function isReadingRoutine(routine) { return routine.type === 'reading'; }
+        function isContinuousRoutine(routine) { return routine.continuous === true; }
+    
         function isRoutineInProgress(routine) {
-            if (routine.status === 'skipped') return false;
-            
-            if (routine.type === 'reading') {
-                // In progress if some pages read but not daily goal met and not book completed
-                return (routine.currentPage > (routine.startPage - 1)) && (routine.currentPage < routine.endPage) && (routine.dailyGoalMetToday !== true);
-            }
-            
-            if (routine.type === 'number' && routine.continuous) {
-                // In progress if value > 0 but daily goal not met
-                const hasValue = routine.value !== null && routine.value !== undefined && routine.value > 0;
-                const goalNotReached = routine.dailyGoal ? routine.value < routine.dailyGoal : false;
-                return hasValue && goalNotReached && (routine.dailyGoalMetToday !== true);
-            }
-            
+            if (routine.status === 'skipped' || isRoutineCompleted(routine)) return false;
+            if (routine.type === 'reading') return (routine.currentPage > (routine.startPage - 1)) && (routine.currentPage < routine.endPage);
+            if (routine.type === 'number' && routine.continuous) return (routine.value || 0) > 0;
             return false;
         }
-
-        // Create improved routine element 8월 6일 업데이트
+    
         function createImprovedRoutineElement(routine) {
-    const isCompleted = isRoutineCompleted(routine);
-    const isSkipped = routine.status === 'skipped';
-    const isGoalReachedOverall = isGoalAchieved(routine);
-    const isContinuous = isContinuousRoutine(routine);
-    const isInProgress = isRoutineInProgress(routine);
-    
-    const routineDiv = document.createElement('div');
-    routineDiv.className = 'routine-item';
-    routineDiv.dataset.id = routine.id;
-    routineDiv.dataset.type = routine.type;
-    
-    routineDiv.classList.add(routine.time);
-    
-    // Apply status-specific styles
-    if (isSkipped) {
-        routineDiv.classList.add('skipped');
-    } else if (isContinuous && isGoalReachedOverall) {
-        routineDiv.classList.add('goal-achieved');
-    } else if (isInProgress) {
-        routineDiv.classList.add('inprogress');
-    } else if (isCompleted && !isContinuous) {
-        routineDiv.classList.add('completed');
-    }
-    
-    let actionButton = '';
-    if (routine.type === 'yesno') {
-        const checkIcon = isCompleted ? '✓' : '';
-        const skipIcon = isSkipped ? '⏭' : '';
-        actionButton = `<div class="routine-checkbox">${checkIcon || skipIcon}</div>`;
-    } else {
-        let buttonIcon = '';
-        if (isContinuous || isReadingRoutine(routine)) {
-            if (isGoalReachedOverall) {
-                buttonIcon = '🎯';
-            } else if (isInProgress) {
-                buttonIcon = '⏳';
+            const isCompleted = isRoutineCompleted(routine);
+            const isSkipped = routine.status === 'skipped';
+            const isGoalReachedOverall = isGoalAchieved(routine);
+            const isContinuous = isContinuousRoutine(routine);
+            const isInProgress = isRoutineInProgress(routine);
+            
+            const routineDiv = document.createElement('div');
+            routineDiv.className = 'routine-item';
+            routineDiv.dataset.id = routine.id;
+            routineDiv.dataset.type = routine.type;
+            routineDiv.classList.add(routine.time);
+            
+            if (isSkipped) routineDiv.classList.add('skipped');
+            else if (isContinuous && isGoalReachedOverall) routineDiv.classList.add('goal-achieved');
+            else if (isInProgress) routineDiv.classList.add('inprogress');
+            else if (isCompleted) routineDiv.classList.add('completed');
+            
+            let actionButton = '';
+            if (routine.type === 'yesno') {
+                const icon = isCompleted ? '✓' : (isSkipped ? '⏭' : '');
+                actionButton = `<div class="routine-checkbox">${icon}</div>`;
             } else {
-                buttonIcon = routine.type === 'number' ? '🔢' : '📖';
+                let icon = '▶'; // Default play icon
+                if (isCompleted || isGoalReachedOverall) icon = '✓';
+                if (isSkipped) icon = '⏭';
+                if (isInProgress) icon = '⏳';
+                if (isContinuous && isGoalReachedOverall) icon = '🎯';
+                actionButton = `<div class="routine-action-button">${icon}</div>`;
             }
-        } else {
-            if (isCompleted) {
-                buttonIcon = '✓';
-            } else if (isSkipped) {
-                buttonIcon = '⏭';
-            } else {
-                buttonIcon = routine.type === 'number' ? '🔢' : '⏰';
+            
+            const streakBadge = routine.streak > 0 ? `<div class="streak-badge ${routine.streak >= 30 ? 'mega-streak' : (routine.streak >= 7 ? 'high-streak' : '')}">🔥 ${routine.streak}</div>` : '';
+            const continuousBadge = isContinuous ? `<div class="continuous-badge">🔄</div>` : '';
+            
+            routineDiv.innerHTML = `
+                ${actionButton}
+                <div class="routine-content">
+                    <div class="routine-name">
+                        ${routine.name}
+                        <span class="type-icon">${getTypeIcon(routine.type)}</span>
+                    </div>
+                    <div class="routine-details">
+                        <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
+                        <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
+                    </div>
+                </div>
+                <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
+                ${streakBadge}
+                ${continuousBadge}
+            `;
+            
+            const actionElement = routineDiv.querySelector('.routine-checkbox, .routine-action-button');
+            if (actionElement) {
+                actionElement.addEventListener('click', async (e) => {
+                    e.stopPropagation(); // 이벤트 버블링 방지
+                    debugLog(`Action for: ${routine.name}`);
+    
+                    if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
+                        // 완료 취소 로직 (Yes/No, Time, 일반 Number)
+                        const updatedFields = { value: routine.type === 'yesno' ? false : null, status: null };
+                        if (routine.pointsGivenToday) {
+                            updatedFields.streak = Math.max(0, (routine.streak || 0) - 1);
+                            if (routine.areas && routine.basePoints) {
+                                const newStats = { ...userStats };
+                                routine.areas.forEach(areaId => {
+                                    newStats[areaId] = Math.max(0, (newStats[areaId] || 0) - routine.basePoints);
+                                });
+                                await updateUserStatsInFirebase(newStats);
+                            }
+                            updatedFields.pointsGivenToday = false;
+                        }
+                        await updateRoutineInFirebase(routine.id, updatedFields);
+                        showNotification('루틴 완료가 취소되었습니다.', 'warning');
+                    } else if (!isSkipped) {
+                        // 완료/진행 로직
+                        if (routine.type === 'yesno') {
+                            const updatedFields = { value: true, status: null, pointsGivenToday: true, streak: (routine.streak || 0) + 1 };
+                            if (routine.areas && routine.basePoints) {
+                                const newStats = { ...userStats };
+                                routine.areas.forEach(areaId => {
+                                    newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                                });
+                                await updateUserStatsInFirebase(newStats);
+                            }
+                            await updateRoutineInFirebase(routine.id, updatedFields);
+                            showCompletionEffect();
+                            setTimeout(showCelebrationMessage, 300);
+                        } else if (routine.type === 'number') {
+                            showNumberInputModal(routine);
+                        } else if (routine.type === 'time') {
+                            showTimeInputModal(routine);
+                        } else if (routine.type === 'reading') {
+                            showReadingProgressModal(routine);
+                        }
+                    }
+                });
+            }
+            return routineDiv;
+        }
+        
+        // === NEW FUNCTION: renderManagePage ===
+        function renderManagePage() {
+            const manageList = document.getElementById('manageRoutineList');
+            const saveBtn = document.getElementById('saveOrderBtn');
+            if (!manageList || !saveBtn) return;
+            
+            manageList.innerHTML = '';
+            orderChanged = false;
+            saveBtn.classList.remove('show');
+    
+            const sortedRoutines = [...sampleRoutines].sort((a, b) => a.order - b.order);
+    
+            sortedRoutines.forEach(routine => {
+                const item = createManageRoutineElement(routine);
+                manageList.appendChild(item);
+            });
+    
+            if (sortableInstance) {
+                sortableInstance.destroy();
+            }
+    
+            sortableInstance = new Sortable(manageList, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                onEnd: () => {
+                    orderChanged = true;
+                    saveBtn.classList.add('show');
+                }
+            });
+        }
+    
+        // === NEW HELPER FUNCTION: createManageRoutineElement ===
+        function createManageRoutineElement(routine) {
+            const item = document.createElement('div');
+            item.className = 'manage-routine-item';
+            item.dataset.id = routine.id;
+    
+            item.innerHTML = `
+                <div class="routine-info-wrapper">
+                    <span class="drag-handle">☰</span>
+                    <div class="routine-main-info">
+                        <div class="routine-main-name">${routine.name}</div>
+                        <div class="routine-main-details">
+                            <span class="routine-type-badge">${getTypeLabel(routine.type)}</span>
+                            <span>${getTimeLabel(routine.time)}</span>
+                            <span>${getFrequencyLabel(routine.frequency)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="routine-controls">
+                    <label class="routine-toggle">
+                        <input type="checkbox" class="toggle-checkbox" ${routine.active ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="edit-btn">편집</button>
+                </div>
+            `;
+    
+            // Event listener for toggle switch
+            item.querySelector('.toggle-checkbox').addEventListener('change', async (e) => {
+                const newStatus = e.target.checked;
+                await updateRoutineInFirebase(routine.id, { active: newStatus });
+                showNotification(`'${routine.name}' 루틴이 ${newStatus ? '활성화' : '비활성화'}되었습니다.`, 'info');
+            });
+    
+            // Event listener for edit button
+            item.querySelector('.edit-btn').addEventListener('click', () => {
+                editRoutine(routine.id);
+            });
+    
+            return item;
+        }
+    
+        // === NEW FUNCTION: saveRoutineOrder ===
+        async function saveRoutineOrder() {
+            if (!orderChanged || !sortableInstance) return;
+    
+            const newOrderIds = sortableInstance.toArray();
+            const orderedRoutines = newOrderIds.map((id, index) => {
+                const routine = sampleRoutines.find(r => String(r.id) === id);
+                return { ...routine, order: index };
+            });
+    
+            try {
+                await updateRoutineOrderInFirebase(orderedRoutines);
+                orderChanged = false;
+                document.getElementById('saveOrderBtn').classList.remove('show');
+                showNotification('✅ 루틴 순서가 저장되었습니다!');
+            } catch (error) {
+                showNotification('순서 저장에 실패했습니다.', 'error');
             }
         }
-        actionButton = `<div class="routine-action-button">${buttonIcon}</div>`;
-    }
     
-    let streakBadge = '';
-    if (routine.streak > 0) {
-        let streakClass = '';
-        if (routine.streak >= 30) streakClass = 'mega-streak';
-        else if (routine.streak >= 7) streakClass = 'high-streak';
-        
-        streakBadge = `<div class="streak-badge ${streakClass}">🔥 ${routine.streak}</div>`;
-    }
-    
-    let continuousBadge = '';
-    if (isContinuous) {
-        continuousBadge = `<div class="continuous-badge">🔄</div>`;
-    }
-    
-    routineDiv.innerHTML = `
-        ${actionButton}
-        <div class="routine-content">
-            <div class="routine-name">
-                ${routine.name}
-                <span class="type-icon">${getTypeIcon(routine.type)}</span>
-            </div>
-            <div class="routine-details">
-                <div class="time-period">
-                    ${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}
-                </div>
-                <div class="frequency-badge">
-                    ${getFrequencyLabel(routine.frequency)}
-                </div>
-            </div>
-        </div>
-        <div class="routine-value">
-            ${getRoutineValueDisplay(routine)}
-        </div>
-        ${streakBadge}
-        ${continuousBadge}
-    `;
-    
-    const actionElement = routineDiv.querySelector('.routine-checkbox, .routine-action-button');
-    if (actionElement) {
-        actionElement.addEventListener('click', () => {
-            debugLog(`Routine clicked: ${routine.name} (ID: ${routine.id}, Type: ${routine.type})`);
+        function renderRoutines() {
+            const incompleteList = document.getElementById('incompleteRoutineList');
+            const inprogressList = document.getElementById('inprogressRoutineList');
+            const completedList = document.getElementById('completedRoutineList');
+            const skippedList = document.getElementById('skippedRoutineList');
             
-            if (isContinuous || isReadingRoutine(routine) || (!isCompleted && !isSkipped)) {
-                if (routine.type === 'yesno') {
-                    routine.value = true;
-                    routine.status = null;
-
-                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
-                        routine.streak = (routine.streak || 0) + 1;
-                        if (routine.areas && routine.basePoints) {
-                            routine.areas.forEach(areaId => {
-                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
-                            });
-                        }
-                        routine.pointsGivenToday = true;
-                    }
-                    routine.lastUpdatedDate = todayDateString;
-                    updateAreasInFirebase();
-
-                    showCompletionEffect();
-                    setTimeout(() => {
-                        showCelebrationMessage();
-                        renderRoutines();
-                    }, 300);
-                    
-                } else if (routine.type === 'reading') {
-                    showReadingProgressModal(routine);
-                    
-                } else if (routine.type === 'number') {
-                    showNumberInputModal(routine);
-                    
-                } else if (routine.type === 'time') {
-                    showTimeInputModal(routine);
-                }
-                
-            } else if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
-                if (routine.type === 'yesno') {
-                    routine.value = false;
-                } else {
-                    routine.value = null;
-                }
-                routine.status = null;
-
-                if (routine.pointsGivenToday) {
-                    routine.streak = Math.max(0, (routine.streak || 0) - 1);
-                    if (routine.areas && routine.basePoints) {
-                        routine.areas.forEach(areaId => {
-                            userStats[areaId] = Math.max(0, (userStats[areaId] || 0) - routine.basePoints);
-                        });
-                    }
-                    routine.pointsGivenToday = false;
-                }
-                routine.lastUpdatedDate = todayDateString;
-                updateAreasInFirebase();
-
-                showNotification('루틴 완료가 취소되었습니다.', 'warning');
-                renderRoutines();
-            }
-        });
-    }
+            const inprogressSection = document.getElementById('inprogress-section');
+            const completedSection = document.getElementById('completed-section');
+            const skippedSection = document.getElementById('skipped-section');
+            const emptyState = document.getElementById('emptyStateIncomplete');
     
-    return routineDiv;
-}
-
-
-
-
-
-
+            incompleteList.innerHTML = '';
+            inprogressList.innerHTML = '';
+            completedList.innerHTML = '';
+            skippedList.innerHTML = '';
+            
+            const activeRoutines = sampleRoutines.filter(r => r.active).sort((a, b) => a.order - b.order);
+            
+            let incompleteRoutines = 0;
+    
+            activeRoutines.forEach(routine => {
+                const element = createImprovedRoutineElement(routine);
+                if (routine.status === 'skipped') {
+                    skippedList.appendChild(element);
+                } else if (isRoutineCompleted(routine)) {
+                    completedList.appendChild(element);
+                } else if (isRoutineInProgress(routine)) {
+                    inprogressList.appendChild(element);
+                } else {
+                    incompleteList.appendChild(element);
+                    incompleteRoutines++;
+                }
+            });
+            
+            emptyState.style.display = incompleteRoutines === 0 && (inprogressList.children.length > 0 || completedList.children.length > 0) ? 'block' : 'none';
+            inprogressSection.style.display = inprogressList.children.length > 0 ? 'block' : 'none';
+            completedSection.style.display = completedList.children.length > 0 ? 'block' : 'none';
+            skippedSection.style.display = skippedList.children.length > 0 ? 'block' : 'none';
+            
+            updateDailyProgress();
+        }
+        
+        function updateDailyProgress() {
+            const activeRoutines = sampleRoutines.filter(r => r.active);
+            if (activeRoutines.length === 0) {
+                 document.getElementById('dailyProgressPercentage').textContent = `0%`;
+                 document.getElementById('dailyProgressBar').style.width = `0%`;
+                 return;
+            }
+    
+            const completedCount = activeRoutines.filter(r => isRoutineCompleted(r)).length;
+            const progressPercentage = Math.round((completedCount / activeRoutines.length) * 100);
+    
+            document.getElementById('dailyProgressPercentage').textContent = `${progressPercentage}%`;
+            document.getElementById('dailyProgressBar').style.width = `${progressPercentage}%`;
+            document.getElementById('incompleteCount').textContent = activeRoutines.length - completedCount - activeRoutines.filter(r => r.status === 'skipped').length;
+            document.getElementById('inprogressCount').textContent = activeRoutines.filter(r => isRoutineInProgress(r)).length;
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('skippedCount').textContent = activeRoutines.filter(r => r.status === 'skipped').length;
+        }
+        
+        const celebrationMessages = [
+            "🎉 잘하셨습니다! 또 하나의 루틴을 완료했네요!", "✨ 훌륭해요! 꾸준한 노력이 큰 변화를 만들어냅니다!", "🌟 대단해요! 오늘도 한 걸음 더 나아가셨네요!",
+            "🎊 멋져요! 작은 실천이 모여 큰 성취가 됩니다!", "🏆 완벽해요! 꾸준함이 성공의 열쇠입니다!", "🎯 목표 달성! 정말 대단한 의지력이에요!",
+            "💪 계속 이런 식으로 해나가세요! 최고입니다!", "🔥 열정적이네요! 이런 자세가 성공을 만듭니다!"
+        ];
+    
+        function showCelebrationMessage() {
+            const randomMessage = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
+            showNotification(randomMessage, 'success');
+        }
+    
         function showNotification(message, type = 'success') {
             const existing = document.querySelector('.notification');
             if (existing) existing.remove();
@@ -3855,751 +3550,339 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => notification.remove(), 400);
             }, 4000);
         }
-
+    
+        function showCompletionEffect() { /* ... implementation ... */ }
+        
         function editRoutine(routineId) {
-    const routine = sampleRoutines.find(r => r.id === routineId);
-    if (routine) {
-        if (routine.type === 'reading') {
-            showReadingSetupModal(routine);
-        } else {
-            showEditRoutineModal(routine);
-        }
-    }
-}
-
-        // Render routines function
-        function renderRoutines() {
-            const incompleteList = document.getElementById('incompleteRoutineList');
-            const inprogressList = document.getElementById('inprogressRoutineList');
-            const completedList = document.getElementById('completedRoutineList');
-            const skippedList = document.getElementById('skippedRoutineList');
-            
-            const incompleteSection = document.getElementById('incomplete-section');
-            const inprogressSection = document.getElementById('inprogress-section');
-            const completedSection = document.getElementById('completed-section');
-            const skippedSection = document.getElementById('skipped-section');
-            const emptyState = document.getElementById('emptyStateIncomplete');
-            
-            // Clear lists
-            incompleteList.innerHTML = '';
-            inprogressList.innerHTML = '';
-            completedList.innerHTML = '';
-            skippedList.innerHTML = '';
-            
-            const incompleteRoutines = [];
-            const inprogressRoutines = [];
-            const completedRoutines = [];
-            const skippedRoutines = [];
-            
-            const sortedRoutines = [...sampleRoutines]
-                .filter(routine => routine.active)
-                .sort((a, b) => a.order - b.order);
-            
-            sortedRoutines.forEach(routine => {
-                if (routine.status === 'skipped') {
-                    skippedRoutines.push(routine);
-                } else if (isRoutineCompleted(routine)) { // Check if daily goal is met for reading/continuous
-                    completedRoutines.push(routine);
-                } else if (isRoutineInProgress(routine)) {
-                    inprogressRoutines.push(routine);
-                } else {
-                    incompleteRoutines.push(routine);
-                }
-            });
-            
-            // Render routines in each section
-            incompleteRoutines.forEach((routine, index) => {
-                const element = createImprovedRoutineElement(routine);
-                element.style.animationDelay = `${index * 0.1}s`;
-                element.style.animation = 'fadeInUp 0.6s ease-out both';
-                incompleteList.appendChild(element);
-            });
-            
-            inprogressRoutines.forEach((routine, index) => {
-                const element = createImprovedRoutineElement(routine);
-                element.style.animationDelay = `${index * 0.1}s`;
-                element.style.animation = 'fadeInUp 0.6s ease-out both';
-                inprogressList.appendChild(element);
-            });
-            
-            completedRoutines.forEach((routine, index) => {
-                const element = createImprovedRoutineElement(routine);
-                element.style.animationDelay = `${index * 0.1}s`;
-                element.style.animation = 'fadeInUp 0.6s ease-out both';
-                completedList.appendChild(element);
-            });
-            
-            skippedRoutines.forEach((routine, index) => {
-                const element = createImprovedRoutineElement(routine);
-                element.style.animationDelay = `${index * 0.1}s`;
-                element.style.animation = 'fadeInUp 0.6s ease-out both';
-                skippedList.appendChild(element);
-            });
-            
-            // Check if all basic routines are completed
-            const basicRoutinesCompleted = incompleteRoutines.length === 0 && 
-                                           inprogressRoutines.filter(r => !isContinuousRoutine(r) && !isReadingRoutine(r)).length === 0;
-            
-            if (basicRoutinesCompleted && sortedRoutines.length > 0) {
-                emptyState.style.display = 'block';
-                emptyState.querySelector('.empty-state-title').textContent = '기본 루틴을 모두 완료했습니다!';
-                emptyState.querySelector('.empty-state-description').innerHTML = '지속 업데이트 루틴은 계속 진행할 수 있습니다.<br>오늘도 정말 수고하셨습니다!';
-                incompleteSection.style.display = 'block';
-                
-                setTimeout(() => {
-                    showCompletionEffect();
-                }, 500);
-            } else {
-                emptyState.style.display = incompleteRoutines.length === 0 ? 'block' : 'none';
-                if (incompleteRoutines.length === 0 && inprogressRoutines.length > 0) {
-                    emptyState.querySelector('.empty-state-title').textContent = '새로운 루틴을 시작해보세요!';
-                    emptyState.querySelector('.empty-state-description').innerHTML = '진행 중인 루틴들을 완료하거나<br>새로운 루틴을 추가해보세요!';
-                }
-                incompleteSection.style.display = 'block';
+            const routine = sampleRoutines.find(r => r.id === routineId);
+            if (routine) {
+                // 이제 모든 루틴 편집은 showEditRoutineModal을 통해 이루어집니다.
+                showEditRoutineModal(routine);
             }
-            
-        // Show/hide sections
-
-// Calculate and update daily progress 8월 6일 추가
-function updateDailyProgress() {
-    const activeRoutines = sampleRoutines.filter(r => r.active);
-    const totalRoutines = activeRoutines.length;
-    
-    // For continuous/reading routines, completion is based on daily goal achievement
-    // For others, it's simple completion
-    const completedRoutines = activeRoutines.filter(r => {
-        return isRoutineCompleted(r);
-    }).length;
-    
-    const inprogressRoutines = activeRoutines.filter(r => isRoutineInProgress(r)).length;
-    const skippedRoutines = activeRoutines.filter(r => r.status === 'skipped').length;
-    const incompleteRoutines = totalRoutines - completedRoutines - inprogressRoutines - skippedRoutines;
-    
-    const progressPercentage = totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0;
-    
-    const progressEl = document.getElementById('dailyProgressPercentage');
-    const progressBarEl = document.getElementById('dailyProgressBar');
-    const incompleteCountEl = document.getElementById('incompleteCount');
-    const inprogressCountEl = document.getElementById('inprogressCount');
-    const completedCountEl = document.getElementById('completedCount');
-    const skippedCountEl = document.getElementById('skippedCount');
-    
-    if (progressEl) progressEl.textContent = `${progressPercentage}%`;
-    if (progressBarEl) {
-        progressBarEl.style.setProperty('--progress-width', `${progressPercentage}%`);
-        progressBarEl.style.width = `${progressPercentage}%`;
-    }
-    if (incompleteCountEl) incompleteCountEl.textContent = incompleteRoutines;
-    if (inprogressCountEl) inprogressCountEl.textContent = inprogressRoutines;
-    if (completedCountEl) completedCountEl.textContent = completedRoutines;
-    if (skippedCountEl) skippedCountEl.textContent = skippedRoutines;
-    
-    return {
-        total: totalRoutines,
-        completed: completedRoutines,
-        inprogress: inprogressRoutines,
-        skipped: skippedRoutines,
-        incomplete: incompleteRoutines,
-        percentage: progressPercentage
-    };
-}
-
-
-
-inprogressSection.style.display = inprogressRoutines.length > 0 ? 'block' : 'none';
-completedSection.style.display = completedRoutines.length > 0 ? 'block' : 'none';
-skippedSection.style.display = skippedRoutines.length > 0 ? 'block' : 'none';
-
-updateDailyProgress();
-// renderAreaStats(); // Area stats are now rendered only on the manage page
-
-        const celebrationMessages = [
-            "🎉 잘하셨습니다! 또 하나의 루틴을 완료했네요!",
-            "✨ 훌륭해요! 꾸준한 노력이 큰 변화를 만들어냅니다!",
-            "🌟 대단해요! 오늘도 한 걸음 더 나아가셨네요!",
-            "🎊 멋져요! 작은 실천이 모여 큰 성취가 됩니다!",
-            "🏆 완벽해요! 꾸준함이 성공의 열쇠입니다!",
-            "🎯 목표 달성! 정말 대단한 의지력이에요!",
-            "💪 계속 이런 식으로 해나가세요! 최고입니다!",
-            "🔥 열정적이네요! 이런 자세가 성공을 만듭니다!"
-        ];
-
-        // Display random celebration message
-        function showCelebrationMessage() {
-            const randomMessage = celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)];
-            showNotification(randomMessage, 'success');
         }
-
+    
         // === Page Navigation Functions ===
         function showHomePage() {
             document.getElementById('main-app-content').style.display = 'block';
-            document.getElementById('dashboard-view').style.display = 'none'; // 대시보드 숨김
-
-            // Hide all sections within main-app-content except the ones for home
+            document.getElementById('dashboard-view').style.display = 'none';
             document.getElementById('manage-section').style.display = 'none';
-            
-            // Show home page sections
-            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
-            homeElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) element.style.display = 'block';
-            });
-            
-            // Show daily progress section
-            const dailyProgress = document.querySelector('.daily-progress');
-            if (dailyProgress) dailyProgress.style.display = 'block';
-            
+            document.querySelector('.daily-progress').style.display = 'block';
+            document.getElementById('incomplete-section').style.display = 'block';
             renderRoutines();
         }
-
+    
         function showManagePage() {
             document.getElementById('main-app-content').style.display = 'block';
-            document.getElementById('dashboard-view').style.display = 'none'; // 대시보드 숨김
-
-            // Hide home page sections
-            const homeElements = ['incomplete-section', 'inprogress-section', 'completed-section', 'skipped-section'];
-            homeElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) element.style.display = 'none';
-            });
-            
-            // Hide daily progress section
-            const dailyProgress = document.querySelector('.daily-progress');
-            if (dailyProgress) dailyProgress.style.display = 'none';
-            
-            // Show manage page
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.querySelector('.daily-progress').style.display = 'none';
+            document.getElementById('incomplete-section').style.display = 'none';
+            document.getElementById('inprogress-section').style.display = 'none';
+            document.getElementById('completed-section').style.display = 'none';
+            document.getElementById('skipped-section').style.display = 'none';
             document.getElementById('manage-section').style.display = 'block';
             
+            renderAreaStats();
             renderManagePage();
-            renderAreaStats(); // Render area stats when navigating to manage page
         }
-
-        // 대시보드 페이지 전환 함수
+    
         function showDashboardPage() {
-            document.getElementById('main-app-content').style.display = 'none'; // 기존 앱 콘텐츠 숨김
-            document.getElementById('dashboard-view').style.display = 'block'; // 대시보드 표시
-
-            // 대시보드 탭을 초기화하고 독서 탭을 활성화합니다.
+            document.getElementById('main-app-content').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
             openDashboardTab('reading');
         }
-
-        // === New Routine Add Modal (Add Routine Modal) Functions ===
+    
+        // === Add/Edit Routine Modal Functions ===
         let isEditingRoutine = false;
         let editingRoutineId = null;
-
-function showAddRoutineModal() {
-    isEditingRoutine = false;
-    editingRoutineId = null;
-    showRoutineModal();
-}
-
-function showEditRoutineModal(routine) {
-    isEditingRoutine = true;
-    editingRoutineId = routine.id;
-    showRoutineModal(routine);
-}
-
-function showRoutineModal(routine = null) {
-    const modal = document.getElementById('addRoutineModal');
-    const modalTitle = modal.querySelector('.modal-header h3');
-    const confirmBtn = document.getElementById('addRoutineConfirm');
-    const newRoutineName = document.getElementById('newRoutineName');
-    const newRoutineTime = document.getElementById('newRoutineTime');
-    const newRoutineType = document.getElementById('newRoutineType');
-    const newRoutineFreq = document.getElementById('newRoutineFreq');
-    const newRoutinePoints = document.getElementById('newRoutinePoints');
-    const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
-    const newNumberOptions = document.getElementById('newNumberOptions');
-    const newReadingOptions = document.getElementById('newReadingOptions');
-
-    // Set modal title and button text based on mode
-    if (isEditingRoutine) {
-        modalTitle.textContent = '✏️ 루틴 편집';
-        confirmBtn.textContent = '수정 완료';
-    } else {
-        modalTitle.textContent = '➕ 새 루틴 추가';
-        confirmBtn.textContent = '루틴 추가';
-    }
-
-    // Initialize form
-    if (routine) {
-        // Edit mode - populate with existing data
-        newRoutineName.value = routine.name;
-        newRoutineTime.value = routine.time;
-        newRoutineType.value = routine.type;
-        newRoutineFreq.value = routine.frequency;
-        newRoutinePoints.value = routine.basePoints;
-        
-        // Populate number options if it's a number type
-        if (routine.type === 'number') {
-            document.getElementById('newNumberUnit').value = routine.unit || '';
-            document.getElementById('newNumberMin').value = routine.min || 1;
-            document.getElementById('newNumberMax').value = routine.max || 100;
-            document.getElementById('newNumberStep').value = routine.step || 1;
-            document.getElementById('newNumberGoal').value = routine.dailyGoal || '';
-            document.getElementById('newNumberContinuous').checked = routine.continuous || false;
-            document.getElementById('newNumberInputType').value = routine.inputType || 'stepper';
+    
+        function showAddRoutineModal() {
+            isEditingRoutine = false;
+            editingRoutineId = null;
+            showRoutineForm();
         }
-        
-        // Populate reading options if it's a reading type
-        if (routine.type === 'reading') {
-            document.getElementById('newBookTitle').value = routine.bookTitle || '';
-            document.getElementById('newStartPage').value = routine.startPage || 1;
-            document.getElementById('newEndPage').value = routine.endPage || '';
-            document.getElementById('newDailyPages').value = routine.dailyPages || 10;
+    
+        function showEditRoutineModal(routine) {
+            isEditingRoutine = true;
+            editingRoutineId = routine.id;
+            showRoutineForm(routine);
         }
-    } else {
-        // Add mode - default values
-        newRoutineName.value = '';
-        newRoutineTime.value = 'morning';
-        newRoutineType.value = 'yesno';
-        newRoutineFreq.value = 'daily';
-        newRoutinePoints.value = 10;
-        
-        // Reset number options
-        document.getElementById('newNumberUnit').value = '';
-        document.getElementById('newNumberMin').value = 1;
-        document.getElementById('newNumberMax').value = 100;
-        document.getElementById('newNumberStep').value = 1;
-        document.getElementById('newNumberGoal').value = '';
-        document.getElementById('newNumberContinuous').checked = false;
-        document.getElementById('newNumberInputType').value = 'stepper';
-        
-        // Reset reading options
-        document.getElementById('newBookTitle').value = '';
-        document.getElementById('newStartPage').value = 1;
-        document.getElementById('newEndPage').value = '';
-        document.getElementById('newDailyPages').value = 10;
-    }
-
-    // Show/hide options based on type
-    newNumberOptions.style.display = 'none';
-    newReadingOptions.style.display = 'none';
-    if (newRoutineType.value === 'number') {
-        newNumberOptions.style.display = 'block';
-    } else if (newRoutineType.value === 'reading') {
-        newReadingOptions.style.display = 'block';
-    }
-
-    // Dynamically create area checkboxes
-    newRoutineAreasContainer.innerHTML = '';
-    userAreas.forEach(area => {
-        const isSelected = routine ? routine.areas?.includes(area.id) : false;
-        const areaDiv = document.createElement('div');
-        areaDiv.className = 'area-checkbox-item';
-        areaDiv.innerHTML = `
-            <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
-            <label for="area-${area.id}">${area.name}</label>
-        `;
-        newRoutineAreasContainer.appendChild(areaDiv);
-    });
-
-    // Show/hide additional options based on routine type
-    newRoutineType.onchange = () => {
-        newNumberOptions.style.display = 'none';
-        newReadingOptions.style.display = 'none';
-        if (newRoutineType.value === 'number') {
-            newNumberOptions.style.display = 'block';
-        } else if (newRoutineType.value === 'reading') {
-            newReadingOptions.style.display = 'block';
+    
+        function showRoutineForm(routine = null) {
+            const modal = document.getElementById('addRoutineModal');
+            modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
+            document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
+            
+            // Form reset/population
+            document.getElementById('newRoutineName').value = routine ? routine.name : '';
+            document.getElementById('newRoutineTime').value = routine ? routine.time : 'morning';
+            document.getElementById('newRoutineType').value = routine ? routine.type : 'yesno';
+            document.getElementById('newRoutineFreq').value = routine ? routine.frequency : 'daily';
+            document.getElementById('newRoutinePoints').value = routine ? routine.basePoints : 10;
+    
+            // Type-specific options
+            const type = routine ? routine.type : 'yesno';
+            document.getElementById('newNumberOptions').style.display = type === 'number' ? 'block' : 'none';
+            document.getElementById('newReadingOptions').style.display = type === 'reading' ? 'block' : 'none';
+    
+            if (type === 'number') {
+                document.getElementById('newNumberUnit').value = routine.unit || '';
+                document.getElementById('newNumberMin').value = routine.min ?? 1;
+                document.getElementById('newNumberMax').value = routine.max ?? 100;
+                document.getElementById('newNumberStep').value = routine.step ?? 1;
+                document.getElementById('newNumberGoal').value = routine.dailyGoal || '';
+                document.getElementById('newNumberContinuous').checked = routine.continuous || false;
+                document.getElementById('newNumberInputType').value = routine.inputType || 'stepper';
+            }
+            if (type === 'reading') {
+                document.getElementById('newBookTitle').value = routine.bookTitle || '';
+                document.getElementById('newStartPage').value = routine.startPage || 1;
+                document.getElementById('newEndPage').value = routine.endPage || '';
+                document.getElementById('newDailyPages').value = routine.dailyPages || 10;
+            }
+    
+            const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
+            newRoutineAreasContainer.innerHTML = '';
+            userAreas.forEach(area => {
+                const isSelected = routine ? routine.areas?.includes(area.id) : false;
+                newRoutineAreasContainer.innerHTML += `
+                    <div class="area-checkbox-item">
+                        <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
+                        <label for="area-${area.id}">${area.name}</label>
+                    </div>
+                `;
+            });
+            
+            modal.style.display = 'flex';
         }
-    };
-
-    modal.style.display = 'flex';
-    newRoutineName.focus();
-}
-
-
-
+    
         function hideAddRoutineModal() {
             document.getElementById('addRoutineModal').style.display = 'none';
         }
-
     
         async function handleAddRoutineConfirm() {
-    const newRoutineName = document.getElementById('newRoutineName').value.trim();
-    const newRoutineTime = document.getElementById('newRoutineTime').value;
-    const newRoutineType = document.getElementById('newRoutineType').value;
-    const newRoutineFreq = document.getElementById('newRoutineFreq').value;
-    const newRoutinePoints = parseInt(document.getElementById('newRoutinePoints').value);
+            const name = document.getElementById('newRoutineName').value.trim();
+            const points = parseInt(document.getElementById('newRoutinePoints').value);
+            const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked')).map(cb => cb.value);
     
-    const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked'))
-                                    .map(cb => cb.value);
-
-    if (!newRoutineName || !newRoutinePoints || newRoutinePoints <= 0 || selectedAreas.length === 0) {
-        showNotification('루틴 이름, 포인트, 영역을 모두 입력해주세요.', 'error');
-        return;
-    }
-
-    if (isEditingRoutine) {
-        // Edit mode
-        const routine = sampleRoutines.find(r => r.id === editingRoutineId);
-        if (!routine) {
-            showNotification('편집할 루틴을 찾을 수 없습니다.', 'error');
-            return;
-        }
-
-        const updatedFields = {
-            name: newRoutineName,
-            time: newRoutineTime,
-            type: newRoutineType,
-            frequency: newRoutineFreq,
-            areas: selectedAreas,
-            basePoints: newRoutinePoints,
-            lastUpdatedDate: todayDateString
-        };
-
-        // Type-specific data handling
-        if (newRoutineType === 'number') {
-            updatedFields.unit = document.getElementById('newNumberUnit').value.trim() || null;
-            updatedFields.min = parseInt(document.getElementById('newNumberMin').value) || 1;
-            updatedFields.max = parseInt(document.getElementById('newNumberMax').value) || 100;
-            updatedFields.step = parseInt(document.getElementById('newNumberStep').value) || 1;
-            updatedFields.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
-            updatedFields.continuous = document.getElementById('newNumberContinuous').checked;
-            updatedFields.inputType = document.getElementById('newNumberInputType').value;
-        } else if (newRoutineType === 'reading') {
-            updatedFields.bookTitle = document.getElementById('newBookTitle').value.trim();
-            updatedFields.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
-            updatedFields.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
-            updatedFields.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
-            updatedFields.unit = '페이지';
-            if (!updatedFields.bookTitle || updatedFields.startPage >= updatedFields.endPage) {
-                showNotification('독서 루틴 정보를 정확히 입력해주세요.', 'error');
+            if (!name || !points || points <= 0 || selectedAreas.length === 0) {
+                showNotification('루틴 이름, 1 이상의 포인트, 1개 이상의 영역을 선택해주세요.', 'error');
                 return;
             }
-        }
-
-        try {
-            await updateRoutineInFirebase(editingRoutineId, updatedFields);
-            hideAddRoutineModal();
-            showNotification(`✏️ "${newRoutineName}" 루틴이 수정되었습니다!`);
-        } catch (error) {
-            console.error('Failed to update routine:', error);
-            showNotification('루틴 수정에 실패했습니다.', 'error');
-        }
-    } else {
-        // Add mode
-        let newRoutine = {
-            name: newRoutineName,
-            time: newRoutineTime,
-            type: newRoutineType,
-            frequency: newRoutineFreq,
-            value: null,
-            status: null,
-            streak: 0,
-            order: sampleRoutines.length,
-            active: true,
-            areas: selectedAreas,
-            basePoints: newRoutinePoints,
-            pointsGivenToday: false,
-            lastUpdatedDate: todayDateString
-        };
-
-        // Type-specific data handling
-        if (newRoutineType === 'number') {
-            newRoutine.unit = document.getElementById('newNumberUnit').value.trim() || null;
-            newRoutine.min = parseInt(document.getElementById('newNumberMin').value) || 1;
-            newRoutine.max = parseInt(document.getElementById('newNumberMax').value) || 100;
-            newRoutine.step = parseInt(document.getElementById('newNumberStep').value) || 1;
-            newRoutine.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
-            newRoutine.continuous = document.getElementById('newNumberContinuous').checked;
-            newRoutine.inputType = document.getElementById('newNumberInputType').value;
-            if(newRoutine.continuous) {
-                newRoutine.value = 0;
-                newRoutine.dailyGoalMetToday = false;
+    
+            const type = document.getElementById('newRoutineType').value;
+            const commonFields = {
+                name: name,
+                time: document.getElementById('newRoutineTime').value,
+                type: type,
+                frequency: document.getElementById('newRoutineFreq').value,
+                areas: selectedAreas,
+                basePoints: points,
+                lastUpdatedDate: todayDateString,
+            };
+    
+            let typeSpecificFields = {};
+            if (type === 'number') {
+                typeSpecificFields = {
+                    unit: document.getElementById('newNumberUnit').value.trim() || null,
+                    min: parseInt(document.getElementById('newNumberMin').value) || 1,
+                    max: parseInt(document.getElementById('newNumberMax').value) || 100,
+                    step: parseInt(document.getElementById('newNumberStep').value) || 1,
+                    dailyGoal: parseInt(document.getElementById('newNumberGoal').value) || null,
+                    continuous: document.getElementById('newNumberContinuous').checked,
+                    inputType: document.getElementById('newNumberInputType').value,
+                };
+                if(typeSpecificFields.continuous) typeSpecificFields.value = 0;
+            } else if (type === 'reading') {
+                const bookTitle = document.getElementById('newBookTitle').value.trim();
+                const startPage = parseInt(document.getElementById('newStartPage').value);
+                const endPage = parseInt(document.getElementById('newEndPage').value);
+                if (!bookTitle || startPage >= endPage) {
+                    showNotification('독서 정보를 정확히 입력해주세요.', 'error');
+                    return;
+                }
+                typeSpecificFields = {
+                    bookTitle: bookTitle,
+                    name: bookTitle, // 루틴 이름도 책 제목으로 설정
+                    startPage: startPage,
+                    endPage: endPage,
+                    dailyPages: parseInt(document.getElementById('newDailyPages').value) || 10,
+                    currentPage: startPage - 1,
+                    startDate: new Date().toISOString().split('T')[0],
+                    unit: '페이지',
+                };
             }
-        } else if (newRoutineType === 'reading') {
-            newRoutine.bookTitle = document.getElementById('newBookTitle').value.trim();
-            newRoutine.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
-            newRoutine.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
-            newRoutine.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
-            newRoutine.currentPage = newRoutine.startPage - 1;
-            newRoutine.startDate = new Date().toISOString().split('T')[0];
-            newRoutine.unit = '페이지';
-            newRoutine.dailyReadPagesToday = 0;
-            newRoutine.dailyGoalMetToday = false;
-            if (!newRoutine.bookTitle || newRoutine.startPage >= newRoutine.endPage) {
-                showNotification('독서 루틴 정보를 정확히 입력해주세요.', 'error');
-                return;
+    
+            if (isEditingRoutine) {
+                const routine = sampleRoutines.find(r => r.id === editingRoutineId);
+                const updatedFields = { ...routine, ...commonFields, ...typeSpecificFields };
+                await updateRoutineInFirebase(editingRoutineId, updatedFields);
+                showNotification(`✏️ "${name}" 루틴이 수정되었습니다!`);
+            } else {
+                const newRoutine = {
+                    ...commonFields,
+                    ...typeSpecificFields,
+                    value: null,
+                    status: null,
+                    streak: 0,
+                    order: sampleRoutines.length,
+                    active: true,
+                    pointsGivenToday: false,
+                };
+                await addRoutineToFirebase(newRoutine);
+                showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
             }
-        }
-
-        try {
-            await addRoutineToFirebase(newRoutine);
             hideAddRoutineModal();
-            showNotification(`➕ "${newRoutineName}" 루틴이 추가되었습니다!`);
-        } catch (error) {
-            console.error('Failed to add new routine:', error);
-            showNotification('새 루틴 추가에 실패했습니다.', 'error');
         }
-    }
-}
-
-
-
-
-
+        
         // === Area Management Modal Functions ===
         function showManageAreasModal() {
             const modal = document.getElementById('manageAreasModal');
             const manageAreasList = document.getElementById('manageAreasList');
             const addAreaBtn = document.getElementById('addAreaBtn');
-            manageAreasList.innerHTML = ''; // Clear existing content
-
-            userAreas.forEach(area => {
-                const areaGroup = document.createElement('div');
-                areaGroup.className = 'form-group';
-                areaGroup.innerHTML = `
-                    <label for="area-name-${area.id}">${area.name}</label>
-                    <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
-                    ${userAreas.length > DEFAULT_AREAS.length ? `<button class="remove-area-btn" data-area-id="${area.id}">−</button>` : ''}
-                `;
-                manageAreasList.appendChild(areaGroup);
-            });
-
-            // Enable/disable 'Add Area' button
-            if (userAreas.length < MAX_AREAS) {
-                addAreaBtn.style.display = 'block';
-                addAreaBtn.onclick = addAreaInput;
-            } else {
-                addAreaBtn.style.display = 'none';
+            
+            manageAreasList.innerHTML = '';
+            
+            // 임시 복사본으로 작업하여 취소 시 원본 유지
+            const tempAreas = JSON.parse(JSON.stringify(userAreas));
+            
+            function renderAreaInputs(areas) {
+                manageAreasList.innerHTML = '';
+                areas.forEach(area => {
+                    const areaGroup = document.createElement('div');
+                    areaGroup.className = 'form-group';
+                    areaGroup.innerHTML = `
+                        <label for="area-name-${area.id}">${area.name}</label>
+                        <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
+                        ${areas.length > 1 ? `<button class="remove-area-btn" data-area-id="${area.id}">−</button>` : ''}
+                    `;
+                    manageAreasList.appendChild(areaGroup);
+                });
+    
+                document.querySelectorAll('.remove-area-btn').forEach(button => {
+                    button.onclick = (e) => {
+                        const idToRemove = e.target.dataset.areaId;
+                        const updatedTempAreas = tempAreas.filter(area => area.id !== idToRemove);
+                        renderAreaInputs(updatedTempAreas);
+                    };
+                });
+                
+                addAreaBtn.style.display = areas.length < MAX_AREAS ? 'block' : 'none';
             }
-
-            // Add event listeners for 'Remove Area' buttons
-            document.querySelectorAll('.remove-area-btn').forEach(button => {
-                button.onclick = (e) => removeAreaInput(e.target.dataset.areaId);
-            });
-
+            
+            renderAreaInputs(tempAreas);
+    
+            addAreaBtn.onclick = () => {
+                if (tempAreas.length >= MAX_AREAS) return;
+                const newAreaId = `customArea${Date.now()}`;
+                tempAreas.push({ id: newAreaId, name: `새 영역 ${tempAreas.length + 1}` });
+                renderAreaInputs(tempAreas);
+            };
+            
             modal.style.display = 'flex';
         }
-
-        function addAreaInput() {
-            if (userAreas.length >= MAX_AREAS) {
-                showNotification(`You can add up to ${MAX_AREAS} areas.`, 'warning');
-                return;
-            }
-
-            const newAreaId = `customArea${Date.now()}`; // Unique ID for new custom area
-            const newAreaName = `새 영역 ${userAreas.length + 1}`;
-            
-            const areaGroup = document.createElement('div');
-            areaGroup.className = 'form-group';
-            areaGroup.innerHTML = `
-                <label for="area-name-${newAreaId}">${newAreaName}</label>
-                <input type="text" id="area-name-${newAreaId}" value="${newAreaName}" data-area-id="${newAreaId}">
-                <button class="remove-area-btn" data-area-id="${newAreaId}">−</button>
-            `;
-            document.getElementById('manageAreasList').appendChild(areaGroup);
-            
-            // Connect event listener to newly added button
-            areaGroup.querySelector('.remove-area-btn').onclick = (e) => removeAreaInput(e.target.dataset.areaId);
-
-            // Temporarily add to userAreas array (not actually saved until confirm button is pressed)
-            userAreas.push({ id: newAreaId, name: newAreaName });
-            
-            if (userAreas.length >= MAX_AREAS) {
-                document.getElementById('addAreaBtn').style.display = 'none';
-            }
-            showNotification('New area added. Change its name and save.', 'info');
-        }
-
-        function removeAreaInput(areaIdToRemove) {
-            if (userAreas.length <= DEFAULT_AREAS.length) {
-                showNotification(`You must have at least ${DEFAULT_AREAS.length} areas.`, 'error');
-                return;
-            }
-
-            // Remove from UI
-            const inputElement = document.getElementById(`area-name-${areaIdToRemove}`);
-            if (inputElement && inputElement.parentNode) {
-                inputElement.parentNode.remove();
-            }
-
-            // Filter out from userAreas array (not actually saved until confirm button is pressed)
-            userAreas = userAreas.filter(area => area.id !== areaIdToRemove);
-
-            // Re-enable 'Add Area' button
-            if (userAreas.length < MAX_AREAS) {
-                document.getElementById('addAreaBtn').style.display = 'block';
-            }
-            showNotification('Area deleted. Press save button to confirm.', 'warning');
-        }
-
-
+    
         function hideManageAreasModal() {
-            // Revert userAreas to loaded state when modal is cancelled
-            // Actual saved data is only changed in handleManageAreasConfirm
-            loadAllDataFromFirebase(); // Reload from localStorage to discard changes
             document.getElementById('manageAreasModal').style.display = 'none';
         }
-
-        
+    
         async function handleManageAreasConfirm() {
-    const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
-    const updatedAreas = [];
-    let isValid = true;
-    let hasChanged = false;
-
-    areaInputs.forEach(input => {
-        const areaId = input.dataset.areaId;
-        const newName = input.value.trim();
-        const oldArea = userAreas.find(area => area.id === areaId);
-
-        if (!newName) {
-            showNotification('Area name cannot be empty.', 'error');
-            isValid = false;
+            const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
+            const updatedAreas = Array.from(areaInputs).map(input => ({
+                id: input.dataset.areaId,
+                name: input.value.trim()
+            }));
+    
+            if (updatedAreas.some(area => !area.name)) {
+                showNotification('영역 이름은 비워둘 수 없습니다.', 'error');
+                return;
+            }
+    
+            try {
+                await updateAreasInFirebase(updatedAreas);
+                
+                const newUserStats = {};
+                updatedAreas.forEach(area => {
+                    newUserStats[area.id] = userStats[area.id] || 0;
+                });
+                await updateUserStatsInFirebase(newUserStats);
+                
+                hideManageAreasModal();
+                showNotification('✅ 영역이 성공적으로 저장되었습니다!');
+            } catch (error) {
+                console.error('Failed to save areas:', error);
+                showNotification('영역 저장에 실패했습니다.', 'error');
+            }
         }
-        if (oldArea && oldArea.name !== newName) {
-            hasChanged = true;
-        }
-        updatedAreas.push({ id: areaId, name: newName });
-    });
-
-    if (!isValid) return;
-
-    if (updatedAreas.length !== userAreas.length) {
-        hasChanged = true;
-    }
-
-    // 변경사항이 있을 때만 Firebase 업데이트
-    if (hasChanged) {
-        try {
-            await updateAreasInFirebase(updatedAreas);
-            
-            // Update userStats: keep existing points, initialize new areas to 0
-            const newUserStats = {};
-            updatedAreas.forEach(area => {
-                newUserStats[area.id] = userStats[area.id] || 0;
-            });
-            await updateUserStatsInFirebase(newUserStats);
-            
-            hideManageAreasModal();
-            showNotification('✅ Area names saved!');
-            // renderRoutines(), renderAreaStats()는 onSnapshot 리스너가 처리합니다.
-        } catch (error) {
-            console.error('Failed to save areas:', error);
-            showNotification('영역 저장에 실패했습니다.', 'error');
-        }
-    } else {
-        hideManageAreasModal();
-        showNotification('변경 사항이 없습니다.', 'info');
-    }
-}
-
-
-
-
-        // === Area Stats Rendering Function ===
+        
         function renderAreaStats() {
             const areaStatsGrid = document.getElementById('areaStatsGrid');
-            areaStatsGrid.innerHTML = ''; // Clear existing content
-
+            areaStatsGrid.innerHTML = '';
+    
             userAreas.forEach(area => {
                 const points = userStats[area.id] || 0;
                 const statItem = document.createElement('div');
-                statItem.className = `area-stat-item ${area.id}`; // Add area ID as class for styling
-                statItem.innerHTML = `
-                    <h4>${area.name}</h4>
-                    <div class="points">${points} P</div>
-                `;
+                statItem.className = `area-stat-item ${area.id.replace(/\d/g, '')}`; // 숫자를 제거하여 일관된 클래스명 유지
+                statItem.innerHTML = `<h4>${area.name}</h4><div class="points">${points} P</div>`;
                 areaStatsGrid.appendChild(statItem);
             });
         }
-
-
-    // Save button event listener
-    const saveBtn = document.getElementById('saveOrderBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', saveRoutineOrder);
-    }
     
-    // 대시보드 탭 버튼 이벤트 리스너 설정
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', () => {
-            openDashboardTab(button.dataset.tab);
+        // === Event Listeners Setup ===
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 데이터 로딩 및 초기 렌더링
+            await loadAllDataFromFirebase();
+            showHomePage();
+    
+            // 네비게이션 버튼
+            document.getElementById('navHomeBtn').addEventListener('click', showHomePage);
+            document.getElementById('navManageBtn').addEventListener('click', showManagePage);
+            document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
+            document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
+            
+            // 대시보드 탭
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => openDashboardTab(button.dataset.tab));
+            });
+    
+            // 관리 페이지 순서 저장 버튼
+            document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
+    
+            // 모달 공통 설정
+            setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
+            setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
+            setupModal('stepperInputModal', hideStepperModal);
+            setupModal('wheelInputModal', hideWheelModal);
+            setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm);
+            setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
+            setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm);
+            setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
+    
+            // ESC로 모든 모달 닫기
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal-overlay').forEach(modal => modal.style.display = 'none');
+                }
+            });
+            
+            showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
         });
-    });
-
-    // 네비게이션 버튼 이벤트 리스너 설정
-    document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
-    document.getElementById('navManageBtn')?.addEventListener('click', showManagePage);
-    document.getElementById('navAddRoutineBtn')?.addEventListener('click', showAddRoutineModal);
-    document.getElementById('navStatsBtn')?.addEventListener('click', showDashboardPage);
     
-    // === Number Input Modal Event Listeners ===
-    document.getElementById('numberConfirmBtn')?.addEventListener('click', handleNumberInputConfirm);
-    document.getElementById('numberModalClose')?.addEventListener('click', hideNumberInputModal);
-    document.getElementById('numberModalCancel')?.addEventListener('click', hideNumberInputModal);
-    document.getElementById('numberInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideNumberInputModal(); });
-    document.getElementById('numberInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleNumberInputConfirm(); });
+        // Helper to setup modal listeners
+        function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
     
-    // === Time Input Modal Event Listeners ===
-    document.getElementById('timeConfirmBtn')?.addEventListener('click', handleTimeInputConfirm);
-    document.getElementById('timeModalClose')?.addEventListener('click', hideTimeInputModal);
-    document.getElementById('timeModalCancel')?.addEventListener('click', hideTimeInputModal);
-    document.getElementById('timeInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideTimeInputModal(); });
-    document.getElementById('timeInput')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTimeInputConfirm(); });
-
-    // === Stepper Modal Event Listeners ===
-    document.getElementById('stepperModalClose')?.addEventListener('click', hideStepperModal);
-    document.getElementById('stepperModalCancel')?.addEventListener('click', hideStepperModal);
-    document.getElementById('stepperInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideStepperModal(); });
-    
-    // === Wheel Modal Event Listeners ===
-    document.getElementById('wheelModalClose')?.addEventListener('click', hideWheelModal);
-    document.getElementById('wheelModalCancel')?.addEventListener('click', hideWheelModal);
-    document.getElementById('wheelInputModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideWheelModal(); });
-    
-    // === Keyboard Shortcuts (ESC to close modals) ===
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            hideNumberInputModal();
-            hideTimeInputModal();
-            hideStepperModal();
-            hideWheelModal();
-            hideReadingSetupModal();
-            hideReadingProgressModal();
-            hideAddRoutineModal();
-            hideManageAreasModal();
+            modal.querySelector('.modal-close')?.addEventListener('click', hideFn);
+            modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
+            modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideFn(); });
+            
+            if (confirmFn) {
+                modal.querySelector('.btn:not(.btn-secondary)')?.addEventListener('click', confirmFn);
+            }
+            if (confirmInputId) {
+                document.getElementById(confirmInputId)?.addEventListener('keypress', (e) => { if (e.key === 'Enter') confirmFn(); });
+            }
         }
-    });
-
-    // === Reading Setup Modal Event Listeners ===
-    document.getElementById('readingSetupConfirm')?.addEventListener('click', handleReadingSetupConfirm);
-    document.getElementById('readingSetupClose')?.addEventListener('click', hideReadingSetupModal);
-    document.getElementById('readingSetupCancel')?.addEventListener('click', hideReadingSetupModal);
-    document.getElementById('readingSetupModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingSetupModal(); });
-
-    // === Reading Progress Modal Event Listeners ===
-    document.getElementById('readingProgressConfirm')?.addEventListener('click', handleReadingProgressConfirm);
-    document.getElementById('readingProgressClose')?.addEventListener('click', hideReadingProgressModal);
-    document.getElementById('readingProgressCancel')?.addEventListener('click', hideReadingProgressModal);
-    document.getElementById('readingProgressModal')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideReadingProgressModal(); });
-    
-    // === New Routine Add Modal Event Listeners ===
-    document.getElementById('addRoutineClose')?.addEventListener('click', hideAddRoutineModal);
-    document.getElementById('addRoutineCancel')?.addEventListener('click', hideAddRoutineModal);
-    document.getElementById('addRoutineConfirm')?.addEventListener('click', handleAddRoutineConfirm);
-
-    // === Area Management Modal Event Listeners ===
-    document.getElementById('manageAreasBtn')?.addEventListener('click', showManageAreasModal);
-    document.getElementById('manageAreasClose')?.addEventListener('click', hideManageAreasModal);
-    document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
-    document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
-    document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput);
-    // Display welcome message
-    setTimeout(() => {
-        showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
-    }, 1000);
-
-    loadAllDataFromFirebase().then(() => {
-            // 데이터 로드 후 초기화 및 렌더링
-            renderRoutines();
-            renderAreaStats();
-            openDashboardTab('reading');
-        });
-    };
-</script>
+    </script>
 </body>
 </html>
