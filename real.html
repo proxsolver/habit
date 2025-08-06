@@ -2726,16 +2726,24 @@ async function addRoutineToFirebase(newRoutine) {
     }
 }
 
-// 영역 이름/개수를 Firebase에 업데이트하는 함수
-async function updateAreasInFirebase(updatedAreas) {
+// 영역 이름/개수를 Firebase에 업데이트하는 함수 클로드 버젼
+async function updateAreasInFirebase(updatedAreas = null) {
     try {
+        // 인자가 없으면 현재 userAreas를 사용
+        const areasToUpdate = updatedAreas || userAreas;
+        
+        if (!areasToUpdate || !Array.isArray(areasToUpdate)) {
+            debugLog("영역 데이터가 없거나 올바르지 않음, 업데이트 건너뜀.");
+            return;
+        }
+        
         const batch = db.batch();
         const areasRef = db.collection('areas');
         // 기존 영역 삭제 (간소화를 위해 전체 삭제 후 재추가)
         const oldAreas = await areasRef.get();
         oldAreas.docs.forEach(doc => batch.delete(areasRef.doc(doc.id)));
         // 새로운 영역 추가
-        updatedAreas.forEach(area => {
+        areasToUpdate.forEach(area => {
             const areaRef = areasRef.doc(area.id);
             batch.set(areaRef, area);
         });
