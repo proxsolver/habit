@@ -2442,48 +2442,78 @@ async function resetDailyProgressForRoutines() {
 // 비동기 함수로 Firebase에서 모든 데이터를 불러오기
 
 // 비동기 함수로 Firebase에서 모든 데이터를 불러오기
+// 비동기 함수로 Firebase에서 모든 데이터를 불러오기
 async function loadAllDataFromFirebase() {
     try {
         debugLog("Firebase에서 모든 데이터 로드 시작...");
+        
+        let allDataLoaded = false;
 
         // 루틴 데이터를 실시간으로 불러옵니다.
         const routinesRef = db.collection('routines');
-        routinesRef.orderBy('order').onSnapshot(async (routinesSnapshot) => {
+        const routinesListener = routinesRef.orderBy('order').onSnapshot(async (routinesSnapshot) => {
             if (!routinesSnapshot.empty) {
                 sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 debugLog('Routines data loaded/updated via snapshot.');
             } else {
-                await uploadInitialSampleData(); // 데이터가 없으면 초기 데이터 업로드
+                debugLog('Routines collection is empty, attempting to upload initial data.');
+                // 초기 데이터가 업로드되면 리스너가 다시 트리거됩니다.
             }
-            await resetDailyProgressForRoutines();
-            renderRoutines();
+            
+            if (allDataLoaded) {
+                await resetDailyProgressForRoutines();
+                renderRoutines();
+            }
         });
 
         // 영역 데이터를 실시간으로 불러옵니다.
         const areasRef = db.collection('areas');
-        areasRef.onSnapshot((areasSnapshot) => {
+        const areasListener = areasRef.onSnapshot((areasSnapshot) => {
             if (!areasSnapshot.empty) {
                 userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             } else {
-                userAreas = [...DEFAULT_AREAS]; // 데이터가 없으면 기본값 사용
+                debugLog('Areas collection is empty. Using default areas.');
+                userAreas = [...DEFAULT_AREAS]; 
             }
             debugLog('Areas data loaded/updated via snapshot.');
-            renderRoutines(); // 루틴 렌더링 시 영역 정보가 필요하므로 함께 호출
-            renderAreaStats();
+            if (allDataLoaded) {
+                renderRoutines();
+                renderAreaStats();
+            }
         });
 
         // 통계 데이터를 실시간으로 불러옵니다.
         const statsRef = db.collection('stats').doc('userStats');
-        statsRef.onSnapshot((statsDoc) => {
+        const statsListener = statsRef.onSnapshot((statsDoc) => {
             if (statsDoc.exists) {
                 userStats = statsDoc.data();
             } else {
-                userStats = {}; // 데이터가 없으면 빈 객체 사용
+                debugLog('Stats document is missing. Using empty stats.');
+                userStats = {};
             }
             debugLog('Stats data loaded/updated via snapshot.');
+            if (allDataLoaded) {
+                renderRoutines();
+                renderAreaStats();
+            }
+        });
+
+        // 데이터가 모두 로드될 때까지 기다린 후 초기 데이터 업로드 로직 실행
+        const checkInitialData = async () => {
+            const routinesCheck = await routinesRef.get();
+            const areasCheck = await areasRef.get();
+            const statsCheck = await statsRef.get();
+
+            if (routinesCheck.empty || areasCheck.empty || !statsCheck.exists) {
+                await uploadInitialSampleData(routinesCheck.empty, areasCheck.empty, !statsCheck.exists);
+            }
+            allDataLoaded = true;
+            await resetDailyProgressForRoutines();
             renderRoutines();
             renderAreaStats();
-        });
+        };
+
+        checkInitialData();
 
         debugLog('Firebase 실시간 리스너 등록 완료.');
 
@@ -2493,7 +2523,59 @@ async function loadAllDataFromFirebase() {
     }
 }
 
+// 초기 샘플 데이터를 Firestore에 업로드하는 함수
+async function uploadInitialSampleData(uploadRoutines = true, uploadAreas = true, uploadStats = true) {
+    debugLog("초기 샘플 데이터 업로드 시작...");
+    const batch = db.batch();
+    
+    // 1. routines 컬렉션에 초기 루틴 데이터 업로드
+    if (uploadRoutines) {
+        const routinesCollectionRef = db.collection('routines');
+        const initialRoutines = INITIAL_SAMPLE_ROUTINES.map(r => ({ ...r, lastUpdatedDate: todayDateString }));
+        initialRoutines.forEach(routine => {
+            const docRef = routinesCollectionRef.doc();
+            routine.id = docRef.id;
+            batch.set(docRef, routine);
+        });
+        sampleRoutines = initialRoutines;
+        debugLog("초기 루틴 데이터 업로드 준비 완료.");
+    }
 
+    // 2. areas 컬렉션에 초기 영역 데이터 업로드
+    if (uploadAreas) {
+        const areasCollectionRef = db.collection('areas');
+        DEFAULT_AREAS.forEach(area => {
+            const docRef = areasCollectionRef.doc(area.id);
+            batch.set(docRef, area);
+        });
+        userAreas = DEFAULT_AREAS;
+        debugLog("초기 영역 데이터 업로드 준비 완료.");
+    }
+
+    // 3. stats 컬렉션에 초기 통계 데이터 업로드
+    if (uploadStats) {
+        const statsRef = db.collection('stats').doc('userStats');
+        const initialStats = {};
+        DEFAULT_AREAS.forEach(area => {
+            initialStats[area.id] = 0;
+        });
+        batch.set(statsRef, initialStats);
+        userStats = initialStats;
+        debugLog("초기 통계 데이터 업로드 준비 완료.");
+    }
+
+    // 4. meta 컬렉션에 마지막 리셋 날짜 업로드
+    const metaRef = db.collection('meta').doc('lastReset');
+    batch.set(metaRef, { date: todayDateString });
+    debugLog("마지막 리셋 날짜 업로드 준비 완료.");
+
+    try {
+        await batch.commit();
+        debugLog("Firebase에 모든 초기 데이터 배치 업로드 완료.");
+    } catch (error) {
+        console.error("초기 데이터 배치 업로드 실패: ", error);
+    }
+}
 
 
 // 초기 샘플 루틴을 Firestore에 업로드하는 함수
