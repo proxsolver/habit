@@ -2500,16 +2500,39 @@ async function loadAllDataFromFirebase() {
 async function uploadInitialSampleData() {
     debugLog("초기 샘플 데이터 업로드 시작...");
     const batch = db.batch();
+
+    // 1. routines 컬렉션에 초기 루틴 데이터 업로드
     const routinesCollectionRef = db.collection('routines');
     const initialRoutines = INITIAL_SAMPLE_ROUTINES.map(r => ({ ...r, lastUpdatedDate: todayDateString }));
     initialRoutines.forEach(routine => {
-        const docRef = routinesCollectionRef.doc(); // Firestore가 고유 ID를 생성하게 합니다.
-        // 기존 ID는 순서 관리를 위해 'order' 속성으로 유지하고, Firestore 문서 ID를 실제 ID로 사용합니다.
+        const docRef = routinesCollectionRef.doc();
         routine.id = docRef.id;
         batch.set(docRef, routine);
     });
+
+    // 2. areas 컬렉션에 초기 영역 데이터 업로드
+    const areasCollectionRef = db.collection('areas');
+    DEFAULT_AREAS.forEach(area => {
+        const docRef = areasCollectionRef.doc(area.id);
+        batch.set(docRef, area);
+    });
+
+    // 3. stats 컬렉션에 초기 통계 데이터 업로드
+    const statsRef = db.collection('stats').doc('userStats');
+    const initialStats = {};
+    DEFAULT_AREAS.forEach(area => {
+        initialStats[area.id] = 0;
+    });
+    batch.set(statsRef, initialStats);
+
+    // 4. meta 컬렉션에 마지막 리셋 날짜 업로드
+    const metaRef = db.collection('meta').doc('lastReset');
+    batch.set(metaRef, { date: todayDateString });
+
     await batch.commit();
-    sampleRoutines = initialRoutines; // 업로드 후 클라이언트 메모리에도 할당
+    sampleRoutines = initialRoutines;
+    userAreas = DEFAULT_AREAS;
+    userStats = initialStats;
     debugLog("초기 샘플 데이터 업로드 완료.");
 }
 
