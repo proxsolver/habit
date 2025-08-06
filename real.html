@@ -4588,12 +4588,18 @@ function showRoutineModal(routine = null) {
     document.getElementById('manageAreasCancel')?.addEventListener('click', hideManageAreasModal);
     document.getElementById('manageAreasConfirm')?.addEventListener('click', handleManageAreasConfirm);
     document.getElementById('addAreaBtn')?.addEventListener('click', addAreaInput);
-
     // Display welcome message
     setTimeout(() => {
         showNotification('🌅 좋은 하루 되세요! 오늘도 루틴과 함께 성장해보아요!', 'success');
     }, 1000);
-}); // Closing brace and parentheses added here
+
+    loadAllDataFromFirebase().then(() => {
+            // 데이터 로드 후 초기화 및 렌더링
+            renderRoutines();
+            renderAreaStats();
+            openDashboardTab('reading');
+        });
+    });
 </script>
 </body>
 </html>
