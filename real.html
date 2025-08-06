@@ -3789,288 +3789,163 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Create improved routine element
-function createImprovedRoutineElement(routine) {
+        function createImprovedRoutineElement(routine) {
     const isCompleted = isRoutineCompleted(routine);
     const isSkipped = routine.status === 'skipped';
     const isGoalReachedOverall = isGoalAchieved(routine);
     const isContinuous = isContinuousRoutine(routine);
     const isInProgress = isRoutineInProgress(routine);
     
-    // Display areas - 이 부분을 함수 시작 부분에 추가
-    const areaNames = routine.areas ? routine.areas.map(areaId => {
-        const area = userAreas.find(a => a.id === areaId);
-        return area ? area.name : areaId;
-    }).join(', ') : '';
-    
     const routineDiv = document.createElement('div');
     routineDiv.className = 'routine-item';
     routineDiv.dataset.id = routine.id;
     routineDiv.dataset.type = routine.type;
-            
-            routineDiv.classList.add(routine.time);
-            
-            // Apply status-specific styles
-            if (isSkipped) {
-                routineDiv.classList.add('skipped');
-            } else if (isContinuous && isGoalReachedOverall) { // If continuous and daily goal met
-                routineDiv.classList.add('goal-achieved');
+    
+    routineDiv.classList.add(routine.time);
+    
+    // Apply status-specific styles
+    if (isSkipped) {
+        routineDiv.classList.add('skipped');
+    } else if (isContinuous && isGoalReachedOverall) {
+        routineDiv.classList.add('goal-achieved');
+    } else if (isInProgress) {
+        routineDiv.classList.add('inprogress');
+    } else if (isCompleted && !isContinuous) {
+        routineDiv.classList.add('completed');
+    }
+    
+    let actionButton = '';
+    if (routine.type === 'yesno') {
+        const checkIcon = isCompleted ? '✓' : '';
+        const skipIcon = isSkipped ? '⏭' : '';
+        actionButton = `<div class="routine-checkbox">${checkIcon || skipIcon}</div>`;
+    } else {
+        let buttonIcon = '';
+        if (isContinuous || isReadingRoutine(routine)) {
+            if (isGoalReachedOverall) {
+                buttonIcon = '🎯';
             } else if (isInProgress) {
-                routineDiv.classList.add('inprogress');
-            } else if (isCompleted && !isContinuous) { // For non-continuous, simple completion
-                routineDiv.classList.add('completed');
-            }
-            
-            let actionButton = '';
-            if (routine.type === 'yesno') {
-                const checkIcon = isCompleted ? '✓' : '';
-                const skipIcon = isSkipped ? '⏭' : '';
-                actionButton = `<div class="routine-checkbox">${checkIcon || skipIcon}</div>`;
+                buttonIcon = '⏳';
             } else {
-                let buttonIcon = '';
-                if (isContinuous || isReadingRoutine(routine)) {
-                    // For continuous/reading routines: always allow update
-                    if (isGoalReachedOverall) {
-                        buttonIcon = '🎯'; // Daily goal met
-                    } else if (isInProgress) {
-                        buttonIcon = '⏳'; // In progress
-                    } else {
-                        buttonIcon = routine.type === 'number' ? '🔢' : '📖'; // Default for number/reading
-                    }
-                } else {
-                    // For other routine types (non-continuous)
-                    if (isCompleted) {
-                        buttonIcon = '✓';
-                    } else if (isSkipped) {
-                        buttonIcon = '⏭';
-                    } else {
-                        buttonIcon = routine.type === 'number' ? '🔢' : '⏰'; // Default for number/time
-                    }
-                }
-                actionButton = `<div class="routine-action-button">${buttonIcon}</div>`;
+                buttonIcon = routine.type === 'number' ? '🔢' : '📖';
             }
-            
-            let streakBadge = '';
-            if (routine.streak > 0) {
-                let streakClass = '';
-                if (routine.streak >= 30) streakClass = 'mega-streak';
-                else if (routine.streak >= 7) streakClass = 'high-streak';
-                
-                streakBadge = `<div class="streak-badge ${streakClass}">🔥 ${routine.streak}</div>`;
+        } else {
+            if (isCompleted) {
+                buttonIcon = '✓';
+            } else if (isSkipped) {
+                buttonIcon = '⏭';
+            } else {
+                buttonIcon = routine.type === 'number' ? '🔢' : '⏰';
             }
-            
-            // Display continuous badge
-            let continuousBadge = '';
-            if (isContinuous) {
-                continuousBadge = `<div class="continuous-badge">🔄</div>`;
-            }
-            
-            routineDiv.innerHTML = `
-    <div class="routine-info-wrapper">
-        <div class="drag-handle">≡</div>
-        <div class="routine-main-info">
-            <div class="routine-main-name">
-                ${getTimeEmoji(routine.time)} ${routine.name}
+        }
+        actionButton = `<div class="routine-action-button">${buttonIcon}</div>`;
+    }
+    
+    let streakBadge = '';
+    if (routine.streak > 0) {
+        let streakClass = '';
+        if (routine.streak >= 30) streakClass = 'mega-streak';
+        else if (routine.streak >= 7) streakClass = 'high-streak';
+        
+        streakBadge = `<div class="streak-badge ${streakClass}">🔥 ${routine.streak}</div>`;
+    }
+    
+    let continuousBadge = '';
+    if (isContinuous) {
+        continuousBadge = `<div class="continuous-badge">🔄</div>`;
+    }
+    
+    routineDiv.innerHTML = `
+        ${actionButton}
+        <div class="routine-content">
+            <div class="routine-name">
+                ${routine.name}
                 <span class="type-icon">${getTypeIcon(routine.type)}</span>
-                ${routine.continuous ? '<span style="margin-left: 0.5rem; font-size: 0.8rem;">🔄</span>' : ''}
             </div>
-            <div class="routine-main-details">
+            <div class="routine-details">
                 <div class="time-period">
-                    ${getTimeLabel(routine.time)}
-                </div>
-                <div class="routine-type-badge">
-                    ${getTypeLabel(routine.type)}
+                    ${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}
                 </div>
                 <div class="frequency-badge">
                     ${getFrequencyLabel(routine.frequency)}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.75rem;">
-                    ${areaNames ? `[${areaNames}]` : ''} ${routine.basePoints ? `+${routine.basePoints}P` : ''}
-                </div>
             </div>
-            ${additionalControls}
         </div>
-    </div>
-    <div class="routine-controls">
-        <label class="routine-toggle">
-            <input type="checkbox" ${routine.active ? 'checked' : ''}>
-            <span class="toggle-slider"></span>
-        </label>
-        <button class="edit-btn" id="editRoutineBtn-${routine.id}">
-            편집
-        </button>
-    </div>
-`;
-
-
-            // 8월 6일 수정 
-const inputTypeSelect = routineDiv.querySelector('.input-type-select');
-if (inputTypeSelect) {
-    inputTypeSelect.addEventListener('change', async (e) => {
-        const routineId = parseInt(e.target.dataset.routineId);
-        const newInputType = e.target.value;
-        
-        try {
-            await updateRoutineInFirebase(routineId, { inputType: newInputType });
-            debugLog(`Routine input type changed to ${newInputType}`);
-            showNotification(`입력 방식이 변경되었습니다.`);
-        } catch (error) {
-            console.error('Failed to update input type:', error);
-            showNotification('입력 방식 변경에 실패했습니다.', 'error');
-        }
-    });
-}
-
-
- // 8월 6일 수정 - 목표 변경 기능 추가           
-
-const goalInput = routineDiv.querySelector('.goal-input');
-if (goalInput) {
-    goalInput.addEventListener('change', async (e) => {
-        const routineId = parseInt(e.target.dataset.routineId);
-        const newGoal = parseInt(e.target.value);
-        
-        if (newGoal > 0) {
-            try {
-                await updateRoutineInFirebase(routineId, { dailyGoal: newGoal });
-                debugLog(`Routine goal changed to ${newGoal}`);
-                showNotification(`목표가 변경되었습니다.`);
-            } catch (error) {
-                console.error('Failed to update goal:', error);
-                showNotification('목표 변경에 실패했습니다.', 'error');
-            }
-        }
-    });
-}
-
-// 8월 6일 수정 - 지속 업데이트 토글 기능 추가
-
-const continuousToggle = routineDiv.querySelector('.continuous-toggle');
-if (continuousToggle) {
-    continuousToggle.addEventListener('change', async (e) => {
-        const routineId = parseInt(e.target.dataset.routineId);
-        const newContinuousStatus = e.target.checked;
-        
-        try {
-            await updateRoutineInFirebase(routineId, { continuous: newContinuousStatus });
-            showNotification(`지속 업데이트가 ${newContinuousStatus ? '활성화' : '비활성화'}되었습니다.`);
-            renderRoutines(); // Update UI
-        } catch (error) {
-            console.error('Failed to update continuous status:', error);
-            e.target.checked = !newContinuousStatus; // 실패시 되돌림
-            showNotification('지속 업데이트 설정 변경에 실패했습니다.', 'error');
-        }
-    });
-}
-
-
-            // Edit button for all routines (generic edit modal or specific for reading)
-            const editBtn = routineDiv.querySelector(`#editRoutineBtn-${routine.id}`);
-            if (editBtn) {
-                editBtn.addEventListener('click', () => {
-                    editRoutine(routine.id);
-                });
-            }
+        <div class="routine-value">
+            ${getRoutineValueDisplay(routine)}
+        </div>
+        ${streakBadge}
+        ${continuousBadge}
+    `;
+    
+    const actionElement = routineDiv.querySelector('.routine-checkbox, .routine-action-button');
+    if (actionElement) {
+        actionElement.addEventListener('click', () => {
+            debugLog(`Routine clicked: ${routine.name} (ID: ${routine.id}, Type: ${routine.type})`);
             
-            // Specific edit button for reading routine setup
-            const editReadingSetupBtn = routineDiv.querySelector(`#editReadingSetupBtn-${routine.id}`);
-            if (editReadingSetupBtn) {
-                editReadingSetupBtn.addEventListener('click', () => {
-                    showReadingSetupModal(sampleRoutines.find(r => r.id === routine.id));
-                });
-            }
-            
-            return routineDiv;
-        }
+            if (isContinuous || isReadingRoutine(routine) || (!isCompleted && !isSkipped)) {
+                if (routine.type === 'yesno') {
+                    routine.value = true;
+                    routine.status = null;
 
-        // === Order Management Functions ===
-        
-        function renderManagePage() {
-            const manageList = document.getElementById('manageRoutineList');
-            if (!manageList) return;
-            
-            manageList.innerHTML = '';
-            
-            const sortedRoutines = [...sampleRoutines].sort((a, b) => a.order - b.order);
-            
-            sortedRoutines.forEach((routine, index) => {
-                const element = createManageRoutineElement(routine);
-                element.style.animationDelay = `${index * 0.1}s`;
-                element.style.animation = 'fadeInUp 0.6s ease-out both';
-                manageList.appendChild(element);
-            });
-            
-            initSortable();
-        }
-
-        function initSortable() {
-            const manageList = document.getElementById('manageRoutineList');
-            if (!manageList) return;
-            
-            if (sortableInstance) {
-                sortableInstance.destroy();
-            }
-            
-            sortableInstance = new Sortable(manageList, {
-                animation: 200,
-                handle: '.drag-handle',
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                onStart: function(evt) {
-                    debugLog('Drag started:', evt.oldIndex);
-                },
-                onEnd: function(evt) {
-                    debugLog('Drag ended:', evt.oldIndex, '->', evt.newIndex);
-                    
-                    if (evt.oldIndex !== evt.newIndex) {
-                        orderChanged = true;
-                        updateRoutineOrder(evt.oldIndex, evt.newIndex);
-                        showSaveButton();
+                    if (isGoalAchieved(routine) && !routine.pointsGivenToday) {
+                        routine.streak = (routine.streak || 0) + 1;
+                        if (routine.areas && routine.basePoints) {
+                            routine.areas.forEach(areaId => {
+                                userStats[areaId] = (userStats[areaId] || 0) + routine.basePoints;
+                            });
+                        }
+                        routine.pointsGivenToday = true;
                     }
+                    routine.lastUpdatedDate = todayDateString;
+                    updateAreasInFirebase();
+
+                    showCompletionEffect();
+                    setTimeout(() => {
+                        showCelebrationMessage();
+                        renderRoutines();
+                    }, 300);
+                    
+                } else if (routine.type === 'reading') {
+                    showReadingProgressModal(routine);
+                    
+                } else if (routine.type === 'number') {
+                    showNumberInputModal(routine);
+                    
+                } else if (routine.type === 'time') {
+                    showTimeInputModal(routine);
                 }
-            });
-        }
+                
+            } else if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
+                if (routine.type === 'yesno') {
+                    routine.value = false;
+                } else {
+                    routine.value = null;
+                }
+                routine.status = null;
 
-        function updateRoutineOrder(oldIndex, newIndex) {
-            const movedRoutine = sampleRoutines.splice(oldIndex, 1)[0];
-            sampleRoutines.splice(newIndex, 0, movedRoutine);
-            
-            sampleRoutines.forEach((routine, index) => {
-                routine.order = index;
-            });
-            
-            debugLog('Order updated:', sampleRoutines.map(r => ({ name: r.name, order: r.order })));
-        }
+                if (routine.pointsGivenToday) {
+                    routine.streak = Math.max(0, (routine.streak || 0) - 1);
+                    if (routine.areas && routine.basePoints) {
+                        routine.areas.forEach(areaId => {
+                            userStats[areaId] = Math.max(0, (userStats[areaId] || 0) - routine.basePoints);
+                        });
+                    }
+                    routine.pointsGivenToday = false;
+                }
+                routine.lastUpdatedDate = todayDateString;
+                updateAreasInFirebase();
 
-        function showSaveButton() {
-            const saveBtn = document.getElementById('saveOrderBtn');
-            if (saveBtn && orderChanged) {
-                saveBtn.classList.add('show');
+                showNotification('루틴 완료가 취소되었습니다.', 'warning');
+                renderRoutines();
             }
-        }
-
-        function hideSaveButton() {
-            const saveBtn = document.getElementById('saveOrderBtn');
-            if (saveBtn) {
-                saveBtn.classList.remove('show');
-            }
-        }
-
-    async function saveRoutineOrder() {
-    if (!orderChanged) return;
-    
-    debugLog('Saving order to Firebase...');
-    
-    try {
-        await updateRoutineOrderInFirebase(sampleRoutines);
-        orderChanged = false;
-        hideSaveButton();
-        
-        showNotification('✅ Routine order saved!');
-    } catch (error) {
-        console.error('Failed to save routine order:', error);
-        showNotification('순서 저장에 실패했습니다.', 'error');
+        });
     }
+    
+    return routineDiv;
 }
+
+
 
 
 
