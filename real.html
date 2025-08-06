@@ -3789,17 +3789,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Create improved routine element
-        function createImprovedRoutineElement(routine) {
-            const isCompleted = isRoutineCompleted(routine); // Daily completion for reading/continuous
-            const isSkipped = routine.status === 'skipped';
-            const isGoalReachedOverall = isGoalAchieved(routine); // Overall goal (book or daily number goal)
-            const isContinuous = isContinuousRoutine(routine);
-            const isInProgress = isRoutineInProgress(routine);
-            
-            const routineDiv = document.createElement('div');
-            routineDiv.className = 'routine-item';
-            routineDiv.dataset.id = routine.id;
-            routineDiv.dataset.type = routine.type;
+function createImprovedRoutineElement(routine) {
+    const isCompleted = isRoutineCompleted(routine);
+    const isSkipped = routine.status === 'skipped';
+    const isGoalReachedOverall = isGoalAchieved(routine);
+    const isContinuous = isContinuousRoutine(routine);
+    const isInProgress = isRoutineInProgress(routine);
+    
+    // Display areas - 이 부분을 함수 시작 부분에 추가
+    const areaNames = routine.areas ? routine.areas.map(areaId => {
+        const area = userAreas.find(a => a.id === areaId);
+        return area ? area.name : areaId;
+    }).join(', ') : '';
+    
+    const routineDiv = document.createElement('div');
+    routineDiv.className = 'routine-item';
+    routineDiv.dataset.id = routine.id;
+    routineDiv.dataset.type = routine.type;
             
             routineDiv.classList.add(routine.time);
             
@@ -4187,14 +4193,60 @@ if (continuousToggle) {
                 incompleteSection.style.display = 'block';
             }
             
-            // Show/hide sections
-            inprogressSection.style.display = inprogressRoutines.length > 0 ? 'block' : 'none';
-            completedSection.style.display = completedRoutines.length > 0 ? 'block' : 'none';
-            skippedSection.style.display = skippedRoutines.length > 0 ? 'block' : 'none';
-            
-            updateDailyProgress();
-            // renderAreaStats(); // Area stats are now rendered only on the manage page
-        }
+        // Show/hide sections
+
+// Calculate and update daily progress 8월 6일 추가
+function updateDailyProgress() {
+    const activeRoutines = sampleRoutines.filter(r => r.active);
+    const totalRoutines = activeRoutines.length;
+    
+    // For continuous/reading routines, completion is based on daily goal achievement
+    // For others, it's simple completion
+    const completedRoutines = activeRoutines.filter(r => {
+        return isRoutineCompleted(r);
+    }).length;
+    
+    const inprogressRoutines = activeRoutines.filter(r => isRoutineInProgress(r)).length;
+    const skippedRoutines = activeRoutines.filter(r => r.status === 'skipped').length;
+    const incompleteRoutines = totalRoutines - completedRoutines - inprogressRoutines - skippedRoutines;
+    
+    const progressPercentage = totalRoutines > 0 ? Math.round((completedRoutines / totalRoutines) * 100) : 0;
+    
+    const progressEl = document.getElementById('dailyProgressPercentage');
+    const progressBarEl = document.getElementById('dailyProgressBar');
+    const incompleteCountEl = document.getElementById('incompleteCount');
+    const inprogressCountEl = document.getElementById('inprogressCount');
+    const completedCountEl = document.getElementById('completedCount');
+    const skippedCountEl = document.getElementById('skippedCount');
+    
+    if (progressEl) progressEl.textContent = `${progressPercentage}%`;
+    if (progressBarEl) {
+        progressBarEl.style.setProperty('--progress-width', `${progressPercentage}%`);
+        progressBarEl.style.width = `${progressPercentage}%`;
+    }
+    if (incompleteCountEl) incompleteCountEl.textContent = incompleteRoutines;
+    if (inprogressCountEl) inprogressCountEl.textContent = inprogressRoutines;
+    if (completedCountEl) completedCountEl.textContent = completedRoutines;
+    if (skippedCountEl) skippedCountEl.textContent = skippedRoutines;
+    
+    return {
+        total: totalRoutines,
+        completed: completedRoutines,
+        inprogress: inprogressRoutines,
+        skipped: skippedRoutines,
+        incomplete: incompleteRoutines,
+        percentage: progressPercentage
+    };
+}
+
+
+
+inprogressSection.style.display = inprogressRoutines.length > 0 ? 'block' : 'none';
+completedSection.style.display = completedRoutines.length > 0 ? 'block' : 'none';
+skippedSection.style.display = skippedRoutines.length > 0 ? 'block' : 'none';
+
+updateDailyProgress();
+// renderAreaStats(); // Area stats are now rendered only on the manage page
 
         const celebrationMessages = [
             "🎉 잘하셨습니다! 또 하나의 루틴을 완료했네요!",
