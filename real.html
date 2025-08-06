@@ -1625,6 +1625,28 @@
             display: block;
         }
         /* ✨ 대시보드 스타일 새로 추가 끝 ✨ */
+        /* 기존 CSS 코드 맨 아래에 추가 */
+        .delete-btn {
+            background: var(--gray-100);
+            color: var(--error);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-height: 32px;
+        }
+
+        .delete-btn:hover {
+            background: var(--error);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+
+
     </style>
 </head>
 <body>
@@ -2582,6 +2604,66 @@
             }
         }
     
+// updateAreasInFirebase 함수 아래에 아래 두 함수를 추가하세요.
+
+/**
+ * Firestore에서 특정 루틴 문서를 삭제하는 함수
+ * @param {string} routineId - 삭제할 루틴의 ID
+ */
+ async function deleteRoutineFromFirebase(routineId) {
+    try {
+        await db.collection('routines').doc(routineId).delete();
+        debugLog(`Routine ${routineId} 삭제 성공.`);
+    } catch (error) {
+        console.error(`Routine ${routineId} 삭제 실패: `, error);
+        throw error; // 에러를 상위로 전파하여 처리
+    }
+}
+
+/**
+ * 루틴 삭제의 전체 프로세스를 관리하는 핸들러 함수
+ * @param {string} routineId - 삭제할 루틴의 ID
+ * @param {string} routineName - 확인 메시지에 표시될 루틴 이름
+ */
+async function handleDeleteRoutine(routineId, routineName) {
+    // 1. 사용자에게 삭제 여부 재확인
+    if (!confirm(`정말로 '${routineName}' 루틴을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+        return; // 사용자가 '취소'를 누르면 함수 종료
+    }
+
+    try {
+        // 2. Firebase에서 데이터 삭제
+        await deleteRoutineFromFirebase(routineId);
+
+        // 3. 로컬 데이터(sampleRoutines 배열)에서 삭제
+        const deletedIndex = sampleRoutines.findIndex(r => String(r.id) === routineId);
+        if (deletedIndex > -1) {
+            sampleRoutines.splice(deletedIndex, 1);
+        }
+
+        // 4. (중요) 나머지 루틴 순서 재정렬
+        const sortedRoutines = sampleRoutines.sort((a, b) => a.order - b.order);
+        const updatedOrderRoutines = sortedRoutines.map((routine, index) => ({
+            ...routine,
+            order: index, // 새로운 순서(0부터 시작)를 할당
+        }));
+
+        // 5. 변경된 순서를 Firebase에 일괄 업데이트
+        await updateRoutineOrderInFirebase(updatedOrderRoutines);
+
+        // 6. 관리 페이지 UI 다시 렌더링
+        renderManagePage();
+        
+        showNotification(`'${routineName}' 루틴이 삭제되었습니다.`, 'success');
+
+    } catch (error) {
+        showNotification('루틴 삭제에 실패했습니다.', 'error');
+    }
+}
+
+
+
+
         // === Number Input Modal Functions ===
         function showNumberInputModal(routine) {
             activeRoutineForModal = routine;
@@ -3447,46 +3529,57 @@ async function handleNumberConfirm(value, inputType) {
         }
     
         // === NEW HELPER FUNCTION: createManageRoutineElement ===
-        function createManageRoutineElement(routine) {
-            const item = document.createElement('div');
-            item.className = 'manage-routine-item';
-            item.dataset.id = routine.id;
-    
-            item.innerHTML = `
-                <div class="routine-info-wrapper">
-                    <span class="drag-handle">☰</span>
-                    <div class="routine-main-info">
-                        <div class="routine-main-name">${routine.name}</div>
-                        <div class="routine-main-details">
-                            <span class="routine-type-badge">${getTypeLabel(routine.type)}</span>
-                            <span>${getTimeLabel(routine.time)}</span>
-                            <span>${getFrequencyLabel(routine.frequency)}</span>
-                        </div>
-                    </div>
+        // 기존 createManageRoutineElement 함수를 아래 코드로 교체하세요.
+
+function createManageRoutineElement(routine) {
+    const item = document.createElement('div');
+    item.className = 'manage-routine-item';
+    item.dataset.id = routine.id;
+
+    // '삭제' 버튼 HTML이 추가되었습니다.
+    item.innerHTML = `
+        <div class="routine-info-wrapper">
+            <span class="drag-handle">☰</span>
+            <div class="routine-main-info">
+                <div class="routine-main-name">${routine.name}</div>
+                <div class="routine-main-details">
+                    <span class="routine-type-badge">${getTypeLabel(routine.type)}</span>
+                    <span>${getTimeLabel(routine.time)}</span>
+                    <span>${getFrequencyLabel(routine.frequency)}</span>
                 </div>
-                <div class="routine-controls">
-                    <label class="routine-toggle">
-                        <input type="checkbox" class="toggle-checkbox" ${routine.active ? 'checked' : ''}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <button class="edit-btn">편집</button>
-                </div>
-            `;
-    
-            // Event listener for toggle switch
-            item.querySelector('.toggle-checkbox').addEventListener('change', async (e) => {
-                const newStatus = e.target.checked;
-                await updateRoutineInFirebase(routine.id, { active: newStatus });
-                showNotification(`'${routine.name}' 루틴이 ${newStatus ? '활성화' : '비활성화'}되었습니다.`, 'info');
-            });
-    
-            // Event listener for edit button
-            item.querySelector('.edit-btn').addEventListener('click', () => {
-                editRoutine(routine.id);
-            });
-    
-            return item;
-        }
+            </div>
+        </div>
+        <div class="routine-controls">
+            <label class="routine-toggle">
+                <input type="checkbox" class="toggle-checkbox" ${routine.active ? 'checked' : ''}>
+                <span class="toggle-slider"></span>
+            </label>
+            <button class="edit-btn">편집</button>
+            <button class="delete-btn">삭제</button> 
+        </div>
+    `;
+
+    // Event listener for toggle switch
+    item.querySelector('.toggle-checkbox').addEventListener('change', async (e) => {
+        const newStatus = e.target.checked;
+        await updateRoutineInFirebase(String(routine.id), { active: newStatus });
+        showNotification(`'${routine.name}' 루틴이 ${newStatus ? '활성화' : '비활성화'}되었습니다.`, 'info');
+    });
+
+    // Event listener for edit button
+    item.querySelector('.edit-btn').addEventListener('click', () => {
+        editRoutine(routine.id);
+    });
+
+    // === 새로 추가된 삭제 버튼 이벤트 리스너 ===
+    item.querySelector('.delete-btn').addEventListener('click', () => {
+        handleDeleteRoutine(String(routine.id), routine.name);
+    });
+
+    return item;
+}
+
+
     
         // === NEW FUNCTION: saveRoutineOrder ===
         async function saveRoutineOrder() {
