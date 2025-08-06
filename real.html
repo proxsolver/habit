@@ -4310,19 +4310,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function editRoutine(routineId) {
-            const routine = sampleRoutines.find(r => r.id === routineId);
-            if (routine) {
-                // Use dedicated edit modal for reading routines
-                if (routine.type === 'reading') {
-                    showReadingSetupModal(routine);
-                } else {
-                    // Other routine types use generic edit modal (to be implemented)
-                    // For now, we can show a simple notification or a placeholder modal
-                    showNotification(`'${routine.name}' 루틴 편집 기능은 아직 구현되지 않았습니다.`, 'info');
-                    // alert(`Edit routine: ${routine.name}\n(Currently, only reading routines have a dedicated edit modal. Other routine edit functions are planned for future implementation.)`);
-                }
-            }
+    const routine = sampleRoutines.find(r => r.id === routineId);
+    if (routine) {
+        if (routine.type === 'reading') {
+            showReadingSetupModal(routine);
+        } else {
+            showEditRoutineModal(routine);
         }
+    }
+}
 
         // Render routines function
         function renderRoutines() {
@@ -4495,52 +4491,132 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // === New Routine Add Modal (Add Routine Modal) Functions ===
-        function showAddRoutineModal() {
-            const modal = document.getElementById('addRoutineModal');
-            const newRoutineName = document.getElementById('newRoutineName');
-            const newRoutineTime = document.getElementById('newRoutineTime');
-            const newRoutineType = document.getElementById('newRoutineType');
-            const newRoutineFreq = document.getElementById('newRoutineFreq');
-            const newRoutinePoints = document.getElementById('newRoutinePoints');
-            const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
-            const newNumberOptions = document.getElementById('newNumberOptions');
-            const newReadingOptions = document.getElementById('newReadingOptions');
+        let isEditingRoutine = false;
+        let editingRoutineId = null;
 
-            // Initialize form
-            newRoutineName.value = '';
-            newRoutineTime.value = 'morning';
-            newRoutineType.value = 'yesno';
-            newRoutineFreq.value = 'daily';
-            newRoutinePoints.value = 10; // Default points
-            newNumberOptions.style.display = 'none';
-            newReadingOptions.style.display = 'none';
+function showAddRoutineModal() {
+    isEditingRoutine = false;
+    editingRoutineId = null;
+    showRoutineModal();
+}
 
-            // Dynamically create area checkboxes
-            newRoutineAreasContainer.innerHTML = '';
-            userAreas.forEach(area => {
-                const areaDiv = document.createElement('div');
-                areaDiv.className = 'area-checkbox-item';
-                areaDiv.innerHTML = `
-                    <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox">
-                    <label for="area-${area.id}">${area.name}</label>
-                `;
-                newRoutineAreasContainer.appendChild(areaDiv);
-            });
+function showEditRoutineModal(routine) {
+    isEditingRoutine = true;
+    editingRoutineId = routine.id;
+    showRoutineModal(routine);
+}
 
-            // Show/hide additional options based on routine type
-            newRoutineType.onchange = () => {
-                newNumberOptions.style.display = 'none';
-                newReadingOptions.style.display = 'none';
-                if (newRoutineType.value === 'number') {
-                    newNumberOptions.style.display = 'block';
-                } else if (newRoutineType.value === 'reading') {
-                    newReadingOptions.style.display = 'block';
-                }
-            };
+function showRoutineModal(routine = null) {
+    const modal = document.getElementById('addRoutineModal');
+    const modalTitle = modal.querySelector('.modal-header h3');
+    const confirmBtn = document.getElementById('addRoutineConfirm');
+    const newRoutineName = document.getElementById('newRoutineName');
+    const newRoutineTime = document.getElementById('newRoutineTime');
+    const newRoutineType = document.getElementById('newRoutineType');
+    const newRoutineFreq = document.getElementById('newRoutineFreq');
+    const newRoutinePoints = document.getElementById('newRoutinePoints');
+    const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
+    const newNumberOptions = document.getElementById('newNumberOptions');
+    const newReadingOptions = document.getElementById('newReadingOptions');
 
-            modal.style.display = 'flex';
-            newRoutineName.focus();
+    // Set modal title and button text based on mode
+    if (isEditingRoutine) {
+        modalTitle.textContent = '✏️ 루틴 편집';
+        confirmBtn.textContent = '수정 완료';
+    } else {
+        modalTitle.textContent = '➕ 새 루틴 추가';
+        confirmBtn.textContent = '루틴 추가';
+    }
+
+    // Initialize form
+    if (routine) {
+        // Edit mode - populate with existing data
+        newRoutineName.value = routine.name;
+        newRoutineTime.value = routine.time;
+        newRoutineType.value = routine.type;
+        newRoutineFreq.value = routine.frequency;
+        newRoutinePoints.value = routine.basePoints;
+        
+        // Populate number options if it's a number type
+        if (routine.type === 'number') {
+            document.getElementById('newNumberUnit').value = routine.unit || '';
+            document.getElementById('newNumberMin').value = routine.min || 1;
+            document.getElementById('newNumberMax').value = routine.max || 100;
+            document.getElementById('newNumberStep').value = routine.step || 1;
+            document.getElementById('newNumberGoal').value = routine.dailyGoal || '';
+            document.getElementById('newNumberContinuous').checked = routine.continuous || false;
+            document.getElementById('newNumberInputType').value = routine.inputType || 'stepper';
         }
+        
+        // Populate reading options if it's a reading type
+        if (routine.type === 'reading') {
+            document.getElementById('newBookTitle').value = routine.bookTitle || '';
+            document.getElementById('newStartPage').value = routine.startPage || 1;
+            document.getElementById('newEndPage').value = routine.endPage || '';
+            document.getElementById('newDailyPages').value = routine.dailyPages || 10;
+        }
+    } else {
+        // Add mode - default values
+        newRoutineName.value = '';
+        newRoutineTime.value = 'morning';
+        newRoutineType.value = 'yesno';
+        newRoutineFreq.value = 'daily';
+        newRoutinePoints.value = 10;
+        
+        // Reset number options
+        document.getElementById('newNumberUnit').value = '';
+        document.getElementById('newNumberMin').value = 1;
+        document.getElementById('newNumberMax').value = 100;
+        document.getElementById('newNumberStep').value = 1;
+        document.getElementById('newNumberGoal').value = '';
+        document.getElementById('newNumberContinuous').checked = false;
+        document.getElementById('newNumberInputType').value = 'stepper';
+        
+        // Reset reading options
+        document.getElementById('newBookTitle').value = '';
+        document.getElementById('newStartPage').value = 1;
+        document.getElementById('newEndPage').value = '';
+        document.getElementById('newDailyPages').value = 10;
+    }
+
+    // Show/hide options based on type
+    newNumberOptions.style.display = 'none';
+    newReadingOptions.style.display = 'none';
+    if (newRoutineType.value === 'number') {
+        newNumberOptions.style.display = 'block';
+    } else if (newRoutineType.value === 'reading') {
+        newReadingOptions.style.display = 'block';
+    }
+
+    // Dynamically create area checkboxes
+    newRoutineAreasContainer.innerHTML = '';
+    userAreas.forEach(area => {
+        const isSelected = routine ? routine.areas?.includes(area.id) : false;
+        const areaDiv = document.createElement('div');
+        areaDiv.className = 'area-checkbox-item';
+        areaDiv.innerHTML = `
+            <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
+            <label for="area-${area.id}">${area.name}</label>
+        `;
+        newRoutineAreasContainer.appendChild(areaDiv);
+    });
+
+    // Show/hide additional options based on routine type
+    newRoutineType.onchange = () => {
+        newNumberOptions.style.display = 'none';
+        newReadingOptions.style.display = 'none';
+        if (newRoutineType.value === 'number') {
+            newNumberOptions.style.display = 'block';
+        } else if (newRoutineType.value === 'reading') {
+            newReadingOptions.style.display = 'block';
+        }
+    };
+
+    modal.style.display = 'flex';
+    newRoutineName.focus();
+}
+
+
 
         function hideAddRoutineModal() {
             document.getElementById('addRoutineModal').style.display = 'none';
@@ -4558,66 +4634,114 @@ document.addEventListener('DOMContentLoaded', () => {
                                     .map(cb => cb.value);
 
     if (!newRoutineName || !newRoutinePoints || newRoutinePoints <= 0 || selectedAreas.length === 0) {
-        showNotification('Please enter routine name, points, and select at least one area.', 'error');
+        showNotification('루틴 이름, 포인트, 영역을 모두 입력해주세요.', 'error');
         return;
     }
 
-    let newRoutine = {
-        name: newRoutineName,
-        time: newRoutineTime,
-        type: newRoutineType,
-        frequency: newRoutineFreq,
-        value: null,
-        status: null,
-        streak: 0,
-        order: sampleRoutines.length,
-        active: true,
-        areas: selectedAreas,
-        basePoints: newRoutinePoints,
-        pointsGivenToday: false,
-        lastUpdatedDate: todayDateString
-    };
-
-    // Type-specific data handling
-    if (newRoutineType === 'number') {
-        newRoutine.unit = document.getElementById('newNumberUnit').value.trim() || null;
-        newRoutine.min = parseInt(document.getElementById('newNumberMin').value) || 1;
-        newRoutine.max = parseInt(document.getElementById('newNumberMax').value) || 100;
-        newRoutine.step = parseInt(document.getElementById('newNumberStep').value) || 1;
-        newRoutine.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
-        newRoutine.continuous = document.getElementById('newNumberContinuous').checked;
-        newRoutine.inputType = document.getElementById('newNumberInputType').value;
-        if(newRoutine.continuous) {
-            newRoutine.value = 0;
-            newRoutine.dailyGoalMetToday = false;
-        }
-    } else if (newRoutineType === 'reading') {
-        newRoutine.bookTitle = document.getElementById('newBookTitle').value.trim();
-        newRoutine.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
-        newRoutine.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
-        newRoutine.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
-        newRoutine.currentPage = newRoutine.startPage - 1;
-        newRoutine.startDate = new Date().toISOString().split('T')[0];
-        newRoutine.unit = '페이지';
-        newRoutine.dailyReadPagesToday = 0;
-        newRoutine.dailyGoalMetToday = false;
-        if (!newRoutine.bookTitle || newRoutine.startPage >= newRoutine.endPage) {
-            showNotification('Please enter accurate reading routine information.', 'error');
+    if (isEditingRoutine) {
+        // Edit mode
+        const routine = sampleRoutines.find(r => r.id === editingRoutineId);
+        if (!routine) {
+            showNotification('편집할 루틴을 찾을 수 없습니다.', 'error');
             return;
         }
-    }
 
-    try {
-        await addRoutineToFirebase(newRoutine);
-        hideAddRoutineModal();
-        showNotification(`➕ "${newRoutineName}" routine added!`);
-        // renderRoutines()는 onSnapshot 리스너가 처리합니다.
-    } catch (error) {
-        console.error('Failed to add new routine:', error);
-        showNotification('새 루틴 추가에 실패했습니다.', 'error');
+        const updatedFields = {
+            name: newRoutineName,
+            time: newRoutineTime,
+            type: newRoutineType,
+            frequency: newRoutineFreq,
+            areas: selectedAreas,
+            basePoints: newRoutinePoints,
+            lastUpdatedDate: todayDateString
+        };
+
+        // Type-specific data handling
+        if (newRoutineType === 'number') {
+            updatedFields.unit = document.getElementById('newNumberUnit').value.trim() || null;
+            updatedFields.min = parseInt(document.getElementById('newNumberMin').value) || 1;
+            updatedFields.max = parseInt(document.getElementById('newNumberMax').value) || 100;
+            updatedFields.step = parseInt(document.getElementById('newNumberStep').value) || 1;
+            updatedFields.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
+            updatedFields.continuous = document.getElementById('newNumberContinuous').checked;
+            updatedFields.inputType = document.getElementById('newNumberInputType').value;
+        } else if (newRoutineType === 'reading') {
+            updatedFields.bookTitle = document.getElementById('newBookTitle').value.trim();
+            updatedFields.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
+            updatedFields.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
+            updatedFields.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
+            updatedFields.unit = '페이지';
+            if (!updatedFields.bookTitle || updatedFields.startPage >= updatedFields.endPage) {
+                showNotification('독서 루틴 정보를 정확히 입력해주세요.', 'error');
+                return;
+            }
+        }
+
+        try {
+            await updateRoutineInFirebase(editingRoutineId, updatedFields);
+            hideAddRoutineModal();
+            showNotification(`✏️ "${newRoutineName}" 루틴이 수정되었습니다!`);
+        } catch (error) {
+            console.error('Failed to update routine:', error);
+            showNotification('루틴 수정에 실패했습니다.', 'error');
+        }
+    } else {
+        // Add mode
+        let newRoutine = {
+            name: newRoutineName,
+            time: newRoutineTime,
+            type: newRoutineType,
+            frequency: newRoutineFreq,
+            value: null,
+            status: null,
+            streak: 0,
+            order: sampleRoutines.length,
+            active: true,
+            areas: selectedAreas,
+            basePoints: newRoutinePoints,
+            pointsGivenToday: false,
+            lastUpdatedDate: todayDateString
+        };
+
+        // Type-specific data handling
+        if (newRoutineType === 'number') {
+            newRoutine.unit = document.getElementById('newNumberUnit').value.trim() || null;
+            newRoutine.min = parseInt(document.getElementById('newNumberMin').value) || 1;
+            newRoutine.max = parseInt(document.getElementById('newNumberMax').value) || 100;
+            newRoutine.step = parseInt(document.getElementById('newNumberStep').value) || 1;
+            newRoutine.dailyGoal = parseInt(document.getElementById('newNumberGoal').value) || null;
+            newRoutine.continuous = document.getElementById('newNumberContinuous').checked;
+            newRoutine.inputType = document.getElementById('newNumberInputType').value;
+            if(newRoutine.continuous) {
+                newRoutine.value = 0;
+                newRoutine.dailyGoalMetToday = false;
+            }
+        } else if (newRoutineType === 'reading') {
+            newRoutine.bookTitle = document.getElementById('newBookTitle').value.trim();
+            newRoutine.startPage = parseInt(document.getElementById('newStartPage').value) || 1;
+            newRoutine.endPage = parseInt(document.getElementById('newEndPage').value) || 0;
+            newRoutine.dailyPages = parseInt(document.getElementById('newDailyPages').value) || 10;
+            newRoutine.currentPage = newRoutine.startPage - 1;
+            newRoutine.startDate = new Date().toISOString().split('T')[0];
+            newRoutine.unit = '페이지';
+            newRoutine.dailyReadPagesToday = 0;
+            newRoutine.dailyGoalMetToday = false;
+            if (!newRoutine.bookTitle || newRoutine.startPage >= newRoutine.endPage) {
+                showNotification('독서 루틴 정보를 정확히 입력해주세요.', 'error');
+                return;
+            }
+        }
+
+        try {
+            await addRoutineToFirebase(newRoutine);
+            hideAddRoutineModal();
+            showNotification(`➕ "${newRoutineName}" 루틴이 추가되었습니다!`);
+        } catch (error) {
+            console.error('Failed to add new routine:', error);
+            showNotification('새 루틴 추가에 실패했습니다.', 'error');
+        }
     }
 }
-
 
 
 
