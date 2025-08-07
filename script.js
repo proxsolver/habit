@@ -1217,7 +1217,6 @@ async function showDetailStatsModal(routineId) {
     contentEl.style.display = 'none';
     modal.style.display = 'flex';
 
-    debugger; 
 
     const routine = sampleRoutines.find(r => r.id === routineId);
     titleEl.textContent = `"${routine.name}" 상세 통계`;
