@@ -103,9 +103,9 @@ async function uploadInitialDataForUser(userId) {
         { id: "init_2", name: '첫 루틴: 물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 0, status: null, streak: 0, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
     ];
     const DEFAULT_AREAS = [
-        { id: 'physical', name: '신체' },
-        { id: 'mental', name: '정신' },
-        { id: 'intellectual', name: '지적' }
+    { id: 'health', name: '건강' },
+    { id: 'relationships', name: '관계' },
+    { id: 'work', name: '업무' }
     ];
 
     INITIAL_SAMPLE_ROUTINES.forEach(routine => {
@@ -1030,68 +1030,26 @@ function hideReadingProgressModal() {
 function showManageAreasModal() {
     const modal = document.getElementById('manageAreasModal');
     const manageAreasList = document.getElementById('manageAreasList');
-    const addAreaBtn = document.getElementById('addAreaBtn');
-
-    // 모달 내에서만 사용할 임시 영역 배열을 만듭니다. (취소 시 원본 유지)
+    
+    // 임시 영역 배열 생성 (취소 시 원본 유지를 위함)
     const tempAreas = JSON.parse(JSON.stringify(userAreas));
 
-    // 화면을 그리는 모든 로직을 이 render 함수에 중앙화합니다.
+    // 화면을 그리는 함수
     const render = () => {
-        // 1. 리스트를 깨끗하게 비웁니다.
-        manageAreasList.innerHTML = '';
+        manageAreasList.innerHTML = ''; // 리스트 비우기
 
-        // 2. tempAreas 배열의 현재 상태를 기반으로 목록을 다시 만듭니다.
         tempAreas.forEach(area => {
             const areaGroup = document.createElement('div');
             areaGroup.className = 'form-group';
-            
-            const label = document.createElement('label');
-            label.setAttribute('for', `area-name-${area.id}`);
-            label.textContent = area.name;
-
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.id = `area-name-${area.id}`;
-            input.value = area.name;
-            input.dataset.areaId = area.id;
-
-            areaGroup.appendChild(label);
-            areaGroup.appendChild(input);
-
-            // 3. 삭제 버튼을 만들고, 각 버튼에 직접 이벤트 리스너를 추가합니다.
-            if (tempAreas.length > 1) {
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-area-btn';
-                removeBtn.textContent = '−';
-                removeBtn.type = 'button'; // form 제출 방지
-                
-                removeBtn.addEventListener('click', () => {
-                    const indexToRemove = tempAreas.findIndex(a => a.id === area.id);
-                    if (indexToRemove > -1) {
-                        tempAreas.splice(indexToRemove, 1); // tempAreas 직접 수정
-                    }
-                    render(); // 변경 후 즉시 화면 다시 그리기
-                });
-                areaGroup.appendChild(removeBtn);
-            }
-
+            areaGroup.innerHTML = `
+                <label for="area-name-${area.id}" style="font-weight: 500;">${area.name} (기본값)</label>
+                <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
+            `;
             manageAreasList.appendChild(areaGroup);
         });
-
-        // 4. 영역 개수에 따라 '추가' 버튼 표시 여부를 결정합니다.
-        addAreaBtn.style.display = tempAreas.length < MAX_AREAS ? 'block' : 'none';
     };
 
-    // '영역 추가' 버튼의 클릭 이벤트 핸들러를 설정합니다.
-    addAreaBtn.onclick = () => {
-        if (tempAreas.length >= MAX_AREAS) return;
-        
-        const newAreaId = `customArea${Date.now()}`;
-        tempAreas.push({ id: newAreaId, name: `새 영역 ${tempAreas.length + 1}` });
-        render(); // 추가 후 즉시 화면 다시 그리기
-    };
-
-    // 모달이 열릴 때 첫 화면을 그립니다.
+    // 모달이 열릴 때 화면을 그림
     render();
     modal.style.display = 'flex';
 }
