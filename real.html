@@ -2334,6 +2334,7 @@
         let sampleRoutines = []; // Routine data
         let userAreas = [];     // 5-area data
         let userStats = {};     // Accumulated points per area
+        let currentUser = null; // 8월 7일 추가 유저 계정기능
         let sortableInstance = null;
         let orderChanged = false;
         let activeRoutineForModal = null;
@@ -2378,167 +2379,128 @@
         };
     
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-    
-        // Function to reset daily progress for routines
-        async function resetDailyProgressForRoutines() {
-            debugLog("일일 진행 상황 초기화 시작...");
-            const batch = db.batch();
-    
-            const lastResetDoc = await db.collection('meta').doc('lastReset').get();
-            const lastResetDate = lastResetDoc.exists ? lastResetDoc.data().date : null;
-    
-            if (lastResetDate !== todayDateString) {
-                sampleRoutines.forEach(routine => {
-                    const routineRef = db.collection('routines').doc(String(routine.id));
-                    const updatedFields = {};
-    
-                    // Streak logic (for the previous day)
-                    if (!isGoalAchieved(routine)) {
-                        routine.streak = 0;
-                        updatedFields.streak = 0;
-                    }
-    
-                    // Resetting daily values
-                    if (routine.type === 'yesno' || routine.type === 'time' || (routine.type === 'number' && !routine.continuous)) {
-                        updatedFields.value = null;
-                        updatedFields.status = null;
-                    } else if (routine.type === 'number' && routine.continuous) {
-                        updatedFields.value = 0;
-                        updatedFields.status = null;
-                        updatedFields.dailyGoalMetToday = false;
-                    } else if (routine.type === 'reading') {
-                        updatedFields.dailyReadPagesToday = 0;
-                        updatedFields.dailyGoalMetToday = false;
-                        updatedFields.status = null;
-                    }
-                    updatedFields.pointsGivenToday = false;
-                    
-                    if (Object.keys(updatedFields).length > 0) {
-                        batch.update(routineRef, updatedFields);
-                    }
-                });
-    
-                batch.set(db.collection('meta').doc('lastReset'), { date: todayDateString });
-    
-                try {
-                    await batch.commit();
-                    debugLog("일일 진행 상황 초기화 완료 및 Firebase에 저장.");
-                } catch (error) {
-                    console.error("일일 진행 상황 초기화 및 저장 실패: ", error);
-                }
-            } else {
-                debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
-            }
+// ====================================================================
+// 3. 사용자 인증 및 데이터 로드 (Authentication & Data Loading)
+// ====================================================================
+
+/**
+ * 특정 사용자 ID를 기반으로 모든 데이터를 로드하는 함수
+ * @param {string} userId - 로그인된 사용자의 고유 ID
+ */
+async function loadAllDataForUser(userId) {
+    try {
+        debugLog(`사용자(${userId}) 데이터 로드 시작...`);
+        const userDocRef = db.collection('users').doc(userId);
+        const userDoc = await userDocRef.get();
+
+        if (!userDoc.exists) {
+            debugLog("신규 사용자 감지, 초기 데이터 생성 시작.");
+            await uploadInitialDataForUser(userId);
+        } else {
+            const [routinesSnapshot, areasSnapshot, statsDoc] = await Promise.all([
+                userDocRef.collection('routines').orderBy('order').get(),
+                userDocRef.collection('areas').get(),
+                userDocRef.collection('stats').doc('userStats').get()
+            ]);
+            sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            userStats = statsDoc.exists ? statsDoc.data() : {};
+            debugLog('기존 사용자 데이터 로드 완료.');
         }
+        await resetDailyProgressForUser(userId);
+    } catch (error) {
+        console.error("사용자 데이터 로드 실패: ", error);
+        showNotification("데이터를 불러오는데 실패했습니다.", "error");
+    }
+}
+
+/**
+ * 신규 사용자를 위한 초기 데이터를 생성하고 업로드하는 함수
+ * @param {string} userId - 신규 사용자의 ID
+ */
+async function uploadInitialDataForUser(userId) {
+    const batch = db.batch();
+    const userDocRef = db.collection('users').doc(userId);
+    batch.set(userDocRef, { email: currentUser.email, name: currentUser.displayName, createdAt: new Date() });
+
+    const INITIAL_SAMPLE_ROUTINES = [ /* ... 기존 INITIAL_SAMPLE_ROUTINES 변수 내용 복사 ... */ ];
+    const DEFAULT_AREAS = [ /* ... 기존 DEFAULT_AREAS 변수 내용 복사 ... */ ];
+
+    INITIAL_SAMPLE_ROUTINES.forEach(routine => {
+        const docRef = userDocRef.collection('routines').doc();
+        batch.set(docRef, { ...routine, id: docRef.id });
+    });
+    DEFAULT_AREAS.forEach(area => {
+        const docRef = userDocRef.collection('areas').doc(area.id);
+        batch.set(docRef, area);
+    });
+    const initialStats = {};
+    DEFAULT_AREAS.forEach(area => { initialStats[area.id] = 0; });
+    batch.set(userDocRef.collection('stats').doc('userStats'), initialStats);
+    batch.set(userDocRef.collection('meta').doc('lastReset'), { date: todayDateString });
+    await batch.commit();
+    await loadAllDataForUser(userId);
+}
+
+/**
+ * 특정 사용자의 일일 진행 데이터를 초기화하는 함수
+ * @param {string} userId - 로그인된 사용자의 ID
+ */
+// 8월 7일 제미나이 2.5 프로제공코드        
+async function resetDailyProgressForUser(userId) {
+    const userDocRef = db.collection('users').doc(userId);
+    const metaRef = userDocRef.collection('meta').doc('lastReset');
     
-        async function loadAllDataFromFirebase() {
-            try {
-                debugLog("Firebase에서 모든 데이터 로드 시작...");
-                
-                // 모든 데이터 로드를 위한 프로미스 배열
-                const promises = [
-                    db.collection('routines').orderBy('order').get(),
-                    db.collection('areas').get(),
-                    db.collection('stats').doc('userStats').get()
-                ];
-    
-                const [routinesSnapshot, areasSnapshot, statsDoc] = await Promise.all(promises);
-    
-                let initialDataNeeded = false;
-    
-                // 루틴 데이터 처리
-                if (!routinesSnapshot.empty) {
-                    sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    debugLog('Routines data loaded from Firebase.');
-                } else {
-                    initialDataNeeded = true;
-                    debugLog('Routines collection is empty.');
-                }
-    
-                // 영역 데이터 처리
-                if (!areasSnapshot.empty) {
-                    userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                     debugLog('Areas data loaded from Firebase.');
-                } else {
-                    initialDataNeeded = true;
-                    debugLog('Areas collection is empty.');
-                }
-    
-                // 통계 데이터 처리
-                if (statsDoc.exists) {
-                    userStats = statsDoc.data();
-                    debugLog('Stats data loaded from Firebase.');
-                } else {
-                    initialDataNeeded = true;
-                    debugLog('Stats document is missing.');
-                }
-    
-                // 초기 데이터가 하나라도 없으면 업로드
-                if (initialDataNeeded) {
-                    await uploadInitialSampleData();
-                }
-    
-                // 일일 진행 상황 초기화
-                await resetDailyProgressForRoutines();
-    
-                debugLog('모든 데이터 로드 및 초기화 완료.');
-    
-            } catch (error) {
-                console.error("Firebase 데이터 로드 실패: ", error);
-                showNotification("데이터를 불러오지 못했습니다. 앱을 새로고침해주세요.", "error");
-            }
-        }
-    
-        async function uploadInitialSampleData() {
-            debugLog("초기 샘플 데이터 업로드 시작...");
-            const batch = db.batch();
-    
-            const routinesCollectionRef = db.collection('routines');
-            INITIAL_SAMPLE_ROUTINES.forEach(routine => {
-                const docRef = routinesCollectionRef.doc(String(routine.id)); // ID를 명시적으로 설정
-                batch.set(docRef, { ...routine, lastUpdatedDate: todayDateString });
-            });
-            sampleRoutines = INITIAL_SAMPLE_ROUTINES;
-    
-            const areasCollectionRef = db.collection('areas');
-            DEFAULT_AREAS.forEach(area => {
-                const docRef = areasCollectionRef.doc(area.id);
-                batch.set(docRef, area);
-            });
-            userAreas = DEFAULT_AREAS;
-    
-            const statsRef = db.collection('stats').doc('userStats');
-            const initialStats = {};
-            DEFAULT_AREAS.forEach(area => {
-                initialStats[area.id] = 0;
-            });
-            batch.set(statsRef, initialStats);
-            userStats = initialStats;
+    const lastResetDoc = await metaRef.get();
+    const lastResetDate = lastResetDoc.exists ? lastResetDoc.data().date : null;
+
+    if (lastResetDate !== todayDateString) {
+        debugLog(`사용자(${userId})의 일일 진행 상황 초기화 시작...`);
+        const batch = db.batch();
+        
+        sampleRoutines.forEach(routine => {
+            const routineRef = userDocRef.collection('routines').doc(String(routine.id));
+            const updatedFields = {};
             
-            const metaRef = db.collection('meta').doc('lastReset');
-            batch.set(metaRef, { date: todayDateString });
-    
-            await batch.commit();
-            debugLog("초기 샘플 데이터 업로드 완료.");
-        }
-    
-        async function updateRoutineInFirebase(routineId, updatedFields) {
-            try {
-                const routineRef = db.collection('routines').doc(String(routineId));
-                await routineRef.update(updatedFields);
-                debugLog(`Routine ${routineId} 업데이트 성공.`);
-                // 로컬 데이터도 즉시 업데이트하여 반응성 향상
-                const index = sampleRoutines.findIndex(r => r.id === routineId);
-                if(index !== -1) {
-                    sampleRoutines[index] = { ...sampleRoutines[index], ...updatedFields };
-                    renderRoutines(); // 즉시 화면 재렌더링
-                }
-            } catch (error) {
-                console.error(`Routine ${routineId} 업데이트 실패: `, error);
-                throw error;
+            if (!isGoalAchieved(routine)) {
+                updatedFields.streak = 0;
             }
+            
+            if (routine.type === 'yesno' || routine.type === 'time' || (routine.type === 'number' && !routine.continuous)) {
+                updatedFields.value = null;
+                updatedFields.status = null;
+            } else if (routine.type === 'number' && routine.continuous) {
+                updatedFields.value = 0;
+                updatedFields.status = null;
+                updatedFields.dailyGoalMetToday = false;
+            } else if (routine.type === 'reading') {
+                updatedFields.dailyReadPagesToday = 0;
+                updatedFields.dailyGoalMetToday = false;
+                updatedFields.status = null;
+            }
+            updatedFields.pointsGivenToday = false;
+            
+            if (Object.keys(updatedFields).length > 0) {
+                batch.update(routineRef, updatedFields);
+            }
+        });
+        
+        batch.set(metaRef, { date: todayDateString });
+        
+        try {
+            await batch.commit();
+            debugLog("일일 진행 상황 초기화 완료. 사용자 데이터 다시 로드.");
+            await loadAllDataForUser(userId); // 초기화 후, 최신 데이터를 다시 불러와 화면에 반영
+        } catch (error) {
+            console.error("일일 진행 상황 초기화 실패: ", error);
         }
+    } else {
+        debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
+    }
+}
+
+        
+
     
         async function updateRoutineOrderInFirebase(orderedRoutines) {
             const batch = db.batch();
@@ -3990,7 +3952,12 @@ function createManageRoutineElement(routine) {
         }
     
 // === Event Listeners Setup ===
-    document.addEventListener('DOMContentLoaded', () => {
+// DOMContentLoaded 내부
+document.addEventListener('DOMContentLoaded', () => {
+    // ... UI 요소 가져오는 코드 ...
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+        
         // --- UI 요소 가져오기 ---
         const userInfoDiv = document.getElementById('user-info');
         const loginBtn = document.getElementById('login-btn');
@@ -4015,45 +3982,37 @@ function createManageRoutineElement(routine) {
             firebase.auth().signOut();
         });
 
-        // ★★★ 핵심: 사용자의 로그인 상태 변경을 실시간으로 감지 ★★★
-        firebase.auth().onAuthStateChanged(async (user) => {
-            if (user) {
-                // --- 1. 사용자가 로그인한 경우 ---
-                console.log("로그인된 사용자:", user.uid, user.displayName);
-                
-                // UI 업데이트: 사용자 정보 표시, 로그인 버튼 숨김
-                userInfoDiv.style.display = 'flex';
-                loginBtn.style.display = 'none';
-                userNameSpan.textContent = user.displayName;
-                userPhotoImg.src = user.photoURL;
-                
-                // 앱 콘텐츠 활성화
-                mainAppSections.forEach(el => el.style.display = 'block');
-                navButtons.style.display = 'flex';
+     // ★★★ 핵심: 사용자의 로그인 상태 변경을 실시간으로 감지 ★★★
+    firebase.auth().onAuthStateChanged(async (user) => { // <<-- [교체]
+        if (user) {
+            // --- 사용자가 로그인한 경우 ---
+            currentUser = user; // <<-- [추가] 전역 변수에 사용자 정보 할당
+            console.log("로그인된 사용자:", currentUser.uid, currentUser.displayName);
+            
+            userInfoDiv.style.display = 'flex';
+            loginBtn.style.display = 'none';
+            userNameSpan.textContent = user.displayName;
+            userPhotoImg.src = user.photoURL;
+            mainAppContent.style.opacity = 1;
+            navButtons.style.display = 'flex';
 
-                // 로그인된 사용자의 ID(user.uid)로 모든 데이터를 로드합니다.
-                await loadAllDataForUser(user.uid);
-                showHomePage(); // 데이터 로드 후 홈 페이지 표시
+            await loadAllDataForUser(currentUser.uid); // <<-- [추가] 사용자 데이터 로드 함수 호출
+            showHomePage();
 
-            } else {
-                // --- 2. 사용자가 로그아웃한 경우 ---
-                console.log("사용자 로그아웃됨.");
+        } else {
+            // --- 사용자가 로그아웃한 경우 ---
+            currentUser = null; // <<-- [추가] 전역 변수 초기화
+            console.log("사용자 로그아웃됨.");
+            
+            userInfoDiv.style.display = 'none';
+            loginBtn.style.display = 'block';
+            mainAppContent.style.opacity = 0.2;
+            navButtons.style.display = 'none';
 
-                // UI 업데이트: 사용자 정보 숨김, 로그인 버튼 표시
-                userInfoDiv.style.display = 'none';
-                loginBtn.style.display = 'block';
-
-                // 앱 콘텐츠 비활성화 (관리/통계 등 숨김)
-                mainAppSections.forEach(el => el.style.display = 'none');
-                navButtons.style.display = 'none';
-
-                // 로컬 데이터 초기화
-                sampleRoutines = [];
-                userAreas = [];
-                userStats = {};
-                renderRoutines(); // 화면 비우기
-            }
-        });
+            sampleRoutines = []; userAreas = []; userStats = {};
+            renderRoutines();
+        }
+    });
 
         // --- 기존 모달 및 버튼 이벤트 리스너 (변경 없음) ---
         // 네비게이션 버튼
