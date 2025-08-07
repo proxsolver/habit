@@ -2377,7 +2377,8 @@
             measurementId: "G-DV5Z9YVTZG"
         };
     
-        firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(); // <<-- 이 라인을 여기에 추가하세요.
 // ====================================================================
 // 3. 사용자 인증 및 데이터 로드 (Authentication & Data Loading)
 // ====================================================================
