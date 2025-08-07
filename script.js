@@ -11,6 +11,7 @@ let activeRoutineForModal = null;
 let areaChartInstance = null;
 let weeklyChartInstance = null; 
 let calHeatmap = null; 
+let currentStatsPeriod = 'weekly'; // <-- 이 라인을 추가하세요.
 
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
@@ -274,7 +275,9 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 // 기존 calculateStats 관련 코드를 모두 지우고 아래 코드로 교체하세요.
 
-async function calculateStats() {
+// script.js의 기존 calculateStats 함수를 이 코드로 교체하세요.
+
+async function calculateStats(period = 'weekly') {
     if (!currentUser) return null;
 
     const historyQuery = db.collectionGroup('history')
@@ -285,25 +288,43 @@ async function calculateStats() {
     const histories = historySnapshot.docs.map(doc => doc.data());
 
     const today = new Date();
-    const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-    oneWeekAgo.setHours(0, 0, 0, 0); // 날짜 비교를 위해 시간 초기화
+    today.setHours(23, 59, 59, 999);
+    
+    // --- 기간 필터에 따른 변수 설정 ---
+    let dateFrom;
+    let totalDays;
+    if (period === 'monthly') {
+        dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
+        totalDays = today.getDate();
+    } else { // weekly
+        dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+        totalDays = 7;
+    }
+    dateFrom.setHours(0, 0, 0, 0);
 
-    let weeklyCompletions = 0;
-    let weeklyTotalRoutines = 0;
+    // --- 통계 계산 변수 초기화 ---
+    let periodCompletions = 0;
+    let periodTotalRoutines = 0;
     const areaPoints = { health: 0, relationships: 0, work: 0 };
     const areaCompletions = { health: 0, relationships: 0, work: 0 };
     let totalPoints = 0;
     
-    // ▼▼▼ 바 차트용 데이터 변수 추가 ▼▼▼
+    // --- (복원된 부분) 바 차트용 데이터 변수 ---
     const weeklyActivityData = [0, 0, 0, 0, 0, 0, 0];
     const weeklyActivityLabels = [];
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-    // ▲▲▲ 여기까지 ▲▲▲
+    const weekStartForBarChart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+    weekStartForBarChart.setHours(0, 0, 0, 0);
 
-    for (let i = 6; i >= 0; i--) { // 날짜 순서를 위해 역순으로 라벨 생성
+
+    // --- 루틴 총 개수 및 바 차트 라벨 계산 ---
+    for (let i = 0; i < totalDays; i++) {
         const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
         const dayOfWeek = date.getDay();
-        weeklyActivityLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[dayOfWeek]})`);
+
+        if (i < 7) { // 바 차트 라벨은 최근 7일 고정
+            weeklyActivityLabels.unshift(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[dayOfWeek]})`);
+        }
 
         sampleRoutines.forEach(routine => {
             const isActiveOnThisDay = 
@@ -311,25 +332,28 @@ async function calculateStats() {
                 (routine.frequency === 'weekday' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
                 (routine.frequency === 'weekend' && (dayOfWeek === 0 || dayOfWeek === 6));
             
-            if (i < 7 && isActiveOnThisDay) { // 7일치 총 루틴 개수만 계산
-                weeklyTotalRoutines++;
+            if (isActiveOnThisDay) {
+                periodTotalRoutines++;
             }
         });
     }
 
+    // --- 기록 기반 통계 집계 ---
     histories.forEach(hist => {
         const historyDate = new Date(hist.date);
         historyDate.setHours(0, 0, 0, 0);
 
-        if (historyDate >= oneWeekAgo) {
-            weeklyCompletions++;
-            // ▼▼▼ 날짜별 완료 횟수 집계 로직 ▼▼▼
+        if (historyDate >= dateFrom) {
+            periodCompletions++;
+        }
+
+        // (복원된 부분) 바 차트 데이터 집계
+        if (historyDate >= weekStartForBarChart) {
             const diffDays = Math.floor((today - historyDate) / (1000 * 60 * 60 * 24));
             const index = 6 - diffDays;
             if (index >= 0 && index < 7) {
                 weeklyActivityData[index]++;
             }
-            // ▲▲▲ 여기까지 ▲▲▲
         }
 
         const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId);
@@ -346,21 +370,20 @@ async function calculateStats() {
         }
     });
 
-    const weeklyCompletionRate = weeklyTotalRoutines > 0 ? Math.round((weeklyCompletions / weeklyTotalRoutines) * 100) : 0;
+    const completionRate = periodTotalRoutines > 0 ? Math.round((periodCompletions / periodTotalRoutines) * 100) : 0;
 
     const stats = {
-        weeklyCompletionRate,
+        completionRate,
         areaPoints,
         totalPoints,
         areaCompletions,
-        weeklyActivityData, // <-- 최종 결과에 추가
-        weeklyActivityLabels // <-- 최종 결과에 추가
+        weeklyActivityData,      // <-- 바 차트 데이터 복원
+        weeklyActivityLabels     // <-- 바 차트 라벨 복원
     };
 
-    debugLog("Calculated Stats:", stats);
+    debugLog("Calculated Stats (Integrated):", stats);
     return stats;
 }
-
 
 
 // ====================================================================
@@ -1537,7 +1560,15 @@ function createManageRoutineElement(routine) {
 // script.js의 기존 renderStatsPage 함수를 이 코드로 교체하세요.
 
 async function renderStatsPage() {
-    const stats = await calculateStats();
+    // 현재 선택된 기간으로 통계 계산
+    const stats = await calculateStats(currentStatsPeriod);
+    const periodText = currentStatsPeriod === 'weekly' ? '주간' : '월간';
+
+    // 제목 업데이트
+    const completionRateTitle = document.querySelector('#dashboard-view .grid .bg-indigo-100 h2');
+    if (completionRateTitle) {
+        completionRateTitle.textContent = `${periodText} 달성률`;
+    }
 
     // --- 1. 핵심 지표 카드 업데이트 (기존 로직) ---
     if (!stats) {
@@ -2063,6 +2094,21 @@ function setupAllEventListeners() {
     document.getElementById('navManageBtn').addEventListener('click', showManagePage);
     document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
     document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
+    // setupAllEventListeners 함수 내부에 추가
+    // ▼▼▼ 통계 필터 버튼 이벤트 ▼▼▼
+    document.getElementById('filter-weekly').addEventListener('click', () => {
+        currentStatsPeriod = 'weekly';
+        document.getElementById('filter-weekly').classList.add('active');
+        document.getElementById('filter-monthly').classList.remove('active');
+        renderStatsPage();
+    });
+    document.getElementById('filter-monthly').addEventListener('click', () => {
+        currentStatsPeriod = 'monthly';
+        document.getElementById('filter-monthly').classList.add('active');
+        document.getElementById('filter-weekly').classList.remove('active');
+        renderStatsPage();
+    });
+    // ▲▲▲ 여기까지 ▲▲▲
     
     // ▼▼▼ 아래 '대시보드 탭' 관련 코드를 전부 삭제하세요. ▼▼▼
     // --- 대시보드 탭 ---

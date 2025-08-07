@@ -1650,3 +1650,19 @@
             color: white;
             box-shadow: var(--shadow-md);
         }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
