@@ -381,6 +381,27 @@ async function handleNumberInputConfirm() {
     await handleNumberConfirm(value, 'simple');
 }
 
+// ==========================================================
+// ▼▼▼ 여기에 새로운 handleWheelConfirm 함수를 붙여넣으세요. ▼▼▼
+// ==========================================================
+async function handleWheelConfirm() {
+    if (!activeRoutineForModal) return;
+
+    const wheelContainer = document.getElementById('wheelContainer');
+    const wheelElement = wheelContainer.firstChild;
+
+    if (!wheelElement || typeof wheelElement.getValue !== 'function') {
+        console.error("Wheel element or getValue function not found.");
+        showNotification('값을 가져오는 데 실패했습니다.', 'error');
+        return;
+    }
+
+    const value = wheelElement.getValue();
+    await handleNumberConfirm(value, 'wheel');
+}
+// ==========================================================
+// ▲▲▲ 여기까지 붙여넣으시면 됩니다. ▲▲▲
+// ==========================================================
 
 
         async function handleTimeInputConfirm() {
