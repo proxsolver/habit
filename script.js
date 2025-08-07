@@ -1565,27 +1565,31 @@ async function renderStatsPage() {
     const periodText = currentStatsPeriod === 'weekly' ? '주간' : '월간';
 
     // 제목 업데이트
-    const completionRateTitle = document.querySelector('#dashboard-view .grid .bg-indigo-100 h2');
+    const completionRateTitle = document.getElementById('completion-rate-title');
     if (completionRateTitle) {
         completionRateTitle.textContent = `${periodText} 달성률`;
     }
 
-    // --- 1. 핵심 지표 카드 업데이트 (기존 로직) ---
+    // --- 1. 핵심 지표 카드 업데이트 ---
     if (!stats) {
         document.getElementById('stats-completion-rate').textContent = '데이터 없음';
-        // ... (기타 초기화 코드) ...
+        document.getElementById('stats-total-points').textContent = '0 P';
+        document.getElementById('stats-area-health').textContent = '0 P';
+        document.getElementById('stats-area-relationships').textContent = '0 P';
+        document.getElementById('stats-area-work').textContent = '0 P';
         return;
     }
-    document.getElementById('stats-completion-rate').textContent = `${stats.weeklyCompletionRate}%`;
+
+    // 올바른 속성명 사용
+    document.getElementById('stats-completion-rate').textContent = `${stats.completionRate}%`;
     document.getElementById('stats-total-points').textContent = `${stats.totalPoints} P`;
     document.getElementById('stats-area-health').textContent = `${stats.areaPoints.health || 0} P`;
     document.getElementById('stats-area-relationships').textContent = `${stats.areaPoints.relationships || 0} P`;
     document.getElementById('stats-area-work').textContent = `${stats.areaPoints.work || 0} P`;
 
-    // --- 2. 파이 차트 렌더링 (새로 추가된 로직) ---
+    // --- 2. 파이 차트 렌더링 ---
     const ctx = document.getElementById('areaDistributionChart').getContext('2d');
     
-    // 이전에 그려진 차트가 있다면 파괴하여 중복 생성 방지
     if (areaChartInstance) {
         areaChartInstance.destroy();
     }
@@ -1597,9 +1601,9 @@ async function renderStatsPage() {
             datasets: [{
                 label: '루틴 완료 횟수',
                 data: [
-                    stats.areaCompletions.health,
-                    stats.areaCompletions.relationships,
-                    stats.areaCompletions.work
+                    stats.areaCompletions.health || 0,
+                    stats.areaCompletions.relationships || 0,
+                    stats.areaCompletions.work || 0
                 ],
                 backgroundColor: [
                     'rgba(239, 68, 68, 0.7)',  // red-500
@@ -1638,41 +1642,43 @@ async function renderStatsPage() {
         }
     });
 
-// --- 3. 바 차트 렌더링 (새로 추가된 로직) ---
-const ctxBar = document.getElementById('weeklyActivityChart').getContext('2d');
-if (weeklyChartInstance) { weeklyChartInstance.destroy(); }
-weeklyChartInstance = new Chart(ctxBar, {
-    type: 'bar',
-    data: {
-        labels: stats.weeklyActivityLabels,
-        datasets: [{
-            label: '일일 완료 루틴 개수',
-            data: stats.weeklyActivityData,
-            backgroundColor: 'rgba(99, 102, 241, 0.7)', // indigo-500
-            borderColor: 'rgba(99, 102, 241, 1)',
-            borderWidth: 1,
-            borderRadius: 4
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false // 범례 숨기기
-            }
+    // --- 3. 바 차트 렌더링 ---
+    const ctxBar = document.getElementById('weeklyActivityChart').getContext('2d');
+    if (weeklyChartInstance) { 
+        weeklyChartInstance.destroy(); 
+    }
+    
+    weeklyChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: stats.weeklyActivityLabels || [],
+            datasets: [{
+                label: '일일 완료 루틴 개수',
+                data: stats.weeklyActivityData || [],
+                backgroundColor: 'rgba(99, 102, 241, 0.7)', // indigo-500
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    stepSize: 1 // y축 눈금을 정수 단위로
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false // 범례 숨기기
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1 // y축 눈금을 정수 단위로
+                    }
                 }
             }
         }
-    }
-});
+    });
 }
-
 // script.js의 calculateStats 함수 다음에 추가하세요.
 
 async function calculateDetailStats(routineId) {

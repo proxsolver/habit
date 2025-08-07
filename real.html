@@ -90,57 +90,62 @@
             </div>
         </div>
 
-        <div id="dashboard-view" class="dashboard-container" style="display: none; padding: 1.5rem;">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">📊 나의 통계</h1>
-            <div id="stats-filter-container" class="flex justify-center gap-2 mb-6">
-                <button id="filter-weekly" class="filter-btn active">주간</button>
-                <button id="filter-monthly" class="filter-btn">월간</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div class="bg-indigo-100 p-4 rounded-lg shadow">
-                    <h2 class="text-indigo-800 font-bold text-sm mb-2">주간 달성률</h2>
-                    <p id="stats-completion-rate" class="text-indigo-900 text-3xl font-extrabold">0%</p>
-                </div>
-                <div class="bg-green-100 p-4 rounded-lg shadow">
-                    <h2 class="text-green-800 font-bold text-sm mb-2">총 획득 포인트</h2>
-                    <p id="stats-total-points" class="text-green-900 text-3xl font-extrabold">0 P</p>
-                </div>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 획득 포인트</h2>
-                <div class="space-y-3">
-                    <div class="bg-red-50 p-4 rounded-lg flex justify-between items-center">
-                        <span class="font-semibold text-red-700">❤️ 건강</span>
-                        <span id="stats-area-health" class="font-bold text-red-900 text-lg">0 P</span>
-                    </div>
-                    <div class="bg-blue-50 p-4 rounded-lg flex justify-between items-center">
-                        <span class="font-semibold text-blue-700">🤝 관계</span>
-                        <span id="stats-area-relationships" class="font-bold text-blue-900 text-lg">0 P</span>
-                    </div>
-                    <div class="bg-yellow-50 p-4 rounded-lg flex justify-between items-center">
-                        <span class="font-semibold text-yellow-700">💼 업무</span>
-                        <span id="stats-area-work" class="font-bold text-yellow-900 text-lg">0 P</span>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8">
-                <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 루틴 완료 분포</h2>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <canvas id="areaDistributionChart"></canvas>
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <h2 class="text-xl font-bold text-gray-700 mb-4">주간 활동 기록</h2>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <canvas id="weeklyActivityChart"></canvas>
-                </div>
-            </div>
-        
-    </div> 
-
+<!-- ▼▼▼ 기존 dashboard-view 내용을 이 코드로 교체하세요 ▼▼▼ -->
+<div id="dashboard-view" class="dashboard-container" style="display: none; padding: 1.5rem;">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">📊 나의 통계</h1>
+    <div id="stats-filter-container" class="flex justify-center gap-2 mb-6">
+        <button id="filter-weekly" class="filter-btn active">주간</button>
+        <button id="filter-monthly" class="filter-btn">월간</button>
+    </div>
+    
+    <!-- 핵심 지표 카드 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div class="bg-indigo-100 p-4 rounded-lg shadow">
+            <h2 class="text-indigo-800 font-bold text-sm mb-2" id="completion-rate-title">주간 달성률</h2>
+            <p id="stats-completion-rate" class="text-indigo-900 text-3xl font-extrabold">0%</p>
         </div>
+        <div class="bg-green-100 p-4 rounded-lg shadow">
+            <h2 class="text-green-800 font-bold text-sm mb-2">총 획득 포인트</h2>
+            <p id="stats-total-points" class="text-green-900 text-3xl font-extrabold">0 P</p>
+        </div>
+    </div>
+
+    <!-- 영역별 포인트 -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 획득 포인트</h2>
+        <div class="space-y-3">
+            <div class="bg-red-50 p-4 rounded-lg flex justify-between items-center">
+                <span class="font-semibold text-red-700">❤️ 건강</span>
+                <span id="stats-area-health" class="font-bold text-red-900 text-lg">0 P</span>
+            </div>
+            <div class="bg-blue-50 p-4 rounded-lg flex justify-between items-center">
+                <span class="font-semibold text-blue-700">🤝 관계</span>
+                <span id="stats-area-relationships" class="font-bold text-blue-900 text-lg">0 P</span>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg flex justify-between items-center">
+                <span class="font-semibold text-yellow-700">💼 업무</span>
+                <span id="stats-area-work" class="font-bold text-yellow-900 text-lg">0 P</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 파이 차트 -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 루틴 완료 분포</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <canvas id="areaDistributionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 바 차트 -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-700 mb-4">주간 활동 기록</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <canvas id="weeklyActivityChart"></canvas>
+        </div>
+    </div>
+</div>
+
     </div> <div class="navigation-buttons">
         <button id="navHomeBtn" class="nav-btn home">🏠 홈</button>
         <button id="navManageBtn" class="nav-btn manage">⚙️ 관리</button>
