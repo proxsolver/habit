@@ -1423,6 +1423,34 @@ function createManageRoutineElement(routine) {
     document.getElementById('skippedCount').textContent = activeRoutines.filter(r => r.status === 'skipped').length;
 }
 
+// feat(stats): Implement basic UI and rendering for statistics page
+
+async function renderStatsPage() {
+    const stats = await calculateStats();
+
+    if (!stats) {
+        // 통계 데이터가 없을 경우 처리
+        document.getElementById('stats-completion-rate').textContent = '데이터 없음';
+        document.getElementById('stats-total-points').textContent = '0 P';
+        document.getElementById('stats-area-health').textContent = '0 P';
+        document.getElementById('stats-area-relationships').textContent = '0 P';
+        document.getElementById('stats-area-work').textContent = '0 P';
+        return;
+    }
+
+    // 계산된 통계 데이터를 HTML 요소에 채워 넣기
+    document.getElementById('stats-completion-rate').textContent = `${stats.weeklyCompletionRate}%`;
+    document.getElementById('stats-total-points').textContent = `${stats.totalPoints} P`;
+
+    document.getElementById('stats-area-health').textContent = `${stats.areaPoints.health || 0} P`;
+    document.getElementById('stats-area-relationships').textContent = `${stats.areaPoints.relationships || 0} P`;
+    document.getElementById('stats-area-work').textContent = `${stats.areaPoints.work || 0} P`;
+}
+
+
+
+
+
 
 // --- 페이지 네비게이션 (Page Navigation) ---
 
@@ -1448,10 +1476,18 @@ function showManagePage() {
     renderManagePage();
 }
 
+// feat(stats): Implement basic UI and rendering for statistics page
+
 function showDashboardPage() {
+    // 다른 페이지 숨기기
     document.getElementById('main-app-content').style.display = 'none';
-    document.getElementById('dashboard-view').style.display = 'block';
-    openDashboardTab('reading');
+    
+    // 통계 페이지 보이기
+    const dashboardView = document.getElementById('dashboard-view');
+    dashboardView.style.display = 'block';
+
+    // 통계 데이터 렌더링 함수 호출
+    renderStatsPage();
 }
 
 
