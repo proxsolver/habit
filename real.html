@@ -14,15 +14,15 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div id="auth-container" class="p-4 mb-4 bg-gray-100 rounded-lg text-center">
-    <div id="user-info" style="display: none;" class="flex items-center justify-center space-x-4">
-        <img id="user-photo" class="w-10 h-10 rounded-full">
-        <span id="user-name" class="font-semibold"></span>
-        <button id="logout-btn" class="btn btn-secondary">로그아웃</button>
-    </div>
-    <button id="login-btn" class="btn">Google 계정으로 로그인</button>
-</div>
 
+    <div id="auth-container" class="p-4 mb-4 bg-gray-100 rounded-lg text-center">
+        <div id="user-info" style="display: none;" class="flex items-center justify-center space-x-4">
+            <img id="user-photo" class="w-10 h-10 rounded-full">
+            <span id="user-name" class="font-semibold"></span>
+            <button id="logout-btn" class="btn btn-secondary">로그아웃</button>
+        </div>
+        <button id="login-btn" class="btn">Google 계정으로 로그인</button>
+    </div>
 
     <div class="container">
         <div id="main-app-content">
@@ -35,89 +35,56 @@
                     </div>
                 </div>
             </div>
-
             <div class="section-card" id="incomplete-section">
                 <h2>
-                    <div class="section-header">
-                        <span>📋 남은 루틴</span>
-                    </div>
-                    <div class="section-progress" id="incompleteProgress">
-                        <span id="incompleteCount">0</span>개 남음
-                    </div>
+                    <div class="section-header"><span>📋 남은 루틴</span></div>
+                    <div class="section-progress" id="incompleteProgress"><span id="incompleteCount">0</span>개 남음</div>
                 </h2>
-                <div class="routine-list" id="incompleteRoutineList">
-                    </div>
+                <div class="routine-list" id="incompleteRoutineList"></div>
                 <div class="empty-state" id="emptyStateIncomplete" style="display: none;">
                     <div class="empty-state-icon">🎉</div>
                     <div class="empty-state-title">모든 루틴을 완료했습니다!</div>
                     <div class="empty-state-description">오늘 하루도 정말 수고하셨습니다.<br>꾸준한 노력이 큰 변화를 만들어냅니다!</div>
                 </div>
             </div>
-
             <div class="section-card" id="inprogress-section" style="display: none;">
                 <h2>
-                    <div class="section-header">
-                        <span>🔄 진행 중 루틴</span>
-                    </div>
-                    <div class="section-progress" id="inprogressProgress">
-                        <span id="inprogressCount">0</span>개 진행 중
-                    </div>
+                    <div class="section-header"><span>🔄 진행 중 루틴</span></div>
+                    <div class="section-progress" id="inprogressProgress"><span id="inprogressCount">0</span>개 진행 중</div>
                 </h2>
-                <div class="routine-list" id="inprogressRoutineList">
-                    </div>
+                <div class="routine-list" id="inprogressRoutineList"></div>
             </div>
             <div class="section-card" id="completed-section" style="display: none;">
                 <h2>
-                    <div class="section-header">
-                        <span>✅ 완료한 루틴</span>
-                    </div>
-                    <div class="section-progress" id="completedProgress">
-                        <span id="completedCount">0</span>개 완료
-                    </div>
+                    <div class="section-header"><span>✅ 완료한 루틴</span></div>
+                    <div class="section-progress" id="completedProgress"><span id="completedCount">0</span>개 완료</div>
                 </h2>
-                <div class="routine-list" id="completedRoutineList">
-                    </div>
+                <div class="routine-list" id="completedRoutineList"></div>
             </div>
-
             <div class="section-card" id="skipped-section" style="display: none;">
                 <h2>
-                    <div class="section-header">
-                        <span>⏭️ 건너뛴 루틴</span>
-                    </div>
-                    <div class="section-progress" id="skippedProgress">
-                        <span id="skippedCount">0</span>개 건너뜜
-                    </div>
+                    <div class="section-header"><span>⏭️ 건너뛴 루틴</span></div>
+                    <div class="section-progress" id="skippedProgress"><span id="skippedCount">0</span>개 건너뜜</div>
                 </h2>
-                <div class="routine-list" id="skippedRoutineList">
-                    </div>
+                <div class="routine-list" id="skippedRoutineList"></div>
             </div>
-
             <div class="section-card" id="manage-section" style="display: none;">
                 <h2>⚙️ 루틴 순서 관리</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    드래그하여 루틴 순서를 변경할 수 있습니다.
-                </p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">드래그하여 루틴 순서를 변경할 수 있습니다.</p>
                 <div class="section-card" id="area-stats-section" style="margin-top: 1.5rem; margin-bottom: 1.5rem; padding: 1.5rem;">
                     <h2>
-                        <div class="section-header">
-                            <span>✨ 영역별 포인트</span>
-                        </div>
+                        <div class="section-header"><span>✨ 영역별 포인트</span></div>
                         <button class="edit-btn" id="manageAreasBtn">영역 관리</button>
                     </h2>
-                    <div class="area-stats-grid" id="areaStatsGrid">
-                        </div>
+                    <div class="area-stats-grid" id="areaStatsGrid"></div>
                 </div>
-                <div class="manage-routine-list" id="manageRoutineList">
-                    </div>
-                <button class="save-order-btn" id="saveOrderBtn">
-                    💾 순서 저장하기
-                </button>
+                <div class="manage-routine-list" id="manageRoutineList"></div>
+                <button class="save-order-btn" id="saveOrderBtn">💾 순서 저장하기</button>
             </div>
         </div>
 
         <div id="dashboard-view" class="dashboard-container" style="display: none; padding: 1.5rem;">
             <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">📊 나의 통계</h1>
-        
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                 <div class="bg-indigo-100 p-4 rounded-lg shadow">
                     <h2 class="text-indigo-800 font-bold text-sm mb-2">주간 달성률</h2>
@@ -128,8 +95,7 @@
                     <p id="stats-total-points" class="text-green-900 text-3xl font-extrabold">0 P</p>
                 </div>
             </div>
-        
-      <div>
+            <div>
                 <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 획득 포인트</h2>
                 <div class="space-y-3">
                     <div class="bg-red-50 p-4 rounded-lg flex justify-between items-center">
@@ -145,321 +111,281 @@
                         <span id="stats-area-work" class="font-bold text-yellow-900 text-lg">0 P</span>
                     </div>
                 </div>
-         <div class="mt-8">
-            <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 루틴 완료 분포</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <canvas id="areaDistributionChart"></canvas>
+            </div>
+            <div class="mt-8">
+                <h2 class="text-xl font-bold text-gray-700 mb-4">영역별 루틴 완료 분포</h2>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <canvas id="areaDistributionChart"></canvas>
+                </div>
             </div>
         </div>
-        </div>
-            
-            
-        <div class="navigation-buttons">
-            <button id="navHomeBtn" class="nav-btn home">
-                🏠 홈
-            </button>
-            <button id="navManageBtn" class="nav-btn manage">
-                ⚙️ 관리
-            </button>
-            <button id="navAddRoutineBtn" class="nav-btn add">
-                ➕ 루틴 추가
-            </button>
-            <button id="navStatsBtn" class="nav-btn stats">
-                📊 통계
-            </button>
-        </div>
+    </div> <div class="navigation-buttons">
+        <button id="navHomeBtn" class="nav-btn home">🏠 홈</button>
+        <button id="navManageBtn" class="nav-btn manage">⚙️ 관리</button>
+        <button id="navAddRoutineBtn" class="nav-btn add">➕ 루틴 추가</button>
+        <button id="navStatsBtn" class="nav-btn stats">📊 통계</button>
+    </div>
 
-        <div id="numberInputModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 id="numberModalTitle">숫자 입력</h3>
-                    <button id="numberModalClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div style="margin-bottom: 1rem;">
-                        <label for="numberInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">값을 입력하세요:</label>
-                        <input type="number" id="numberInput" 
-                               style="width: 100%; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: var(--radius); font-size: 1rem;"
-                               step="0.1" min="0" placeholder="숫자를 입력하세요">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="numberModalCancel" class="btn btn-secondary">취소</button>
-                    <button id="numberConfirmBtn" class="btn">확인</button>
+    <div id="numberInputModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="numberModalTitle">숫자 입력</h3>
+                <button id="numberModalClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <label for="numberInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">값을 입력하세요:</label>
+                    <input type="number" id="numberInput" 
+                           style="width: 100%; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: var(--radius); font-size: 1rem;"
+                           step="0.1" min="0" placeholder="숫자를 입력하세요">
                 </div>
             </div>
-        </div>
-
-        <div id="timeInputModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 id="timeModalTitle">시간 입력</h3>
-                    <button id="timeModalClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div style="margin-bottom: 1rem;">
-                        <label for="timeInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">시간을 선택하세요:</label>
-                        <input type="time" id="timeInput" 
-                               style="width: 100%; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: var(--radius); font-size: 1rem;">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="timeModalCancel" class="btn btn-secondary">취소</button>
-                    <button id="timeConfirmBtn" class="btn">확인</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="stepperInputModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 id="stepperModalTitle">값 입력</h3>
-                    <button id="stepperModalClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="stepper-container">
-                        <button id="stepperMinus" class="stepper-btn">−</button>
-                        <div style="text-align: center;">
-                            <span id="stepperValue" class="stepper-value">1</span>
-                            <span id="stepperUnit" class="stepper-unit">잔</span>
-                        </div>
-                        <button id="stepperPlus" class="stepper-btn">+</button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="stepperModalCancel" class="btn btn-secondary">취소</button>
-                    <button id="stepperConfirmBtn" class="btn">확인</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="readingSetupModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 id="readingSetupTitle">📚 독서 루틴 수정</h3>
-                    <button id="readingSetupClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="bookTitle">책 제목</label>
-                        <input type="text" id="bookTitle" placeholder="예: JavaScript 완벽 가이드" required>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="startPage">시작 페이지</label>
-                            <input type="number" id="startPage" min="1" value="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="endPage">끝 페이지</label>
-                            <input type="number" id="endPage" min="1" placeholder="500" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="dailyPages">일일 목표 (페이지)</label>
-                        <input type="number" id="dailyPages" min="1" value="10" required>
-                    </div>
-                    
-                    <div class="reading-summary" id="readingSummary" style="display: none;">
-                        <h4>📊 예상 일정</h4>
-                        <div class="summary-item">
-                            <span>총 페이지:</span>
-                            <span id="totalPages">-</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>예상 소요일:</span>
-                            <span id="estimatedDays">-</span>
-                        </div>
-                        <div class="summary-item">
-                            <span>완료 예정일:</span>
-                            <span id="completionDate">-</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="readingSetupCancel" class="btn btn-secondary">취소</button>
-                    <button id="readingSetupConfirm" class="btn">설정 완료</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="readingProgressModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 id="readingProgressTitle">📖 읽기 완료</h3>
-                    <button id="readingProgressClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="reading-info" id="readingInfo">
-                        </div>
-                    
-                    <div class="form-group">
-                        <label for="readPages">오늘 읽은 페이지 수</label>
-                        <input type="number" id="readPages" min="1" placeholder="10" required>
-                        <small style="color: var(--text-secondary); font-size: 0.8rem;">
-                            권장: <span id="recommendedPages">10</span> 페이지
-                        </small>
-                    </div>
-                    
-                    <div class="reading-progress-info" id="readingProgressInfo">
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="readingProgressCancel" class="btn btn-secondary">취소</button>
-                    <button id="readingProgressConfirm" class="btn">완료</button>
-                </div>
-            </div>
-        </div>
-        <div id="wheelInputModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 id="wheelModalTitle">값 선택</h3>
-                    <button id="wheelModalClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div id="wheelContainer" style="position: relative;">
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="wheelModalCancel" class="btn btn-secondary">취소</button>
-                    <button id="wheelConfirmBtn" class="btn">확인</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="addRoutineModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>➕ 새 루틴 추가</h3>
-                    <button id="addRoutineClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="newRoutineName">루틴 이름</label>
-                        <input type="text" id="newRoutineName" placeholder="예: 아침 독서, 물 8잔 마시기" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="newRoutineTime">시간대</label>
-                            <select id="newRoutineTime" required>
-                                <option value="morning">아침</option>
-                                <option value="afternoon">점심</option>
-                                <option value="evening">저녁</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="newRoutineType">루틴 타입</label>
-                            <select id="newRoutineType" required>
-                                <option value="yesno">체크 (예/아니오)</option>
-                                <option value="number">숫자 (수량/횟수)</option>
-                                <option value="time">시간 (시각)</option>
-                                <option value="reading">독서 (페이지)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="newRoutineFreq">빈도</label>
-                        <select id="newRoutineFreq" required>
-                            <option value="daily">매일</option>
-                            <option value="weekday">평일</option>
-                            <option value="weekend">주말</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>영역 선택 (다중 선택 가능)</label>
-                        <div class="area-selection-grid" id="newRoutineAreas">
-                            </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="newRoutinePoints">기본 포인트 (루틴 완료 시)</label>
-                        <input type="number" id="newRoutinePoints" min="1" value="10" required>
-                    </div>
-                    <div id="newNumberOptions" class="hidden-options">
-                        <div class="form-group">
-                            <label for="newNumberUnit">단위</label>
-                            <input type="text" id="newNumberUnit" placeholder="예: 잔, 걸음, 개">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="newNumberMin">최소값</label>
-                                <input type="number" id="newNumberMin" value="1">
-                            </div>
-                            <div class="form-group">
-                                <label for="newNumberMax">최대값</label>
-                                <input type="number" id="newNumberMax" value="100">
-                            </div>
-                            <div class="form-group">
-                                <label for="newNumberStep">단계</label>
-                                <input type="number" id="newNumberStep" value="1">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="newNumberGoal">일일 목표 (선택 사항)</label>
-                            <input type="number" id="newNumberGoal" placeholder="예: 8 (잔), 10000 (걸음)">
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="newNumberContinuous"> 지속 업데이트 가능 (매일 목표 달성 시까지)
-                            </label>
-                        </div>
-                        <div class="form-group">
-                            <label for="newNumberInputType">입력 방식</label>
-                            <select id="newNumberInputType">
-                                <option value="stepper">스테퍼 (± 버튼)</option>
-                                <option value="wheel">휠 (스크롤)</option>
-                                <option value="simple">간단 숫자 입력</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="newReadingOptions" class="hidden-options">
-                        <div class="form-group">
-                            <label for="newBookTitle">책 제목</label>
-                            <input type="text" id="newBookTitle" placeholder="예: JavaScript 완벽 가이드">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="newStartPage">시작 페이지</label>
-                                <input type="number" id="newStartPage" min="1" value="1">
-                            </div>
-                            <div class="form-group">
-                                <label for="newEndPage">끝 페이지</label>
-                                <input type="number" id="newEndPage" min="1" placeholder="500">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="newDailyPages">일일 목표 (페이지)</label>
-                            <input type="number" id="newDailyPages" min="1" value="10">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="addRoutineCancel" class="btn btn-secondary">취소</button>
-                    <button id="addRoutineConfirm" class="btn">루틴 추가</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="manageAreasModal" class="modal-overlay" style="display: none;">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>📝 영역 관리</h3>
-                    <button id="manageAreasClose" class="modal-close">×</button>
-                </div>
-                <div class="modal-body">
-                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                        3개 핵심 영역의 이름을 수정할 수 있습니다.
-                    </p>
-                    <div class="manage-areas-list" id="manageAreasList">
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="manageAreasCancel" class="btn btn-secondary">취소</button>
-                    <button id="manageAreasConfirm" class="btn">저장</button>
-                </div>
+            <div class="modal-footer">
+                <button id="numberModalCancel" class="btn btn-secondary">취소</button>
+                <button id="numberConfirmBtn" class="btn">확인</button>
             </div>
         </div>
     </div>
+    <div id="timeInputModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="timeModalTitle">시간 입력</h3>
+                <button id="timeModalClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <label for="timeInput" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">시간을 선택하세요:</label>
+                    <input type="time" id="timeInput" 
+                           style="width: 100%; padding: 0.75rem; border: 2px solid var(--gray-200); border-radius: var(--radius); font-size: 1rem;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="timeModalCancel" class="btn btn-secondary">취소</button>
+                <button id="timeConfirmBtn" class="btn">확인</button>
+            </div>
+        </div>
+    </div>
+    <div id="stepperInputModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="stepperModalTitle">값 입력</h3>
+                <button id="stepperModalClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="stepper-container">
+                    <button id="stepperMinus" class="stepper-btn">−</button>
+                    <div style="text-align: center;">
+                        <span id="stepperValue" class="stepper-value">1</span>
+                        <span id="stepperUnit" class="stepper-unit">잔</span>
+                    </div>
+                    <button id="stepperPlus" class="stepper-btn">+</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="stepperModalCancel" class="btn btn-secondary">취소</button>
+                <button id="stepperConfirmBtn" class="btn">확인</button>
+            </div>
+        </div>
+    </div>
+    <div id="readingSetupModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="readingSetupTitle">📚 독서 루틴 수정</h3>
+                <button id="readingSetupClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bookTitle">책 제목</label>
+                    <input type="text" id="bookTitle" placeholder="예: JavaScript 완벽 가이드" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startPage">시작 페이지</label>
+                        <input type="number" id="startPage" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endPage">끝 페이지</label>
+                        <input type="number" id="endPage" min="1" placeholder="500" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="dailyPages">일일 목표 (페이지)</label>
+                    <input type="number" id="dailyPages" min="1" value="10" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="readingSetupCancel" class="btn btn-secondary">취소</button>
+                <button id="readingSetupConfirm" class="btn">설정 완료</button>
+            </div>
+        </div>
+    </div>
+    <div id="readingProgressModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="readingProgressTitle">📖 읽기 완료</h3>
+                <button id="readingProgressClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="reading-info" id="readingInfo"></div>
+                <div class="form-group">
+                    <label for="readPages">오늘 읽은 페이지 수</label>
+                    <input type="number" id="readPages" min="1" placeholder="10" required>
+                    <small style="color: var(--text-secondary); font-size: 0.8rem;">
+                        권장: <span id="recommendedPages">10</span> 페이지
+                    </small>
+                </div>
+                <div class="reading-progress-info" id="readingProgressInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="readingProgressCancel" class="btn btn-secondary">취소</button>
+                <button id="readingProgressConfirm" class="btn">완료</button>
+            </div>
+        </div>
+    </div>
+    <div id="wheelInputModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="wheelModalTitle">값 선택</h3>
+                <button id="wheelModalClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="wheelContainer" style="position: relative;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="wheelModalCancel" class="btn btn-secondary">취소</button>
+                <button id="wheelConfirmBtn" class="btn">확인</button>
+            </div>
+        </div>
+    </div>
+    <div id="addRoutineModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ 새 루틴 추가</h3>
+                <button id="addRoutineClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newRoutineName">루틴 이름</label>
+                    <input type="text" id="newRoutineName" placeholder="예: 아침 독서, 물 8잔 마시기" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newRoutineTime">시간대</label>
+                        <select id="newRoutineTime" required>
+                            <option value="morning">아침</option>
+                            <option value="afternoon">점심</option>
+                            <option value="evening">저녁</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newRoutineType">루틴 타입</label>
+                        <select id="newRoutineType" required>
+                            <option value="yesno">체크 (예/아니오)</option>
+                            <option value="number">숫자 (수량/횟수)</option>
+                            <option value="time">시간 (시각)</option>
+                            <option value="reading">독서 (페이지)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newRoutineFreq">빈도</label>
+                    <select id="newRoutineFreq" required>
+                        <option value="daily">매일</option>
+                        <option value="weekday">평일</option>
+                        <option value="weekend">주말</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>영역 선택 (다중 선택 가능)</label>
+                    <div class="area-selection-grid" id="newRoutineAreas"></div>
+                </div>
+                <div class="form-group">
+                    <label for="newRoutinePoints">기본 포인트 (루틴 완료 시)</label>
+                    <input type="number" id="newRoutinePoints" min="1" value="10" required>
+                </div>
+                <div id="newNumberOptions" class="hidden-options">
+                    <div class="form-group">
+                        <label for="newNumberUnit">단위</label>
+                        <input type="text" id="newNumberUnit" placeholder="예: 잔, 걸음, 개">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newNumberMin">최소값</label>
+                            <input type="number" id="newNumberMin" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="newNumberMax">최대값</label>
+                            <input type="number" id="newNumberMax" value="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="newNumberStep">단계</label>
+                            <input type="number" id="newNumberStep" value="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="newNumberGoal">일일 목표 (선택 사항)</label>
+                        <input type="number" id="newNumberGoal" placeholder="예: 8 (잔), 10000 (걸음)">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="newNumberContinuous"> 지속 업데이트 가능 (매일 목표 달성 시까지)
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="newNumberInputType">입력 방식</label>
+                        <select id="newNumberInputType">
+                            <option value="stepper">스테퍼 (± 버튼)</option>
+                            <option value="wheel">휠 (스크롤)</option>
+                            <option value="simple">간단 숫자 입력</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="newReadingOptions" class="hidden-options">
+                    <div class="form-group">
+                        <label for="newBookTitle">책 제목</label>
+                        <input type="text" id="newBookTitle" placeholder="예: JavaScript 완벽 가이드">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newStartPage">시작 페이지</label>
+                            <input type="number" id="newStartPage" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="newEndPage">끝 페이지</label>
+                            <input type="number" id="newEndPage" min="1" placeholder="500">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="newDailyPages">일일 목표 (페이지)</label>
+                        <input type="number" id="newDailyPages" min="1" value="10">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="addRoutineCancel" class="btn btn-secondary">취소</button>
+                <button id="addRoutineConfirm" class="btn">루틴 추가</button>
+            </div>
+        </div>
+    </div>
+    <div id="manageAreasModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📝 영역 관리</h3>
+                <button id="manageAreasClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    3개 핵심 영역의 이름을 수정할 수 있습니다.
+                </p>
+                <div class="manage-areas-list" id="manageAreasList"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="manageAreasCancel" class="btn btn-secondary">취소</button>
+                <button id="manageAreasConfirm" class="btn">저장</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // Firebase 초기화 코드
@@ -473,10 +399,10 @@
             measurementId: "G-DV5Z9YVTZG"
         };
     
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(); // <<-- 이 라인을 여기에 추가하세요
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
     </script>
- <script defer src="script.js"></script>
+    <script defer src="script.js"></script>
 
 </body>
 </html>
