@@ -1034,27 +1034,38 @@ function showManageAreasModal() {
         
         // 임시 복사본으로 작업하여 취소 시 원본 유지
         const tempAreas = JSON.parse(JSON.stringify(userAreas));
-        
+        // fix(areas): Correct state mutation in area management modal to fix silent bug
         function renderAreaInputs(areas) {
-            manageAreasList.innerHTML = '';
-            areas.forEach(area => {
-                const areaGroup = document.createElement('div');
-                areaGroup.className = 'form-group';
-                areaGroup.innerHTML = `
-                    <label for="area-name-${area.id}">${area.name}</label>
-                    <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
-                    ${areas.length > 1 ? `<button class="remove-area-btn" data-area-id="${area.id}">−</button>` : ''}
-                `;
-                manageAreasList.appendChild(areaGroup);
-            });
+    manageAreasList.innerHTML = '';
+    areas.forEach(area => {
+        const areaGroup = document.createElement('div');
+        areaGroup.className = 'form-group';
+        areaGroup.innerHTML = `
+            <label for="area-name-${area.id}">${area.name}</label>
+            <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
+            ${areas.length > 1 ? `<button class="remove-area-btn" data-area-id="${area.id}">−</button>` : ''}
+        `;
+        manageAreasList.appendChild(areaGroup);
+    });
 
-            document.querySelectorAll('.remove-area-btn').forEach(button => {
-                button.onclick = (e) => {
-                    const idToRemove = e.target.dataset.areaId;
-                    const updatedTempAreas = tempAreas.filter(area => area.id !== idToRemove);
-                    renderAreaInputs(updatedTempAreas);
-                };
-            });
+    document.querySelectorAll('.remove-area-btn').forEach(button => {
+        button.onclick = (e) => {
+            const idToRemove = e.target.dataset.areaId;
+
+            // --- 여기가 수정된 부분입니다 ---
+            // 1. 삭제할 아이템의 인덱스를 찾습니다.
+            const indexToRemove = tempAreas.findIndex(area => area.id === idToRemove);
+
+            // 2. splice를 사용해 tempAreas 배열 자체를 직접 수정(mutate)합니다.
+            if (indexToRemove > -1) {
+                tempAreas.splice(indexToRemove, 1);
+            }
+
+            // 3. 수정된 tempAreas를 기반으로 화면을 다시 그립니다.
+            renderAreaInputs(tempAreas);
+            // --- 여기까지 수정 ---
+        };
+    });
             
             addAreaBtn.style.display = areas.length < MAX_AREAS ? 'block' : 'none';
         }
