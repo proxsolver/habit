@@ -3950,35 +3950,111 @@ function createManageRoutineElement(routine) {
                 areaStatsGrid.appendChild(statItem);
             });
         }
-    
-// === Event Listeners Setup ===
-// DOMContentLoaded 내부
-document.addEventListener('DOMContentLoaded', () => {
-        
-        // --- UI 요소 가져오기 ---
-        const userInfoDiv = document.getElementById('user-info');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userNameSpan = document.getElementById('user-name');
-        const userPhotoImg = document.getElementById('user-photo');
-        const mainAppContent = document.querySelector('.container'); // <<-- 이 줄을 추가하세요.
-        const mainAppSections = document.querySelectorAll('.container > div'); // 앱 콘텐츠 영역들
-        const navButtons = document.querySelector('.navigation-buttons');
-
-        // Google 로그인 공급자 객체 생성
+            
+                // Google 로그인 공급자 객체 생성
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        // --- 인증 이벤트 리스너 ---
-        loginBtn.addEventListener('click', () => {
-            firebase.auth().signInWithPopup(provider).catch(error => {
-                console.error("로그인 실패:", error);
-                showNotification("로그인에 실패했습니다.", "error");
-            });
-        });
+// === Event Listeners Setup ===
+// ====================================================================
+// 8. 이벤트 리스너 설정 함수 (이 블록을 먼저 붙여넣고)
+// ====================================================================
 
-        logoutBtn.addEventListener('click', () => {
-            firebase.auth().signOut();
-        });
+function setupAllEventListeners() {
+    // --- 네비게이션 버튼 ---
+    document.getElementById('navHomeBtn').addEventListener('click', showHomePage);
+    document.getElementById('navManageBtn').addEventListener('click', showManagePage);
+    document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
+    document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
+    
+    // --- 대시보드 탭 ---
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', () => openDashboardTab(button.dataset.tab));
+    });
+
+    // --- 관리 페이지 ---
+    document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
+    document.getElementById('manageAreasBtn').addEventListener('click', showManageAreasModal);
+
+    // --- 각종 모달 버튼들 ---
+    setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
+    setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
+    setupModal('stepperInputModal', hideStepperModal, handleStepperConfirm);
+    setupModal('wheelInputModal', hideWheelModal, handleWheelConfirm);
+    setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm);
+    setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
+    setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm);
+    setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
+
+    // --- ESC로 모든 모달 닫기 ---
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay').forEach(modal => modal.style.display = 'none');
+        }
+    });
+}
+
+function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    modal.querySelector('.modal-close')?.addEventListener('click', hideFn);
+    modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
+    modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideFn(); });
+    
+    if (confirmFn) {
+        modal.querySelector('.btn:not(.btn-secondary)')?.addEventListener('click', confirmFn);
+    }
+    if (confirmInputId) {
+        document.getElementById(confirmInputId)?.addEventListener('keypress', (e) => { if (e.key === 'Enter') confirmFn(); });
+    }
+}
+
+// ====================================================================
+// 9. 앱 시작점 (이 블록을 그 다음에 붙여넣으세요)
+// ====================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // UI 요소
+    const userInfoDiv = document.getElementById('user-info');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const userNameSpan = document.getElementById('user-name');
+    const userPhotoImg = document.getElementById('user-photo');
+    const mainAppContent = document.querySelector('.container');
+    const navButtons = document.querySelector('.navigation-buttons');
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // 인증 이벤트 리스너
+    loginBtn.addEventListener('click', () => firebase.auth().signInWithPopup(provider));
+    logoutBtn.addEventListener('click', () => firebase.auth().signOut());
+
+    // 로그인 상태 변경 감지
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            currentUser = user;
+            userInfoDiv.style.display = 'flex';
+            loginBtn.style.display = 'none';
+            userNameSpan.textContent = user.displayName;
+            userPhotoImg.src = user.photoURL;
+            mainAppContent.style.opacity = 1;
+            navButtons.style.display = 'flex';
+            await loadAllDataForUser(currentUser.uid);
+            showHomePage();
+        } else {
+            currentUser = null;
+            userInfoDiv.style.display = 'none';
+            loginBtn.style.display = 'block';
+            mainAppContent.style.opacity = 0.2;
+            navButtons.style.display = 'none';
+            sampleRoutines = []; userAreas = []; userStats = {};
+            renderRoutines();
+        }
+    });
+
+    // 모든 UI 이벤트 리스너 설정 함수 호출
+    setupAllEventListeners();
+});
+
 
      // ★★★ 핵심: 사용자의 로그인 상태 변경을 실시간으로 감지 ★★★
     firebase.auth().onAuthStateChanged(async (user) => { // <<-- [교체]
@@ -4012,38 +4088,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-        // --- 기존 모달 및 버튼 이벤트 리스너 (변경 없음) ---
-        // 네비게이션 버튼
-        document.getElementById('navHomeBtn').addEventListener('click', showHomePage);
-        document.getElementById('navManageBtn').addEventListener('click', showManagePage);
-        document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
-        document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
-        
-        // 대시보드 탭
-        document.querySelectorAll('.tab-button').forEach(button => {
-            button.addEventListener('click', () => openDashboardTab(button.dataset.tab));
-        });
-
-        // 관리 페이지 순서 저장 버튼
-        document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
-
-        // 모달 공통 설정
-        setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
-        setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
-        setupModal('stepperInputModal', hideStepperModal);
-        setupModal('wheelInputModal', hideWheelModal);
-        setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm);
-        setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
-        setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm);
-        setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
-
-        // ESC로 모든 모달 닫기
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay').forEach(modal => modal.style.display = 'none');
-            }
-        });
-    });
+       
 
     /**
      * ★★★ 신규 함수 ★★★
