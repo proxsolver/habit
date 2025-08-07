@@ -730,8 +730,8 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            display: flex;
+              /* backdrop-filter: blur(8px);  <-- 이 라인을 삭제하거나 주석 처리하세요. */
+             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
