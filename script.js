@@ -9,6 +9,7 @@ let sortableInstance = null;
 let orderChanged = false;
 let activeRoutineForModal = null;
 const DEBUG_MODE = true;
+const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
 
 const today = new Date();
 const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
