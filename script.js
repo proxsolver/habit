@@ -1920,6 +1920,16 @@ function setupAllEventListeners() {
     document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
     document.getElementById('manageAreasBtn').addEventListener('click', showManageAreasModal);
 
+    // ▼▼▼ 이 코드를 여기에 추가하세요 ▼▼▼
+    // '새 루틴 추가' 모달에서 루틴 타입 변경 시 옵션 동적 표시
+    document.getElementById('newRoutineType').addEventListener('change', (e) => {
+        const selectedType = e.target.value;
+        document.getElementById('newNumberOptions').style.display = selectedType === 'number' ? 'block' : 'none';
+        document.getElementById('newReadingOptions').style.display = selectedType === 'reading' ? 'block' : 'none';
+    });
+    // ▲▲▲ 여기까지 ▲▲▲
+
+
     // --- 각종 모달 버튼들 ---
     setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
