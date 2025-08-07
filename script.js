@@ -507,7 +507,7 @@ async function handleNumberConfirm(value, inputType) {
                 showNotification('저장에 실패했습니다.', 'error');
             }
         }
-}
+
 
         async function handleAddRoutineConfirm() {
             const name = document.getElementById('newRoutineName').value.trim();
