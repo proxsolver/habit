@@ -2751,22 +2751,28 @@ async function handleDeleteRoutine(routineId, routineName) {
             activeRoutineForModal = null;
         }
     
-      // 1. Stepper(± 버튼) 루틴 완료 처리 함수
+// 1. Stepper(± 버튼) 루틴 완료 처리 함수
 async function handleStepperConfirm(value) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
+            const tempRoutineForCheck = { ...routine, value: value };
+            const isNowGoalAchieved = isGoalAchieved(tempRoutineForCheck);
+
             const updatedFields = {
                 value: value,
                 status: null,
-                lastUpdatedDate: todayDateString
+                lastUpdatedDate: todayDateString,
+                // ★★★ 수정된 핵심 로직 1 ★★★
+                // 포인트 지급 여부와 관계없이, 목표 달성 상태를 항상 업데이트합니다.
+                dailyGoalMetToday: isNowGoalAchieved
             };
             let pointsAwarded = false;
-            const tempRoutineForCheck = { ...routine, value: value };
 
-            if (isGoalAchieved(tempRoutineForCheck) && !routine.pointsGivenToday) {
+            // 포인트와 스트릭은 오늘 처음 목표를 달성했을 때만 지급합니다.
+            if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
@@ -2776,12 +2782,12 @@ async function handleStepperConfirm(value) {
                     await updateUserStatsInFirebase(newStats);
                 }
                 updatedFields.pointsGivenToday = true;
-                updatedFields.dailyGoalMetToday = true; // 수정된 부분
                 pointsAwarded = true;
             }
+
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
             hideStepperModal();
-            const goalStatus = isGoalAchieved(tempRoutineForCheck) ? ' 🎯 목표 달성!' : '';
+            const goalStatus = isNowGoalAchieved ? ' 🎯 목표 달성!' : '';
             showNotification(`✅ ${currentRoutine.name}: ${value}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
             if (pointsAwarded) {
                 showCompletionEffect();
@@ -2802,15 +2808,21 @@ async function handleNumberConfirm(value, inputType) {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
             const finalValue = routine.continuous ? Math.max(routine.value || 0, value) : value;
+            const tempRoutineForCheck = { ...routine, value: finalValue };
+            const isNowGoalAchieved = isGoalAchieved(tempRoutineForCheck);
+
             const updatedFields = {
                 value: finalValue,
                 status: null,
-                lastUpdatedDate: todayDateString
+                lastUpdatedDate: todayDateString,
+                // ★★★ 수정된 핵심 로직 2 ★★★
+                // 포인트 지급 여부와 관계없이, 목표 달성 상태를 항상 업데이트합니다.
+                dailyGoalMetToday: isNowGoalAchieved
             };
             let pointsAwarded = false;
-            const tempRoutineForCheck = { ...routine, value: finalValue };
 
-            if (isGoalAchieved(tempRoutineForCheck) && !routine.pointsGivenToday) {
+            // 포인트와 스트릭은 오늘 처음 목표를 달성했을 때만 지급합니다.
+            if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
@@ -2820,14 +2832,13 @@ async function handleNumberConfirm(value, inputType) {
                     await updateUserStatsInFirebase(newStats);
                 }
                 updatedFields.pointsGivenToday = true;
-                updatedFields.dailyGoalMetToday = true; // 수정된 부분
                 pointsAwarded = true;
             }
 
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
             if (inputType === 'simple') hideNumberInputModal();
             if (inputType === 'wheel') hideWheelModal();
-            const goalStatus = isGoalAchieved(tempRoutineForCheck) ? ' 🎯 목표 달성!' : '';
+            const goalStatus = isNowGoalAchieved ? ' 🎯 목표 달성!' : '';
             showNotification(`✅ ${currentRoutine.name}: ${finalValue}${currentRoutine.unit || ''}${goalStatus} 저장되었습니다!`);
             if (pointsAwarded) {
                 showCompletionEffect();
