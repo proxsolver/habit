@@ -1513,6 +1513,8 @@ async function renderStatsPage() {
                 }
             }
         }
+    });
+    
 // --- 3. 바 차트 렌더링 (새로 추가된 로직) ---
 const ctxBar = document.getElementById('weeklyActivityChart').getContext('2d');
 if (weeklyChartInstance) { weeklyChartInstance.destroy(); }
