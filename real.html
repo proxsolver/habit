@@ -4015,7 +4015,7 @@ function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
 
 document.addEventListener('DOMContentLoaded', () => {
     // UI 요소
-    const userInfoDiv = document.getElementById('user-info');
+    const userInfoDiv = document.getElementById('user-info'); // id가 'user-info' 입니다.
     const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const userNameSpan = document.getElementById('user-name');
@@ -4024,15 +4024,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const navButtons = document.querySelector('.navigation-buttons');
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    // 인증 이벤트 리스너
+ 
+    // --- 인증 이벤트 리스너 ---
     loginBtn.addEventListener('click', () => firebase.auth().signInWithPopup(provider));
     logoutBtn.addEventListener('click', () => firebase.auth().signOut());
-
-    // 로그인 상태 변경 감지
+    
+    // --- 로그인 상태 변경 감지 ---
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = user;
-            userInfoDiv.style.display = 'flex';
+            userInfoDiv.style.display = 'flex'; // 이제 정상적으로 동작합니다.
             loginBtn.style.display = 'none';
             userNameSpan.textContent = user.displayName;
             userPhotoImg.src = user.photoURL;
@@ -4042,7 +4043,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showHomePage();
         } else {
             currentUser = null;
-            userInfoDiv.style.display = 'none';
+            userInfoDiv.style.display = 'none'; // 이제 정상적으로 동작합니다.
             loginBtn.style.display = 'block';
             mainAppContent.style.opacity = 0.2;
             navButtons.style.display = 'none';
@@ -4050,7 +4051,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderRoutines();
         }
     });
-
+    
     // 모든 UI 이벤트 리스너 설정 함수 호출
     setupAllEventListeners();
 });
