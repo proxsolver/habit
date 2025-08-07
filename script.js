@@ -270,7 +270,7 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 
 
-// script.js의 기존 calculateStats 함수를 이 코드로 교체하세요.
+// 기존 calculateStats 관련 코드를 모두 지우고 아래 코드로 교체하세요.
 
 async function calculateStats() {
     if (!currentUser) return null;
@@ -288,11 +288,9 @@ async function calculateStats() {
     let weeklyCompletions = 0;
     let weeklyTotalRoutines = 0;
     
-    // ▼▼▼ 계산할 변수 추가 ▼▼▼
     const areaPoints = { health: 0, relationships: 0, work: 0 };
-    const areaCompletions = { health: 0, relationships: 0, work: 0 }; // 완료 횟수 집계용
+    const areaCompletions = { health: 0, relationships: 0, work: 0 };
     let totalPoints = 0;
-    // ▲▲▲ 여기까지 ▲▲▲
 
     for (let i = 0; i < 7; i++) {
         const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
@@ -320,13 +318,11 @@ async function calculateStats() {
         if (parentRoutine && parentRoutine.areas) {
             parentRoutine.areas.forEach(areaId => {
                 if (areaPoints[areaId] !== undefined) {
-                    // ▼▼▼ 완료 횟수 및 포인트 동시 집계 ▼▼▼
                     areaCompletions[areaId]++;
                     if (hist.pointsEarned) {
                         areaPoints[areaId] += hist.pointsEarned;
                         totalPoints += hist.pointsEarned;
                     }
-                    // ▲▲▲ 여기까지 ▲▲▲
                 }
             });
         }
@@ -338,48 +334,13 @@ async function calculateStats() {
         weeklyCompletionRate: weeklyCompletionRate,
         areaPoints: areaPoints,
         totalPoints: totalPoints,
-        areaCompletions: areaCompletions // <-- 최종 결과에 추가
+        areaCompletions: areaCompletions
     };
 
     debugLog("Calculated Stats:", stats);
     return stats;
 }
 
-    // --- 4. 가져온 history 기록을 바탕으로 통계 집계 ---
-    histories.forEach(hist => {
-        const historyDate = new Date(hist.date);
-
-        // 주간 달성 횟수 계산
-        if (historyDate >= oneWeekAgo) {
-            weeklyCompletions++;
-        }
-
-        // 영역별, 총 포인트 계산
-        if (hist.pointsEarned) {
-            const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId); // 부모 루틴 찾기 (수정됨)
-            if (parentRoutine && parentRoutine.areas) {
-                parentRoutine.areas.forEach(areaId => {
-                    if (areaPoints[areaId] !== undefined) {
-                        areaPoints[areaId] += hist.pointsEarned;
-                    }
-                });
-                totalPoints += hist.pointsEarned;
-            }
-        }
-    });
-
-    // --- 5. 최종 통계 객체 생성 및 반환 ---
-    const weeklyCompletionRate = weeklyTotalRoutines > 0 ? Math.round((weeklyCompletions / weeklyTotalRoutines) * 100) : 0;
-
-    const stats = {
-        weeklyCompletionRate: weeklyCompletionRate,
-        areaPoints: areaPoints,
-        totalPoints: totalPoints
-    };
-
-    debugLog("Calculated Stats:", stats);
-    return stats;
-}
 
 
 
