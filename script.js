@@ -239,7 +239,8 @@ async function updateAreasInFirebase(updatedAreas) {
     renderAreaStats();
 }
 
-// script.js의 Firebase 처리 함수 섹션에 추가하세요.
+
+// feat(stats): Implement stats calculation function using collection group query
 
 async function logRoutineHistory(routineId, dataToLog) {
     if (!currentUser) return;
@@ -253,6 +254,7 @@ async function logRoutineHistory(routineId, dataToLog) {
     
     try {
         await historyRef.set({
+            routineId: routineId, // <-- 부모 루틴의 ID를 함께 저장
             date: dateString,
             ...dataToLog
         });
@@ -261,6 +263,86 @@ async function logRoutineHistory(routineId, dataToLog) {
         console.error("Failed to log routine history:", error);
     }
 }
+
+// feat(stats): Implement stats calculation function using collection group query
+
+
+
+async function calculateStats() {
+    if (!currentUser) return null;
+
+    // --- 1. 모든 루틴의 모든 'history' 기록을 한 번에 가져오기 ---
+    const historyQuery = db.collectionGroup('history')
+                           .where('__name__', '>=', `users/${currentUser.uid}/`)
+                           .where('__name__', '<', `users/${currentUser.uid}0/`);
+    
+    const historySnapshot = await historyQuery.get();
+    const histories = historySnapshot.docs.map(doc => doc.data());
+
+    // --- 2. 통계 계산을 위한 변수 초기화 ---
+    const today = new Date();
+    const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6); // 오늘 포함 7일
+    
+    let weeklyCompletions = 0;
+    let weeklyTotalRoutines = 0;
+    const areaPoints = { health: 0, relationships: 0, work: 0 };
+    let totalPoints = 0;
+
+    // --- 3. 주간 루틴 총 개수 계산 ---
+    // (정확한 계산을 위해 주간/평일/주말 루틴을 고려)
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+        const dayOfWeek = date.getDay(); // 0:일요일, 6:토요일
+
+        sampleRoutines.forEach(routine => {
+            const isActiveOnThisDay = 
+                (routine.frequency === 'daily') ||
+                (routine.frequency === 'weekday' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
+                (routine.frequency === 'weekend' && (dayOfWeek === 0 || dayOfWeek === 6));
+            
+            if (isActiveOnThisDay) {
+                weeklyTotalRoutines++;
+            }
+        });
+    }
+
+
+    // --- 4. 가져온 history 기록을 바탕으로 통계 집계 ---
+    histories.forEach(hist => {
+        const historyDate = new Date(hist.date);
+
+        // 주간 달성 횟수 계산
+        if (historyDate >= oneWeekAgo) {
+            weeklyCompletions++;
+        }
+
+        // 영역별, 총 포인트 계산
+        if (hist.pointsEarned) {
+            const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId); // 부모 루틴 찾기 (수정됨)
+            if (parentRoutine && parentRoutine.areas) {
+                parentRoutine.areas.forEach(areaId => {
+                    if (areaPoints[areaId] !== undefined) {
+                        areaPoints[areaId] += hist.pointsEarned;
+                    }
+                });
+                totalPoints += hist.pointsEarned;
+            }
+        }
+    });
+
+    // --- 5. 최종 통계 객체 생성 및 반환 ---
+    const weeklyCompletionRate = weeklyTotalRoutines > 0 ? Math.round((weeklyCompletions / weeklyTotalRoutines) * 100) : 0;
+
+    const stats = {
+        weeklyCompletionRate: weeklyCompletionRate,
+        areaPoints: areaPoints,
+        totalPoints: totalPoints
+    };
+
+    debugLog("Calculated Stats:", stats);
+    return stats;
+}
+
 
 
 // ====================================================================
