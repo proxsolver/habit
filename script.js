@@ -1661,7 +1661,7 @@ function setupAllEventListeners() {
     // --- 각종 모달 버튼들 ---
     setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
-    setupModal('stepperInputModal', hideStepperModal, handleStepperConfirm);
+    setupModal('stepperInputModal', hideStepperModal);
     setupModal('wheelInputModal', hideWheelModal, handleWheelConfirm);
     setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm);
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
