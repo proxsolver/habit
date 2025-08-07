@@ -363,6 +363,26 @@ async function handleNumberConfirm(value, inputType) {
     }
 }
 
+async function handleNumberInputConfirm() {
+    if (!activeRoutineForModal) return;
+
+    // 모달의 input 요소에서 값을 읽어옵니다.
+    const inputElement = document.getElementById('numberInput');
+    const value = parseFloat(inputElement.value);
+
+    // 값이 유효한 숫자인지 확인합니다.
+    if (isNaN(value)) {
+        showNotification('유효한 숫자를 입력해주세요.', 'error');
+        return;
+    }
+
+    // 기존에 만들어둔 범용 숫자 처리 함수를 호출합니다.
+    // 'simple' 타입으로 호출하여 어떤 종류의 입력인지 구분합니다.
+    await handleNumberConfirm(value, 'simple');
+}
+
+
+
         async function handleTimeInputConfirm() {
             if (!activeRoutineForModal) return;
             
