@@ -1024,63 +1024,85 @@ function hideReadingProgressModal() {
     document.getElementById('readingProgressModal').style.display = 'none';
 }
 
+// refactor(areas): Rearchitect area management modal for stable state handling
+
 
 function showManageAreasModal() {
-        const modal = document.getElementById('manageAreasModal');
-        const manageAreasList = document.getElementById('manageAreasList');
-        const addAreaBtn = document.getElementById('addAreaBtn');
-        
+    const modal = document.getElementById('manageAreasModal');
+    const manageAreasList = document.getElementById('manageAreasList');
+    const addAreaBtn = document.getElementById('addAreaBtn');
+
+    // 모달 내에서만 사용할 임시 영역 배열을 만듭니다. (취소 시 원본 유지)
+    const tempAreas = JSON.parse(JSON.stringify(userAreas));
+
+    // 화면을 그리는 모든 로직을 이 render 함수에 중앙화합니다.
+    const render = () => {
+        // 1. 리스트를 깨끗하게 비웁니다.
         manageAreasList.innerHTML = '';
-        
-        // 임시 복사본으로 작업하여 취소 시 원본 유지
-        const tempAreas = JSON.parse(JSON.stringify(userAreas));
-        // fix(areas): Correct state mutation in area management modal to fix silent bug
-        function renderAreaInputs(areas) {
-    manageAreasList.innerHTML = '';
-    areas.forEach(area => {
-        const areaGroup = document.createElement('div');
-        areaGroup.className = 'form-group';
-        areaGroup.innerHTML = `
-            <label for="area-name-${area.id}">${area.name}</label>
-            <input type="text" id="area-name-${area.id}" value="${area.name}" data-area-id="${area.id}">
-            ${areas.length > 1 ? `<button class="remove-area-btn" data-area-id="${area.id}">−</button>` : ''}
-        `;
-        manageAreasList.appendChild(areaGroup);
-    });
 
-    document.querySelectorAll('.remove-area-btn').forEach(button => {
-        button.onclick = (e) => {
-            const idToRemove = e.target.dataset.areaId;
+        // 2. tempAreas 배열의 현재 상태를 기반으로 목록을 다시 만듭니다.
+        tempAreas.forEach(area => {
+            const areaGroup = document.createElement('div');
+            areaGroup.className = 'form-group';
+            
+            const label = document.createElement('label');
+            label.setAttribute('for', `area-name-${area.id}`);
+            label.textContent = area.name;
 
-            // --- 여기가 수정된 부분입니다 ---
-            // 1. 삭제할 아이템의 인덱스를 찾습니다.
-            const indexToRemove = tempAreas.findIndex(area => area.id === idToRemove);
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `area-name-${area.id}`;
+            input.value = area.name;
+            input.dataset.areaId = area.id;
 
-            // 2. splice를 사용해 tempAreas 배열 자체를 직접 수정(mutate)합니다.
-            if (indexToRemove > -1) {
-                tempAreas.splice(indexToRemove, 1);
+            areaGroup.appendChild(label);
+            areaGroup.appendChild(input);
+
+            // 3. 삭제 버튼을 만들고, 각 버튼에 직접 이벤트 리스너를 추가합니다.
+            if (tempAreas.length > 1) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-area-btn';
+                removeBtn.textContent = '−';
+                removeBtn.type = 'button'; // form 제출 방지
+                
+                removeBtn.addEventListener('click', () => {
+                    const indexToRemove = tempAreas.findIndex(a => a.id === area.id);
+                    if (indexToRemove > -1) {
+                        tempAreas.splice(indexToRemove, 1); // tempAreas 직접 수정
+                    }
+                    render(); // 변경 후 즉시 화면 다시 그리기
+                });
+                areaGroup.appendChild(removeBtn);
             }
 
-            // 3. 수정된 tempAreas를 기반으로 화면을 다시 그립니다.
-            renderAreaInputs(tempAreas);
-            // --- 여기까지 수정 ---
-        };
-    });
-            
-            addAreaBtn.style.display = areas.length < MAX_AREAS ? 'block' : 'none';
-        }
-        
-        renderAreaInputs(tempAreas);
+            manageAreasList.appendChild(areaGroup);
+        });
 
-        addAreaBtn.onclick = () => {
-            if (tempAreas.length >= MAX_AREAS) return;
-            const newAreaId = `customArea${Date.now()}`;
-            tempAreas.push({ id: newAreaId, name: `새 영역 ${tempAreas.length + 1}` });
-            renderAreaInputs(tempAreas);
-        };
+        // 4. 영역 개수에 따라 '추가' 버튼 표시 여부를 결정합니다.
+        addAreaBtn.style.display = tempAreas.length < MAX_AREAS ? 'block' : 'none';
+    };
+
+    // '영역 추가' 버튼의 클릭 이벤트 핸들러를 설정합니다.
+    addAreaBtn.onclick = () => {
+        if (tempAreas.length >= MAX_AREAS) return;
         
-        modal.style.display = 'flex';
-    }
+        const newAreaId = `customArea${Date.now()}`;
+        tempAreas.push({ id: newAreaId, name: `새 영역 ${tempAreas.length + 1}` });
+        render(); // 추가 후 즉시 화면 다시 그리기
+    };
+
+    // 모달이 열릴 때 첫 화면을 그립니다.
+    render();
+    modal.style.display = 'flex';
+}
+
+
+
+
+
+
+
+
 
 function hideManageAreasModal() {
     document.getElementById('manageAreasModal').style.display = 'none';
