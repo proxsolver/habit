@@ -9,7 +9,8 @@ let sortableInstance = null;
 let orderChanged = false;
 let activeRoutineForModal = null;
 let areaChartInstance = null;
-let weeklyChartInstance = null; // <-- 이 라인을 추가하세요.
+let weeklyChartInstance = null; 
+let calHeatmap = null; 
 
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
@@ -1211,6 +1212,7 @@ async function showDetailStatsModal(routineId) {
     const loadingEl = document.getElementById('detailModalLoading');
     const contentEl = document.getElementById('detailModalContent');
     const titleEl = document.getElementById('detailModalTitle');
+    const calendarContainer = document.getElementById('calendar-heatmap-container');
 
     // 데이터 로딩 시작
     loadingEl.style.display = 'block';
@@ -1231,7 +1233,58 @@ async function showDetailStatsModal(routineId) {
         document.getElementById('detail-total-completions').textContent = `✅ ${stats.totalCompletions}`;
         document.getElementById('detail-total-points').textContent = `✨ ${stats.totalPoints}`;
     }
+// --- ▼▼▼ 캘린더 히트맵 렌더링 로직 (새로 추가) ▼▼▼ ---
+calendarContainer.innerHTML = '<div id="cal-heatmap" class="w-full"></div>'; // 캘린더를 그릴 div 초기화
 
+if (calHeatmap) {
+    calHeatmap.destroy(); // 이전 캘린더 인스턴스 파괴
+}
+calHeatmap = new CalHeatmap();
+
+// history 데이터를 캘린더가 이해하는 형식으로 변환
+const calendarData = stats.historyData.map(hist => ({
+    date: hist.date,
+    value: 1 // 완료한 날은 값 1로 표시
+}));
+
+calHeatmap.paint({
+    data: {
+        source: calendarData,
+        x: 'date',
+        y: 'value'
+    },
+    date: { start: new Date(new Date().setFullYear(new Date().getFullYear() - 1)) }, // 1년 전부터
+    range: 12, // 12개월
+    scale: {
+        color: {
+            type: 'threshold',
+            range: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
+            domain: [1, 2, 3, 4, 5] // 값에 따른 색상 단계 (GitHub 스타일)
+        }
+    },
+    domain: {
+        type: 'month',
+        gutter: 4,
+        label: { text: 'MMM', position: 'top' }
+    },
+    subDomain: {
+        type: 'ghDay',
+        radius: 2,
+        width: 11,
+        height: 11,
+        gutter: 4
+    }
+}, [
+    [
+        Tooltip,
+        {
+            text: function (date, value, dayjsDate) {
+                return (value ? value + '회 완료' : '기록 없음') + ' on ' + dayjsDate.format('LL');
+            }
+        },
+    ],
+]);
+// --- ▲▲▲ 여기까지 ▲▲▲ ---
     // 로딩 완료 후 콘텐츠 표시
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
