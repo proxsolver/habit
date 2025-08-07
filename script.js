@@ -921,6 +921,7 @@ function createNumberWheel(min, max, step, initialValue, unit) {
             console.warn('New reading routine creation should use showAddRoutineModal().');
             return;
         }
+ }
 
 function hideReadingSetupModal() {
     document.getElementById('readingSetupModal').style.display = 'none';
