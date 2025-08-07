@@ -118,14 +118,53 @@
                     <canvas id="areaDistributionChart"></canvas>
                 </div>
             </div>
-            
+
             <div class="mt-8">
                 <h2 class="text-xl font-bold text-gray-700 mb-4">주간 활동 기록</h2>
                 <div class="bg-white p-4 rounded-lg shadow">
                     <canvas id="weeklyActivityChart"></canvas>
                 </div>
             </div>
-            
+           <div id="routineDetailModal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="detailModalTitle">루틴 상세 통계</h3>
+            <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="detailModalLoading" style="text-align: center;">로딩 중...</div>
+            <div id="detailModalContent" style="display: none;">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-100 p-3 rounded-lg text-center">
+                        <h4 class="text-sm font-bold text-gray-600">현재 스트릭</h4>
+                        <p id="detail-current-streak" class="text-2xl font-bold">🔥 0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg text-center">
+                        <h4 class="text-sm font-bold text-gray-600">최고 스트릭</h4>
+                        <p id="detail-longest-streak" class="text-2xl font-bold">🏆 0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg text-center">
+                        <h4 class="text-sm font-bold text-gray-600">총 완료 횟수</h4>
+                        <p id="detail-total-completions" class="text-2xl font-bold">✅ 0</p>
+                    </div>
+                    <div class="bg-gray-100 p-3 rounded-lg text-center">
+                        <h4 class="text-sm font-bold text-gray-600">총 획득 포인트</h4>
+                        <p id="detail-total-points" class="text-2xl font-bold">✨ 0</p>
+                    </div>
+                </div>
+                <div id="calendar-heatmap-container" class="mt-4">
+                    <h3 class="text-lg font-bold mb-2">활동 기록</h3>
+                    <div class="bg-gray-50 p-2 rounded-lg">
+                        (캘린더 히트맵 준비 중)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary">닫기</button>
+        </div>
+    </div>
+</div> 
     </div> 
 
         </div>

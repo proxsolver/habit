@@ -1202,8 +1202,38 @@ function hideManageAreasModal() {
     document.getElementById('manageAreasModal').style.display = 'none';
 }
 
-   
+function hideDetailStatsModal() {
+    document.getElementById('routineDetailModal').style.display = 'none';
+}
 
+async function showDetailStatsModal(routineId) {
+    const modal = document.getElementById('routineDetailModal');
+    const loadingEl = document.getElementById('detailModalLoading');
+    const contentEl = document.getElementById('detailModalContent');
+    const titleEl = document.getElementById('detailModalTitle');
+
+    // 데이터 로딩 시작
+    loadingEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    modal.style.display = 'flex';
+
+    const routine = sampleRoutines.find(r => r.id === routineId);
+    titleEl.textContent = `"${routine.name}" 상세 통계`;
+    
+    const stats = await calculateDetailStats(routineId);
+
+    // 데이터 채우기
+    if (stats) {
+        document.getElementById('detail-current-streak').textContent = `🔥 ${stats.currentStreak}`;
+        document.getElementById('detail-longest-streak').textContent = `🏆 ${stats.longestStreak}`;
+        document.getElementById('detail-total-completions').textContent = `✅ ${stats.totalCompletions}`;
+        document.getElementById('detail-total-points').textContent = `✨ ${stats.totalPoints}`;
+    }
+
+    // 로딩 완료 후 콘텐츠 표시
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+}
    
 
    
@@ -1395,7 +1425,7 @@ function createManageRoutineElement(routine) {
                 <input type="checkbox" class="toggle-checkbox" ${routine.active ? 'checked' : ''}>
                 <span class="toggle-slider"></span>
             </label>
-            <button class="edit-btn">편집</button>
+            <button class="stats-btn">상세</button> <button class="edit-btn">편집</button>
             <button class="delete-btn">삭제</button> 
         </div>
     `;
@@ -1403,11 +1433,11 @@ function createManageRoutineElement(routine) {
         await updateRoutineInFirebase(String(routine.id), { active: e.target.checked });
         showNotification(`'${routine.name}' 루틴이 ${e.target.checked ? '활성화' : '비활성화'}되었습니다.`, 'info');
     });
+    item.querySelector('.stats-btn').addEventListener('click', () => showDetailStatsModal(routine.id)); // 상세 버튼 이벤트 연결
     item.querySelector('.edit-btn').addEventListener('click', () => editRoutine(routine.id));
     item.querySelector('.delete-btn').addEventListener('click', () => handleDeleteRoutine(String(routine.id), routine.name));
     return item;
 }
-
    
 
  function renderAreaStats() {
@@ -1550,7 +1580,70 @@ weeklyChartInstance = new Chart(ctxBar, {
 });
 }
 
+// script.js의 calculateStats 함수 다음에 추가하세요.
 
+async function calculateDetailStats(routineId) {
+    const routine = sampleRoutines.find(r => r.id === routineId);
+    if (!routine) return null;
+
+    // 1. 해당 루틴의 모든 history 기록 가져오기
+    const historyRef = db.collection('users').doc(currentUser.uid)
+                         .collection('routines').doc(routineId)
+                         .collection('history');
+    const historySnapshot = await historyRef.orderBy('date', 'desc').get();
+    const histories = historySnapshot.docs.map(doc => doc.data());
+
+    if (histories.length === 0) {
+        return {
+            currentStreak: routine.streak || 0,
+            longestStreak: routine.streak || 0,
+            totalCompletions: 0,
+            totalPoints: 0,
+            historyData: []
+        };
+    }
+
+    // 2. 총 완료 횟수 및 포인트 계산
+    const totalCompletions = histories.length;
+    const totalPoints = histories.reduce((sum, hist) => sum + (hist.pointsEarned || 0), 0);
+
+    // 3. 최고 스트릭 계산 (조금 복잡한 로직)
+    let longestStreak = 0;
+    let currentStreakCheck = 0;
+    if (histories.length > 0) {
+        // 날짜를 기준으로 정렬 (이미 쿼리에서 했지만 확인차)
+        const sortedDates = histories.map(h => new Date(h.date)).sort((a, b) => b - a);
+        
+        let lastDate = sortedDates[0];
+        currentStreakCheck = 1;
+        longestStreak = 1;
+
+        for (let i = 1; i < sortedDates.length; i++) {
+            const currentDate = sortedDates[i];
+            const diffTime = lastDate.getTime() - currentDate.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                currentStreakCheck++;
+            } else {
+                currentStreakCheck = 1; // 연속이 끊김
+            }
+            if (currentStreakCheck > longestStreak) {
+                longestStreak = currentStreakCheck;
+            }
+            lastDate = currentDate;
+        }
+    }
+
+
+    return {
+        currentStreak: routine.streak || 0,
+        longestStreak: longestStreak,
+        totalCompletions: totalCompletions,
+        totalPoints: totalPoints,
+        historyData: histories // 캘린더 히트맵을 위해 전달
+    };
+}
 
 
 // --- 페이지 네비게이션 (Page Navigation) ---
@@ -1939,6 +2032,7 @@ function setupAllEventListeners() {
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
     setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm);
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
+    setupModal('routineDetailModal', hideDetailStatsModal); 
 
     // --- ESC로 모든 모달 닫기 ---
     document.addEventListener('keydown', (e) => {
