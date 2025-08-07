@@ -43,6 +43,35 @@ JavaScript 파일은 애플리케이션의 모든 동적 기능과 로직을 담
 
 ---
 
+
+2. 프로젝트 개요 (Project Overview)
+프로젝트명: 가족 루틴 트래커
+
+핵심 기술 스택: Vanilla JavaScript, Firebase(Authentication, Firestore), HTML, CSS
+
+주요 라이브러리: Tailwind CSS (CDN), Chart.js (CDN), D3.js (CDN), Cal-Heatmap.js (CDN)
+
+3. 응답 형식 및 스타일 요구사항 (Response Format & Style)
+기본 언어: 한글을 기본으로 하되, 기술 용어 등 필요한 경우 영어 혼용 가능
+
+응답 구조: 항상 논리적인 구조(예: 현상 분석 → 원인 규명 → 해결 방안)에 기반한 답변 선호
+
+텍스트 정제: 최종 출력물은 유니코드 특수기호(불필요한 이모지 등)를 제거하여, 복사/붙여넣기 용이한 정제된 텍스트로 제공
+
+코드 변경 안내: 코드의 추가, 삭제, 교체가 필요한 경우, 아래 예시와 같이 변경될 블록의 시작과 끝을 명확한 시각적 구분자(주석)로 감싸서 안내
+
+코드 추가/삭제 시:
+
+JavaScript
+
+// ▼▼▼ 여기에 새 코드를 추가하세요 (또는 이 코드를 삭제하세요) ▼▼▼
+... (변경될 코드 내용) ...
+// ▲▲▲ 여기까지 추가 (또는 여기까지 삭제) ▲▲▲
+최종 요약: 답변의 마지막에는 항상 해당 작업 내용을 요약하는 git commit 메시지를 한 줄로 제공
+
+형식: git commit -am "type(scope): subject"
+
+예시: git commit -am "fix(ui): 상세 모달 렌더링 버그 수정"
 #### **3. `styles.css` - 앱의 옷과 화장 (Visual Design)**
 
 CSS 파일은 애플리케이션의 시각적인 모든 요소를 책임집니다.
