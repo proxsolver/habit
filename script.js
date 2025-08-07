@@ -9,6 +9,7 @@ let sortableInstance = null;
 let orderChanged = false;
 let activeRoutineForModal = null;
 let areaChartInstance = null;
+let weeklyChartInstance = null; // <-- 이 라인을 추가하세요.
 
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
@@ -284,17 +285,24 @@ async function calculateStats() {
 
     const today = new Date();
     const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-    
+    oneWeekAgo.setHours(0, 0, 0, 0); // 날짜 비교를 위해 시간 초기화
+
     let weeklyCompletions = 0;
     let weeklyTotalRoutines = 0;
-    
     const areaPoints = { health: 0, relationships: 0, work: 0 };
     const areaCompletions = { health: 0, relationships: 0, work: 0 };
     let totalPoints = 0;
+    
+    // ▼▼▼ 바 차트용 데이터 변수 추가 ▼▼▼
+    const weeklyActivityData = [0, 0, 0, 0, 0, 0, 0];
+    const weeklyActivityLabels = [];
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    // ▲▲▲ 여기까지 ▲▲▲
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 6; i >= 0; i--) { // 날짜 순서를 위해 역순으로 라벨 생성
         const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
         const dayOfWeek = date.getDay();
+        weeklyActivityLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[dayOfWeek]})`);
 
         sampleRoutines.forEach(routine => {
             const isActiveOnThisDay = 
@@ -302,7 +310,7 @@ async function calculateStats() {
                 (routine.frequency === 'weekday' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
                 (routine.frequency === 'weekend' && (dayOfWeek === 0 || dayOfWeek === 6));
             
-            if (isActiveOnThisDay) {
+            if (i < 7 && isActiveOnThisDay) { // 7일치 총 루틴 개수만 계산
                 weeklyTotalRoutines++;
             }
         });
@@ -310,8 +318,17 @@ async function calculateStats() {
 
     histories.forEach(hist => {
         const historyDate = new Date(hist.date);
+        historyDate.setHours(0, 0, 0, 0);
+
         if (historyDate >= oneWeekAgo) {
             weeklyCompletions++;
+            // ▼▼▼ 날짜별 완료 횟수 집계 로직 ▼▼▼
+            const diffDays = Math.floor((today - historyDate) / (1000 * 60 * 60 * 24));
+            const index = 6 - diffDays;
+            if (index >= 0 && index < 7) {
+                weeklyActivityData[index]++;
+            }
+            // ▲▲▲ 여기까지 ▲▲▲
         }
 
         const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId);
@@ -331,16 +348,17 @@ async function calculateStats() {
     const weeklyCompletionRate = weeklyTotalRoutines > 0 ? Math.round((weeklyCompletions / weeklyTotalRoutines) * 100) : 0;
 
     const stats = {
-        weeklyCompletionRate: weeklyCompletionRate,
-        areaPoints: areaPoints,
-        totalPoints: totalPoints,
-        areaCompletions: areaCompletions
+        weeklyCompletionRate,
+        areaPoints,
+        totalPoints,
+        areaCompletions,
+        weeklyActivityData, // <-- 최종 결과에 추가
+        weeklyActivityLabels // <-- 최종 결과에 추가
     };
 
     debugLog("Calculated Stats:", stats);
     return stats;
 }
-
 
 
 
@@ -1495,7 +1513,42 @@ async function renderStatsPage() {
                 }
             }
         }
-    });
+// --- 3. 바 차트 렌더링 (새로 추가된 로직) ---
+const ctxBar = document.getElementById('weeklyActivityChart').getContext('2d');
+if (weeklyChartInstance) { weeklyChartInstance.destroy(); }
+weeklyChartInstance = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+        labels: stats.weeklyActivityLabels,
+        datasets: [{
+            label: '일일 완료 루틴 개수',
+            data: stats.weeklyActivityData,
+            backgroundColor: 'rgba(99, 102, 241, 0.7)', // indigo-500
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false // 범례 숨기기
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1 // y축 눈금을 정수 단위로
+                }
+            }
+        }
+    }
+});
+}
+
+
 }
 
 
