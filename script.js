@@ -1221,6 +1221,7 @@ async function showDetailStatsModal(routineId) {
     titleEl.textContent = `"${routine.name}" 상세 통계`;
     
     const stats = await calculateDetailStats(routineId);
+    console.log('상세 통계 계산 완료:', stats);
 
     // 데이터 채우기
     if (stats) {
