@@ -1629,4 +1629,21 @@
             box-shadow: var(--shadow-md);
         }
 
-
+        .stats-btn {
+            background: var(--gray-100);
+            color: var(--primary);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-height: 32px;
+        }
+        
+        .stats-btn:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }

@@ -1404,6 +1404,8 @@ function createImprovedRoutineElement(routine) {
 }
 
    
+// script.js의 기존 createManageRoutineElement 함수를 이 코드로 교체하세요.
+
 function createManageRoutineElement(routine) {
     const item = document.createElement('div');
     item.className = 'manage-routine-item';
@@ -1425,7 +1427,8 @@ function createManageRoutineElement(routine) {
                 <input type="checkbox" class="toggle-checkbox" ${routine.active ? 'checked' : ''}>
                 <span class="toggle-slider"></span>
             </label>
-            <button class="stats-btn">상세</button> <button class="edit-btn">편집</button>
+            <button class="stats-btn">상세</button>
+            <button class="edit-btn">편집</button>
             <button class="delete-btn">삭제</button> 
         </div>
     `;
@@ -1433,7 +1436,11 @@ function createManageRoutineElement(routine) {
         await updateRoutineInFirebase(String(routine.id), { active: e.target.checked });
         showNotification(`'${routine.name}' 루틴이 ${e.target.checked ? '활성화' : '비활성화'}되었습니다.`, 'info');
     });
-    item.querySelector('.stats-btn').addEventListener('click', () => showDetailStatsModal(routine.id)); // 상세 버튼 이벤트 연결
+
+    // ▼▼▼ 이 부분이 핵심입니다. '상세' 버튼에 기능을 연결합니다. ▼▼▼
+    item.querySelector('.stats-btn').addEventListener('click', () => showDetailStatsModal(routine.id));
+    // ▲▲▲ 여기까지 ▲▲▲
+
     item.querySelector('.edit-btn').addEventListener('click', () => editRoutine(routine.id));
     item.querySelector('.delete-btn').addEventListener('click', () => handleDeleteRoutine(String(routine.id), routine.name));
     return item;
