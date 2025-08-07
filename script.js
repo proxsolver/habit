@@ -8,6 +8,8 @@ let currentUser = null; // 로그인된 사용자 정보를 저장할 변수
 let sortableInstance = null;
 let orderChanged = false;
 let activeRoutineForModal = null;
+let areaChartInstance = null;
+
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
 
@@ -268,10 +270,11 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 
 
+// script.js의 기존 calculateStats 함수를 이 코드로 교체하세요.
+
 async function calculateStats() {
     if (!currentUser) return null;
 
-    // --- 1. 모든 루틴의 모든 'history' 기록을 한 번에 가져오기 ---
     const historyQuery = db.collectionGroup('history')
                            .where('__name__', '>=', `users/${currentUser.uid}/`)
                            .where('__name__', '<', `users/${currentUser.uid}0/`);
@@ -279,20 +282,21 @@ async function calculateStats() {
     const historySnapshot = await historyQuery.get();
     const histories = historySnapshot.docs.map(doc => doc.data());
 
-    // --- 2. 통계 계산을 위한 변수 초기화 ---
     const today = new Date();
-    const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6); // 오늘 포함 7일
+    const oneWeekAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
     
     let weeklyCompletions = 0;
     let weeklyTotalRoutines = 0;
+    
+    // ▼▼▼ 계산할 변수 추가 ▼▼▼
     const areaPoints = { health: 0, relationships: 0, work: 0 };
+    const areaCompletions = { health: 0, relationships: 0, work: 0 }; // 완료 횟수 집계용
     let totalPoints = 0;
+    // ▲▲▲ 여기까지 ▲▲▲
 
-    // --- 3. 주간 루틴 총 개수 계산 ---
-    // (정확한 계산을 위해 주간/평일/주말 루틴을 고려)
     for (let i = 0; i < 7; i++) {
         const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-        const dayOfWeek = date.getDay(); // 0:일요일, 6:토요일
+        const dayOfWeek = date.getDay();
 
         sampleRoutines.forEach(routine => {
             const isActiveOnThisDay = 
@@ -306,6 +310,40 @@ async function calculateStats() {
         });
     }
 
+    histories.forEach(hist => {
+        const historyDate = new Date(hist.date);
+        if (historyDate >= oneWeekAgo) {
+            weeklyCompletions++;
+        }
+
+        const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId);
+        if (parentRoutine && parentRoutine.areas) {
+            parentRoutine.areas.forEach(areaId => {
+                if (areaPoints[areaId] !== undefined) {
+                    // ▼▼▼ 완료 횟수 및 포인트 동시 집계 ▼▼▼
+                    areaCompletions[areaId]++;
+                    if (hist.pointsEarned) {
+                        areaPoints[areaId] += hist.pointsEarned;
+                        totalPoints += hist.pointsEarned;
+                    }
+                    // ▲▲▲ 여기까지 ▲▲▲
+                }
+            });
+        }
+    });
+
+    const weeklyCompletionRate = weeklyTotalRoutines > 0 ? Math.round((weeklyCompletions / weeklyTotalRoutines) * 100) : 0;
+
+    const stats = {
+        weeklyCompletionRate: weeklyCompletionRate,
+        areaPoints: areaPoints,
+        totalPoints: totalPoints,
+        areaCompletions: areaCompletions // <-- 최종 결과에 추가
+    };
+
+    debugLog("Calculated Stats:", stats);
+    return stats;
+}
 
     // --- 4. 가져온 history 기록을 바탕으로 통계 집계 ---
     histories.forEach(hist => {
@@ -1425,28 +1463,79 @@ function createManageRoutineElement(routine) {
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
+// script.js의 기존 renderStatsPage 함수를 이 코드로 교체하세요.
+
 async function renderStatsPage() {
     const stats = await calculateStats();
 
+    // --- 1. 핵심 지표 카드 업데이트 (기존 로직) ---
     if (!stats) {
-        // 통계 데이터가 없을 경우 처리
         document.getElementById('stats-completion-rate').textContent = '데이터 없음';
-        document.getElementById('stats-total-points').textContent = '0 P';
-        document.getElementById('stats-area-health').textContent = '0 P';
-        document.getElementById('stats-area-relationships').textContent = '0 P';
-        document.getElementById('stats-area-work').textContent = '0 P';
+        // ... (기타 초기화 코드) ...
         return;
     }
-
-    // 계산된 통계 데이터를 HTML 요소에 채워 넣기
     document.getElementById('stats-completion-rate').textContent = `${stats.weeklyCompletionRate}%`;
     document.getElementById('stats-total-points').textContent = `${stats.totalPoints} P`;
-
     document.getElementById('stats-area-health').textContent = `${stats.areaPoints.health || 0} P`;
     document.getElementById('stats-area-relationships').textContent = `${stats.areaPoints.relationships || 0} P`;
     document.getElementById('stats-area-work').textContent = `${stats.areaPoints.work || 0} P`;
-}
 
+    // --- 2. 파이 차트 렌더링 (새로 추가된 로직) ---
+    const ctx = document.getElementById('areaDistributionChart').getContext('2d');
+    
+    // 이전에 그려진 차트가 있다면 파괴하여 중복 생성 방지
+    if (areaChartInstance) {
+        areaChartInstance.destroy();
+    }
+
+    areaChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['❤️ 건강', '🤝 관계', '💼 업무'],
+            datasets: [{
+                label: '루틴 완료 횟수',
+                data: [
+                    stats.areaCompletions.health,
+                    stats.areaCompletions.relationships,
+                    stats.areaCompletions.work
+                ],
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.7)',  // red-500
+                    'rgba(59, 130, 246, 0.7)', // blue-500
+                    'rgba(245, 158, 11, 0.7)'  // amber-500
+                ],
+                borderColor: [
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(245, 158, 11, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.raw !== null) {
+                                label += context.raw + '회';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
 
 
 
