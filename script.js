@@ -1560,8 +1560,14 @@ function createManageRoutineElement(routine) {
 // script.js의 기존 renderStatsPage 함수를 이 코드로 교체하세요.
 
 async function renderStatsPage() {
+    console.log('=== 통계 페이지 렌더링 시작 ===');
+    console.log('현재 기간:', currentStatsPeriod);
+    console.log('사용자:', currentUser?.uid);
+    console.log('루틴 개수:', sampleRoutines.length);
     // 현재 선택된 기간으로 통계 계산
     const stats = await calculateStats(currentStatsPeriod);
+    console.log('계산된 통계:', stats);
+
     const periodText = currentStatsPeriod === 'weekly' ? '주간' : '월간';
 
     // 제목 업데이트
@@ -2101,19 +2107,20 @@ function setupAllEventListeners() {
     document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
     document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
     // setupAllEventListeners 함수 내부에 추가
-    // ▼▼▼ 통계 필터 버튼 이벤트 ▼▼▼
-    document.getElementById('filter-weekly').addEventListener('click', () => {
-        currentStatsPeriod = 'weekly';
-        document.getElementById('filter-weekly').classList.add('active');
-        document.getElementById('filter-monthly').classList.remove('active');
-        renderStatsPage();
-    });
-    document.getElementById('filter-monthly').addEventListener('click', () => {
-        currentStatsPeriod = 'monthly';
-        document.getElementById('filter-monthly').classList.add('active');
-        document.getElementById('filter-weekly').classList.remove('active');
-        renderStatsPage();
-    });
+    // 통계 필터 버튼 이벤트
+document.getElementById('filter-weekly').addEventListener('click', () => {
+    currentStatsPeriod = 'weekly';
+    document.getElementById('filter-weekly').classList.add('active');
+    document.getElementById('filter-monthly').classList.remove('active');
+    renderStatsPage();
+});
+
+document.getElementById('filter-monthly').addEventListener('click', () => {
+    currentStatsPeriod = 'monthly';
+    document.getElementById('filter-monthly').classList.add('active');
+    document.getElementById('filter-weekly').classList.remove('active');
+    renderStatsPage();
+});
     // ▲▲▲ 여기까지 ▲▲▲
     
     // ▼▼▼ 아래 '대시보드 탭' 관련 코드를 전부 삭제하세요. ▼▼▼

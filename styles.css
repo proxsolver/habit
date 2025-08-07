@@ -1650,7 +1650,7 @@
             color: white;
             box-shadow: var(--shadow-md);
         }
-        
+
         .filter-btn {
             padding: 8px 16px;
             border: 1px solid var(--gray-300);
@@ -1666,3 +1666,42 @@
             color: white;
             border-color: var(--primary);
         }
+
+        /* 통계 페이지 반응형 개선 */
+.dashboard-container {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+.dashboard-container h2 {
+    margin-bottom: 0.5rem !important;
+}
+
+.dashboard-container .grid {
+    margin-bottom: 2rem;
+}
+
+/* 차트 컨테이너 반응형 */
+.dashboard-container canvas {
+    max-height: 300px;
+}
+
+@media (max-width: 480px) {
+    .dashboard-container {
+        padding: 1rem !important;
+    }
+    
+    .dashboard-container h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .dashboard-container h2 {
+        font-size: 1.1rem !important;
+    }
+    
+    .dashboard-container .grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+/* ▲▲▲ 여기까지 추가 ▲▲▲ */
