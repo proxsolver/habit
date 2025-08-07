@@ -1808,10 +1808,12 @@ function setupAllEventListeners() {
     document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
     document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
     
+    // ▼▼▼ 아래 '대시보드 탭' 관련 코드를 전부 삭제하세요. ▼▼▼
     // --- 대시보드 탭 ---
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', () => openDashboardTab(button.dataset.tab));
-    });
+    // document.querySelectorAll('.tab-button').forEach(button => {
+    //     button.addEventListener('click', () => openDashboardTab(button.dataset.tab));
+    // });
+    // ▲▲▲ 여기까지 삭제 ▲▲▲
 
     // --- 관리 페이지 ---
     document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
