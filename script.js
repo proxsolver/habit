@@ -239,6 +239,29 @@ async function updateAreasInFirebase(updatedAreas) {
     renderAreaStats();
 }
 
+// script.js의 Firebase 처리 함수 섹션에 추가하세요.
+
+async function logRoutineHistory(routineId, dataToLog) {
+    if (!currentUser) return;
+    
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const historyRef = db.collection('users').doc(currentUser.uid)
+                         .collection('routines').doc(String(routineId))
+                         .collection('history').doc(dateString);
+    
+    try {
+        await historyRef.set({
+            date: dateString,
+            ...dataToLog
+        });
+        debugLog(`History logged for routine ${routineId} on ${dateString}`);
+    } catch (error) {
+        console.error("Failed to log routine history:", error);
+    }
+}
+
 
 // ====================================================================
 // 6. 핸들러, 렌더링, 유틸리티 등 나머지 모든 함수
@@ -294,6 +317,11 @@ async function handleStepperConfirm(value) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
+                // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
+                // ▲▲▲ 여기까지 ▲▲▲
+
+                
                 updatedFields.pointsGivenToday = true;
                 pointsAwarded = true;
             }
@@ -435,6 +463,10 @@ async function handleWheelConfirm() {
                             });
                             await updateUserStatsInFirebase(newStats);
                         }
+                        // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                        await logRoutineHistory(routine.id, { value: value, pointsEarned: routine.basePoints });
+                        // ▲▲▲ 여기까지 ▲▲▲
+                        
                         updatedFields.pointsGivenToday = true;
                         pointsAwarded = true;
                     }
@@ -524,6 +556,11 @@ async function handleWheelConfirm() {
                             });
                             await updateUserStatsInFirebase(newStats);
                         }
+                        // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                        await logRoutineHistory(routine.id, { value: readPages, pointsEarned: routine.basePoints });
+                        // ▲▲▲ 여기까지 ▲▲▲
+
+                        
                         updatedFields.pointsGivenToday = true;
                         pointsAwarded = true;
                     }
@@ -1218,6 +1255,10 @@ function createImprovedRoutineElement(routine) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
+                 // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                await logRoutineHistory(routine.id, { value: true, pointsEarned: routine.basePoints });
+                // ▲▲▲ 여기까지 ▲▲▲
+
                 await updateRoutineInFirebase(routine.id, updatedFields);
                 showCompletionEffect();
                 setTimeout(showCelebrationMessage, 300);
