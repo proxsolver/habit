@@ -899,55 +899,77 @@ async function handleWheelConfirm() {
             showRoutineForm(routine);
         }
     
-        function showRoutineForm(routine = null) {
-            const modal = document.getElementById('addRoutineModal');
-            modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
-            document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
-            
-            // Form reset/population
-            document.getElementById('newRoutineName').value = routine ? routine.name : '';
-            document.getElementById('newRoutineTime').value = routine ? routine.time : 'morning';
-            document.getElementById('newRoutineType').value = routine ? routine.type : 'yesno';
-            document.getElementById('newRoutineFreq').value = routine ? routine.frequency : 'daily';
-            document.getElementById('newRoutinePoints').value = routine ? routine.basePoints : 10;
+// ▼▼▼ showRoutineForm 함수에 삭제 버튼 처리 로직을 추가하세요 ▼▼▼
+function showRoutineForm(routine = null) {
+    const modal = document.getElementById('addRoutineModal');
+    const deleteBtn = document.getElementById('deleteRoutineBtn');
     
-            // Type-specific options
-            const type = routine ? routine.type : 'yesno';
-            document.getElementById('newNumberOptions').style.display = type === 'number' ? 'block' : 'none';
-            document.getElementById('newReadingOptions').style.display = type === 'reading' ? 'block' : 'none';
+    modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
+    document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
     
-            if (type === 'number') {
-                document.getElementById('newNumberUnit').value = routine.unit || '';
-                document.getElementById('newNumberMin').value = routine.min ?? 1;
-                document.getElementById('newNumberMax').value = routine.max ?? 100;
-                document.getElementById('newNumberStep').value = routine.step ?? 1;
-                document.getElementById('newNumberGoal').value = routine.dailyGoal || '';
-                document.getElementById('newNumberContinuous').checked = routine.continuous || false;
-                document.getElementById('newNumberInputType').value = routine.inputType || 'stepper';
-            }
-            if (type === 'reading') {
-                document.getElementById('newBookTitle').value = routine.bookTitle || '';
-                document.getElementById('newStartPage').value = routine.startPage || 1;
-                document.getElementById('newEndPage').value = routine.endPage || '';
-                document.getElementById('newDailyPages').value = routine.dailyPages || 10;
-            }
+    // 삭제 버튼 표시/숨김
+    if (routine) {
+        deleteBtn.style.display = 'block';
+        deleteBtn.onclick = () => {
+            hideAddRoutineModal();
+            // 삭제 확인을 위한 지연
+            setTimeout(() => {
+                if (confirm(`정말로 '${routine.name}' 루틴을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n모든 기록과 통계가 함께 삭제됩니다.`)) {
+                    handleDeleteRoutine(String(routine.id), routine.name);
+                }
+            }, 100);
+        };
+    } else {
+        deleteBtn.style.display = 'none';
+    }
     
-            const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
-            newRoutineAreasContainer.innerHTML = '';
-            userAreas.forEach(area => {
-                const isSelected = routine ? routine.areas?.includes(area.id) : false;
-                newRoutineAreasContainer.innerHTML += `
-                    <div class="area-checkbox-item">
-                        <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
-                        <label for="area-${area.id}">${area.name}</label>
-                    </div>
-                `;
-            });
-            
-            modal.style.display = 'flex';
-        }
+    // Form reset/population (기존 로직)
+    document.getElementById('newRoutineName').value = routine ? routine.name : '';
+    document.getElementById('newRoutineTime').value = routine ? routine.time : 'morning';
+    document.getElementById('newRoutineType').value = routine ? routine.type : 'yesno';
+    document.getElementById('newRoutineFreq').value = routine ? routine.frequency : 'daily';
+    document.getElementById('newRoutinePoints').value = routine ? routine.basePoints : 10;
+
+    // Type-specific options (기존 로직)
+    const type = routine ? routine.type : 'yesno';
+    document.getElementById('newNumberOptions').style.display = type === 'number' ? 'block' : 'none';
+    document.getElementById('newReadingOptions').style.display = type === 'reading' ? 'block' : 'none';
+
+    if (type === 'number') {
+        document.getElementById('newNumberUnit').value = routine.unit || '';
+        document.getElementById('newNumberMin').value = routine.min ?? 1;
+        document.getElementById('newNumberMax').value = routine.max ?? 100;
+        document.getElementById('newNumberStep').value = routine.step ?? 1;
+        document.getElementById('newNumberGoal').value = routine.dailyGoal || '';
+        document.getElementById('newNumberContinuous').checked = routine.continuous || false;
+        document.getElementById('newNumberInputType').value = routine.inputType || 'stepper';
+    }
+    if (type === 'reading') {
+        document.getElementById('newBookTitle').value = routine.bookTitle || '';
+        document.getElementById('newStartPage').value = routine.startPage || 1;
+        document.getElementById('newEndPage').value = routine.endPage || '';
+        document.getElementById('newDailyPages').value = routine.dailyPages || 10;
+    }
+
+    const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
+    newRoutineAreasContainer.innerHTML = '';
+    userAreas.forEach(area => {
+        const isSelected = routine ? routine.areas?.includes(area.id) : false;
+        newRoutineAreasContainer.innerHTML += `
+            <div class="area-checkbox-item">
+                <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
+                <label for="area-${area.id}">${area.name}</label>
+            </div>
+        `;
+    });
     
-        function hideAddRoutineModal() {
+    modal.style.display = 'flex';
+}
+// ▲▲▲ 여기까지 수정 ▲▲▲
+
+
+
+function hideAddRoutineModal() {
             document.getElementById('addRoutineModal').style.display = 'none';
         }
 function showNumberInputModal(routine) {
@@ -1517,6 +1539,7 @@ function createImprovedRoutineElement(routine) {
    
 // script.js의 기존 createManageRoutineElement 함수를 이 코드로 교체하세요.
 
+// ▼▼▼ createManageRoutineElement 함수를 이 코드로 교체하세요 ▼▼▼
 function createManageRoutineElement(routine) {
     const item = document.createElement('div');
     item.className = 'manage-routine-item';
@@ -1540,22 +1563,24 @@ function createManageRoutineElement(routine) {
             </label>
             <button class="stats-btn">상세</button>
             <button class="edit-btn">편집</button>
-            <button class="delete-btn">삭제</button> 
         </div>
     `;
+    
+    // 토글 이벤트
     item.querySelector('.toggle-checkbox').addEventListener('change', async (e) => {
         await updateRoutineInFirebase(String(routine.id), { active: e.target.checked });
         showNotification(`'${routine.name}' 루틴이 ${e.target.checked ? '활성화' : '비활성화'}되었습니다.`, 'info');
     });
 
-    // ▼▼▼ 이 부분이 핵심입니다. '상세' 버튼에 기능을 연결합니다. ▼▼▼
+    // 상세 버튼 이벤트
     item.querySelector('.stats-btn').addEventListener('click', () => showDetailStatsModal(routine.id));
-    // ▲▲▲ 여기까지 ▲▲▲
-
+    
+    // 편집 버튼 이벤트 (삭제 기능 포함된 편집 모달)
     item.querySelector('.edit-btn').addEventListener('click', () => editRoutine(routine.id));
-    item.querySelector('.delete-btn').addEventListener('click', () => handleDeleteRoutine(String(routine.id), routine.name));
+    
     return item;
 }
+// ▲▲▲ 여기까지 교체 ▲▲▲
    
 
  function renderAreaStats() {
@@ -2289,8 +2314,16 @@ document.getElementById('filter-monthly').addEventListener('click', () => {
     setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm);
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
     setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm);
+    
+    // ▼▼▼ 여기에 삭제 버튼 이벤트 추가 ▼▼▼
+    const deleteRoutineBtn = document.getElementById('deleteRoutineBtn');
+    if (deleteRoutineBtn) {
+        console.log('삭제 버튼 요소 확인됨');
+    }
+    // ▲▲▲ 여기까지 추가 ▲▲▲
+    
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
-    setupModal('routineDetailModal', hideDetailStatsModal); 
+    setupModal('routineDetailModal', hideDetailStatsModal);
 
     // --- ESC로 모든 모달 닫기 ---
     document.addEventListener('keydown', (e) => {
