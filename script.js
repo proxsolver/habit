@@ -1269,166 +1269,83 @@ function hideDetailStatsModal() {
     document.getElementById('routineDetailModal').style.display = 'none';
 }
 
+// ▼▼▼ showDetailStatsModal 함수를 이 코드로 교체하세요 ▼▼▼
 async function showDetailStatsModal(routineId) {
     const modal = document.getElementById('routineDetailModal');
     const loadingEl = document.getElementById('detailModalLoading');
     const contentEl = document.getElementById('detailModalContent');
     const titleEl = document.getElementById('detailModalTitle');
     const calendarContainer = document.getElementById('calendar-heatmap-container');
-   
-    calendarContainer.innerHTML = '<h3 class="text-lg font-bold mb-4">📅 활동 기록</h3>';
 
-    if (stats.historyData && stats.historyData.length > 0) {
-    createSimpleHeatmap(calendarContainer, stats.historyData);
-} else {
-    calendarContainer.innerHTML += `
-        <div class="bg-gray-50 p-8 rounded-lg text-center">
-            <div class="text-4xl mb-2">📊</div>
-            <div class="text-gray-500">아직 활동 기록이 없습니다</div>
-            <div class="text-sm text-gray-400 mt-1">루틴을 완료하면 여기에 기록됩니다</div>
-        </div>
-    `;
-}
-    
-    // 데이터 로딩 시작
+    // 모달 초기 상태 설정
     loadingEl.style.display = 'block';
     contentEl.style.display = 'none';
     modal.style.display = 'flex';
 
-
     const routine = sampleRoutines.find(r => r.id === routineId);
+    if (!routine) {
+        loadingEl.innerHTML = '<div class="text-center text-red-500">루틴을 찾을 수 없습니다.</div>';
+        return;
+    }
+
     titleEl.textContent = `"${routine.name}" 상세 통계`;
     
-    const stats = await calculateDetailStats(routineId);
-    console.log('상세 통계 계산 완료:', stats);
+    try {
+        // stats 변수 초기화
+        let stats = null;
+        
+        // 통계 계산
+        stats = await calculateDetailStats(routineId);
+        console.log('상세 통계 계산 완료:', stats);
 
-    // 데이터 채우기
-    if (stats) {
+        // 통계 데이터 확인 및 기본값 설정
+        if (!stats) {
+            stats = {
+                currentStreak: routine.streak || 0,
+                longestStreak: routine.streak || 0,
+                totalCompletions: 0,
+                totalPoints: 0,
+                historyData: []
+            };
+        }
+
+        // 데이터 채우기
         document.getElementById('detail-current-streak').textContent = `🔥 ${stats.currentStreak}`;
         document.getElementById('detail-longest-streak').textContent = `🏆 ${stats.longestStreak}`;
         document.getElementById('detail-total-completions').textContent = `✅ ${stats.totalCompletions}`;
         document.getElementById('detail-total-points').textContent = `✨ ${stats.totalPoints}`;
-    }
-// --- ▼▼▼ 캘린더 히트맵 렌더링 로직 (새로 추가) ▼▼▼ ---
-console.log('=== 캘린더 히트맵 렌더링 시작 ===');
-console.log('통계 데이터:', stats);
-console.log('히스토리 데이터:', stats.historyData);
-calendarContainer.innerHTML = '<div id="cal-heatmap" class="w-full"></div>'; // 캘린더를 그릴 div 초기화
 
-if (calHeatmap) {
-    console.log('기존 캘린더 인스턴스 파괴');
-    try {
-        calHeatmap.destroy();
-    } catch (e) {
-        console.warn('캘린더 파괴 중 오류:', e);
-    }
-}
+        // 커스텀 히트맵 렌더링
+        calendarContainer.innerHTML = '<h3 class="text-lg font-bold mb-4">📅 활동 기록</h3>';
 
-// 새 인스턴스 생성
-calHeatmap = new CalHeatmap();
-console.log('새 캘린더 인스턴스 생성:', calHeatmap);
-
-// history 데이터를 캘린더가 이해하는 형식으로 변환
-const calendarData = stats.historyData.map(hist => {
-    console.log('히스토리 변환:', hist.date, '→', new Date(hist.date).getTime() / 1000);
-    return {
-        date: new Date(hist.date).getTime() / 1000, // Unix timestamp로 변환
-        value: 1
-    };
-});
-
-console.log('변환된 캘린더 데이터:', calendarData);
-
-// 모달이 완전히 렌더링된 후 캘린더 그리기
-setTimeout(() => {
-    try {
-        console.log('캘린더 paint 시작');
-        calHeatmap.paint({
-            itemSelector: '#cal-heatmap', // 컨테이너 명시적 지정
-            data: {
-                source: calendarData,
-                x: 'date',
-                y: 'value'
-            },
-            date: { 
-                start: new Date(new Date().getFullYear() - 1, 0, 1) // 작년 1월 1일부터
-            },
-            range: 12,
-            scale: {
-                color: {
-                    type: 'threshold',
-                    range: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-                    domain: [0, 1]
-                }
-            },
-            domain: {
-                type: 'month',
-                gutter: 4,
-                label: { 
-                    text: 'MMM', 
-                    position: 'top' 
-                }
-            },
-            subDomain: {
-                type: 'ghDay',
-                radius: 2,
-                width: 11,
-                height: 11,
-                gutter: 4
-            }
-        });
-        console.log('캘린더 paint 완료');
-    } catch (error) {
-        console.error('캘린더 렌더링 오류:', error);
-        // 오류 시 대체 메시지 표시
-        document.getElementById('cal-heatmap').innerHTML = 
-            '<div class="text-center text-gray-500 p-4">캘린더를 불러오는 중 오류가 발생했습니다.</div>';
-    }
-}, 100); // 100ms 지연
-
-calHeatmap.paint({
-    data: {
-        source: calendarData,
-        x: 'date',
-        y: 'value'
-    },
-    date: { start: new Date(new Date().setFullYear(new Date().getFullYear() - 1)) }, // 1년 전부터
-    range: 12, // 12개월
-    scale: {
-        color: {
-            type: 'threshold',
-            range: ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'],
-            domain: [1, 2, 3, 4, 5] // 값에 따른 색상 단계 (GitHub 스타일)
+        if (stats.historyData && stats.historyData.length > 0) {
+            createSimpleHeatmap(calendarContainer, stats.historyData);
+        } else {
+            calendarContainer.innerHTML += `
+                <div class="bg-gray-50 p-8 rounded-lg text-center">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div class="text-gray-500">아직 활동 기록이 없습니다</div>
+                    <div class="text-sm text-gray-400 mt-1">루틴을 완료하면 여기에 기록됩니다</div>
+                </div>
+            `;
         }
-    },
-    domain: {
-        type: 'month',
-        gutter: 4,
-        label: { text: 'MMM', position: 'top' }
-    },
-    subDomain: {
-        type: 'ghDay',
-        radius: 2,
-        width: 11,
-        height: 11,
-        gutter: 4
+
+        // 로딩 완료 후 콘텐츠 표시
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'block';
+        
+    } catch (error) {
+        console.error('상세 통계 로드 실패:', error);
+        loadingEl.innerHTML = `
+            <div class="text-center text-red-500">
+                <div class="text-2xl mb-2">⚠️</div>
+                <div>통계를 불러오는 중 오류가 발생했습니다</div>
+                <div class="text-sm mt-2">${error.message}</div>
+            </div>
+        `;
     }
-}, [
-    [
-        Tooltip,
-        {
-            text: function (date, value, dayjsDate) {
-                return (value ? value + '회 완료' : '기록 없음') + ' on ' + dayjsDate.format('LL');
-            }
-        },
-    ],
-]);
-// --- ▲▲▲ 여기까지 ▲▲▲ ---
-    // 로딩 완료 후 콘텐츠 표시
-    loadingEl.style.display = 'none';
-    contentEl.style.display = 'block';
 }
-   
+// ▲▲▲ 여기까지 교체 ▲▲▲
 
    
 
