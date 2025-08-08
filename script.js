@@ -10,7 +10,6 @@ let orderChanged = false;
 let activeRoutineForModal = null;
 let areaChartInstance = null;
 let weeklyChartInstance = null; 
-let calHeatmap = null; 
 let currentStatsPeriod = 'weekly'; // <-- 이 라인을 추가하세요.
 
 const DEBUG_MODE = true;
@@ -1276,7 +1275,21 @@ async function showDetailStatsModal(routineId) {
     const contentEl = document.getElementById('detailModalContent');
     const titleEl = document.getElementById('detailModalTitle');
     const calendarContainer = document.getElementById('calendar-heatmap-container');
+   
+    calendarContainer.innerHTML = '<h3 class="text-lg font-bold mb-4">📅 활동 기록</h3>';
 
+    if (stats.historyData && stats.historyData.length > 0) {
+    createSimpleHeatmap(calendarContainer, stats.historyData);
+} else {
+    calendarContainer.innerHTML += `
+        <div class="bg-gray-50 p-8 rounded-lg text-center">
+            <div class="text-4xl mb-2">📊</div>
+            <div class="text-gray-500">아직 활동 기록이 없습니다</div>
+            <div class="text-sm text-gray-400 mt-1">루틴을 완료하면 여기에 기록됩니다</div>
+        </div>
+    `;
+}
+    
     // 데이터 로딩 시작
     loadingEl.style.display = 'block';
     contentEl.style.display = 'none';
@@ -1852,6 +1865,60 @@ async function calculateDetailStats(routineId) {
         historyData: histories // 캘린더 히트맵을 위해 전달
     };
 }
+
+// ▼▼▼ createSimpleHeatmap 함수를 script.js에 추가하세요 ▼▼▼
+function createSimpleHeatmap(container, historyData) {
+    const today = new Date();
+    
+    // 날짜별 완료 횟수 맵 생성
+    const dateMap = {};
+    historyData.forEach(hist => {
+        const date = hist.date;
+        dateMap[date] = (dateMap[date] || 0) + 1;
+    });
+    
+    let html = '<div class="simple-heatmap">';
+    html += '<div class="heatmap-grid">';
+    
+    // 최근 365일 생성 (역순으로)
+    for (let i = 364; i >= 0; i--) {
+        const currentDate = new Date(today);
+        currentDate.setDate(currentDate.getDate() - i);
+        const dateStr = currentDate.toISOString().split('T')[0];
+        
+        const count = dateMap[dateStr] || 0;
+        const intensity = count > 0 ? Math.min(count, 4) : 0;
+        const colorClass = `heatmap-cell-${intensity}`;
+        
+        const koreanDate = currentDate.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        html += `<div class="heatmap-cell ${colorClass}" 
+                     title="${koreanDate}: ${count}회 완료"
+                     data-date="${dateStr}" 
+                     data-count="${count}"></div>`;
+    }
+    
+    html += '</div>';
+    html += '<div class="heatmap-legend">';
+    html += '<span>적음</span>';
+    for (let i = 0; i <= 4; i++) {
+        html += `<div class="legend-cell heatmap-cell-${i}"></div>`;
+    }
+    html += '<span>많음</span>';
+    html += '</div>';
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+// ▲▲▲ 여기까지 추가 ▲▲▲
+
+
+
+
 
 
 // --- 페이지 네비게이션 (Page Navigation) ---
