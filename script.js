@@ -34,9 +34,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainAppContent = document.querySelector('.container');
     const navButtons = document.querySelector('.navigation-buttons');
     const provider = new firebase.auth.GoogleAuthProvider();
+    
+    // ▼▼▼ 구글 로그인 설정 개선 ▼▼▼
+    provider.addScope('profile');
+    provider.addScope('email');
+    
+    // 로그인 방식을 리다이렉트로 변경 (팝업 문제 해결)
+    loginBtn.addEventListener('click', async () => {
+        try {
+            // 모바일에서는 리다이렉트, 데스크톱에서는 팝업 시도
+            if (window.innerWidth <= 768) {
+                await firebase.auth().signInWithRedirect(provider);
+            } else {
+                await firebase.auth().signInWithPopup(provider);
+            }
+        } catch (error) {
+            console.error("Login failed:", error);
+            // 팝업이 실패하면 리다이렉트로 재시도
+            if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+                try {
+                    await firebase.auth().signInWithRedirect(provider);
+                } catch (redirectError) {
+                    console.error("Redirect login also failed:", redirectError);
+                    showNotification('로그인에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.', 'error');
+                }
+            }
+        }
+    });
+    // ▲▲▲ 여기까지 교체 ▲▲▲
 
-    // 인증 이벤트 리스너
-    loginBtn.addEventListener('click', () => firebase.auth().signInWithPopup(provider).catch(error => console.error("Login failed:", error)));
     logoutBtn.addEventListener('click', () => firebase.auth().signOut());
 
     // 로그인 상태 변경 감지
@@ -62,9 +88,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 리다이렉트 결과 처리
+    firebase.auth().getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                console.log('리다이렉트 로그인 성공:', result.user.displayName);
+            }
+        })
+        .catch((error) => {
+            console.error('리다이렉트 로그인 오류:', error);
+        });
+
     // 모든 UI 이벤트 리스너 설정
     setupAllEventListeners();
 });
+// ▲▲▲ 여기까지 교체 ▲▲▲
 
 // ====================================================================
 // 4. 사용자 데이터 로직 (User Data Logic)
@@ -440,10 +478,9 @@ async function handleStepperConfirm(value) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
-                // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
-                await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
-                // ▲▲▲ 여기까지 ▲▲▲
-
+                // ▼▼▼ 이 부분의 finalValue를 value로 수정하세요 ▼▼▼
+                await logRoutineHistory(routine.id, { value: value, pointsEarned: routine.basePoints });
+                // ▲▲▲ 여기까지 수정 ▲▲▲
                 
                 updatedFields.pointsGivenToday = true;
                 pointsAwarded = true;
@@ -465,6 +502,7 @@ async function handleStepperConfirm(value) {
 }
 
 // 2. Wheel(스크롤) 및 Simple(직접입력) 루틴 완료 처리 통합 함수
+// ▼▼▼ handleNumberConfirm 함수 내의 logRoutineHistory 호출 부분을 수정하세요 ▼▼▼
 async function handleNumberConfirm(value, inputType) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
@@ -479,13 +517,10 @@ async function handleNumberConfirm(value, inputType) {
                 value: finalValue,
                 status: null,
                 lastUpdatedDate: todayDateString,
-                // ★★★ 수정된 핵심 로직 2 ★★★
-                // 포인트 지급 여부와 관계없이, 목표 달성 상태를 항상 업데이트합니다.
                 dailyGoalMetToday: isNowGoalAchieved
             };
             let pointsAwarded = false;
 
-            // 포인트와 스트릭은 오늘 처음 목표를 달성했을 때만 지급합니다.
             if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
                 if (routine.areas && routine.basePoints) {
@@ -495,6 +530,10 @@ async function handleNumberConfirm(value, inputType) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
+                // ▼▼▼ 여기는 이미 finalValue가 정의되어 있으므로 그대로 사용 ▼▼▼
+                await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
+                // ▲▲▲ 이 부분은 수정 불필요 ▲▲▲
+                
                 updatedFields.pointsGivenToday = true;
                 pointsAwarded = true;
             }
@@ -514,6 +553,7 @@ async function handleNumberConfirm(value, inputType) {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
+// ▲▲▲ 여기까지 확인 ▲▲▲
 
 async function handleNumberInputConfirm() {
     if (!activeRoutineForModal) return;
