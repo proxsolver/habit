@@ -1875,3 +1875,43 @@
     }
 }
 /* ▲▲▲ 여기까지 교체 ▲▲▲ */
+
+/* 현재 주차 강조 스타일 */
+.weekly-heatmap-cell.current-week {
+    border: 2px solid #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    animation: pulse-current 2s infinite;
+}
+
+.weekly-heatmap-cell.current-week .week-number {
+    font-weight: 800;
+}
+
+@keyframes pulse-current {
+    0%, 100% {
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.4);
+    }
+}
+
+/* 주차 번호 표시 개선 */
+.week-number {
+    font-size: 10px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+    line-height: 1;
+}
+
+/* 작년 주차 구분 */
+.weekly-heatmap-cell[data-year]:not([data-year="2025"]) {
+    opacity: 0.7;
+}
+
+.weekly-heatmap-cell[data-year]:not([data-year="2025"]) .week-number {
+    font-size: 8px;
+}
+
+/* ▲▲▲ 여기까지 추가 ▲▲▲ */
