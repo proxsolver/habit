@@ -1783,7 +1783,7 @@ async function calculateDetailStats(routineId) {
     };
 }
 
-// ▼▼▼ createSimpleHeatmap 함수를 script.js에 추가하세요 ▼▼▼
+// ▼▼▼ createSimpleHeatmap 함수를 이 코드로 교체하세요 ▼▼▼
 function createSimpleHeatmap(container, historyData) {
     const today = new Date();
     
@@ -1794,45 +1794,76 @@ function createSimpleHeatmap(container, historyData) {
         dateMap[date] = (dateMap[date] || 0) + 1;
     });
     
-    let html = '<div class="simple-heatmap">';
-    html += '<div class="heatmap-grid">';
+    // 주별 데이터 집계
+    const weeklyData = [];
     
-    // 최근 365일 생성 (역순으로)
-    for (let i = 364; i >= 0; i--) {
-        const currentDate = new Date(today);
-        currentDate.setDate(currentDate.getDate() - i);
-        const dateStr = currentDate.toISOString().split('T')[0];
+    for (let weekIndex = 51; weekIndex >= 0; weekIndex--) {
+        // 각 주의 시작일 (일요일) 계산
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - (today.getDay()) - (weekIndex * 7));
+        weekStart.setHours(0, 0, 0, 0);
         
-        const count = dateMap[dateStr] || 0;
-        const intensity = count > 0 ? Math.min(count, 4) : 0;
-        const colorClass = `heatmap-cell-${intensity}`;
+        // 주의 끝일 (토요일)
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
         
-        const koreanDate = currentDate.toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+        // 해당 주의 완료 횟수 집계
+        let weeklyCount = 0;
+        for (let day = new Date(weekStart); day <= weekEnd; day.setDate(day.getDate() + 1)) {
+            const dayStr = day.toISOString().split('T')[0];
+            weeklyCount += dateMap[dayStr] || 0;
+        }
+        
+        // 주차 정보 생성
+        const weekNumber = 52 - weekIndex;
+        const startMonth = weekStart.getMonth() + 1;
+        const startDay = weekStart.getDate();
+        const endMonth = weekEnd.getMonth() + 1;
+        const endDay = weekEnd.getDate();
+        
+        weeklyData.push({
+            weekNumber,
+            count: weeklyCount,
+            startDate: `${startMonth}/${startDay}`,
+            endDate: `${endMonth}/${endDay}`,
+            intensity: weeklyCount > 0 ? Math.min(Math.ceil(weeklyCount / 2), 4) : 0 // 2회당 1단계
         });
-        
-        html += `<div class="heatmap-cell ${colorClass}" 
-                     title="${koreanDate}: ${count}회 완료"
-                     data-date="${dateStr}" 
-                     data-count="${count}"></div>`;
     }
     
+    let html = '<div class="simple-heatmap">';
+    html += '<h4 class="heatmap-title">최근 1년간 주별 활동 기록</h4>';
+    html += '<div class="weekly-heatmap-grid">';
+    
+    weeklyData.forEach(week => {
+        const colorClass = `heatmap-cell-${week.intensity}`;
+        const tooltipText = `${week.weekNumber}주차 (${week.startDate}~${week.endDate}): ${week.count}회 완료`;
+        
+        html += `<div class="weekly-heatmap-cell ${colorClass}" 
+                     title="${tooltipText}"
+                     data-week="${week.weekNumber}" 
+                     data-count="${week.count}">
+                     <span class="week-number">${week.weekNumber}</span>
+                 </div>`;
+    });
+    
     html += '</div>';
+    
+    // 범례
     html += '<div class="heatmap-legend">';
-    html += '<span>적음</span>';
+    html += '<span class="legend-label">활동량:</span>';
+    html += '<span class="legend-text">적음</span>';
     for (let i = 0; i <= 4; i++) {
         html += `<div class="legend-cell heatmap-cell-${i}"></div>`;
     }
-    html += '<span>많음</span>';
+    html += '<span class="legend-text">많음</span>';
     html += '</div>';
+    
     html += '</div>';
     
     container.innerHTML = html;
 }
-// ▲▲▲ 여기까지 추가 ▲▲▲
-
+// ▲▲▲ 여기까지 교체 ▲▲▲
 
 
 
