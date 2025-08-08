@@ -1704,81 +1704,174 @@
         grid-template-columns: 1fr !important;
     }
 }
-/* ▼▼▼ styles.css 맨 아래에 이 코드를 추가하세요 ▼▼▼ */
+
+/* ▼▼▼ feat(heatmap): 365일 일별 히트맵을 52주 주별 히트맵으로 개선하여 가독성 향상 ▼▼▼ */
 .simple-heatmap {
-    padding: 1rem;
+    padding: 1.5rem;
     background: #f9fafb;
-    border-radius: 8px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
 }
 
-.heatmap-grid {
-    display: grid;
-    grid-template-columns: repeat(53, 12px);
-    gap: 2px;
+.heatmap-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
     margin-bottom: 1rem;
-    overflow-x: auto;
-    padding: 10px 0;
+    text-align: center;
 }
 
-.heatmap-cell {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+/* 주별 히트맵 그리드 */
+.weekly-heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr); /* 13주씩 4줄 = 52주 */
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    justify-items: center;
+}
+
+.weekly-heatmap-cell {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0,0,0,0.1);
 }
 
-.heatmap-cell:hover {
-    transform: scale(1.3);
+.weekly-heatmap-cell:hover {
+    transform: scale(1.1);
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #6366f1;
 }
 
-.heatmap-cell:hover::after {
+.weekly-heatmap-cell:hover::after {
     content: attr(title);
     position: absolute;
-    bottom: 100%;
+    bottom: 120%;
     left: 50%;
     transform: translateX(-50%);
     background: #1f2937;
     color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
     white-space: nowrap;
-    margin-bottom: 4px;
+    z-index: 20;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
-.heatmap-cell-0 { background-color: #ebedf0; }
-.heatmap-cell-1 { background-color: #9be9a8; }
-.heatmap-cell-2 { background-color: #40c463; }
-.heatmap-cell-3 { background-color: #30a14e; }
-.heatmap-cell-4 { background-color: #216e39; }
+.weekly-heatmap-cell:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #1f2937;
+    z-index: 20;
+}
 
+.week-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* 강도별 색상 */
+.heatmap-cell-0 { 
+    background-color: #f3f4f6; 
+}
+.heatmap-cell-0 .week-number { color: #9ca3af; }
+
+.heatmap-cell-1 { 
+    background-color: #dcfce7; 
+    border-color: #bbf7d0;
+}
+.heatmap-cell-1 .week-number { color: #166534; }
+
+.heatmap-cell-2 { 
+    background-color: #bbf7d0; 
+    border-color: #86efac;
+}
+.heatmap-cell-2 .week-number { color: #166534; }
+
+.heatmap-cell-3 { 
+    background-color: #86efac; 
+    border-color: #4ade80;
+}
+.heatmap-cell-3 .week-number { color: #14532d; }
+
+.heatmap-cell-4 { 
+    background-color: #22c55e; 
+    border-color: #16a34a;
+}
+.heatmap-cell-4 .week-number { color: white; }
+
+/* 범례 스타일 */
 .heatmap-legend {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     font-size: 0.75rem;
     color: #6b7280;
 }
 
-.legend-cell {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+.legend-label {
+    font-weight: 600;
+    margin-right: 4px;
 }
 
-@media (max-width: 480px) {
-    .heatmap-grid {
-        grid-template-columns: repeat(26, 12px);
+.legend-text {
+    margin: 0 2px;
+}
+
+.legend-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 640px) {
+    .weekly-heatmap-grid {
+        grid-template-columns: repeat(10, 1fr); /* 모바일에서는 10주씩 */
+        gap: 4px;
+    }
+    
+    .weekly-heatmap-cell {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .week-number {
+        font-size: 9px;
     }
     
     .simple-heatmap {
-        padding: 0.5rem;
+        padding: 1rem;
     }
 }
-/* ▲▲▲ 여기까지 추가 ▲▲▲ */
 
+@media (max-width: 480px) {
+    .weekly-heatmap-grid {
+        grid-template-columns: repeat(8, 1fr); /* 작은 화면에서는 8주씩 */
+    }
+    
+    .weekly-heatmap-cell {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .week-number {
+        font-size: 8px;
+    }
+}
+/* ▲▲▲ 여기까지 교체 ▲▲▲ */
