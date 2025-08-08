@@ -1794,6 +1794,14 @@ function createSimpleHeatmap(container, historyData) {
         dateMap[date] = (dateMap[date] || 0) + 1;
     });
     
+    // 정확한 주차 계산 함수
+    function getWeekNumber(date) {
+        const currentDate = new Date(date);
+        const startOfYear = new Date(currentDate.getFullYear(), 0, 1);
+        const days = Math.floor((currentDate - startOfYear) / (24 * 60 * 60 * 1000));
+        return Math.ceil((days + startOfYear.getDay() + 1) / 7);
+    }
+    
     // 주별 데이터 집계
     const weeklyData = [];
     
@@ -1815,19 +1823,28 @@ function createSimpleHeatmap(container, historyData) {
             weeklyCount += dateMap[dayStr] || 0;
         }
         
-        // 주차 정보 생성
-        const weekNumber = 52 - weekIndex;
+        // 정확한 주차 계산
+        const actualWeekNumber = getWeekNumber(weekStart);
+        const year = weekStart.getFullYear();
         const startMonth = weekStart.getMonth() + 1;
         const startDay = weekStart.getDate();
         const endMonth = weekEnd.getMonth() + 1;
         const endDay = weekEnd.getDate();
         
+        // 연도가 바뀌는 경우 처리
+        const displayWeek = weekStart.getFullYear() === today.getFullYear() ? 
+            actualWeekNumber : 
+            `${year.toString().slice(-2)}년 ${actualWeekNumber}주`;
+        
         weeklyData.push({
-            weekNumber,
+            weekNumber: actualWeekNumber,
+            displayWeek: displayWeek,
             count: weeklyCount,
             startDate: `${startMonth}/${startDay}`,
             endDate: `${endMonth}/${endDay}`,
-            intensity: weeklyCount > 0 ? Math.min(Math.ceil(weeklyCount / 2), 4) : 0 // 2회당 1단계
+            year: year,
+            intensity: weeklyCount > 0 ? Math.min(Math.ceil(weeklyCount / 2), 4) : 0,
+            isCurrentWeek: weekIndex === 0 // 이번 주 확인
         });
     }
     
@@ -1837,13 +1854,15 @@ function createSimpleHeatmap(container, historyData) {
     
     weeklyData.forEach(week => {
         const colorClass = `heatmap-cell-${week.intensity}`;
-        const tooltipText = `${week.weekNumber}주차 (${week.startDate}~${week.endDate}): ${week.count}회 완료`;
+        const currentWeekClass = week.isCurrentWeek ? 'current-week' : '';
+        const tooltipText = `${week.year}년 ${week.weekNumber}주차 (${week.startDate}~${week.endDate}): ${week.count}회 완료`;
         
-        html += `<div class="weekly-heatmap-cell ${colorClass}" 
+        html += `<div class="weekly-heatmap-cell ${colorClass} ${currentWeekClass}" 
                      title="${tooltipText}"
                      data-week="${week.weekNumber}" 
+                     data-year="${week.year}"
                      data-count="${week.count}">
-                     <span class="week-number">${week.weekNumber}</span>
+                     <span class="week-number">${week.displayWeek}</span>
                  </div>`;
     });
     
