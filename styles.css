@@ -5,8 +5,8 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
         :root {
+
             --primary: #6366f1;
             --primary-dark: #4f46e5;
             --secondary: #ec4899;
@@ -1704,4 +1704,81 @@
         grid-template-columns: 1fr !important;
     }
 }
+/* ▼▼▼ styles.css 맨 아래에 이 코드를 추가하세요 ▼▼▼ */
+.simple-heatmap {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(53, 12px);
+    gap: 2px;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+.heatmap-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.heatmap-cell:hover {
+    transform: scale(1.3);
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.heatmap-cell:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    margin-bottom: 4px;
+}
+
+.heatmap-cell-0 { background-color: #ebedf0; }
+.heatmap-cell-1 { background-color: #9be9a8; }
+.heatmap-cell-2 { background-color: #40c463; }
+.heatmap-cell-3 { background-color: #30a14e; }
+.heatmap-cell-4 { background-color: #216e39; }
+
+.heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.legend-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+@media (max-width: 480px) {
+    .heatmap-grid {
+        grid-template-columns: repeat(26, 12px);
+    }
+    
+    .simple-heatmap {
+        padding: 0.5rem;
+    }
+}
 /* ▲▲▲ 여기까지 추가 ▲▲▲ */
+
