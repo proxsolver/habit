@@ -1991,3 +1991,21 @@
 }
 
 /* ▲▲▲ 여기까지 추가 ▲▲▲ */
+/* ▼▼▼ refactor(modal): 수정/추가 버튼의 모호한 선택자를 명확한 클래스로 변경하여 버그 수정 ▼▼▼ */
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border: 1px solid #dc2626;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:active {
+    transform: scale(0.98);
+}
+/* ▲▲▲ 여기까지 추가 ▲▲▲ */

@@ -2333,6 +2333,7 @@ document.getElementById('filter-monthly').addEventListener('click', () => {
     });
 }
 
+// ▼▼▼ 이 함수를 아래 코드로 교체하세요 ▼▼▼
 function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -2341,12 +2342,14 @@ function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
     modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
     modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideFn(); });
     
+    // 'btn-confirm' 클래스를 가진 버튼을 명확히 찾아 이벤트를 연결합니다.
     if (confirmFn) {
-        modal.querySelector('.btn:not(.btn-secondary)')?.addEventListener('click', confirmFn);
+        modal.querySelector('.btn-confirm')?.addEventListener('click', confirmFn);
     }
     if (confirmInputId) {
         document.getElementById(confirmInputId)?.addEventListener('keypress', (e) => { if (e.key === 'Enter') confirmFn(); });
     }
 }
+// ▲▲▲ 여기까지 교체 ▲▲▲
 
 
