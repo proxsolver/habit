@@ -1563,7 +1563,7 @@
         }
 
         /* ✨ 대시보드 스타일 새로 추가 시작 ✨ */
-        
+
 /* ▼▼▼ 기존의 모든 .dashboard-container 스타일을 삭제하고 아래 코드로 교체하세요 ▼▼▼ */
 .dashboard-container {
     background-color: #ffffff;
@@ -2008,5 +2008,37 @@
 
 .btn-danger:active {
     transform: scale(0.98);
+}
+/* ▲▲▲ 여기까지 추가 ▲▲▲ */
+/* ▼▼▼ 여기에 새 코드를 추가하세요 (목표 카드 스타일) ▼▼▼ */
+.goal-card {
+    background: #ffffff;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+.goal-card-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:0.5rem;
+}
+.goal-progress-wrap {
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    margin-top:0.75rem;
+}
+.goal-meter {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: conic-gradient(#22c55e var(--deg, 0deg), #e5e7eb 0deg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    color:#111827;
 }
 /* ▲▲▲ 여기까지 추가 ▲▲▲ */
