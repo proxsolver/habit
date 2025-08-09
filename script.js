@@ -898,6 +898,47 @@ async function handleWheelConfirm() {
             hideAddRoutineModal();
         }
 
+        // ▼▼▼ 08/09(수정일) handleAddGoalConfirm 함수 추가 ▼▼▼
+async function handleAddGoalConfirm() {
+    console.log('📌 [handleAddGoalConfirm]: 목표 추가 처리 시작');
+    const name = document.getElementById('goalName').value.trim();
+    const targetValue = parseFloat(document.getElementById('goalTargetValue').value);
+    const unit = document.getElementById('goalUnit').value.trim();
+    const startDate = document.getElementById('goalStartDate').value;
+    const endDate = document.getElementById('goalEndDate').value;
+    const area = document.getElementById('goalArea').value;
+    const linkedRoutines = Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value);
+
+    // 유효성 검사
+    if (!name || !targetValue || targetValue <= 0 || !unit || !startDate || !endDate) {
+        showNotification('이름/목표값/단위/기간을 정확히 입력해주세요.', 'error');
+        console.log('❌ [handleAddGoalConfirm]: 필수 필드 누락');
+        return;
+    }
+    if (new Date(startDate) >= new Date(endDate)) {
+        showNotification('종료일은 시작일보다 이후여야 합니다.', 'error');
+        console.log('❌ [handleAddGoalConfirm]: 날짜 유효성 검사 실패');
+        return;
+    }
+    if (!linkedRoutines.length) {
+        showNotification('최소 1개 이상의 관련 루틴을 선택해주세요.', 'error');
+        console.log('❌ [handleAddGoalConfirm]: 연결된 루틴 없음');
+        return;
+    }
+    
+    try {
+        await addGoalToFirebase({ name, targetValue, unit, startDate, endDate, area, linkedRoutines });
+        hideAddGoalModal();
+        showNotification('🧭 새로운 목표가 생성되었습니다!');
+        renderGoalCompassPage();
+        console.log('🏁 [handleAddGoalConfirm]: 목표 추가 완료');
+    } catch (error) {
+        console.error('❌ [handleAddGoalConfirm]: 목표 추가 실패', error);
+        showNotification('목표 추가에 실패했습니다.', 'error');
+    }
+}
+// ▲▲▲ 여기까지 08/09(수정일) handleAddGoalConfirm 함수 추가 ▲▲▲
+
         async function handleManageAreasConfirm() {
             const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
             const updatedAreas = Array.from(areaInputs).map(input => ({
@@ -2593,6 +2634,9 @@ document.getElementById('filter-monthly').addEventListener('click', () => {
     // ▲▲▲ 여기까지 추가 ▲▲▲
     
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
+    // ▼▼▼ 08/09(수정일) 목표 모달 이벤트 리스너 연결 ▼▼▼
+setupModal('addGoalModal', hideAddGoalModal, handleAddGoalConfirm);
+// ▲▲▲ 여기까지 08/09(수정일) 목표 모달 이벤트 리스너 연결 ▲▲▲
     setupModal('routineDetailModal', hideDetailStatsModal);
 
     // --- ESC로 모든 모달 닫기 ---
