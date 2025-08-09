@@ -314,7 +314,6 @@
         }
 
         .routine-item.completed::after {
-            content: '✨';
             position: absolute;
             top: -5px;
             right: -5px;
@@ -335,7 +334,6 @@
         }
 
         .routine-item.inprogress::after {
-            content: '⏳';
             position: absolute;
             top: -5px;
             right: -5px;
@@ -701,19 +699,20 @@
             gap: 0.5rem;
         }
 
+/* ▼▼▼ 08/09(수정일) 알림 아이콘 중복 제거 ▼▼▼ */
         .notification::before {
-            content: '✅';
+            /* content: '✅'; <-- 이 줄을 삭제하거나 주석 처리합니다. */
             font-size: 1.2rem;
         }
 
-        .notification.error {
-            background: linear-gradient(135deg, var(--error), #f87171);
-        }
-
         .notification.error::before {
-            content: '❌';
+            content: '❌'; /* 에러와 경고는 유지하거나 필요시 삭제 가능 */
         }
 
+        .notification.warning::before {
+            content: '⚠️'; /* 에러와 경고는 유지하거나 필요시 삭제 가능 */
+        }
+/* ▲▲▲ 여기까지 08/09(수정일) 알림 아이콘 중복 제거 ▲▲▲ */
         .notification.warning {
             background: linear-gradient(135deg, var(--warning), #fbbf24);
         }
