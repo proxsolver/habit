@@ -281,6 +281,68 @@ async function updateAreasInFirebase(updatedAreas) {
     renderAreaStats();
 }
 
+// ▼▼▼ 여기에 새 코드를 추가하세요 (목표 관리 함수) ▼▼▼
+async function addGoalToFirebase(goalData) {
+    if (!currentUser) return null;
+    const goalsRef = db.collection('users').doc(currentUser.uid).collection('goals');
+    const docRef = goalsRef.doc();
+    const payload = {
+        id: docRef.id,
+        name: goalData.name,
+        targetValue: Number(goalData.targetValue) || 0,
+        currentValue: 0,
+        unit: goalData.unit || '',
+        startDate: goalData.startDate, // 'YYYY-MM-DD'
+        endDate: goalData.endDate, // 'YYYY-MM-DD'
+        linkedRoutines: Array.isArray(goalData.linkedRoutines) ? goalData.linkedRoutines : [],
+        area: goalData.area || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+    };
+    await docRef.set(payload);
+    return payload;
+}
+
+async function getUserGoals(userId) {
+    const goalsRef = db.collection('users').doc(userId).collection('goals').orderBy('createdAt', 'desc');
+    const snap = await goalsRef.get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function updateGoalInFirebase(goalId, updatedFields) {
+    if (!currentUser) return;
+    const goalRef = db.collection('users').doc(currentUser.uid).collection('goals').doc(goalId);
+    await goalRef.update({ ...updatedFields, updatedAt: new Date() });
+}
+
+async function deleteGoalFromFirebase(goalId) {
+    if (!currentUser) return;
+    const goalRef = db.collection('users').doc(currentUser.uid).collection('goals').doc(goalId);
+    await goalRef.delete();
+}
+
+async function incrementGoalProgressByRoutine(routineId, deltaValue) {
+    if (!currentUser) return;
+    if (!deltaValue || isNaN(deltaValue) || deltaValue <= 0) return;
+
+    const goalsRef = db.collection('users').doc(currentUser.uid).collection('goals');
+    const q = await goalsRef.where('linkedRoutines', 'array-contains', String(routineId)).get();
+
+    if (q.empty) return;
+
+    const batch = db.batch();
+    q.docs.forEach(doc => {
+        const ref = doc.ref;
+        batch.update(ref, {
+            currentValue: firebase.firestore.FieldValue.increment(deltaValue),
+            updatedAt: new Date()
+        });
+    });
+    await batch.commit();
+}
+// ▲▲▲ 여기까지 추가 ▲▲▲
+
+
 
 // feat(stats): Implement stats calculation function using collection group query
 
@@ -480,6 +542,10 @@ async function handleStepperConfirm(value) {
                 // ▼▼▼ 이 부분의 finalValue를 value로 수정하세요 ▼▼▼
                 await logRoutineHistory(routine.id, { value: value, pointsEarned: routine.basePoints });
                 // ▲▲▲ 여기까지 수정 ▲▲▲
+
+                // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                await incrementGoalProgressByRoutine(routine.id, value);
+                // ▲▲▲ 여기까지 추가 ▲▲▲
                 
                 updatedFields.pointsGivenToday = true;
                 pointsAwarded = true;
@@ -532,6 +598,10 @@ async function handleNumberConfirm(value, inputType) {
                 // ▼▼▼ 여기는 이미 finalValue가 정의되어 있으므로 그대로 사용 ▼▼▼
                 await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
                 // ▲▲▲ 이 부분은 수정 불필요 ▲▲▲
+
+                // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                await incrementGoalProgressByRoutine(routine.id, (routine.continuous ? value : finalValue));
+                // ▲▲▲ 여기까지 추가 ▲▲▲
                 
                 updatedFields.pointsGivenToday = true;
                 pointsAwarded = true;
@@ -722,6 +792,9 @@ async function handleWheelConfirm() {
                         await logRoutineHistory(routine.id, { value: readPages, pointsEarned: routine.basePoints });
                         // ▲▲▲ 여기까지 ▲▲▲
 
+                        // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+                        await incrementGoalProgressByRoutine(routine.id, readPages);
+                        // ▲▲▲ 여기까지 추가 ▲▲▲
                         
                         updatedFields.pointsGivenToday = true;
                         pointsAwarded = true;
@@ -1910,7 +1983,176 @@ function createSimpleHeatmap(container, historyData) {
 // ▲▲▲ 여기까지 교체 ▲▲▲
 
 
+// ▼▼▼ 여기에 새 코드를 추가하세요 (목표 나침반 페이지 및 모달 관리) ▼▼▼
+async function showGoalCompassPage() {
+    document.getElementById('main-app-content').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('goal-compass-page').style.display = 'block';
+    await renderGoalCompassPage();
+}
 
+async function renderGoalCompassPage() {
+    if (!currentUser) return;
+    const goals = await getUserGoals(currentUser.uid);
+    const list = document.getElementById('goalsList');
+    list.innerHTML = '';
+    if (!goals.length) {
+        list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
+        return;
+    }
+
+    goals.forEach(goal => {
+        const pct = goal.targetValue > 0 ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)) : 0;
+        const deg = Math.round(360 * (pct / 100));
+        const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
+        const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || ''}`;
+
+        const card = document.createElement('div');
+        card.className = 'goal-card';
+        card.innerHTML = `
+            <div class="goal-card-header">
+                <div style="font-weight:800;">${goal.name}</div>
+                <div>
+                    <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
+                    <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+                </div>
+            </div>
+            <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
+            <div class="goal-progress-wrap">
+                <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
+                <div style="flex:1;">
+                    <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
+                    <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
+                    <div style="color:#6b7280;">${ddayInfo.label}</div>
+                    <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
+                </div>
+            </div>
+        `;
+        list.appendChild(card);
+        
+        const paceMsg = getPaceMessage(goal);
+        const paceEl = document.getElementById(`pace-${goal.id}`);
+        if (paceEl && paceMsg) paceEl.textContent = paceMsg;
+        
+        card.querySelector('.delete-btn').addEventListener('click', async () => {
+            if (!confirm('이 목표를 삭제할까요?')) return;
+            await deleteGoalFromFirebase(goal.id);
+            renderGoalCompassPage();
+            showNotification('목표가 삭제되었습니다.');
+        });
+        
+        card.querySelector('.edit-btn').addEventListener('click', () => {
+             showNotification('편집 기능은 아직 지원되지 않습니다. 삭제 후 다시 생성해주세요.', 'info');
+        });
+    });
+}
+
+function getAreaName(id) {
+    const area = userAreas.find(a => a.id === id);
+    return area ? area.name : (id || '미지정');
+}
+
+function getGoalDdayInfo(start, end) {
+    const today = new Date();
+    const endDate = new Date(end);
+    const startDate = new Date(start);
+    today.setHours(0,0,0,0);
+    endDate.setHours(0,0,0,0);
+    startDate.setHours(0,0,0,0);
+
+    const diffDays = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+    const elapsedDays = Math.max(0, Math.ceil((today - startDate) / (1000 * 60 * 60 * 24)));
+    const label = diffDays >= 0 ? `남은 기간: D-${diffDays} (경과 ${elapsedDays}일)` : `종료됨 (종료 후 ${Math.abs(diffDays)}일)`;
+    return { diffDays, elapsedDays, label };
+}
+
+function getPaceMessage(goal) {
+    if (!goal.startDate || !goal.endDate || !goal.targetValue) return '';
+    const { elapsedDays, diffDays } = getGoalDdayInfo(goal.startDate, goal.endDate);
+    if (diffDays < 0) return '목표 기간이 종료되었습니다.';
+    
+    const elapsed = Math.max(1, elapsedDays);
+    const ratePerDay = (goal.currentValue || 0) / elapsed;
+    const remaining = Math.max(0, goal.targetValue - (goal.currentValue || 0));
+
+    if (ratePerDay <= 0) return '진행률을 계산할 수 없습니다.';
+    
+    const estimateDaysNeeded = Math.ceil(remaining / ratePerDay);
+    
+    if (estimateDaysNeeded <= diffDays) {
+        return `현재 속도라면 목표일보다 ${diffDays - estimateDaysNeeded}일 빠르게 달성 가능해요!`;
+    } else {
+        return `현재 속도라면 목표일보다 ${estimateDaysNeeded - diffDays}일 늦어질 수 있어요.`;
+    }
+}
+
+function showAddGoalModal() {
+    populateGoalModalFields();
+    document.getElementById('addGoalModal').style.display = 'flex';
+}
+
+function hideAddGoalModal() {
+    document.getElementById('addGoalModal').style.display = 'none';
+}
+
+function populateGoalModalFields() {
+    const sel = document.getElementById('goalArea');
+    sel.innerHTML = '';
+    userAreas.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name;
+        sel.appendChild(opt);
+    });
+
+    const container = document.getElementById('linkableRoutines');
+    container.innerHTML = '';
+    sampleRoutines
+        .filter(r => r.type === 'number' || r.type === 'reading')
+        .forEach(r => {
+            const id = `link-r-${r.id}`;
+            const label = `${r.name} (${getTypeLabel(r.type)})`;
+            const item = document.createElement('div');
+            item.className = 'area-checkbox-item';
+            item.innerHTML = `<input type="checkbox" id="${id}" value="${r.id}" /> <label for="${id}">${label}</label>`;
+            container.appendChild(item);
+        });
+
+    document.getElementById('goalName').value = '';
+    document.getElementById('goalTargetValue').value = '';
+    document.getElementById('goalUnit').value = '';
+    document.getElementById('goalStartDate').value = todayDateString;
+    document.getElementById('goalEndDate').value = '';
+}
+
+async function handleAddGoalConfirmModal() {
+    const name = document.getElementById('goalName').value.trim();
+    const targetValue = parseFloat(document.getElementById('goalTargetValue').value);
+    const unit = document.getElementById('goalUnit').value.trim();
+    const startDate = document.getElementById('goalStartDate').value;
+    const endDate = document.getElementById('goalEndDate').value;
+    const area = document.getElementById('goalArea').value;
+    const linkedRoutines = Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value);
+
+    if (!name || !targetValue || targetValue <= 0 || !unit || !startDate || !endDate) {
+        showNotification('이름/목표값/단위/기간을 정확히 입력해주세요.', 'error');
+        return;
+    }
+    if (new Date(startDate) >= new Date(endDate)) {
+        showNotification('종료일은 시작일보다 이후여야 합니다.', 'error');
+        return;
+    }
+    if (!linkedRoutines.length) {
+        showNotification('최소 1개 이상의 관련 루틴을 선택해주세요.', 'error');
+        return;
+    }
+    
+    await addGoalToFirebase({ name, targetValue, unit, startDate, endDate, area, linkedRoutines });
+    hideAddGoalModal();
+    showNotification('🧭 새로운 목표가 생성되었습니다!');
+    renderGoalCompassPage();
+}
+// ▲▲▲ 여기까지 추가 ▲▲▲
 
 
 // --- 페이지 네비게이션 (Page Navigation) ---
@@ -2268,10 +2510,16 @@ function setupAllEventListeners() {
     document.getElementById('navManageBtn').addEventListener('click', showManagePage);
     document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
     document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
+        // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+    document.getElementById('navGoalCompassBtn').addEventListener('click', showGoalCompassPage);
+        // ▲▲▲ 여기까지 추가 ▲▲▲
     // setupAllEventListeners 함수 내부에 추가
     // 통계 필터 버튼 이벤트
-document.getElementById('filter-weekly').addEventListener('click', () => {
-    currentStatsPeriod = 'weekly';
+    // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
+    document.getElementById('openAddGoalBtn')?.addEventListener('click', showAddGoalModal);
+        // ▲▲▲ 여기까지 추가 ▲▲▲
+    document.getElementById('filter-weekly').addEventListener('click', () => {
+        currentStatsPeriod = 'weekly';
     document.getElementById('filter-weekly').classList.add('active');
     document.getElementById('filter-monthly').classList.remove('active');
     renderStatsPage();
