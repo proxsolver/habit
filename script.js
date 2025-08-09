@@ -1993,59 +1993,81 @@ async function showGoalCompassPage() {
 
 async function renderGoalCompassPage() {
     if (!currentUser) return;
-    const goals = await getUserGoals(currentUser.uid);
     const list = document.getElementById('goalsList');
-    list.innerHTML = '';
-    if (!goals.length) {
-        list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
-        return;
-    }
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-title">목표를 불러오는 중...</div></div>'; // 로딩 표시
 
-    goals.forEach(goal => {
-        const pct = goal.targetValue > 0 ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)) : 0;
-        const deg = Math.round(360 * (pct / 100));
-        const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
-        const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || ''}`;
+    try {
+        const goals = await getUserGoals(currentUser.uid);
+        list.innerHTML = ''; // 로딩 표시 제거
 
-        const card = document.createElement('div');
-        card.className = 'goal-card';
-        card.innerHTML = `
-            <div class="goal-card-header">
-                <div style="font-weight:800;">${goal.name}</div>
-                <div>
-                    <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
-                    <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+        if (!goals.length) {
+            list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
+            return;
+        }
+
+        goals.forEach(goal => {
+            const pct = goal.targetValue > 0 ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)) : 0;
+            const deg = Math.round(360 * (pct / 100));
+            const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
+            const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || ''}`;
+
+            const card = document.createElement('div');
+            card.className = 'goal-card';
+            card.innerHTML = `
+                <div class="goal-card-header">
+                    <div style="font-weight:800;">${goal.name}</div>
+                    <div>
+                        <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
+                        <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+                    </div>
                 </div>
-            </div>
-            <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
-            <div class="goal-progress-wrap">
-                <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
-                <div style="flex:1;">
-                    <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
-                    <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
-                    <div style="color:#6b7280;">${ddayInfo.label}</div>
-                    <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
+                <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
+                <div class="goal-progress-wrap">
+                    <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
+                        <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
+                        <div style="color:#6b7280;">${ddayInfo.label}</div>
+                        <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+            
+            const paceMsg = getPaceMessage(goal);
+            const paceEl = document.getElementById(`pace-${goal.id}`);
+            if (paceEl && paceMsg) paceEl.textContent = paceMsg;
+            
+            card.querySelector('.delete-btn').addEventListener('click', async () => {
+                if (!confirm('이 목표를 삭제할까요?')) return;
+                await deleteGoalFromFirebase(goal.id);
+                renderGoalCompassPage();
+                showNotification('목표가 삭제되었습니다.');
+            });
+            
+            card.querySelector('.edit-btn').addEventListener('click', () => {
+                 showNotification('편집 기능은 아직 지원되지 않습니다. 삭제 후 다시 생성해주세요.', 'info');
+            });
+        });
+    } catch (error) {
+        console.error("목표 렌더링 실패:", error);
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <div class="empty-state-title">목표를 불러올 수 없습니다</div>
+                <div class="empty-state-description">
+                    데이터베이스 권한(Firestore 보안 규칙)이 올바르게 설정되었는지 확인해주세요.
+                    <br><br>
+                    <small>에러: ${error.message}</small>
                 </div>
             </div>
         `;
-        list.appendChild(card);
-        
-        const paceMsg = getPaceMessage(goal);
-        const paceEl = document.getElementById(`pace-${goal.id}`);
-        if (paceEl && paceMsg) paceEl.textContent = paceMsg;
-        
-        card.querySelector('.delete-btn').addEventListener('click', async () => {
-            if (!confirm('이 목표를 삭제할까요?')) return;
-            await deleteGoalFromFirebase(goal.id);
-            renderGoalCompassPage();
-            showNotification('목표가 삭제되었습니다.');
-        });
-        
-        card.querySelector('.edit-btn').addEventListener('click', () => {
-             showNotification('편집 기능은 아직 지원되지 않습니다. 삭제 후 다시 생성해주세요.', 'info');
-        });
-    });
+    }
 }
+// ▲▲▲ 여기까지 08/09(수정일) 목표함수 추가 ▲▲▲
+
+
+
 
 function getAreaName(id) {
     const area = userAreas.find(a => a.id === id);
