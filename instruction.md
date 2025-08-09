@@ -6,7 +6,7 @@
 
 2. 오늘의 핵심 과업 (Today's Core Task):
 
-과업: 현재 개발 중인 Firebase 기반 웹 앱의 script.js 파일에서 발생하는 ReferenceError를 해결하고, 코드의 구조적 안정성을 확보하는 것입니다.
+과업: 코드의 구조적 안정성을 확보와 신규 기능 추가 및 에러 해결
 
 제공 파일: index.html, script.js, styles.css
 
