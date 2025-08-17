@@ -547,16 +547,19 @@ async function handleDeleteRoutine(routineId, routineName) {
     }
 }
 
-// ▼▼▼ 08/17(수정일) handleStepperConfirm 최종본 ▼▼▼
-async function handleStepperConfirm(value) {
+// ▼▼▼ 08/17(수정일) handleStepperConfirm 최종 결정판 ▼▼▼
+async function handleStepperConfirm(incrementValue) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
+
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
-            const isNowGoalAchieved = isGoalAchieved({ ...routine, value: value });
+            const finalValue = (routine.value || 0) + incrementValue;
+            const isNowGoalAchieved = isGoalAchieved({ ...routine, value: finalValue });
+
             const updatedFields = {
-                value: value,
+                value: finalValue,
                 status: null,
                 lastUpdatedDate: todayDateString,
                 dailyGoalMetToday: isNowGoalAchieved
@@ -573,12 +576,18 @@ async function handleStepperConfirm(value) {
                     await updateUserStatsInFirebase(newStats);
                 }
 
-                await logRoutineHistory(routine.id, { value: value, pointsEarned: routine.basePoints });
+                await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
 
-                const incrementValue = routine.continuous ? (value - (routine.value || 0)) : value;
-                const reportData = { delta: incrementValue, finalValue: value };
+                const reportData = { delta: incrementValue, finalValue: finalValue };
                 
-                console.log(`📡 [handleStepperConfirm]: 목표 시스템에 전과 보고`, reportData);
+                // --- 통신 감청 ---
+                console.log("--- 통신 감청 시작 ---");
+                console.log("전달된 증가량 (incrementValue):", incrementValue, `(타입: ${typeof incrementValue})`);
+                console.log("기존 루틴의 값 (routine.value):", routine.value, `(타입: ${typeof routine.value})`);
+                console.log("계산된 최종값 (finalValue):", reportData.finalValue, `(타입: ${typeof reportData.finalValue})`);
+                console.log("보고할 델타값 (delta):", reportData.delta, `(타입: ${typeof reportData.delta})`);
+                console.log("--- 통신 감청 종료 ---");
+
                 if (reportData.delta > 0) {
                     await updateGoalProgressByRoutine(routine.id, reportData);
                 }
@@ -590,7 +599,7 @@ async function handleStepperConfirm(value) {
             hideStepperModal();
             
             const goalStatus = isNowGoalAchieved ? ' 🎯 목표 달성!' : '';
-            showNotification(`✅ ${routine.name}: ${value}${routine.unit || ''}${goalStatus} 저장되었습니다!`);
+            showNotification(`✅ ${routine.name}: ${finalValue}${routine.unit || ''}${goalStatus} 저장되었습니다!`);
             
             if (updatedFields.pointsGivenToday) {
                 showCompletionEffect();
@@ -602,7 +611,8 @@ async function handleStepperConfirm(value) {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/17(수정일) handleStepperConfirm 최종본 ▲▲▲
+// ▲▲▲ 여기까지 08/17(수정일) handleStepperConfirm 최종 결정판 ▲▲▲
+
 
 // 2. Wheel(스크롤) 및 Simple(직접입력) 루틴 완료 처리 통합 함수
 // ▼▼▼ 08/17(수정일) handleNumberConfirm 최종본 ▼▼▼
