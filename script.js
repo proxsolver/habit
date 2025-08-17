@@ -987,6 +987,7 @@ async function handleGoalConfirm() {
         startDate: document.getElementById('goalStartDate').value,
         endDate: document.getElementById('goalEndDate').value,
         area: document.getElementById('goalArea').value,
+        direction: document.getElementById('goalDirection').value, // '방향' 값을 읽어옵니다.
         updateMethod: document.getElementById('goalUpdateMethod').value,
         linkedRoutines: Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value)
     };
@@ -1011,7 +1012,11 @@ async function handleGoalConfirm() {
             await updateGoalInFirebase(editingGoalId, goalData);
             showNotification('🧭 목표가 성공적으로 수정되었습니다!');
         } else {
-            goalData.currentValue = 0;
+            // ★★★ 핵심: '감소 목표'의 경우, 현재값을 시작값으로 저장합니다. ★★★
+            const currentValue = parseFloat(document.getElementById('goalCurrentValue').value) || 0;
+            goalData.startValue = (goalData.direction === 'decrease') ? currentValue : 0;
+            goalData.currentValue = currentValue;
+            
             await addGoalToFirebase(goalData);
             showNotification('🧭 새로운 목표가 생성되었습니다!');
         }
@@ -2198,7 +2203,23 @@ async function renderGoalCompassPage() {
             list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
         } else {
             goals.forEach(goal => {
-                const pct = goal.targetValue > 0 ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)) : 0;
+                // ★★★ 핵심: '작전 방향'에 따라 진행률(pct) 계산식을 분기합니다. ★★★
+                let pct = 0;
+                if (goal.direction === 'decrease') {
+                    // [감소 목표 계산식]
+                    const startValue = goal.startValue || 0;
+                    const range = startValue - goal.targetValue;
+                    const achieved = startValue - goal.currentValue;
+                    if (range > 0) {
+                        pct = Math.min(100, Math.max(0, Math.round((achieved / range) * 100)));
+                    }
+                } else {
+                    // [증가 목표 계산식] (기존 방식)
+                    if (goal.targetValue > 0) {
+                        pct = Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100));
+                    }
+                }
+
                 const deg = Math.round(360 * (pct / 100));
                 const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
                 const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || ''}`;
@@ -2378,6 +2399,8 @@ function populateGoalModalFields(goal = null) {
         document.getElementById('goalStartDate').value = goal.startDate || '';
         document.getElementById('goalEndDate').value = goal.endDate || '';
         document.getElementById('goalArea').value = goal.area || '';
+        document.getElementById('goalDirection').value = goal.direction || 'increase';
+
 
         // 저장된 '진행 방식' 값을 드롭다운에 설정합니다.
         goalUpdateMethodSelect.value = goal.updateMethod || 'accumulate';
@@ -2397,6 +2420,8 @@ function populateGoalModalFields(goal = null) {
         document.getElementById('goalUnit').value = '';
         document.getElementById('goalStartDate').value = todayDateString;
         document.getElementById('goalEndDate').value = '';
+        document.getElementById('goalDirection').value = 'increase';
+
         
         // '진행 방식'을 기본값으로 설정합니다.
         goalUpdateMethodSelect.value = 'accumulate';
