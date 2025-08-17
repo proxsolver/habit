@@ -325,12 +325,12 @@ async function deleteGoalFromFirebase(goalId) {
     await goalRef.delete();
 }
 
-// ▼▼▼ 08/17(수정일) '누적하기' 방식의 목표 업데이트 버그 수정 ▼▼▼
+// ▼▼▼ 08/18(수정일) updateGoalProgressByRoutine 최종 진화형 ▼▼▼
 async function updateGoalProgressByRoutine(routineId, reportData) {
+    // reportData 객체는 { delta: number, finalValue: number, points: number } 형태를 가집니다.
     if (!currentUser) return;
-    // 1. 보고서 유효성 1차 검사
     if (!reportData) {
-        console.warn('⚠️ [updateGoalProgressByRoutine]: 유효하지 않은 보고 데이터(reportData)로 인해 작전을 중단합니다.');
+        console.warn('⚠️ [updateGoalProgressByRoutine]: 유효하지 않은 보고 데이터로 인해 작전을 중단합니다.');
         return;
     }
 
@@ -349,38 +349,45 @@ async function updateGoalProgressByRoutine(routineId, reportData) {
         const goal = doc.data();
         const ref = doc.ref;
         
-        // 2. 목표의 '진행 방식'에 따라 다른 명령 하달
-        if (goal.updateMethod === 'replace') {
-            const finalValue = parseFloat(reportData.finalValue);
-            // '대체' 방식은 전달받은 finalValue가 유효한 숫자인지 확인
-            if (!isNaN(finalValue)) {
-                console.log(`- 목표(${goal.name}): '대체' 방식으로 현재값을 ${finalValue}(으)로 업데이트합니다.`);
+        // --- 1. 목표 유형 식별 ---
+        if (goal.goalType === 'points') {
+            // --- 2a. '포인트 목표'일 경우의 작전 수행 ---
+            const pointsValue = parseFloat(reportData.points);
+            if (!isNaN(pointsValue) && pointsValue > 0) {
+                console.log(`- 목표(${goal.name}): '포인트' 방식으로 현재값을 ${pointsValue}만큼 증가시킵니다.`);
                 batch.update(ref, {
-                    currentValue: finalValue,
+                    currentValue: firebase.firestore.FieldValue.increment(pointsValue),
                     updatedAt: new Date()
                 });
             } else {
-                console.warn(`⚠️ [updateGoalProgressByRoutine]: '대체' 방식에 유효하지 않은 finalValue(${reportData.finalValue})가 전달되었습니다.`);
+                console.warn(`⚠️ [updateGoalProgressByRoutine]: '포인트' 방식에 유효하지 않은 points(${reportData.points})가 전달되었습니다.`);
             }
-        } else { // 기본값은 'accumulate'
-            const deltaValue = parseFloat(reportData.delta);
-            // ★★★ 핵심 수정: '누적' 방식은 delta가 0보다 큰 유효한 숫자인지 '반드시' 확인 ★★★
-            if (!isNaN(deltaValue) && deltaValue > 0) {
-                console.log(`- 목표(${goal.name}): '누적' 방식으로 현재값을 ${deltaValue}만큼 증가시킵니다.`);
-                batch.update(ref, {
-                    currentValue: firebase.firestore.FieldValue.increment(deltaValue),
-                    updatedAt: new Date()
-                });
-            } else {
-                 console.warn(`⚠️ [updateGoalProgressByRoutine]: '누적' 방식에 유효하지 않은 delta(${reportData.delta})가 전달되어 누적을 건너뜁니다.`);
+
+        } else { // 'units' 목표일 경우
+            // --- 2b. '단위 목표'일 경우의 작전 수행 ---
+            if (goal.updateMethod === 'replace') {
+                const finalValue = parseFloat(reportData.finalValue);
+                if (!isNaN(finalValue)) {
+                    console.log(`- 목표(${goal.name}): '대체' 방식으로 현재값을 ${finalValue}(으)로 업데이트합니다.`);
+                    batch.update(ref, { currentValue: finalValue, updatedAt: new Date() });
+                }
+            } else { // 'accumulate'
+                const deltaValue = parseFloat(reportData.delta);
+                if (!isNaN(deltaValue) && deltaValue !== 0) { // delta는 음수가 될 수도 있으므로 0이 아닌지만 체크
+                    console.log(`- 목표(${goal.name}): '누적' 방식으로 현재값을 ${deltaValue}만큼 증가시킵니다.`);
+                    batch.update(ref, {
+                        currentValue: firebase.firestore.FieldValue.increment(deltaValue),
+                        updatedAt: new Date()
+                    });
+                }
             }
         }
     });
+    
     await batch.commit();
     console.log('🏁 [updateGoalProgressByRoutine]: 모든 연결된 목표의 진척도 업데이트 완료.');
 }
-// ▲▲▲ 여기까지 08/17(수정일) '누적하기' 방식의 목표 업데이트 버그 수정 ▲▲▲
-
+// ▲▲▲ 여기까지 08/18(수정일) updateGoalProgressByRoutine 최종 진화형 ▲▲▲
 // feat(stats): Implement stats calculation function using collection group query
 
 async function logRoutineHistory(routineId, dataToLog) {
@@ -553,6 +560,7 @@ async function handleDeleteRoutine(routineId, routineName) {
 //3단계: 일일 목표 첫 달성 여부를 판단하여 포상(포인트, 스트릭) 처리.
 //4-5단계: 최종 상태를 데이터베이스에 기록하고, 임무 완료를 알림.
 
+// ▼▼▼ 08/18(수정일) handleStepperConfirm 최종 임무 수첩 ▼▼▼
 async function handleStepperConfirm(value) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
@@ -560,10 +568,8 @@ async function handleStepperConfirm(value) {
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
-            // 1. 보고 수신 및 상태 계산
             const finalValue = value;
             const isNowGoalAchieved = isGoalAchieved({ ...routine, value: finalValue });
-
             const updatedFields = {
                 value: finalValue,
                 status: null,
@@ -571,19 +577,22 @@ async function handleStepperConfirm(value) {
                 dailyGoalMetToday: isNowGoalAchieved
             };
 
-            // 2. 최우선 임무: 전과 보고 (포상 여부와 무관하게 항상 실행)
+            // 1. 종합 보고서 작성
             const incrementValue = finalValue - (routine.value || 0);
-            if (incrementValue !== 0) { // 값이 변경되었을 경우에만 보고
-                const reportData = { delta: incrementValue, finalValue: finalValue };
-                console.log(`📡 [handleStepperConfirm]: 목표 시스템에 전과 보고 (포상 여부 무관)`, reportData);
-                await updateGoalProgressByRoutine(routine.id, reportData);
+            const reportData = {
+                points: routine.basePoints || 0,
+                delta: incrementValue,
+                finalValue: finalValue
+            };
+
+            // 2. 전과 보고 (항상 실행)
+            if (reportData.delta !== 0) {
+                 await updateGoalProgressByRoutine(routine.id, reportData);
             }
 
-            // 3. 일일 포상 처리 (하루에 한 번만 실행)
+            // 3. 일일 포상 (하루 한 번)
             if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
-                
-                // 포인트 지급
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -591,17 +600,11 @@ async function handleStepperConfirm(value) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
-
-                // 활동 기록
                 await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
-                
                 updatedFields.pointsGivenToday = true;
             }
 
-            // 4. 루틴의 최종 상태를 데이터베이스에 업데이트
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
-            
-            // 5. 임무 완료 후 모달 닫기 및 알림
             hideStepperModal();
             
             const goalStatus = isNowGoalAchieved ? ' 🎯 목표 달성!' : '';
@@ -617,21 +620,17 @@ async function handleStepperConfirm(value) {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/18(수정일) handleStepperConfirm 최종 완전판 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleStepperConfirm 최종 임무 수첩 ▲▲▲
 
-// ▼▼▼ 08/18(수정일) handleNumberConfirm 최종 완전판 ▼▼▼
+// ▼▼▼ 08/18(수정일) handleNumberConfirm 최종 완전판 (포인트 로직 포함) ▼▼▼
 async function handleNumberConfirm(value, inputType) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
-
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
-            // 1. 보고 수신 및 상태 계산
-            // '지속 업데이트'의 경우, 입력된 value를 기존 값에 더합니다.
             const finalValue = routine.continuous ? (routine.value || 0) + value : value;
             const isNowGoalAchieved = isGoalAchieved({ ...routine, value: finalValue });
-
             const updatedFields = {
                 value: finalValue,
                 status: null,
@@ -639,20 +638,20 @@ async function handleNumberConfirm(value, inputType) {
                 dailyGoalMetToday: isNowGoalAchieved
             };
 
-            // 2. 최우선 임무: 전과 보고 (포상 여부와 무관하게 항상 실행)
-            // '지속' 타입이면 입력값(value) 자체가 증가량, 아니면 (최종값 - 기존값)이 증가량입니다.
             const incrementValue = routine.continuous ? value : (finalValue - (routine.value || 0));
             if (incrementValue !== 0) {
-                const reportData = { delta: incrementValue, finalValue: finalValue };
-                console.log(`📡 [handleNumberConfirm]: 목표 시스템에 전과 보고 (포상 여부 무관)`, reportData);
+                const reportData = {
+                    points: routine.basePoints || 0,
+                    delta: incrementValue,
+                    finalValue: finalValue
+                };
                 await updateGoalProgressByRoutine(routine.id, reportData);
             }
 
-            // 3. 일일 포상 처리 (하루에 한 번만 실행)
             if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
 
-                // 포인트 지급
+                // --- ▼▼▼ 이전에 누락되었던 '비밀 임무' 시작 ▼▼▼ ---
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -660,17 +659,14 @@ async function handleNumberConfirm(value, inputType) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
+                // --- ▲▲▲ '비밀 임무' 종료 ▲▲▲ ---
 
-                // 활동 기록
                 await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
-                
                 updatedFields.pointsGivenToday = true;
             }
 
-            // 4. 루틴의 최종 상태를 데이터베이스에 업데이트
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
             
-            // 5. 임무 완료 후 모달 닫기 및 알림
             if (inputType === 'simple') hideNumberInputModal();
             if (inputType === 'wheel') hideWheelModal();
 
@@ -687,7 +683,7 @@ async function handleNumberConfirm(value, inputType) {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/18(수정일) handleNumberConfirm 최종 완전판 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleNumberConfirm 최종 완전판 (포인트 로직 포함) ▲▲▲
 
 async function handleNumberInputConfirm() {
     if (!activeRoutineForModal) return;
@@ -817,26 +813,21 @@ async function handleWheelConfirm() {
     
         // ▼▼▼ 08/17(수정일) handleReadingProgressConfirm 장교 완전 복원 ▼▼▼
 // ▼▼▼ 08/18(수정일) handleReadingProgressConfirm 최종 완전판 ▼▼▼
+// ▼▼▼ 08/18(수정일) handleReadingProgressConfirm 최종 완전판 (포인트 로직 포함) ▼▼▼
 async function handleReadingProgressConfirm() {
     if (!activeRoutineForModal) return;
-    
     const readPages = parseInt(document.getElementById('readPages').value);
-    
     if (isNaN(readPages) || readPages <= 0) {
         showNotification('읽은 페이지 수를 입력해주세요.', 'error');
         return;
     }
-    
     const currentRoutine = activeRoutineForModal;
-    
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
-            // 1. 보고 수신 및 상태 계산
             const newCurrentPage = Math.min((routine.currentPage || routine.startPage - 1) + readPages, routine.endPage);
             const newDailyReadPagesToday = (routine.dailyReadPagesToday || 0) + readPages;
             const newDailyGoalMetToday = newDailyReadPagesToday >= routine.dailyPages;
-            
             const updatedFields = {
                 currentPage: newCurrentPage,
                 value: newCurrentPage,
@@ -846,18 +837,19 @@ async function handleReadingProgressConfirm() {
                 lastUpdatedDate: todayDateString
             };
 
-            // 2. 최우선 임무: 전과 보고 (포상 여부와 무관하게 항상 실행)
             if (readPages > 0) {
-                const reportData = { delta: readPages, finalValue: newCurrentPage };
-                console.log(`📡 [handleReadingProgressConfirm]: 목표 시스템에 전과 보고 (포상 여부 무관)`, reportData);
+                const reportData = {
+                    points: routine.basePoints || 0,
+                    delta: readPages,
+                    finalValue: newCurrentPage
+                };
                 await updateGoalProgressByRoutine(routine.id, reportData);
             }
-
-            // 3. 일일 포상 처리 (하루에 한 번만 실행)
+            
             if (newDailyGoalMetToday && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
-                
-                // 포인트 지급
+
+                // --- ▼▼▼ '비밀 임무': 포인트 지급 로직 ▼▼▼ ---
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -865,17 +857,13 @@ async function handleReadingProgressConfirm() {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
+                // --- ▲▲▲ '비밀 임무' 종료 ▲▲▲ ---
 
-                // 활동 기록
                 await logRoutineHistory(routine.id, { value: readPages, pointsEarned: routine.basePoints });
-                
                 updatedFields.pointsGivenToday = true;
             }
             
-            // 4. 루틴의 최종 상태를 데이터베이스에 업데이트
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
-            
-            // 5. 임무 완료 후 모달 닫기 및 알림
             hideReadingProgressModal();
             
             if (newCurrentPage >= routine.endPage) {
@@ -895,7 +883,7 @@ async function handleReadingProgressConfirm() {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/18(수정일) handleReadingProgressConfirm 최종 완전판 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleReadingProgressConfirm 최종 완전판 (포인트 로직 포함) ▲▲▲
 
 
         async function handleAddRoutineConfirm() {
@@ -973,61 +961,87 @@ async function handleReadingProgressConfirm() {
             hideAddRoutineModal();
         }
 
-// ▼▼▼ 2025-08-17(수정일) handleGoalConfirm 장군 복원 ▼▼▼
+
+// ▼▼▼ 08/18(수정일) handleGoalConfirm 최종 완전판 (이중 작전 체계) ▼▼▼
 async function handleGoalConfirm() {
     console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
 
-    const targetValueStr = document.getElementById('goalTargetValue').value;
-    const targetValue = parseFloat(targetValueStr);
-
-    const goalData = {
-        name: document.getElementById('goalName').value.trim(),
-        targetValue: targetValue,
-        unit: document.getElementById('goalUnit').value.trim(),
-        startDate: document.getElementById('goalStartDate').value,
-        endDate: document.getElementById('goalEndDate').value,
-        area: document.getElementById('goalArea').value,
-        direction: document.getElementById('goalDirection').value, // '방향' 값을 읽어옵니다.
-        updateMethod: document.getElementById('goalUpdateMethod').value,
-        linkedRoutines: Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value)
-    };
-    
-    console.log('📝 취합된 목표 데이터:', goalData);
-
-    if (!goalData.name || !goalData.unit || !goalData.startDate || !goalData.endDate) {
-        showNotification('이름, 단위, 기간 필드는 비워둘 수 없습니다.', 'error');
-        return;
-    }
-    if (isNaN(goalData.targetValue) || goalData.targetValue <= 0) {
-        showNotification('목표값은 0보다 큰 숫자여야 합니다.', 'error');
-        return;
-    }
-    if (new Date(goalData.startDate) >= new Date(goalData.endDate)) {
-        showNotification('종료일은 시작일보다 이후여야 합니다.', 'error');
-        return;
-    }
-
     try {
+        const goalType = document.getElementById('goalTypeSelect').value;
+        let goalData = {}; // 최종 보고할 데이터 객체
+
+        // --- 1. 공통 정보 취합 ---
+        const commonData = {
+            startDate: document.getElementById('goalStartDate').value,
+            endDate: document.getElementById('goalEndDate').value,
+            area: document.getElementById('goalArea').value,
+            linkedRoutines: Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value)
+        };
+
+        // --- 2. 목표 유형에 따라 개별 정보 취합 ---
+        if (goalType === 'points') {
+            goalData = {
+                ...commonData,
+                goalType: 'points',
+                name: document.getElementById('goalNamePoints').value.trim(),
+                targetValue: parseFloat(document.getElementById('goalTargetValuePoints').value),
+                unit: 'P' // 포인트 목표의 단위는 'P'로 고정
+            };
+            console.log('📝 "포인트 목표" 정보 취합:', goalData);
+        } else { // 'units'
+            goalData = {
+                ...commonData,
+                goalType: 'units',
+                name: document.getElementById('goalNameUnits').value.trim(),
+                targetValue: parseFloat(document.getElementById('goalTargetValueUnits').value),
+                unit: document.getElementById('goalUnit').value.trim(),
+                direction: document.getElementById('goalDirection').value,
+                updateMethod: document.getElementById('goalUpdateMethod').value
+            };
+            console.log('📝 "단위 목표" 정보 취합:', goalData);
+        }
+
+        // --- 3. 유효성 검사 ---
+        if (!goalData.name || !goalData.startDate || !goalData.endDate) {
+            showNotification('목표 이름과 기간을 정확히 입력해주세요.', 'error');
+            return;
+        }
+        if (isNaN(goalData.targetValue) || goalData.targetValue <= 0) {
+            showNotification('목표값은 0보다 큰 숫자여야 합니다.', 'error');
+            return;
+        }
+        if (goalData.goalType === 'units' && !goalData.unit) {
+            showNotification('단위 목표는 단위를 반드시 입력해야 합니다.', 'error');
+            return;
+        }
+
+        // --- 4. 사령부 보고 (추가/수정) ---
         if (isEditingGoal) {
             await updateGoalInFirebase(editingGoalId, goalData);
             showNotification('🧭 목표가 성공적으로 수정되었습니다!');
         } else {
-            // ★★★ 핵심: '감소 목표'의 경우, 현재값을 시작값으로 저장합니다. ★★★
+            // 새로 생성 시, 현재값과 시작값을 설정
             const currentValue = parseFloat(document.getElementById('goalCurrentValue').value) || 0;
-            goalData.startValue = (goalData.direction === 'decrease') ? currentValue : 0;
             goalData.currentValue = currentValue;
-            
+            // '감소' 목표일 때만 '시작값'을 기록
+            if (goalData.direction === 'decrease') {
+                goalData.startValue = currentValue;
+            }
             await addGoalToFirebase(goalData);
             showNotification('🧭 새로운 목표가 생성되었습니다!');
         }
+
         hideAddGoalModal();
         renderGoalCompassPage();
+
     } catch (error) {
         console.error('❌ [handleGoalConfirm]: 목표 처리 실패', error);
         showNotification('목표 처리에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 2025-08-17(수정일) handleGoalConfirm 장군 복원 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleGoalConfirm 최종 완전판 (이중 작전 체계) ▲▲▲
+
+
 
         async function handleManageAreasConfirm() {
             const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
@@ -2339,21 +2353,50 @@ function getPaceMessage(goal) {
     }
 }
 
-// ▼▼▼ 08/17(수정일) 목표 추가/편집 모달 함수 기능 확장 ▼▼▼
-function showAddGoalModal(goal = null) { // goal 파라미터 추가
-    console.log('📌 [showAddGoalModal]: 모달 표시. 편집 모드:', !!goal);
+// ▼▼▼ 08/18(수정일) showAddGoalModal 최종 완전판 (동적 UI 제어) ▼▼▼
+function showAddGoalModal(goal = null) {
+    console.log('📌 [showAddGoalModal]: 모달 표시 시작. 편집 모드:', !!goal);
     isEditingGoal = !!goal;
     editingGoalId = goal ? goal.id : null;
 
-    // 모달 UI 업데이트
     const modal = document.getElementById('addGoalModal');
-    modal.querySelector('.modal-header h3').textContent = goal ? '🧭 목표 편집' : '🧭 새 목표 설정';
-    modal.querySelector('#addGoalConfirm').textContent = goal ? '수정 완료' : '저장';
+    const typeSelect = document.getElementById('goalTypeSelect');
+    const unitsOptions = document.getElementById('goalUnitsOptions');
+    const pointsOptions = document.getElementById('goalPointsOptions');
+
+    // 1. 유형 선택에 따라 UI를 변경하는 핵심 임무
+    const handleTypeChange = () => {
+        if (typeSelect.value === 'points') {
+            unitsOptions.style.display = 'none';
+            pointsOptions.style.display = 'block';
+            console.log('🔄 [showAddGoalModal]: UI를 "포인트 목표" 모드로 전환합니다.');
+        } else { // 'units'
+            unitsOptions.style.display = 'block';
+            pointsOptions.style.display = 'none';
+            console.log('🔄 [showAddGoalModal]: UI를 "단위 목표" 모드로 전환합니다.');
+        }
+    };
+
+    // 2. 명령 수신병(이벤트 리스너) 중복 배치를 막기 위한 조치
+    // 기존 select 요소를 복제하여 모든 이전 리스너를 제거합니다.
+    const newTypeSelect = typeSelect.cloneNode(true);
+    typeSelect.parentNode.replaceChild(newTypeSelect, typeSelect);
+    // 새로운 수신병을 배치합니다.
+    newTypeSelect.addEventListener('change', handleTypeChange);
     
-    populateGoalModalFields(goal); // 데이터를 채우는 함수 호출
+    // 3. 작전 브리핑 장교를 호출하여 폼 내용을 채웁니다.
+    populateGoalModalFields(goal);
+    
+    // 4. 편집 모드일 경우, 목표 유형 변경을 금지합니다.
+    newTypeSelect.disabled = isEditingGoal;
+
+    // 5. 모달이 열릴 때의 초기 UI 상태를 설정합니다.
+    handleTypeChange();
+    
+    // 6. 최종적으로 모달을 전장에 표시합니다.
     modal.style.display = 'flex';
 }
-// ▲▲▲ 여기까지 08/17(수정일) 목표 추가/편집 모달 함수 기능 확장 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) showAddGoalModal 최종 완전판 (동적 UI 제어) ▲▲▲
 
 function hideAddGoalModal() {
     document.getElementById('addGoalModal').style.display = 'none';

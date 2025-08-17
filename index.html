@@ -484,43 +484,59 @@
             <div class="modal-body">
                 <div class="routine-form">
                     <div class="form-group">
-                        <label>목표 이름</label>
-                        <input id="goalName" type="text" placeholder="예: 3분기 독서왕 되기" />
+                        <label>목표 유형 선택</label>
+                        <select id="goalTypeSelect">
+                            <option value="units">단위 목표 (예: 100분 공부, 65kg 달성)</option>
+                            <option value="points">포인트 목표 (예: 건강 포인트 500점 획득)</option>
+                        </select>
                     </div>
-                    <div class="form-row">
+            
+                    <div id="goalUnitsOptions">
                         <div class="form-group">
-                            <label>현재값</label>
-                            <input id="goalCurrentValue" type="number" disabled />
+                            <label>목표 이름</label>
+                            <input id="goalNameUnits" type="text" placeholder="예: 3분기 독서왕 되기" />
                         </div>
-                        <div class="form-group">
-                            <label>목표값</label>
-                            <input id="goalTargetValue" type="number" min="1" placeholder="예: 10" />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>현재값 (자동 계산)</label>
+                                <input id="goalCurrentValue" type="number" disabled />
+                            </div>
+                            <div class="form-group">
+                                <label>목표값</label>
+                                <input id="goalTargetValueUnits" type="number" min="1" placeholder="예: 10" />
+                            </div>
                         </div>
-                        <div class="form-group">
+                         <div class="form-group">
                             <label>단위</label>
                             <input id="goalUnit" type="text" placeholder="예: 권, km, 회" />
                         </div>
+                        <div class="form-group">
+                            <label>작전 방향</label>
+                            <select id="goalDirection">
+                                <option value="increase">증가 목표</option>
+                                <option value="decrease">감소 목표</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>진행 방식</label>
+                            <select id="goalUpdateMethod">
+                                <option value="accumulate">누적하기</option>
+                                <option value="replace">값으로 대체하기</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>진행 방식</label>
-                        <select id="goalUpdateMethod">
-                            <option value="accumulate">누적하기 (예: 운동 시간, 지출 금액)</option>
-                            <option value="replace">값으로 대체하기 (예: 독서 페이지, 현재 몸무게)</option>
-                        </select>
-                        <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px;">
-                            목표의 성격에 맞는 계산 방식을 선택해주세요.
-                        </small>
+            
+                    <div id="goalPointsOptions" style="display: none;">
+                        <div class="form-group">
+                            <label>목표 이름</label>
+                            <input id="goalNamePoints" type="text" placeholder="예: 3분기 건강 증진 마스터" />
+                        </div>
+                        <div class="form-group">
+                            <label>목표 포인트</label>
+                            <input id="goalTargetValuePoints" type="number" min="1" placeholder="예: 1000" />
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>작전 방향</label>
-                        <select id="goalDirection">
-                            <option value="increase">증가 목표 (예: 공부 시간, 독서량)</option>
-                            <option value="decrease">감소 목표 (예: 몸무게, 지출 줄이기)</option>
-                        </select>
-                        <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px;">
-                            목표 달성을 위해 값이 커져야 하는지, 작아져야 하는지 선택해주세요.
-                        </small>
-                    </div>
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>시작일</label>
@@ -533,15 +549,11 @@
                     </div>
                     <div class="form-group">
                         <label>연결 영역</label>
-                        <select id="goalArea">
-                            </select>
+                        <select id="goalArea"></select>
                     </div>
                     <div class="hidden-options show" style="margin-top:0.5rem;">
                         <label style="font-weight:700; margin-bottom:0.5rem;">루틴 연결하기</label>
                         <div id="linkableRoutines" class="area-selection-grid"></div>
-                        <div style="color:#6b7280; font-size:0.85rem; margin-top:0.5rem;">
-                            숫자/독서 타입 루틴만 선택됩니다.
-                        </div>
                     </div>
                 </div>
             </div>
