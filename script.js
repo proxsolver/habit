@@ -11,6 +11,10 @@ let activeRoutineForModal = null;
 let areaChartInstance = null;
 let weeklyChartInstance = null; 
 let currentStatsPeriod = 'weekly'; // <-- 이 라인을 추가하세요.
+// ▼▼▼ 08/17(수정일) 목표 편집을 위한 전역 변수 추가 ▼▼▼
+let isEditingGoal = false;
+let editingGoalId = null;
+// ▲▲▲ 여기까지 08/17(수정일) 목표 편집을 위한 전역 변수 추가 ▲▲▲
 
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
@@ -898,9 +902,9 @@ async function handleWheelConfirm() {
             hideAddRoutineModal();
         }
 
-        // ▼▼▼ 08/09(수정일) handleAddGoalConfirm 함수 추가 ▼▼▼
-async function handleAddGoalConfirm() {
-    console.log('📌 [handleAddGoalConfirm]: 목표 추가 처리 시작');
+        // ▼▼▼ 08/09(수정일) handleGoalConfirm 함수 추가 ▼▼▼
+async function handleGoalConfirm() {
+    console.log('📌 [handleGoalConfirm]: 목표 추가 처리 시작');
     const name = document.getElementById('goalName').value.trim();
     const targetValue = parseFloat(document.getElementById('goalTargetValue').value);
     const unit = document.getElementById('goalUnit').value.trim();
@@ -912,17 +916,17 @@ async function handleAddGoalConfirm() {
     // 유효성 검사
     if (!name || !targetValue || targetValue <= 0 || !unit || !startDate || !endDate) {
         showNotification('이름/목표값/단위/기간을 정확히 입력해주세요.', 'error');
-        console.log('❌ [handleAddGoalConfirm]: 필수 필드 누락');
+        console.log('❌ [handleGoalConfirm]: 필수 필드 누락');
         return;
     }
     if (new Date(startDate) >= new Date(endDate)) {
         showNotification('종료일은 시작일보다 이후여야 합니다.', 'error');
-        console.log('❌ [handleAddGoalConfirm]: 날짜 유효성 검사 실패');
+        console.log('❌ [handleGoalConfirm]: 날짜 유효성 검사 실패');
         return;
     }
     if (!linkedRoutines.length) {
         showNotification('최소 1개 이상의 관련 루틴을 선택해주세요.', 'error');
-        console.log('❌ [handleAddGoalConfirm]: 연결된 루틴 없음');
+        console.log('❌ [handleGoalConfirm]: 연결된 루틴 없음');
         return;
     }
     
@@ -931,13 +935,13 @@ async function handleAddGoalConfirm() {
         hideAddGoalModal();
         showNotification('🧭 새로운 목표가 생성되었습니다!');
         renderGoalCompassPage();
-        console.log('🏁 [handleAddGoalConfirm]: 목표 추가 완료');
+        console.log('🏁 [handleGoalConfirm]: 목표 추가 완료');
     } catch (error) {
-        console.error('❌ [handleAddGoalConfirm]: 목표 추가 실패', error);
+        console.error('❌ [handleGoalConfirm]: 목표 추가 실패', error);
         showNotification('목표 추가에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/09(수정일) handleAddGoalConfirm 함수 추가 ▲▲▲
+// ▲▲▲ 여기까지 08/09(수정일) handleGoalConfirm 함수 추가 ▲▲▲
 
         async function handleManageAreasConfirm() {
             const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
@@ -2077,16 +2081,24 @@ function createSimpleHeatmap(container, historyData) {
 // ▲▲▲ 여기까지 교체 ▲▲▲
 
 
-// ▼▼▼ 여기에 새 코드를 추가하세요 (목표 나침반 페이지 및 모달 관리) ▼▼▼
+// ▼▼▼ 08/17(수정일) 불필요한 모달 기습 호출 제거 ▼▼▼
 async function showGoalCompassPage() {
+    console.log('📌 [showGoalCompassPage]: 나침반 페이지 표시');
     document.getElementById('main-app-content').style.display = 'none';
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('goal-compass-page').style.display = 'block';
+    
+    // 아래 라인은 '+ 새 목표' 버튼이 눌렸을 때만 호출되어야 하므로 삭제합니다.
+    // showAddGoalModal(); // <--- 이 라인을 삭제!
+    
     await renderGoalCompassPage();
 }
+// ▲▲▲ 여기까지 08/17(수정일) 불필요한 모달 기습 호출 제거 ▲▲▲
 
+// ▼▼▼ 08/17(수정일) renderGoalCompassPage 전우 복원 ▼▼▼
 async function renderGoalCompassPage() {
     if (!currentUser) return;
+    const page = document.getElementById('goal-compass-page');
     const list = document.getElementById('goalsList');
     list.innerHTML = '<div class="empty-state"><div class="empty-state-title">목표를 불러오는 중...</div></div>'; // 로딩 표시
 
@@ -2096,53 +2108,71 @@ async function renderGoalCompassPage() {
 
         if (!goals.length) {
             list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
-            return;
+        } else {
+            goals.forEach(goal => {
+                const pct = goal.targetValue > 0 ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)) : 0;
+                const deg = Math.round(360 * (pct / 100));
+                const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
+                const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || ''}`;
+
+                const card = document.createElement('div');
+                card.className = 'goal-card';
+                card.innerHTML = `
+                    <div class="goal-card-header">
+                        <div style="font-weight:800;">${goal.name}</div>
+                        <div>
+                            <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
+                            <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+                        </div>
+                    </div>
+                    <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
+                    <div class="goal-progress-wrap">
+                        <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
+                            <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
+                            <div style="color:#6b7280;">${ddayInfo.label}</div>
+                            <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+                
+                const paceMsg = getPaceMessage(goal);
+                const paceEl = document.getElementById(`pace-${goal.id}`);
+                if (paceEl && paceMsg) paceEl.textContent = paceMsg;
+            });
         }
 
-        goals.forEach(goal => {
-            const pct = goal.targetValue > 0 ? Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100)) : 0;
-            const deg = Math.round(360 * (pct / 100));
-            const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
-            const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || ''}`;
-
-            const card = document.createElement('div');
-            card.className = 'goal-card';
-            card.innerHTML = `
-                <div class="goal-card-header">
-                    <div style="font-weight:800;">${goal.name}</div>
-                    <div>
-                        <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
-                        <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
-                    </div>
-                </div>
-                <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
-                <div class="goal-progress-wrap">
-                    <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
-                    <div style="flex:1;">
-                        <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
-                        <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
-                        <div style="color:#6b7280;">${ddayInfo.label}</div>
-                        <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
-                    </div>
-                </div>
-            `;
-            list.appendChild(card);
-            
-            const paceMsg = getPaceMessage(goal);
-            const paceEl = document.getElementById(`pace-${goal.id}`);
-            if (paceEl && paceMsg) paceEl.textContent = paceMsg;
-            
-            card.querySelector('.delete-btn').addEventListener('click', async () => {
-                if (!confirm('이 목표를 삭제할까요?')) return;
-                await deleteGoalFromFirebase(goal.id);
-                renderGoalCompassPage();
-                showNotification('목표가 삭제되었습니다.');
-            });
-            
-            card.querySelector('.edit-btn').addEventListener('click', () => {
-                 showNotification('편집 기능은 아직 지원되지 않습니다. 삭제 후 다시 생성해주세요.', 'info');
-            });
-        });
+        // --- 새로운 이벤트 리스너 지휘관 ---
+        page.onclick = (e) => {
+            console.log('📌 [GoalPage Click]:', e.target);
+            // '+ 새 목표' 버튼 클릭 시
+            if (e.target.id === 'openAddGoalBtn') {
+                console.log('🎯 새 목표 추가 모달 호출');
+                showAddGoalModal();
+            }
+            // '삭제' 버튼 클릭 시
+            if (e.target.matches('.delete-btn')) {
+                const goalId = e.target.dataset.goalId;
+                console.log(`🎯 목표 삭제 요청: ${goalId}`);
+                if (confirm('이 목표를 삭제할까요?')) {
+                    deleteGoalFromFirebase(goalId).then(() => {
+                        renderGoalCompassPage();
+                        showNotification('목표가 삭제되었습니다.');
+                    });
+                }
+            }
+            // '편집' 버튼 클릭 시
+            if (e.target.matches('.edit-btn')) {
+                const goalId = e.target.dataset.goalId;
+                const goalToEdit = goals.find(g => g.id === goalId);
+                if (goalToEdit) {
+                    console.log(`🎯 목표 편집 요청: ${goalId}`, goalToEdit);
+                    showAddGoalModal(goalToEdit);
+                }
+            }
+        };
     } catch (error) {
         console.error("목표 렌더링 실패:", error);
         list.innerHTML = `
@@ -2158,8 +2188,7 @@ async function renderGoalCompassPage() {
         `;
     }
 }
-// ▲▲▲ 여기까지 08/09(수정일) 목표함수 추가 ▲▲▲
-
+// ▲▲▲ 여기까지 08/17(수정일) renderGoalCompassPage 전우 복원 ▲▲▲
 
 
 
@@ -2202,16 +2231,31 @@ function getPaceMessage(goal) {
     }
 }
 
-function showAddGoalModal() {
-    populateGoalModalFields();
-    document.getElementById('addGoalModal').style.display = 'flex';
+// ▼▼▼ 08/17(수정일) 목표 추가/편집 모달 함수 기능 확장 ▼▼▼
+function showAddGoalModal(goal = null) { // goal 파라미터 추가
+    console.log('📌 [showAddGoalModal]: 모달 표시. 편집 모드:', !!goal);
+    isEditingGoal = !!goal;
+    editingGoalId = goal ? goal.id : null;
+
+    // 모달 UI 업데이트
+    const modal = document.getElementById('addGoalModal');
+    modal.querySelector('.modal-header h3').textContent = goal ? '🧭 목표 편집' : '🧭 새 목표 설정';
+    modal.querySelector('#addGoalConfirm').textContent = goal ? '수정 완료' : '저장';
+    
+    populateGoalModalFields(goal); // 데이터를 채우는 함수 호출
+    modal.style.display = 'flex';
 }
+// ▲▲▲ 여기까지 08/17(수정일) 목표 추가/편집 모달 함수 기능 확장 ▲▲▲
 
 function hideAddGoalModal() {
     document.getElementById('addGoalModal').style.display = 'none';
 }
 
-function populateGoalModalFields() {
+// ▼▼▼ 2025-08-17(수정일) 목표 편집 시 데이터 미표시 버그 수정 ▼▼▼
+function populateGoalModalFields(goal = null) {
+    console.log('📌 [populateGoalModalFields]: 폼 필드 채우기 시작. 전달된 목표:', goal);
+
+    // 1. 영역 <select> 목록 생성
     const sel = document.getElementById('goalArea');
     sel.innerHTML = '';
     userAreas.forEach(a => {
@@ -2221,6 +2265,7 @@ function populateGoalModalFields() {
         sel.appendChild(opt);
     });
 
+    // 2. 연결 가능한 루틴 <checkbox> 목록 생성
     const container = document.getElementById('linkableRoutines');
     container.innerHTML = '';
     sampleRoutines
@@ -2234,21 +2279,56 @@ function populateGoalModalFields() {
             container.appendChild(item);
         });
 
-    document.getElementById('goalName').value = '';
-    document.getElementById('goalTargetValue').value = '';
-    document.getElementById('goalUnit').value = '';
-    document.getElementById('goalStartDate').value = todayDateString;
-    document.getElementById('goalEndDate').value = '';
-}
+    // --- 여기가 누락된 핵심 로직입니다 ---
+    // 3. 전달받은 goal 객체 유무에 따라 폼 값 설정
+    if (goal) {
+        // [수정 모드]: 기존 목표 데이터로 폼을 채웁니다.
+        console.log('📝 수정 모드: 기존 데이터로 폼을 채웁니다.');
+        document.getElementById('goalName').value = goal.name || '';
+        document.getElementById('goalTargetValue').value = goal.targetValue || '';
+        document.getElementById('goalUnit').value = goal.unit || '';
+        document.getElementById('goalStartDate').value = goal.startDate || '';
+        document.getElementById('goalEndDate').value = goal.endDate || '';
+        sel.value = goal.area || ''; // 영역 선택
 
-async function handleAddGoalConfirmModal() {
-    const name = document.getElementById('goalName').value.trim();
-    const targetValue = parseFloat(document.getElementById('goalTargetValue').value);
-    const unit = document.getElementById('goalUnit').value.trim();
-    const startDate = document.getElementById('goalStartDate').value;
-    const endDate = document.getElementById('goalEndDate').value;
-    const area = document.getElementById('goalArea').value;
-    const linkedRoutines = Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value);
+        // 연결된 루틴 체크
+        if (goal.linkedRoutines && Array.isArray(goal.linkedRoutines)) {
+            goal.linkedRoutines.forEach(routineId => {
+                const checkbox = document.getElementById(`link-r-${routineId}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+    } else {
+        // [추가 모드]: 폼을 초기화합니다.
+        console.log('✨ 추가 모드: 폼을 초기화합니다.');
+        document.getElementById('goalName').value = '';
+        document.getElementById('goalTargetValue').value = '';
+        document.getElementById('goalUnit').value = '';
+        document.getElementById('goalStartDate').value = todayDateString;
+        document.getElementById('goalEndDate').value = '';
+        // 영역이나 루틴은 기본 선택 없음
+    }
+    console.log('🏁 [populateGoalModalFields]: 폼 필드 설정 완료');
+}
+// ▲▲▲ 여기까지 2025-08-17(수정일) 목표 편집 시 데이터 미표시 버그 수정 ▲▲▲}
+
+
+
+
+// ▼▼▼ 08/17(수정일) 목표 저장/수정 분기 처리 로직 추가 ▼▼▼
+async function handleGoalConfirm() { // 함수 이름 변경 및 로직 수정
+    console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
+    const goalData = {
+        name: document.getElementById('goalName').value.trim(),
+        targetValue: parseFloat(document.getElementById('goalTargetValue').value),
+        unit: document.getElementById('goalUnit').value.trim(),
+        startDate: document.getElementById('goalStartDate').value,
+        endDate: document.getElementById('goalEndDate').value,
+        area: document.getElementById('goalArea').value,
+        linkedRoutines: Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value)
+    };
 
     if (!name || !targetValue || targetValue <= 0 || !unit || !startDate || !endDate) {
         showNotification('이름/목표값/단위/기간을 정확히 입력해주세요.', 'error');
@@ -2263,11 +2343,38 @@ async function handleAddGoalConfirmModal() {
         return;
     }
     
+ 
+
+    try {
+        if (isEditingGoal) {
+            // 수정 모드
+            await updateGoalInFirebase(editingGoalId, goalData);
+            showNotification('🧭 목표가 성공적으로 수정되었습니다!');
+            console.log('🏁 [handleGoalConfirm]: 목표 수정 완료', editingGoalId);
+        } else {
+            // 추가 모드
+            await addGoalToFirebase(goalData);
+            showNotification('🧭 새로운 목표가 생성되었습니다!');
+            console.log('🏁 [handleGoalConfirm]: 새 목표 추가 완료');
+        }
+        hideAddGoalModal();
+        renderGoalCompassPage(); // 목록 새로고침
+    } catch (error) {
+        console.error('❌ [handleGoalConfirm]: 목표 처리 실패', error);
+        showNotification('목표 처리에 실패했습니다.', 'error');
+    }
+
     await addGoalToFirebase({ name, targetValue, unit, startDate, endDate, area, linkedRoutines });
     hideAddGoalModal();
     showNotification('🧭 새로운 목표가 생성되었습니다!');
     renderGoalCompassPage();
+
+
 }
+
+
+
+
 // ▲▲▲ 여기까지 추가 ▲▲▲
 
 
@@ -2694,7 +2801,7 @@ function setupAllEventListeners() {
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm, 'readingProgressConfirm');
     setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm, 'addRoutineConfirm');
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
-    setupModal('addGoalModal', hideAddGoalModal, handleAddGoalConfirm, 'addGoalConfirm');
+    setupModal('addGoalModal', hideAddGoalModal, handleGoalConfirm, 'addGoalConfirm');
     setupModal('routineDetailModal', hideDetailStatsModal);
     // ▲▲▲ 여기까지 교체 ▲▲▲
     // --- ESC로 모든 모달 닫기 ---
@@ -2706,8 +2813,9 @@ function setupAllEventListeners() {
 
     // --- 동적으로 생성되는 요소에 대한 이벤트 리스너 (루틴 타입 변경 등) ---
     document.getElementById('manageAreasBtn').addEventListener('click', showManageAreasModal);
-    document.getElementById('openAddGoalBtn')?.addEventListener('click', showAddGoalModal);
-    
+// ▼▼▼ 08/17(수정일) 중복 가능성 있는 이벤트 리스너 제거 ▼▼▼
+// document.getElementById('openAddGoalBtn')?.addEventListener('click', showAddGoalModal); <-- 이 라인을 삭제!
+// ▲▲▲ 여기까지 08/17(수정일) 중복 가능성 있는 이벤트 리스너 제거 ▲▲▲    
     // --- 대시보드 탭 관련 리스너 ---
     document.querySelectorAll('#dashboard-view .tab-button').forEach(button => {
         button.addEventListener('click', () => {
