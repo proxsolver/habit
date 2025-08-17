@@ -325,45 +325,61 @@ async function deleteGoalFromFirebase(goalId) {
     await goalRef.delete();
 }
 
-// ▼▼▼ 08/17(수정일) '진행 방식'에 따른 목표 업데이트 함수 (기존 increment... 함수 대체) ▼▼▼
+// ▼▼▼ 08/17(수정일) '누적하기' 방식의 목표 업데이트 버그 수정 ▼▼▼
 async function updateGoalProgressByRoutine(routineId, reportData) {
     if (!currentUser) return;
-    if (!reportData || (!reportData.delta && !reportData.finalValue)) return;
+    // 1. 보고서 유효성 1차 검사
+    if (!reportData) {
+        console.warn('⚠️ [updateGoalProgressByRoutine]: 유효하지 않은 보고 데이터(reportData)로 인해 작전을 중단합니다.');
+        return;
+    }
 
     console.log(`📌 [updateGoalProgressByRoutine]: 루틴(${routineId})으로부터 보고 수신:`, reportData);
 
     const goalsRef = db.collection('users').doc(currentUser.uid).collection('goals');
     const q = await goalsRef.where('linkedRoutines', 'array-contains', String(routineId)).get();
 
-    if (q.empty) return;
+    if (q.empty) {
+        console.log('✅ [updateGoalProgressByRoutine]: 이 루틴과 연결된 목표가 없습니다. 작전을 종료합니다.');
+        return;
+    }
 
     const batch = db.batch();
     q.docs.forEach(doc => {
         const goal = doc.data();
         const ref = doc.ref;
         
-        // 목표의 '진행 방식(updateMethod)'에 따라 다른 명령을 내립니다.
+        // 2. 목표의 '진행 방식'에 따라 다른 명령 하달
         if (goal.updateMethod === 'replace') {
-            console.log(`- 목표(${goal.name}): '대체' 방식으로 현재값을 ${reportData.finalValue}(으)로 업데이트합니다.`);
-            batch.update(ref, {
-                currentValue: reportData.finalValue,
-                updatedAt: new Date()
-            });
-        } else { // 기본값은 'accumulate'
-            if (reportData.delta > 0) {
-                console.log(`- 목표(${goal.name}): '누적' 방식으로 현재값을 ${reportData.delta}만큼 증가시킵니다.`);
+            const finalValue = parseFloat(reportData.finalValue);
+            // '대체' 방식은 전달받은 finalValue가 유효한 숫자인지 확인
+            if (!isNaN(finalValue)) {
+                console.log(`- 목표(${goal.name}): '대체' 방식으로 현재값을 ${finalValue}(으)로 업데이트합니다.`);
                 batch.update(ref, {
-                    currentValue: firebase.firestore.FieldValue.increment(reportData.delta),
+                    currentValue: finalValue,
                     updatedAt: new Date()
                 });
+            } else {
+                console.warn(`⚠️ [updateGoalProgressByRoutine]: '대체' 방식에 유효하지 않은 finalValue(${reportData.finalValue})가 전달되었습니다.`);
+            }
+        } else { // 기본값은 'accumulate'
+            const deltaValue = parseFloat(reportData.delta);
+            // ★★★ 핵심 수정: '누적' 방식은 delta가 0보다 큰 유효한 숫자인지 '반드시' 확인 ★★★
+            if (!isNaN(deltaValue) && deltaValue > 0) {
+                console.log(`- 목표(${goal.name}): '누적' 방식으로 현재값을 ${deltaValue}만큼 증가시킵니다.`);
+                batch.update(ref, {
+                    currentValue: firebase.firestore.FieldValue.increment(deltaValue),
+                    updatedAt: new Date()
+                });
+            } else {
+                 console.warn(`⚠️ [updateGoalProgressByRoutine]: '누적' 방식에 유효하지 않은 delta(${reportData.delta})가 전달되어 누적을 건너뜁니다.`);
             }
         }
     });
     await batch.commit();
     console.log('🏁 [updateGoalProgressByRoutine]: 모든 연결된 목표의 진척도 업데이트 완료.');
 }
-// ▲▲▲ 여기까지 08/17(수정일) '진행 방식'에 따른 목표 업데이트 함수 ▲▲▲
-
+// ▲▲▲ 여기까지 08/17(수정일) '누적하기' 방식의 목표 업데이트 버그 수정 ▲▲▲
 
 // feat(stats): Implement stats calculation function using collection group query
 
