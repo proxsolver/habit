@@ -1559,33 +1559,19 @@ function renderManagePage() {
             });
         }
 
+// ▼▼▼ 08/17(수정일) 독서 루틴에 완료 예정일 추가 및 위치 수정 (기존 함수 전체 교체) ▼▼▼
 function createImprovedRoutineElement(routine) {
     const isCompleted = isRoutineCompleted(routine);
     const isSkipped = routine.status === 'skipped';
     const isGoalReachedOverall = isGoalAchieved(routine);
     const isContinuous = isContinuousRoutine(routine);
     const isInProgress = isRoutineInProgress(routine);
-    
-    // ▼▼▼ 08/17(수정일) 독서 루틴에 완료 예정일 추가 ▼▼▼
-    let readingDetails = '';
-    if (routine.type === 'reading') {
-        const estimatedCompletionDate = getEstimatedCompletionDate(routine);
-        readingDetails = `
-            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
-                완료 예정일: ${estimatedCompletionDate}
-            </div>
-        `;
-    }
-    // ▲▲▲ 여기까지 08/17(수정일) 독서 루틴에 완료 예정일 추가 ▲▲▲
-
-
 
     const routineDiv = document.createElement('div');
     routineDiv.className = 'routine-item';
     routineDiv.dataset.id = routine.id;
     routineDiv.dataset.type = routine.type;
-    routineDiv.classList.add(routine.time);
-    
+
     if (isSkipped) routineDiv.classList.add('skipped');
     else if ((isContinuous || isReadingRoutine(routine)) && isGoalReachedOverall) routineDiv.classList.add('goal-achieved');
     else if (isInProgress) routineDiv.classList.add('inprogress');
@@ -1601,6 +1587,13 @@ function createImprovedRoutineElement(routine) {
     const streakBadge = routine.streak > 0 ? `<div class="streak-badge ${routine.streak >= 30 ? 'mega-streak' : (routine.streak >= 7 ? 'high-streak' : '')}">🔥 ${routine.streak}</div>` : '';
     const continuousBadge = isContinuous || isReadingRoutine(routine) ? `<div class="continuous-badge">🔄</div>` : '';
     
+    // 독서 루틴에 대한 추가 상세 정보
+    let readingDetailHtml = '';
+    if (routine.type === 'reading') {
+        const estimatedCompletionDate = getEstimatedCompletionDate(routine);
+        readingDetailHtml = `<div class="mt-1 text-xs text-gray-500">완료 예정일: ${estimatedCompletionDate}</div>`;
+    }
+
     routineDiv.innerHTML = `
     ${actionButton}
     <div class="routine-content">
@@ -1611,14 +1604,13 @@ function createImprovedRoutineElement(routine) {
         <div class="routine-details">
             <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
             <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
+            ${readingDetailHtml}
         </div>
-        ${readingDetails}
     </div>
     <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
     ${streakBadge}
     ${continuousBadge}
 `;
-
     
     routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -1647,10 +1639,6 @@ function createImprovedRoutineElement(routine) {
                     });
                     await updateUserStatsInFirebase(newStats);
                 }
-                 // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
-                await logRoutineHistory(routine.id, { value: true, pointsEarned: routine.basePoints });
-                // ▲▲▲ 여기까지 ▲▲▲
-
                 await updateRoutineInFirebase(routine.id, updatedFields);
                 showCompletionEffect();
                 setTimeout(showCelebrationMessage, 300);
@@ -1665,9 +1653,8 @@ function createImprovedRoutineElement(routine) {
     });
     return routineDiv;
 }
+// ▲▲▲ 여기까지 08/17(수정일) 독서 루틴에 완료 예정일 추가 및 위치 수정 (기존 함수 전체 교체) ▲▲▲
 
-   
-// script.js의 기존 createManageRoutineElement 함수를 이 코드로 교체하세요.
 
 // ▼▼▼ createManageRoutineElement 함수를 이 코드로 교체하세요 ▼▼▼
 function createManageRoutineElement(routine) {
@@ -2493,12 +2480,27 @@ function getRoutineValueDisplay(routine) {
             return false;
         }
         
+        // ▼▼▼ 08/17(수정일) 독서 루틴 진행률 및 예정일 계산 로직 수정 ▼▼▼
         function getReadingProgress(routine) {
             if (routine.type !== 'reading' || !routine.endPage) return 0;
+
+            // 전체 페이지 수 (시작 페이지 포함)
             const totalPages = routine.endPage - routine.startPage + 1;
+            // 읽은 페이지 수 (현재 페이지까지)
             const readPages = routine.currentPage - routine.startPage + 1;
-            return Math.max(0, Math.min(100, Math.round((readPages / totalPages) * 100)));
+
+            console.log('📌 [getReadingProgress]: 루틴:', routine.name);
+            console.log(`- 전체: ${totalPages}p, 읽은: ${readPages}p`);
+
+            // 0보다 작거나 같은 값이 나오지 않도록 방어 로직 추가
+            const progress = Math.max(0, Math.min(100, Math.round((readPages / totalPages) * 100)));
+            
+            console.log('🏁 [getReadingProgress]: 계산된 진행률:', progress);
+            return progress;
         }
+
+        // ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 진행률 및 예정일 계산 로직 수정 ▲▲▲
+
     
         function getTodayReadingRange(routine) {
             if (routine.type !== 'reading') return null;
@@ -2509,6 +2511,8 @@ function getRoutineValueDisplay(routine) {
             return { start: todayStart, end: todayEnd, pages: Math.max(0, todayEnd - todayStart + 1) };
         }
     
+        // ▼▼▼ 08/17(수정일) 독서 루틴 진행률 및 예정일 계산 로직 수정 ▼▼▼
+
         function getEstimatedCompletionDate(routine) {
             if (routine.type !== 'reading' || routine.currentPage >= routine.endPage) return '완료';
         
