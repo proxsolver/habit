@@ -93,15 +93,7 @@
         <button id="filter-weekly" class="filter-btn active">주간</button>
         <button id="filter-monthly" class="filter-btn">월간</button>
     </div>
-    <div id="goal-compass-page" class="dashboard-container" style="display:none;">
-        <h1>🧭 목표 나침반</h1>
-        <div class="flex" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div style="font-weight:600; color:#6b7280;">장기 목표를 설정하고, 루틴을 연결해 보세요.</div>
-            <button id="openAddGoalBtn" class="btn">+ 새 목표</button>
-        </div>
-        <div id="goalsList" class="grid" style="display:grid; gap:1rem; grid-template-columns: 1fr;">
-            </div>
-    </div>
+ 
     <!-- 핵심 지표 카드 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div class="bg-indigo-100 p-4 rounded-lg shadow">
@@ -148,6 +140,18 @@
             <canvas id="weeklyActivityChart"></canvas>
         </div>
     </div>
+</div>
+
+<!-- ▼▼▼ 나침반 식별 위치 내용을 이 코드로 교체하세요 ▼▼▼ -->
+
+<div id="goal-compass-page" class="dashboard-container" style="display:none;">
+    <h1>🧭 목표 나침반</h1>
+    <div class="flex" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="font-weight:600; color:#6b7280;">장기 목표를 설정하고, 루틴을 연결해 보세요.</div>
+        <button id="openAddGoalBtn" class="btn">+ 새 목표</button>
+    </div>
+    <div id="goalsList" class="grid" style="display:grid; gap:1rem; grid-template-columns: 1fr;">
+        </div>
 </div>
 
     </div> <div class="navigation-buttons">
