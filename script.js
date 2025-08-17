@@ -547,15 +547,16 @@ async function handleDeleteRoutine(routineId, routineName) {
     }
 }
 
-// ▼▼▼ 08/17(수정일) handleStepperConfirm 최종 결정판 ▼▼▼
-async function handleStepperConfirm(incrementValue) {
+// ▼▼▼ 08/18(수정일) handleStepperConfirm 최종 완전판 ▼▼▼
+async function handleStepperConfirm(value) { // 'value'는 모달에서 설정한 '새로운 최종값'
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
 
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
-            const finalValue = (routine.value || 0) + incrementValue;
+            // 1. 전달받은 최종값을 기준으로 상태를 계산합니다.
+            const finalValue = value;
             const isNowGoalAchieved = isGoalAchieved({ ...routine, value: finalValue });
 
             const updatedFields = {
@@ -565,9 +566,11 @@ async function handleStepperConfirm(incrementValue) {
                 dailyGoalMetToday: isNowGoalAchieved
             };
 
+            // 2. 일일 목표를 '처음' 달성했을 때만 포상 및 목표 보고를 수행합니다.
             if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
-                
+
+                // 2a. 포인트 포상
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -576,18 +579,14 @@ async function handleStepperConfirm(incrementValue) {
                     await updateUserStatsInFirebase(newStats);
                 }
 
+                // 2b. 활동 기록 보고
                 await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
 
+                // 2c. '순수 증가량(delta)' 계산 및 목표 시스템 보고
+                const incrementValue = finalValue - (routine.value || 0);
                 const reportData = { delta: incrementValue, finalValue: finalValue };
                 
-                // --- 통신 감청 ---
-                console.log("--- 통신 감청 시작 ---");
-                console.log("전달된 증가량 (incrementValue):", incrementValue, `(타입: ${typeof incrementValue})`);
-                console.log("기존 루틴의 값 (routine.value):", routine.value, `(타입: ${typeof routine.value})`);
-                console.log("계산된 최종값 (finalValue):", reportData.finalValue, `(타입: ${typeof reportData.finalValue})`);
-                console.log("보고할 델타값 (delta):", reportData.delta, `(타입: ${typeof reportData.delta})`);
-                console.log("--- 통신 감청 종료 ---");
-
+                console.log(`📡 [handleStepperConfirm]: 목표 시스템에 최종 보고`, reportData);
                 if (reportData.delta > 0) {
                     await updateGoalProgressByRoutine(routine.id, reportData);
                 }
@@ -595,7 +594,10 @@ async function handleStepperConfirm(incrementValue) {
                 updatedFields.pointsGivenToday = true;
             }
 
+            // 3. 루틴의 최종 상태를 데이터베이스에 업데이트합니다.
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
+            
+            // 4. 임무 완료 후 모달을 닫고 알림을 보냅니다.
             hideStepperModal();
             
             const goalStatus = isNowGoalAchieved ? ' 🎯 목표 달성!' : '';
@@ -611,7 +613,7 @@ async function handleStepperConfirm(incrementValue) {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/17(수정일) handleStepperConfirm 최종 결정판 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleStepperConfirm 최종 완전판 ▲▲▲
 
 
 // 2. Wheel(스크롤) 및 Simple(직접입력) 루틴 완료 처리 통합 함수
@@ -1184,84 +1186,78 @@ function hideTimeInputModal() {
     document.getElementById('timeInputModal').style.display = 'none';
 }
 
+// ▼▼▼ 08/18(수정일) showStepperModal 최종 완전판 ▼▼▼
 function showStepperModal(routine) {
-        const modal = document.getElementById('stepperInputModal');
-        const title = document.getElementById('stepperModalTitle');
-        const valueDisplay = document.getElementById('stepperValue');
-        const unitDisplay = document.getElementById('stepperUnit');
-        
-        if (!modal || !title || !valueDisplay) {
-            console.error('스테퍼 모달 요소를 찾을 수 없습니다.');
-            return;
-        }
-        
-        let currentValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.value || routine.min || 1);
-        const minValue = routine.continuous ? (routine.value || 0) + (routine.step || 1) : (routine.min || 1);
-        const maxValue = routine.max || 100;
-        const stepValue = routine.step || 1;
-        
-        const titleText = routine.continuous ? `${routine.name} (현재: ${routine.value || 0}${routine.unit || ''})` : routine.name;
-        title.textContent = titleText;
-        valueDisplay.textContent = currentValue;
-        unitDisplay.textContent = routine.unit || '';
-        
-        const existingGoal = modal.querySelector('.goal-text');
-        if (existingGoal) existingGoal.remove();
-        
-        if (routine.dailyGoal) {
-            const goalText = document.createElement('div');
-            goalText.className = 'goal-text';
-            goalText.style.cssText = `text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;`;
-            goalText.textContent = `목표: ${routine.dailyGoal}${routine.unit || ''}`;
-            modal.querySelector('.stepper-container').parentNode.insertBefore(goalText, modal.querySelector('.stepper-container').nextSibling);
-        }
-        
-        const minusBtn = document.getElementById('stepperMinus');
-        const plusBtn = document.getElementById('stepperPlus');
-        const newMinusBtn = minusBtn.cloneNode(true);
-        const newPlusBtn = plusBtn.cloneNode(true);
-        
-        minusBtn.parentNode.replaceChild(newMinusBtn, minusBtn);
-        plusBtn.parentNode.replaceChild(newPlusBtn, plusBtn);
-        
-        function updateStepperButtons() {
-            newMinusBtn.disabled = currentValue <= minValue;
-            newPlusBtn.disabled = currentValue >= maxValue;
-        }
+    activeRoutineForModal = routine;
+    const modal = document.getElementById('stepperInputModal');
+    const title = document.getElementById('stepperModalTitle');
+    const valueDisplay = document.getElementById('stepperValue');
+    const unitDisplay = document.getElementById('stepperUnit');
+    
+    let currentValue = routine.value || routine.min || 1;
+    const minValue = routine.min || 1;
+    const maxValue = routine.max || 100;
+    const stepValue = routine.step || 1;
+    
+    title.textContent = routine.name;
+    valueDisplay.textContent = currentValue;
+    unitDisplay.textContent = routine.unit || '';
+    
+    // --- ▼▼▼ 이전에 누락되었던 '숨겨진 임무' 시작 ▼▼▼ ---
+    // 모달을 열 때마다 이전 목표 텍스트가 남아있지 않도록 먼저 제거합니다.
+    const existingGoal = modal.querySelector('.goal-text');
+    if (existingGoal) {
+        existingGoal.remove();
+    }
+    
+    // 루틴에 일일 목표(dailyGoal)가 설정되어 있을 경우에만 목표 텍스트를 표시합니다.
+    if (routine.dailyGoal) {
+        const goalText = document.createElement('div');
+        goalText.className = 'goal-text';
+        goalText.style.cssText = `text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;`;
+        goalText.textContent = `오늘 목표: ${routine.dailyGoal}${routine.unit || ''}`;
+        // 스테퍼 컨테이너 바로 다음에 목표 텍스트를 삽입합니다.
+        modal.querySelector('.stepper-container').parentNode.insertBefore(goalText, modal.querySelector('.stepper-container').nextSibling);
+    }
+    // --- ▲▲▲ '숨겨진 임무' 종료 ▲▲▲ ---
 
-        newMinusBtn.addEventListener('click', () => {
-            if (currentValue > minValue) {
-                currentValue = Math.max(minValue, currentValue - stepValue);
-                valueDisplay.textContent = currentValue;
-                updateStepperButtons();
-            }
-        });
-        
-        newPlusBtn.addEventListener('click', () => {
-            if (currentValue < maxValue) {
-                currentValue = Math.min(maxValue, currentValue + stepValue);
-                valueDisplay.textContent = currentValue;
-                updateStepperButtons();
-            }
-        });
-        
-        updateStepperButtons();
-        
-        //document.getElementById('stepperConfirmBtn').onclick = () => handleStepperConfirm(currentValue);
-        // 위 라인을 아래와 같이 수정하여, 이벤트 객체가 아닌 'currentValue' 변수 자체를 전달하도록 명확히 합니다.
-        const confirmBtn = document.getElementById('stepperConfirmBtn');
-        // 기존에 달려있을 수 있는 잘못된 리스너를 제거합니다.
-        const newConfirmBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        // 새로운 리스너를 올바르게 추가합니다.
-        newConfirmBtn.addEventListener('click', () => {
-        console.log(`📌 [showStepperModal]: 확인 버튼 클릭됨. 값: ${currentValue}`);
-        handleStepperConfirm(currentValue);
-    });
+    const confirmBtn = document.getElementById('stepperConfirmBtn');
+    const minusBtn = document.getElementById('stepperMinus');
+    const plusBtn = document.getElementById('stepperPlus');
 
-        modal.style.display = 'flex';
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    const newMinusBtn = minusBtn.cloneNode(true);
+    minusBtn.parentNode.replaceChild(newMinusBtn, minusBtn);
+    const newPlusBtn = plusBtn.cloneNode(true);
+    plusBtn.parentNode.replaceChild(newPlusBtn, plusBtn);
+
+    function updateStepperButtons() {
+        newMinusBtn.disabled = currentValue <= minValue;
+        newPlusBtn.disabled = currentValue >= maxValue;
     }
 
+    newMinusBtn.addEventListener('click', () => {
+        currentValue = Math.max(minValue, currentValue - stepValue);
+        valueDisplay.textContent = currentValue;
+        updateStepperButtons();
+    });
+    
+    newPlusBtn.addEventListener('click', () => {
+        currentValue = Math.min(maxValue, currentValue + stepValue);
+        valueDisplay.textContent = currentValue;
+        updateStepperButtons();
+    });
+    
+    newConfirmBtn.addEventListener('click', () => {
+        console.log(`📌 [showStepperModal]: 확인 버튼 클릭됨. 최종값: ${currentValue}`);
+        handleStepperConfirm(currentValue);
+    });
+    
+    updateStepperButtons();
+    modal.style.display = 'flex';
+}
+// ▲▲▲ 여기까지 08/18(수정일) showStepperModal 최종 완전판 ▲▲▲
 
 function hideStepperModal() {
     document.getElementById('stepperInputModal').style.display = 'none';
