@@ -1315,16 +1315,18 @@ function showReadingProgressModal(routine) {
     const readingProgressInfo = document.getElementById('readingProgressInfo');
     
     if (!modal) return;
-    
+    title.textContent = `📖 ${routine.bookTitle}`;
+
+    const todayRange = getTodayReadingRange(routine);
+    const progress = getReadingProgress(routine);
+
     readPagesInput.value = todayRange.pages;
     recommendedPages.textContent = todayRange.pages;
 
     // 모바일에서 입력편하게 개선 0817(수정일)
 
-    title.textContent = `📖 ${routine.bookTitle}`;
         
-    const todayRange = getTodayReadingRange(routine);
-    const progress = getReadingProgress(routine);
+
     
     readingInfo.innerHTML = `
         <h4>📚 ${routine.bookTitle}</h4>
