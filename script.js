@@ -902,21 +902,34 @@ async function handleWheelConfirm() {
             hideAddRoutineModal();
         }
 
-        // ▼▼▼ 08/09(수정일) handleGoalConfirm 함수 추가 ▼▼▼
+// ▼▼▼ 2025-08-17(수정일) 목표 편집 시 유효성 검사 오류 수정 ▼▼▼
 async function handleGoalConfirm() {
-    console.log('📌 [handleGoalConfirm]: 목표 추가 처리 시작');
+    console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
+
+    // 1. 각 폼 요소에서 직접 값을 읽어옵니다.
     const name = document.getElementById('goalName').value.trim();
-    const targetValue = parseFloat(document.getElementById('goalTargetValue').value);
+    const targetValueStr = document.getElementById('goalTargetValue').value; // 문자열로 먼저 받음
     const unit = document.getElementById('goalUnit').value.trim();
     const startDate = document.getElementById('goalStartDate').value;
     const endDate = document.getElementById('goalEndDate').value;
     const area = document.getElementById('goalArea').value;
     const linkedRoutines = Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value);
 
-    // 유효성 검사
-    if (!name || !targetValue || targetValue <= 0 || !unit || !startDate || !endDate) {
-        showNotification('이름/목표값/단위/기간을 정확히 입력해주세요.', 'error');
-        console.log('❌ [handleGoalConfirm]: 필수 필드 누락');
+    // 2. 읽어온 값을 디버깅을 위해 콘솔에 출력합니다.
+    console.log('📝 폼에서 읽어온 데이터:', { name, targetValueStr, unit, startDate, endDate, area });
+
+    // 3. 숫자 값으로 변환합니다.
+    const targetValue = parseFloat(targetValueStr);
+
+    // 4. 강화된 유효성 검사를 수행합니다.
+    if (!name || !unit || !startDate || !endDate) {
+        showNotification('이름, 단위, 기간 필드는 비워둘 수 없습니다.', 'error');
+        console.log('❌ [handleGoalConfirm]: 텍스트 필드 유효성 검사 실패');
+        return;
+    }
+    if (isNaN(targetValue) || targetValue <= 0) {
+        showNotification('목표값은 0보다 큰 숫자여야 합니다.', 'error');
+        console.log('❌ [handleGoalConfirm]: 숫자 필드 유효성 검사 실패 - 값:', targetValueStr);
         return;
     }
     if (new Date(startDate) >= new Date(endDate)) {
@@ -924,24 +937,31 @@ async function handleGoalConfirm() {
         console.log('❌ [handleGoalConfirm]: 날짜 유효성 검사 실패');
         return;
     }
-    if (!linkedRoutines.length) {
-        showNotification('최소 1개 이상의 관련 루틴을 선택해주세요.', 'error');
-        console.log('❌ [handleGoalConfirm]: 연결된 루틴 없음');
-        return;
-    }
+
+    // 5. 모든 검사를 통과한 데이터를 객체로 만듭니다.
+    const goalData = { name, targetValue, unit, startDate, endDate, area, linkedRoutines };
     
     try {
-        await addGoalToFirebase({ name, targetValue, unit, startDate, endDate, area, linkedRoutines });
+        if (isEditingGoal) {
+            // 수정 모드
+            await updateGoalInFirebase(editingGoalId, goalData);
+            showNotification('🧭 목표가 성공적으로 수정되었습니다!');
+            console.log('🏁 [handleGoalConfirm]: 목표 수정 완료', editingGoalId);
+        } else {
+            // 추가 모드
+            await addGoalToFirebase(goalData);
+            showNotification('🧭 새로운 목표가 생성되었습니다!');
+            console.log('🏁 [handleGoalConfirm]: 새 목표 추가 완료');
+        }
         hideAddGoalModal();
-        showNotification('🧭 새로운 목표가 생성되었습니다!');
-        renderGoalCompassPage();
-        console.log('🏁 [handleGoalConfirm]: 목표 추가 완료');
+        renderGoalCompassPage(); // 목록 새로고침
     } catch (error) {
-        console.error('❌ [handleGoalConfirm]: 목표 추가 실패', error);
-        showNotification('목표 추가에 실패했습니다.', 'error');
+        console.error('❌ [handleGoalConfirm]: 목표 처리 실패', error);
+        showNotification('목표 처리에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/09(수정일) handleGoalConfirm 함수 추가 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-17(수정일) 목표 편집 시 유효성 검사 오류 수정 ▲▲▲
+
 
         async function handleManageAreasConfirm() {
             const areaInputs = document.querySelectorAll('#manageAreasList input[type="text"]');
