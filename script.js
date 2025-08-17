@@ -1304,62 +1304,66 @@ function hideReadingSetupModal() {
     document.getElementById('readingSetupModal').style.display = 'none';
 }
 
- function showReadingProgressModal(routine) {
-        activeRoutineForModal = routine;
+function showReadingProgressModal(routine) {
+    activeRoutineForModal = routine;
+    
+    const modal = document.getElementById('readingProgressModal');
+    const title = document.getElementById('readingProgressTitle');
+    const readPagesInput = document.getElementById('readPages');
+    const recommendedPages = document.getElementById('recommendedPages');
+    const readingInfo = document.getElementById('readingInfo');
+    const readingProgressInfo = document.getElementById('readingProgressInfo');
+    
+    if (!modal) return;
+    
+    title.textContent = `📖 ${routine.bookTitle}`;
+    
+    const todayRange = getTodayReadingRange(routine);
+    const progress = getReadingProgress(routine);
+    
+    readingInfo.innerHTML = `
+        <h4>📚 ${routine.bookTitle}</h4>
+        <p><strong>오늘의 목표:</strong> ${todayRange.start}~${todayRange.end} 페이지 (${todayRange.pages}페이지)</p>
+        <p><strong>현재 진행률:</strong> ${routine.currentPage}/${routine.endPage} 페이지 (${progress}%)</p>
+    `;
+    
+    readPagesInput.value = todayRange.pages;
+    recommendedPages.textContent = todayRange.pages;
+    
+    // 진행률 미리보기 업데이트
+    function updateProgressPreview() {
+        const readPages = parseInt(readPagesInput.value) || 0;
+        const newCurrentPage = routine.currentPage + readPages;
+        const newProgress = Math.round(((newCurrentPage - routine.startPage + 1) / (routine.endPage - routine.startPage + 1)) * 100);
         
-        const modal = document.getElementById('readingProgressModal');
-        const title = document.getElementById('readingProgressTitle');
-        const readPagesInput = document.getElementById('readPages');
-        const recommendedPages = document.getElementById('recommendedPages');
-        const readingInfo = document.getElementById('readingInfo');
-        const readingProgressInfo = document.getElementById('readingProgressInfo');
-        
-        if (!modal) return;
-        
-        title.textContent = `📖 ${routine.bookTitle}`;
-        
-        const todayRange = getTodayReadingRange(routine);
-        const progress = getReadingProgress(routine);
-        
-        readingInfo.innerHTML = `
-            <h4>📚 ${routine.bookTitle}</h4>
-            <p><strong>오늘의 목표:</strong> ${todayRange.start}~${todayRange.end} 페이지 (${todayRange.pages}페이지)</p>
-            <p><strong>현재 진행률:</strong> ${routine.currentPage}/${routine.endPage} 페이지 (${progress}%)</p>
+        readingProgressInfo.innerHTML = `
+            <div class="progress-preview">
+                <span>읽은 후 페이지:</span>
+                <span>${newCurrentPage}/${routine.endPage}</span>
+            </div>
+            <div class="progress-preview highlight">
+                <span>새로운 진행률:</span>
+                <span>${newProgress}%</span>
+            </div>
         `;
-        
-        readPagesInput.value = todayRange.pages;
-        recommendedPages.textContent = todayRange.pages;
-        
-        function updateProgressPreview() {
-            const readPages = parseInt(readPagesInput.value) || 0;
-            const newCurrentPage = routine.currentPage + readPages;
-            const newProgress = Math.round(((newCurrentPage - routine.startPage + 1) / (routine.endPage - routine.startPage + 1)) * 100);
-            
-            readingProgressInfo.innerHTML = `
-                <div class="progress-preview">
-                    <span>읽은 후 페이지:</span>
-                    <span>${newCurrentPage}/${routine.endPage}</span>
-                </div>
-                <div class="progress-preview highlight">
-                    <span>새로운 진행률:</span>
-                    <span>${newProgress}%</span>
-                </div>
-            `;
-        }
-        
-        readPagesInput.removeEventListener('input', updateProgressPreview);
-        readPagesInput.addEventListener('input', updateProgressPreview);
-        updateProgressPreview();
-        
-        modal.style.display = 'flex';
-        readPagesInput.focus();
-    } 
+    }
+    
+    // 완료 예정일 계산 및 표시
+    const completionDateEl = document.getElementById('completionDate');
+    const estimatedCompletionDate = getEstimatedCompletionDate(routine);
+    if (completionDateEl) {
+        completionDateEl.textContent = estimatedCompletionDate;
+    }
 
-function hideReadingProgressModal() {
-    document.getElementById('readingProgressModal').style.display = 'none';
+    readPagesInput.removeEventListener('input', updateProgressPreview);
+    readPagesInput.addEventListener('input', updateProgressPreview);
+    updateProgressPreview();
+    
+    modal.style.display = 'flex';
+    readPagesInput.focus();
 }
+// ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 완료 예정일 위치 수정 (기존 함수 전체 교체) ▲▲▲
 
-// refactor(areas): Rearchitect area management modal for stable state handling
 
 
 function showManageAreasModal() {
@@ -1567,11 +1571,7 @@ function createImprovedRoutineElement(routine) {
     const isContinuous = isContinuousRoutine(routine);
     const isInProgress = isRoutineInProgress(routine);
     
-    let readingDetails = '';
-    if (routine.type === 'reading') {
-        const estimatedCompletionDate = getEstimatedCompletionDate(routine);
-        readingDetails = `<div class="reading-detail-info">완료 예정일: ${estimatedCompletionDate}</div>`;
-    }
+    // 이전에 추가되었던 readingDetails 변수와 로직을 삭제합니다.
     
     const routineDiv = document.createElement('div');
     routineDiv.className = 'routine-item';
@@ -1608,7 +1608,6 @@ function createImprovedRoutineElement(routine) {
         </div>
     </div>
     <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
-    ${readingDetails}
     ${streakBadge}
     ${continuousBadge}
 `;
@@ -2481,7 +2480,7 @@ function getRoutineValueDisplay(routine) {
             return false;
         }
         
-        // ▼▼▼ 08/17(수정일) 독서 루틴 진행률 및 예정일 계산 로직 수정 ▼▼▼
+        // ▼▼▼ 08/17(수정일) 독서 루틴 진행률 및 예정일 계산 로직 수정 (기존 함수 전체 교체) ▼▼▼
         function getReadingProgress(routine) {
             if (routine.type !== 'reading' || !routine.endPage) return 0;
 
@@ -2496,7 +2495,7 @@ function getRoutineValueDisplay(routine) {
             // 0보다 작거나 같은 값이 나오지 않도록 방어 로직 추가
             const progress = Math.max(0, Math.min(100, Math.round((readPages / totalPages) * 100)));
             
-            console.log('🏁 [getReadingProgress]: 계산된 진행률:', progress);
+            console.log('🏁 [getReadingProgress]: 계산 완료, 결과:', progress);
             return progress;
         }
 
