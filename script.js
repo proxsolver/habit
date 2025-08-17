@@ -2335,69 +2335,6 @@ function populateGoalModalFields(goal = null) {
 // ▲▲▲ 여기까지 2025-08-17(수정일) 목표 편집 시 데이터 미표시 버그 수정 ▲▲▲}
 
 
-
-
-// ▼▼▼ 08/17(수정일) 목표 저장/수정 분기 처리 로직 추가 ▼▼▼
-async function handleGoalConfirm() { // 함수 이름 변경 및 로직 수정
-    console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
-    const goalData = {
-        name: document.getElementById('goalName').value.trim(),
-        targetValue: parseFloat(document.getElementById('goalTargetValue').value),
-        unit: document.getElementById('goalUnit').value.trim(),
-        startDate: document.getElementById('goalStartDate').value,
-        endDate: document.getElementById('goalEndDate').value,
-        area: document.getElementById('goalArea').value,
-        linkedRoutines: Array.from(document.querySelectorAll('#linkableRoutines input[type="checkbox"]:checked')).map(cb => cb.value)
-    };
-
-    if (!name || !targetValue || targetValue <= 0 || !unit || !startDate || !endDate) {
-        showNotification('이름/목표값/단위/기간을 정확히 입력해주세요.', 'error');
-        return;
-    }
-    if (new Date(startDate) >= new Date(endDate)) {
-        showNotification('종료일은 시작일보다 이후여야 합니다.', 'error');
-        return;
-    }
-    if (!linkedRoutines.length) {
-        showNotification('최소 1개 이상의 관련 루틴을 선택해주세요.', 'error');
-        return;
-    }
-    
- 
-
-    try {
-        if (isEditingGoal) {
-            // 수정 모드
-            await updateGoalInFirebase(editingGoalId, goalData);
-            showNotification('🧭 목표가 성공적으로 수정되었습니다!');
-            console.log('🏁 [handleGoalConfirm]: 목표 수정 완료', editingGoalId);
-        } else {
-            // 추가 모드
-            await addGoalToFirebase(goalData);
-            showNotification('🧭 새로운 목표가 생성되었습니다!');
-            console.log('🏁 [handleGoalConfirm]: 새 목표 추가 완료');
-        }
-        hideAddGoalModal();
-        renderGoalCompassPage(); // 목록 새로고침
-    } catch (error) {
-        console.error('❌ [handleGoalConfirm]: 목표 처리 실패', error);
-        showNotification('목표 처리에 실패했습니다.', 'error');
-    }
-
-    await addGoalToFirebase({ name, targetValue, unit, startDate, endDate, area, linkedRoutines });
-    hideAddGoalModal();
-    showNotification('🧭 새로운 목표가 생성되었습니다!');
-    renderGoalCompassPage();
-
-
-}
-
-
-
-
-// ▲▲▲ 여기까지 추가 ▲▲▲
-
-
 // --- 페이지 네비게이션 (Page Navigation) ---
 
 function showHomePage() {
