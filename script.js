@@ -2353,7 +2353,7 @@ function getPaceMessage(goal) {
     }
 }
 
-// ▼▼▼ 08/18(수정일) showAddGoalModal 최종 완전판 (동적 UI 제어) ▼▼▼
+// ▼▼▼ 08/18(수정일) showAddGoalModal 임무 단순화 ▼▼▼
 function showAddGoalModal(goal = null) {
     console.log('📌 [showAddGoalModal]: 모달 표시 시작. 편집 모드:', !!goal);
     isEditingGoal = !!goal;
@@ -2361,42 +2361,22 @@ function showAddGoalModal(goal = null) {
 
     const modal = document.getElementById('addGoalModal');
     const typeSelect = document.getElementById('goalTypeSelect');
-    const unitsOptions = document.getElementById('goalUnitsOptions');
-    const pointsOptions = document.getElementById('goalPointsOptions');
-
-    // 1. 유형 선택에 따라 UI를 변경하는 핵심 임무
-    const handleTypeChange = () => {
-        if (typeSelect.value === 'points') {
-            unitsOptions.style.display = 'none';
-            pointsOptions.style.display = 'block';
-            console.log('🔄 [showAddGoalModal]: UI를 "포인트 목표" 모드로 전환합니다.');
-        } else { // 'units'
-            unitsOptions.style.display = 'block';
-            pointsOptions.style.display = 'none';
-            console.log('🔄 [showAddGoalModal]: UI를 "단위 목표" 모드로 전환합니다.');
-        }
-    };
-
-    // 2. 명령 수신병(이벤트 리스너) 중복 배치를 막기 위한 조치
-    // 기존 select 요소를 복제하여 모든 이전 리스너를 제거합니다.
-    const newTypeSelect = typeSelect.cloneNode(true);
-    typeSelect.parentNode.replaceChild(newTypeSelect, typeSelect);
-    // 새로운 수신병을 배치합니다.
-    newTypeSelect.addEventListener('change', handleTypeChange);
     
-    // 3. 작전 브리핑 장교를 호출하여 폼 내용을 채웁니다.
+    // 폼 필드를 채웁니다.
     populateGoalModalFields(goal);
     
-    // 4. 편집 모드일 경우, 목표 유형 변경을 금지합니다.
-    newTypeSelect.disabled = isEditingGoal;
+    // 편집 모드일 경우, 목표 유형 변경을 금지합니다.
+    typeSelect.disabled = isEditingGoal;
 
-    // 5. 모달이 열릴 때의 초기 UI 상태를 설정합니다.
-    handleTypeChange();
+    // UI의 초기 상태를 강제로 업데이트합니다.
+    // Event를 수동으로 발생시켜, setupAllEventListeners에 있는 리스너가 작동하도록 합니다.
+    typeSelect.dispatchEvent(new Event('change'));
     
-    // 6. 최종적으로 모달을 전장에 표시합니다.
+    // 최종적으로 모달을 전장에 표시합니다.
     modal.style.display = 'flex';
 }
-// ▲▲▲ 여기까지 08/18(수정일) showAddGoalModal 최종 완전판 (동적 UI 제어) ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) showAddGoalModal 임무 단순화 ▲▲▲
+
 
 function hideAddGoalModal() {
     document.getElementById('addGoalModal').style.display = 'none';
@@ -2938,6 +2918,22 @@ function setupAllEventListeners() {
             openDashboardTab(button.dataset.tab);
         });
     });
+
+    const goalTypeSelect = document.getElementById('goalTypeSelect');
+    if (goalTypeSelect) {
+        goalTypeSelect.addEventListener('change', () => {
+            const unitsOptions = document.getElementById('goalUnitsOptions');
+            const pointsOptions = document.getElementById('goalPointsOptions');
+            if (goalTypeSelect.value === 'points') {
+                unitsOptions.style.display = 'none';
+                pointsOptions.style.display = 'block';
+            } else {
+                unitsOptions.style.display = 'block';
+                pointsOptions.style.display = 'none';
+            }
+        });
+    }
+
 }
 
 // ... (이전 코드 생략) ...
