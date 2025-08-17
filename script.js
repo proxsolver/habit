@@ -1304,6 +1304,7 @@ function hideReadingSetupModal() {
     document.getElementById('readingSetupModal').style.display = 'none';
 }
 
+// ▼▼▼ 08/17(수정일) 독서 진행 모달 표시 함수 수정 ▼▼▼
 function showReadingProgressModal(routine) {
     activeRoutineForModal = routine;
     
@@ -1314,22 +1315,27 @@ function showReadingProgressModal(routine) {
     const readingInfo = document.getElementById('readingInfo');
     const readingProgressInfo = document.getElementById('readingProgressInfo');
     
-    if (!modal) return;
+    if (!modal) {
+        console.error('❌ [showReadingProgressModal]: 모달 요소를 찾을 수 없습니다.');
+        return;
+    }
+    console.log(`📌 [showReadingProgressModal]: "${routine.name}" 모달 표시 시작`);
+    
     title.textContent = `📖 ${routine.bookTitle}`;
-
+    
     const todayRange = getTodayReadingRange(routine);
     const progress = getReadingProgress(routine);
-
+    
     readingInfo.innerHTML = `
         <h4>📚 ${routine.bookTitle}</h4>
         <p><strong>오늘의 목표:</strong> ${todayRange.start}~${todayRange.end} 페이지 (${todayRange.pages}페이지)</p>
         <p><strong>현재 진행률:</strong> ${routine.currentPage}/${routine.endPage} 페이지 (${progress}%)</p>
     `;
-
+    
     readPagesInput.value = todayRange.pages;
     recommendedPages.textContent = todayRange.pages;
-              
-
+    
+    // 진행률 미리보기 업데이트
     function updateProgressPreview() {
         const readPages = parseInt(readPagesInput.value) || 0;
         const newCurrentPage = routine.currentPage + readPages;
@@ -1361,6 +1367,13 @@ function showReadingProgressModal(routine) {
     modal.style.display = 'flex';
     readPagesInput.focus();
 }
+
+function hideReadingProgressModal() {
+    console.log('📌 [hideReadingProgressModal]: 독서 모달 닫기');
+    document.getElementById('readingProgressModal').style.display = 'none';
+}
+// ▲▲▲ 여기까지 교체 ▲▲▲
+
 // ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 완료 예정일 위치 수정 (기존 함수 전체 교체) ▲▲▲
 
 
@@ -2637,6 +2650,8 @@ function showCelebrationMessage() {
 
 // ▼▼▼ 08/17(수정일) 모든 이벤트 리스너를 재구성한 최종 버전 ▼▼▼
 function setupAllEventListeners() {
+    console.log('📌 [setupAllEventListeners]: 모든 이벤트 리스너 설정 시작');
+
     // --- 네비게이션 버튼 ---
     document.getElementById('navHomeBtn').addEventListener('click', showHomePage);
     document.getElementById('navManageBtn').addEventListener('click', showManagePage);
