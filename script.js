@@ -1320,23 +1320,16 @@ function showReadingProgressModal(routine) {
     const todayRange = getTodayReadingRange(routine);
     const progress = getReadingProgress(routine);
 
-    readPagesInput.value = todayRange.pages;
-    recommendedPages.textContent = todayRange.pages;
-
-    // 모바일에서 입력편하게 개선 0817(수정일)
-
-        
-
-    
     readingInfo.innerHTML = `
         <h4>📚 ${routine.bookTitle}</h4>
         <p><strong>오늘의 목표:</strong> ${todayRange.start}~${todayRange.end} 페이지 (${todayRange.pages}페이지)</p>
         <p><strong>현재 진행률:</strong> ${routine.currentPage}/${routine.endPage} 페이지 (${progress}%)</p>
     `;
-    
 
+    readPagesInput.value = todayRange.pages;
+    recommendedPages.textContent = todayRange.pages;
+              
 
-    // 진행률 미리보기 업데이트
     function updateProgressPreview() {
         const readPages = parseInt(readPagesInput.value) || 0;
         const newCurrentPage = routine.currentPage + readPages;
