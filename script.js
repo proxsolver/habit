@@ -2783,3 +2783,4 @@ function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
 // ▲▲▲ 여기까지 교체 ▲▲▲
 
 
+// 잘 작동함 코멘트 담기
