@@ -1612,9 +1612,7 @@ function createImprovedRoutineElement(routine) {
             <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
             <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
         </div>
-        // ▼▼▼ 08/17(수정일) 루틴 내용에 완료 예정일 추가 ▼▼▼
         ${readingDetails}
-        // ▲▲▲ 여기까지 08/17(수정일) 루틴 내용에 완료 예정일 추가 ▲▲▲
     </div>
     <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
     ${streakBadge}
