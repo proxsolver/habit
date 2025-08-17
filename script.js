@@ -1566,6 +1566,20 @@ function createImprovedRoutineElement(routine) {
     const isContinuous = isContinuousRoutine(routine);
     const isInProgress = isRoutineInProgress(routine);
     
+    // ▼▼▼ 08/17(수정일) 독서 루틴에 완료 예정일 추가 ▼▼▼
+    let readingDetails = '';
+    if (routine.type === 'reading') {
+        const estimatedCompletionDate = getEstimatedCompletionDate(routine);
+        readingDetails = `
+            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                완료 예정일: ${estimatedCompletionDate}
+            </div>
+        `;
+    }
+    // ▲▲▲ 여기까지 08/17(수정일) 독서 루틴에 완료 예정일 추가 ▲▲▲
+
+
+
     const routineDiv = document.createElement('div');
     routineDiv.className = 'routine-item';
     routineDiv.dataset.id = routine.id;
@@ -1588,21 +1602,25 @@ function createImprovedRoutineElement(routine) {
     const continuousBadge = isContinuous || isReadingRoutine(routine) ? `<div class="continuous-badge">🔄</div>` : '';
     
     routineDiv.innerHTML = `
-        ${actionButton}
-        <div class="routine-content">
-            <div class="routine-name">
-                ${routine.name}
-                <span class="type-icon">${getTypeIcon(routine.type)}</span>
-            </div>
-            <div class="routine-details">
-                <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
-                <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
-            </div>
+    ${actionButton}
+    <div class="routine-content">
+        <div class="routine-name">
+            ${routine.name}
+            <span class="type-icon">${getTypeIcon(routine.type)}</span>
         </div>
-        <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
-        ${streakBadge}
-        ${continuousBadge}
-    `;
+        <div class="routine-details">
+            <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
+            <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
+        </div>
+        // ▼▼▼ 08/17(수정일) 루틴 내용에 완료 예정일 추가 ▼▼▼
+        ${readingDetails}
+        // ▲▲▲ 여기까지 08/17(수정일) 루틴 내용에 완료 예정일 추가 ▲▲▲
+    </div>
+    <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
+    ${streakBadge}
+    ${continuousBadge}
+`;
+
     
     routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventListener('click', async (e) => {
         e.stopPropagation();
