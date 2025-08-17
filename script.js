@@ -1635,9 +1635,9 @@ routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventLi
         }
 
         const updatedFields = {
-            // 독서 루틴의 상태와 진행 상황을 초기화합니다.
-            value: routine.startPage - 1,
-            currentPage: routine.startPage - 1,
+            // 독서 루틴의 상태 및 진행 상황을 오늘 완료하기 직전 상태로 되돌립니다.
+            value: Math.max(0, routine.currentPage - routine.dailyReadPagesToday),
+            currentPage: Math.max(0, routine.currentPage - routine.dailyReadPagesToday),
             dailyReadPagesToday: 0,
             dailyGoalMetToday: false,
             status: null,
