@@ -2597,76 +2597,50 @@ function showCelebrationMessage() {
 // 7. 이벤트 리스너 설정 함수
 // ====================================================================
 
+// ▼▼▼ 08/17(수정일) 모든 이벤트 리스너를 재구성한 최종 버전 ▼▼▼
 function setupAllEventListeners() {
     // --- 네비게이션 버튼 ---
     document.getElementById('navHomeBtn').addEventListener('click', showHomePage);
     document.getElementById('navManageBtn').addEventListener('click', showManagePage);
     document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
     document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
-        // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
     document.getElementById('navGoalCompassBtn').addEventListener('click', showGoalCompassPage);
-        // ▲▲▲ 여기까지 추가 ▲▲▲
-    // setupAllEventListeners 함수 내부에 추가
-    // 통계 필터 버튼 이벤트
-    // ▼▼▼ 이 코드를 추가하세요 ▼▼▼
-    document.getElementById('openAddGoalBtn')?.addEventListener('click', showAddGoalModal);
-        // ▲▲▲ 여기까지 추가 ▲▲▲
-    document.getElementById('filter-weekly').addEventListener('click', () => {
+
+    // --- 통계 페이지 필터 버튼 ---
+    document.getElementById('filter-weekly')?.addEventListener('click', () => {
         currentStatsPeriod = 'weekly';
-    document.getElementById('filter-weekly').classList.add('active');
-    document.getElementById('filter-monthly').classList.remove('active');
-    renderStatsPage();
-});
+        document.getElementById('filter-weekly').classList.add('active');
+        document.getElementById('filter-monthly').classList.remove('active');
+        renderStatsPage();
+    });
 
-document.getElementById('filter-monthly').addEventListener('click', () => {
-    currentStatsPeriod = 'monthly';
-    document.getElementById('filter-monthly').classList.add('active');
-    document.getElementById('filter-weekly').classList.remove('active');
-    renderStatsPage();
-});
-    // ▲▲▲ 여기까지 ▲▲▲
+    document.getElementById('filter-monthly')?.addEventListener('click', () => {
+        currentStatsPeriod = 'monthly';
+        document.getElementById('filter-monthly').classList.add('active');
+        document.getElementById('filter-weekly').classList.remove('active');
+        renderStatsPage();
+    });
     
-    // ▼▼▼ 아래 '대시보드 탭' 관련 코드를 전부 삭제하세요. ▼▼▼
-    // --- 대시보드 탭 ---
-    // document.querySelectorAll('.tab-button').forEach(button => {
-    //     button.addEventListener('click', () => openDashboardTab(button.dataset.tab));
-    // });
-    // ▲▲▲ 여기까지 삭제 ▲▲▲
-
-    // --- 관리 페이지 ---
-    document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
-    document.getElementById('manageAreasBtn').addEventListener('click', showManageAreasModal);
-
-    // ▼▼▼ 이 코드를 여기에 추가하세요 ▼▼▼
-    // '새 루틴 추가' 모달에서 루틴 타입 변경 시 옵션 동적 표시
-    document.getElementById('newRoutineType').addEventListener('change', (e) => {
+    // --- 새 루틴 추가 모달의 타입 변경 이벤트 ---
+    document.getElementById('newRoutineType')?.addEventListener('change', (e) => {
         const selectedType = e.target.value;
         document.getElementById('newNumberOptions').style.display = selectedType === 'number' ? 'block' : 'none';
         document.getElementById('newReadingOptions').style.display = selectedType === 'reading' ? 'block' : 'none';
     });
-    // ▲▲▲ 여기까지 ▲▲▲
-
-
-    // --- 각종 모달 버튼들 ---
+    
+    // --- 관리 페이지 순서 저장 버튼 ---
+    document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
+    
+    // --- 각종 모달 버튼들 (setupModal을 통해 일괄 설정) ---
     setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
-    setupModal('stepperInputModal', hideStepperModal);
-    setupModal('wheelInputModal', hideWheelModal, handleWheelConfirm);
-    setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm);
-    setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
-    setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm);
-    
-    // ▼▼▼ 여기에 삭제 버튼 이벤트 추가 ▼▼▼
-    const deleteRoutineBtn = document.getElementById('deleteRoutineBtn');
-    if (deleteRoutineBtn) {
-        console.log('삭제 버튼 요소 확인됨');
-    }
-    // ▲▲▲ 여기까지 추가 ▲▲▲
-    
+    setupModal('stepperInputModal', hideStepperModal, handleStepperConfirm, 'stepperConfirmBtn');
+    setupModal('wheelInputModal', hideWheelModal, handleWheelConfirm, 'wheelConfirmBtn');
+    setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm, 'readingSetupConfirm');
+    setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm, 'readingProgressConfirm');
+    setupModal('addRoutineModal', hideAddRoutineModal, handleAddRoutineConfirm, 'addRoutineConfirm');
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
-    // ▼▼▼ 08/09(수정일) 목표 모달 이벤트 리스너 연결 ▼▼▼
-setupModal('addGoalModal', hideAddGoalModal, handleAddGoalConfirm);
-// ▲▲▲ 여기까지 08/09(수정일) 목표 모달 이벤트 리스너 연결 ▲▲▲
+    setupModal('addGoalModal', hideAddGoalModal, handleAddGoalConfirm, 'addGoalConfirm');
     setupModal('routineDetailModal', hideDetailStatsModal);
 
     // --- ESC로 모든 모달 닫기 ---
@@ -2675,7 +2649,43 @@ setupModal('addGoalModal', hideAddGoalModal, handleAddGoalConfirm);
             document.querySelectorAll('.modal-overlay').forEach(modal => modal.style.display = 'none');
         }
     });
+
+    // --- 동적으로 생성되는 요소에 대한 이벤트 리스너 (루틴 타입 변경 등) ---
+    document.getElementById('manageAreasBtn').addEventListener('click', showManageAreasModal);
+    document.getElementById('openAddGoalBtn')?.addEventListener('click', showAddGoalModal);
+    
+    // --- 대시보드 탭 관련 리스너 ---
+    document.querySelectorAll('#dashboard-view .tab-button').forEach(button => {
+        button.addEventListener('click', () => {
+            openDashboardTab(button.dataset.tab);
+        });
+    });
 }
+
+function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.querySelector('.modal-close')?.addEventListener('click', hideFn);
+    modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
+    modal.addEventListener('click', (e) => { 
+        if (e.target === e.currentTarget) {
+            hideFn();
+        }
+    });
+    
+    if (confirmFn) {
+        modal.querySelector('.btn-confirm')?.addEventListener('click', confirmFn);
+    }
+    if (confirmInputId) {
+        document.getElementById(confirmInputId)?.addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') {
+                confirmFn();
+            }
+        });
+    }
+}
+// ▲▲▲ 여기까지 08/17(수정일) 모든 이벤트 리스너를 재구성한 최종 버전 ▲▲▲
 
 // ▼▼▼ 이 함수를 아래 코드로 교체하세요 ▼▼▼
 function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
