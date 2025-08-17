@@ -548,14 +548,19 @@ async function handleDeleteRoutine(routineId, routineName) {
 }
 
 // ▼▼▼ 08/18(수정일) handleStepperConfirm 최종 완전판 ▼▼▼
-async function handleStepperConfirm(value) { // 'value'는 모달에서 설정한 '새로운 최종값'
+//1단계: 보고받은 값을 기준으로 새로운 상태를 계산.
+//2단계 (최우선): '순수 증가량'을 계산하여 목표 시스템에 무조건 보고.
+//3단계: 일일 목표 첫 달성 여부를 판단하여 포상(포인트, 스트릭) 처리.
+//4-5단계: 최종 상태를 데이터베이스에 기록하고, 임무 완료를 알림.
+
+async function handleStepperConfirm(value) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
 
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
-            // 1. 전달받은 최종값을 기준으로 상태를 계산합니다.
+            // 1. 보고 수신 및 상태 계산
             const finalValue = value;
             const isNowGoalAchieved = isGoalAchieved({ ...routine, value: finalValue });
 
@@ -566,11 +571,19 @@ async function handleStepperConfirm(value) { // 'value'는 모달에서 설정�
                 dailyGoalMetToday: isNowGoalAchieved
             };
 
-            // 2. 일일 목표를 '처음' 달성했을 때만 포상 및 목표 보고를 수행합니다.
+            // 2. 최우선 임무: 전과 보고 (포상 여부와 무관하게 항상 실행)
+            const incrementValue = finalValue - (routine.value || 0);
+            if (incrementValue !== 0) { // 값이 변경되었을 경우에만 보고
+                const reportData = { delta: incrementValue, finalValue: finalValue };
+                console.log(`📡 [handleStepperConfirm]: 목표 시스템에 전과 보고 (포상 여부 무관)`, reportData);
+                await updateGoalProgressByRoutine(routine.id, reportData);
+            }
+
+            // 3. 일일 포상 처리 (하루에 한 번만 실행)
             if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
-
-                // 2a. 포인트 포상
+                
+                // 포인트 지급
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -579,25 +592,16 @@ async function handleStepperConfirm(value) { // 'value'는 모달에서 설정�
                     await updateUserStatsInFirebase(newStats);
                 }
 
-                // 2b. 활동 기록 보고
+                // 활동 기록
                 await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
-
-                // 2c. '순수 증가량(delta)' 계산 및 목표 시스템 보고
-                const incrementValue = finalValue - (routine.value || 0);
-                const reportData = { delta: incrementValue, finalValue: finalValue };
-                
-                console.log(`📡 [handleStepperConfirm]: 목표 시스템에 최종 보고`, reportData);
-                if (reportData.delta > 0) {
-                    await updateGoalProgressByRoutine(routine.id, reportData);
-                }
                 
                 updatedFields.pointsGivenToday = true;
             }
 
-            // 3. 루틴의 최종 상태를 데이터베이스에 업데이트합니다.
+            // 4. 루틴의 최종 상태를 데이터베이스에 업데이트
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
             
-            // 4. 임무 완료 후 모달을 닫고 알림을 보냅니다.
+            // 5. 임무 완료 후 모달 닫기 및 알림
             hideStepperModal();
             
             const goalStatus = isNowGoalAchieved ? ' 🎯 목표 달성!' : '';
@@ -615,17 +619,19 @@ async function handleStepperConfirm(value) { // 'value'는 모달에서 설정�
 }
 // ▲▲▲ 여기까지 08/18(수정일) handleStepperConfirm 최종 완전판 ▲▲▲
 
-
-// 2. Wheel(스크롤) 및 Simple(직접입력) 루틴 완료 처리 통합 함수
-// ▼▼▼ 08/17(수정일) handleNumberConfirm 최종본 ▼▼▼
+// ▼▼▼ 08/18(수정일) handleNumberConfirm 최종 완전판 ▼▼▼
 async function handleNumberConfirm(value, inputType) {
     if (!activeRoutineForModal) return;
     const currentRoutine = activeRoutineForModal;
+
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
+            // 1. 보고 수신 및 상태 계산
+            // '지속 업데이트'의 경우, 입력된 value를 기존 값에 더합니다.
             const finalValue = routine.continuous ? (routine.value || 0) + value : value;
             const isNowGoalAchieved = isGoalAchieved({ ...routine, value: finalValue });
+
             const updatedFields = {
                 value: finalValue,
                 status: null,
@@ -633,9 +639,20 @@ async function handleNumberConfirm(value, inputType) {
                 dailyGoalMetToday: isNowGoalAchieved
             };
 
+            // 2. 최우선 임무: 전과 보고 (포상 여부와 무관하게 항상 실행)
+            // '지속' 타입이면 입력값(value) 자체가 증가량, 아니면 (최종값 - 기존값)이 증가량입니다.
+            const incrementValue = routine.continuous ? value : (finalValue - (routine.value || 0));
+            if (incrementValue !== 0) {
+                const reportData = { delta: incrementValue, finalValue: finalValue };
+                console.log(`📡 [handleNumberConfirm]: 목표 시스템에 전과 보고 (포상 여부 무관)`, reportData);
+                await updateGoalProgressByRoutine(routine.id, reportData);
+            }
+
+            // 3. 일일 포상 처리 (하루에 한 번만 실행)
             if (isNowGoalAchieved && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
-                
+
+                // 포인트 지급
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -644,21 +661,16 @@ async function handleNumberConfirm(value, inputType) {
                     await updateUserStatsInFirebase(newStats);
                 }
 
+                // 활동 기록
                 await logRoutineHistory(routine.id, { value: finalValue, pointsEarned: routine.basePoints });
-
-                const incrementValue = routine.continuous ? value : finalValue;
-                const reportData = { delta: incrementValue, finalValue: finalValue };
-                
-                console.log(`📡 [handleNumberConfirm]: 목표 시스템에 전과 보고`, reportData);
-                if (reportData.delta > 0) {
-                    await updateGoalProgressByRoutine(routine.id, reportData);
-                }
                 
                 updatedFields.pointsGivenToday = true;
             }
 
+            // 4. 루틴의 최종 상태를 데이터베이스에 업데이트
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
             
+            // 5. 임무 완료 후 모달 닫기 및 알림
             if (inputType === 'simple') hideNumberInputModal();
             if (inputType === 'wheel') hideWheelModal();
 
@@ -675,7 +687,7 @@ async function handleNumberConfirm(value, inputType) {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/17(수정일) handleNumberConfirm 최종본 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleNumberConfirm 최종 완전판 ▲▲▲
 
 async function handleNumberInputConfirm() {
     if (!activeRoutineForModal) return;
@@ -804,7 +816,7 @@ async function handleWheelConfirm() {
         }
     
         // ▼▼▼ 08/17(수정일) handleReadingProgressConfirm 장교 완전 복원 ▼▼▼
-// ▼▼▼ 08/17(수정일) handleReadingProgressConfirm 최종본 ▼▼▼
+// ▼▼▼ 08/18(수정일) handleReadingProgressConfirm 최종 완전판 ▼▼▼
 async function handleReadingProgressConfirm() {
     if (!activeRoutineForModal) return;
     
@@ -820,6 +832,7 @@ async function handleReadingProgressConfirm() {
     try {
         const routine = sampleRoutines.find(r => r.id === currentRoutine.id);
         if (routine) {
+            // 1. 보고 수신 및 상태 계산
             const newCurrentPage = Math.min((routine.currentPage || routine.startPage - 1) + readPages, routine.endPage);
             const newDailyReadPagesToday = (routine.dailyReadPagesToday || 0) + readPages;
             const newDailyGoalMetToday = newDailyReadPagesToday >= routine.dailyPages;
@@ -833,9 +846,18 @@ async function handleReadingProgressConfirm() {
                 lastUpdatedDate: todayDateString
             };
 
+            // 2. 최우선 임무: 전과 보고 (포상 여부와 무관하게 항상 실행)
+            if (readPages > 0) {
+                const reportData = { delta: readPages, finalValue: newCurrentPage };
+                console.log(`📡 [handleReadingProgressConfirm]: 목표 시스템에 전과 보고 (포상 여부 무관)`, reportData);
+                await updateGoalProgressByRoutine(routine.id, reportData);
+            }
+
+            // 3. 일일 포상 처리 (하루에 한 번만 실행)
             if (newDailyGoalMetToday && !routine.pointsGivenToday) {
                 updatedFields.streak = (routine.streak || 0) + 1;
                 
+                // 포인트 지급
                 if (routine.areas && routine.basePoints) {
                     const newStats = { ...userStats };
                     routine.areas.forEach(areaId => {
@@ -844,17 +866,16 @@ async function handleReadingProgressConfirm() {
                     await updateUserStatsInFirebase(newStats);
                 }
 
+                // 활동 기록
                 await logRoutineHistory(routine.id, { value: readPages, pointsEarned: routine.basePoints });
-
-                const reportData = { delta: readPages, finalValue: newCurrentPage };
-                console.log(`📡 [handleReadingProgressConfirm]: 목표 시스템에 전과 보고`, reportData);
-                await updateGoalProgressByRoutine(routine.id, reportData);
                 
                 updatedFields.pointsGivenToday = true;
             }
             
+            // 4. 루틴의 최종 상태를 데이터베이스에 업데이트
             await updateRoutineInFirebase(currentRoutine.id, updatedFields);
             
+            // 5. 임무 완료 후 모달 닫기 및 알림
             hideReadingProgressModal();
             
             if (newCurrentPage >= routine.endPage) {
@@ -874,7 +895,8 @@ async function handleReadingProgressConfirm() {
         showNotification('저장에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/17(수정일) handleReadingProgressConfirm 최종본 ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) handleReadingProgressConfirm 최종 완전판 ▲▲▲
+
 
         async function handleAddRoutineConfirm() {
             const name = document.getElementById('newRoutineName').value.trim();
