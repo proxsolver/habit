@@ -1559,19 +1559,27 @@ function renderManagePage() {
             });
         }
 
-// ▼▼▼ 08/17(수정일) 독서 루틴에 완료 예정일 추가 및 위치 수정 (기존 함수 전체 교체) ▼▼▼
+// ▼▼▼ 08/17(수정일) 독서 루틴 완료 예정일 표시 위치 및 구조 수정 (기존 함수 전체 교체) ▼▼▼
 function createImprovedRoutineElement(routine) {
     const isCompleted = isRoutineCompleted(routine);
     const isSkipped = routine.status === 'skipped';
     const isGoalReachedOverall = isGoalAchieved(routine);
     const isContinuous = isContinuousRoutine(routine);
     const isInProgress = isRoutineInProgress(routine);
-
+    
+    let readingDetails = '';
+    if (routine.type === 'reading') {
+        const estimatedCompletionDate = getEstimatedCompletionDate(routine);
+        readingDetails = `<div class="reading-detail-info">완료 예정일: ${estimatedCompletionDate}</div>`;
+    }
+    
     const routineDiv = document.createElement('div');
     routineDiv.className = 'routine-item';
     routineDiv.dataset.id = routine.id;
     routineDiv.dataset.type = routine.type;
-
+    
+    routineDiv.classList.add(routine.time);
+    
     if (isSkipped) routineDiv.classList.add('skipped');
     else if ((isContinuous || isReadingRoutine(routine)) && isGoalReachedOverall) routineDiv.classList.add('goal-achieved');
     else if (isInProgress) routineDiv.classList.add('inprogress');
@@ -1587,13 +1595,6 @@ function createImprovedRoutineElement(routine) {
     const streakBadge = routine.streak > 0 ? `<div class="streak-badge ${routine.streak >= 30 ? 'mega-streak' : (routine.streak >= 7 ? 'high-streak' : '')}">🔥 ${routine.streak}</div>` : '';
     const continuousBadge = isContinuous || isReadingRoutine(routine) ? `<div class="continuous-badge">🔄</div>` : '';
     
-    // 독서 루틴에 대한 추가 상세 정보
-    let readingDetailHtml = '';
-    if (routine.type === 'reading') {
-        const estimatedCompletionDate = getEstimatedCompletionDate(routine);
-        readingDetailHtml = `<div class="mt-1 text-xs text-gray-500">완료 예정일: ${estimatedCompletionDate}</div>`;
-    }
-
     routineDiv.innerHTML = `
     ${actionButton}
     <div class="routine-content">
@@ -1604,10 +1605,10 @@ function createImprovedRoutineElement(routine) {
         <div class="routine-details">
             <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
             <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
-            ${readingDetailHtml}
         </div>
     </div>
     <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
+    ${readingDetails}
     ${streakBadge}
     ${continuousBadge}
 `;
@@ -1653,7 +1654,7 @@ function createImprovedRoutineElement(routine) {
     });
     return routineDiv;
 }
-// ▲▲▲ 여기까지 08/17(수정일) 독서 루틴에 완료 예정일 추가 및 위치 수정 (기존 함수 전체 교체) ▲▲▲
+// ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 완료 예정일 표시 위치 및 구조 수정 (기존 함수 전체 교체) ▲▲▲
 
 
 // ▼▼▼ createManageRoutineElement 함수를 이 코드로 교체하세요 ▼▼▼

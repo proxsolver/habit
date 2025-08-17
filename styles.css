@@ -2056,3 +2056,17 @@
     box-sizing: border-box; /* 패딩과 보더가 너비에 포함되도록 설정 */
 }
 /* ▲▲▲ 여기까지 08/09(수정일) 목표함수 추가 ▲▲▲ */
+/* ▼▼▼ 08/17(수정일) 독서 루틴 상세 정보 스타일 추가 ▼▼▼ */
+.reading-detail-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    padding-left: calc(var(--touch-target-min) + 12px); /* 체크박스 공간만큼 여백 */
+}
+
+@media (max-width: 480px) {
+    .reading-detail-info {
+        padding-left: calc(var(--touch-target-min) + 12px);
+    }
+}
+/* ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 상세 정보 스타일 추가 ▲▲▲ */
