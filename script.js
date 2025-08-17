@@ -2411,6 +2411,7 @@ function showHomePage() {
     document.getElementById('main-app-content').style.display = 'block';
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('manage-section').style.display = 'none';
+    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
     document.querySelector('.daily-progress').style.display = 'block';
     document.getElementById('incomplete-section').style.display = 'block';
     renderRoutines();
@@ -2424,6 +2425,7 @@ function showManagePage() {
     document.getElementById('inprogress-section').style.display = 'none';
     document.getElementById('completed-section').style.display = 'none';
     document.getElementById('skipped-section').style.display = 'none';
+    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
     document.getElementById('manage-section').style.display = 'block';
     renderAreaStats();
     renderManagePage();
@@ -2434,6 +2436,7 @@ function showManagePage() {
 function showDashboardPage() {
     // 다른 페이지 숨기기
     document.getElementById('main-app-content').style.display = 'none';
+    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
     
     // 통계 페이지 보이기
     const dashboardView = document.getElementById('dashboard-view');
