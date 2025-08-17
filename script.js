@@ -1248,10 +1248,21 @@ function showStepperModal(routine) {
         
         updateStepperButtons();
         
-        document.getElementById('stepperConfirmBtn').onclick = () => handleStepperConfirm(currentValue);
-        
+        //document.getElementById('stepperConfirmBtn').onclick = () => handleStepperConfirm(currentValue);
+        // 위 라인을 아래와 같이 수정하여, 이벤트 객체가 아닌 'currentValue' 변수 자체를 전달하도록 명확히 합니다.
+        const confirmBtn = document.getElementById('stepperConfirmBtn');
+        // 기존에 달려있을 수 있는 잘못된 리스너를 제거합니다.
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        // 새로운 리스너를 올바르게 추가합니다.
+        newConfirmBtn.addEventListener('click', () => {
+        console.log(`📌 [showStepperModal]: 확인 버튼 클릭됨. 값: ${currentValue}`);
+        handleStepperConfirm(currentValue);
+    });
+
         modal.style.display = 'flex';
     }
+
 
 function hideStepperModal() {
     document.getElementById('stepperInputModal').style.display = 'none';
@@ -2098,9 +2109,10 @@ function createSimpleHeatmap(container, historyData) {
             endDate: `${endMonth}/${endDay}`,
             year: year,
             intensity: weeklyCount > 0 ? Math.min(Math.ceil(weeklyCount / 2), 4) : 0,
-            isCurrentWeek: weekIndex === 0 // 이번 주 확인
-        });
-    }
+        isCurrentWeek: weekIndex === 0,
+    });
+        }
+    
     
     let html = '<div class="simple-heatmap">';
     html += '<h4 class="heatmap-title">최근 1년간 주별 활동 기록</h4>';
