@@ -2511,12 +2511,23 @@ function getRoutineValueDisplay(routine) {
     
         function getEstimatedCompletionDate(routine) {
             if (routine.type !== 'reading' || routine.currentPage >= routine.endPage) return '완료';
-            const remainingPages = routine.endPage - routine.currentPage;
-            const remainingDays = Math.ceil(remainingPages / (routine.dailyPages || 10));
+        
+            // 읽은 페이지 수 계산
+            const readPagesCount = routine.currentPage - (routine.startPage - 1);
+            // 남은 페이지 수 계산 (전체 페이지 수 - 읽은 페이지 수)
+            const remainingPages = (routine.endPage - (routine.startPage - 1)) - readPagesCount;
+            const dailyPages = routine.dailyPages || 10;
+            const remainingDays = Math.ceil(remainingPages / dailyPages);
+        
             const completionDate = new Date();
-            completionDate.setDate(today.getDate() + remainingDays);
+            completionDate.setDate(completionDate.getDate() + remainingDays);
+            
+            console.log('📌 [getEstimatedCompletionDate]: 루틴:', routine.name);
+            console.log(`- 남은 페이지: ${remainingPages}p, 남은 날: ${remainingDays}일`);
+            console.log('🏁 [getEstimatedCompletionDate]: 완료 예정일:', completionDate.toLocaleDateString('ko-KR'));
             return completionDate.toLocaleDateString('ko-KR');
         }
+        // ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 진행률 및 예정일 계산 로직 수정 ▲▲▲
     
         function isReadingRoutine(routine) { return routine.type === 'reading'; }
         function isContinuousRoutine(routine) { return routine.continuous === true; }
