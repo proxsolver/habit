@@ -1611,45 +1611,83 @@ function createImprovedRoutineElement(routine) {
     ${continuousBadge}
 `;
     
-    routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
-            const updatedFields = { value: routine.type === 'yesno' ? false : null, status: null };
-            if (routine.pointsGivenToday) {
-                updatedFields.streak = Math.max(0, (routine.streak || 0) - 1);
-                if (routine.areas && routine.basePoints) {
-                    const newStats = { ...userStats };
-                    routine.areas.forEach(areaId => {
-                        newStats[areaId] = Math.max(0, (newStats[areaId] || 0) - routine.basePoints);
-                    });
-                    await updateUserStatsInFirebase(newStats);
-                }
-                updatedFields.pointsGivenToday = false;
+routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventListener('click', async (e) => {
+    e.stopPropagation();
+
+    if (isReadingRoutine(routine) && (isCompleted || isGoalReachedOverall)) {
+        // 독서 루틴이 완료되었을 경우: 완료를 취소하는 로직 추가
+        console.log('📌 [createImprovedRoutineElement]: 독서 루틴 완료 상태에서 클릭 감지. 완료 취소 로직 실행.');
+        if (!confirm(`"${routine.name}" 루틴 완료를 취소하시겠습니까?`)) {
+            return;
+        }
+
+        const updatedFields = {
+            // 독서 루틴의 상태와 진행 상황을 초기화합니다.
+            value: routine.startPage - 1,
+            currentPage: routine.startPage - 1,
+            dailyReadPagesToday: 0,
+            dailyGoalMetToday: false,
+            status: null,
+            lastUpdatedDate: todayDateString
+        };
+        
+        // 포인트와 스트릭을 되돌리는 로직
+        if (routine.pointsGivenToday) {
+            updatedFields.streak = Math.max(0, (routine.streak || 0) - 1);
+            if (routine.areas && routine.basePoints) {
+                const newStats = { ...userStats };
+                routine.areas.forEach(areaId => {
+                    newStats[areaId] = Math.max(0, (newStats[areaId] || 0) - routine.basePoints);
+                });
+                await updateUserStatsInFirebase(newStats);
+            }
+            updatedFields.pointsGivenToday = false;
+        }
+
+        await updateRoutineInFirebase(routine.id, updatedFields);
+        showNotification('📖 독서 루틴 완료가 취소되었습니다.', 'warning');
+        
+    } else if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
+        // Yes/No, Time, 일반 Number 루틴의 완료 취소 로직 (기존 로직)
+        console.log('📌 [createImprovedRoutineElement]: 일반 루틴 완료 상태에서 클릭 감지. 완료 취소 로직 실행.');
+        const updatedFields = { value: routine.type === 'yesno' ? false : null, status: null };
+        if (routine.pointsGivenToday) {
+            updatedFields.streak = Math.max(0, (routine.streak || 0) - 1);
+            if (routine.areas && routine.basePoints) {
+                const newStats = { ...userStats };
+                routine.areas.forEach(areaId => {
+                    newStats[areaId] = Math.max(0, (newStats[areaId] || 0) - routine.basePoints);
+                });
+                await updateUserStatsInFirebase(newStats);
+            }
+            updatedFields.pointsGivenToday = false;
+        }
+        await updateRoutineInFirebase(routine.id, updatedFields);
+        showNotification('루틴 완료가 취소되었습니다.', 'warning');
+    } else if (!isSkipped) {
+        // 완료/진행 로직 (기존 로직)
+        console.log('📌 [createImprovedRoutineElement]: 미완료/진행 중 루틴 클릭 감지. 완료/진행 로직 실행.');
+        if (routine.type === 'yesno') {
+            const updatedFields = { value: true, status: null, pointsGivenToday: true, streak: (routine.streak || 0) + 1 };
+            if (routine.areas && routine.basePoints) {
+                const newStats = { ...userStats };
+                routine.areas.forEach(areaId => {
+                    newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
+                });
+                await updateUserStatsInFirebase(newStats);
             }
             await updateRoutineInFirebase(routine.id, updatedFields);
-            showNotification('루틴 완료가 취소되었습니다.', 'warning');
-        } else if (!isSkipped) {
-            if (routine.type === 'yesno') {
-                const updatedFields = { value: true, status: null, pointsGivenToday: true, streak: (routine.streak || 0) + 1 };
-                if (routine.areas && routine.basePoints) {
-                    const newStats = { ...userStats };
-                    routine.areas.forEach(areaId => {
-                        newStats[areaId] = (newStats[areaId] || 0) + routine.basePoints;
-                    });
-                    await updateUserStatsInFirebase(newStats);
-                }
-                await updateRoutineInFirebase(routine.id, updatedFields);
-                showCompletionEffect();
-                setTimeout(showCelebrationMessage, 300);
-            } else if (routine.type === 'number') {
-                showNumberInputModal(routine);
-            } else if (routine.type === 'time') {
-                showTimeInputModal(routine);
-            } else if (routine.type === 'reading') {
-                showReadingProgressModal(routine);
-            }
+            showCompletionEffect();
+            setTimeout(showCelebrationMessage, 300);
+        } else if (routine.type === 'number') {
+            showNumberInputModal(routine);
+        } else if (routine.type === 'time') {
+            showTimeInputModal(routine);
+        } else if (routine.type === 'reading') {
+            showReadingProgressModal(routine);
         }
-    });
+    }
+});
     return routineDiv;
 }
 // ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 완료 예정일 표시 위치 및 구조 수정 (기존 함수 전체 교체) ▲▲▲
@@ -2632,6 +2670,7 @@ function setupAllEventListeners() {
     document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
     
     // --- 각종 모달 버튼들 (setupModal을 통해 일괄 설정) ---
+    // ▼▼▼ 이 부분을 아래 코드로 교체해주세요 ▼▼▼
     setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
     setupModal('stepperInputModal', hideStepperModal, handleStepperConfirm, 'stepperConfirmBtn');
@@ -2642,7 +2681,7 @@ function setupAllEventListeners() {
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
     setupModal('addGoalModal', hideAddGoalModal, handleAddGoalConfirm, 'addGoalConfirm');
     setupModal('routineDetailModal', hideDetailStatsModal);
-
+    // ▲▲▲ 여기까지 교체 ▲▲▲
     // --- ESC로 모든 모달 닫기 ---
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -2662,29 +2701,51 @@ function setupAllEventListeners() {
     });
 }
 
+// ... (이전 코드 생략) ...
+
+// ▼▼▼ 이 함수를 아래 코드로 교체해주세요 ▼▼▼
 function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
     const modal = document.getElementById(modalId);
-    if (!modal) return;
+    if (!modal) {
+        console.warn(`⚠️ [setupModal]: ID가 "${modalId}"인 모달 요소를 찾을 수 없습니다. 이벤트 리스너 설정을 건너뜁니다.`);
+        return;
+    }
     
+    console.log(`📌 [setupModal]: 모달("${modalId}") 이벤트 리스너 설정 시작`);
+
     modal.querySelector('.modal-close')?.addEventListener('click', hideFn);
     modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
     modal.addEventListener('click', (e) => { 
         if (e.target === e.currentTarget) {
+            console.log(`📌 [setupModal]: 모달("${modalId}") 외부 클릭 감지, 닫기 함수 호출`);
             hideFn();
         }
     });
     
     if (confirmFn) {
-        modal.querySelector('.btn-confirm')?.addEventListener('click', confirmFn);
+        const confirmBtn = modal.querySelector('.btn-confirm');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', confirmFn);
+        } else {
+             console.warn(`⚠️ [setupModal]: 모달 "${modalId}"에서 'btn-confirm' 버튼을 찾을 수 없습니다.`);
+        }
     }
     if (confirmInputId) {
-        document.getElementById(confirmInputId)?.addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') {
-                confirmFn();
-            }
-        });
+        const inputElement = document.getElementById(confirmInputId);
+        if (inputElement) {
+            inputElement.addEventListener('keypress', (e) => { 
+                if (e.key === 'Enter') {
+                    console.log(`📌 [setupModal]: 'Enter' 키 입력 감지, 확인 함수 호출`);
+                    confirmFn();
+                }
+            });
+        } else {
+            console.warn(`⚠️ [setupModal]: ID가 "${confirmInputId}"인 입력 요소를 찾을 수 없습니다.`);
+        }
     }
+    console.log(`🏁 [setupModal]: 모달("${modalId}") 이벤트 리스너 설정 완료`);
 }
+// ▲▲▲ 여기까지 교체 ▲▲▲
 // ▲▲▲ 여기까지 08/17(수정일) 모든 이벤트 리스너를 재구성한 최종 버전 ▲▲▲
 
 // ▼▼▼ 이 함수를 아래 코드로 교체하세요 ▼▼▼
