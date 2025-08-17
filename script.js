@@ -2403,50 +2403,70 @@ function hideAddGoalModal() {
 }
 
 // ▼▼▼ 2025-08-17(수정일) populateGoalModalFields 장군 복원 ▼▼▼
+// ▼▼▼ 08/18(수정일) populateGoalModalFields 최종 완전판 (비밀 임무 포함) ▼▼▼
 function populateGoalModalFields(goal = null) {
     console.log('📌 [populateGoalModalFields]: 폼 필드 채우기 시작. 전달된 목표:', goal);
 
-    // 영역 <select> 목록 생성
-    const sel = document.getElementById('goalArea');
-    sel.innerHTML = '';
-    userAreas.forEach(a => {
-        const opt = document.createElement('option');
-        opt.value = a.id;
-        opt.textContent = a.name;
-        sel.appendChild(opt);
-    });
+    const safeSetValue = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value;
+        } else {
+            console.warn(`[safeSetValue]: ID가 '${id}'인 요소를 찾을 수 없습니다. 값을 설정할 수 없습니다.`);
+        }
+    };
 
-    // 연결 가능한 루틴 <checkbox> 목록 생성
-    const container = document.getElementById('linkableRoutines');
-    container.innerHTML = '';
-    sampleRoutines
-        .filter(r => r.type === 'number' || r.type === 'reading')
-        .forEach(r => {
-            const id = `link-r-${r.id}`;
-            const label = `${r.name} (${getTypeLabel(r.type)})`;
-            const item = document.createElement('div');
-            item.className = 'area-checkbox-item';
-            item.innerHTML = `<input type="checkbox" id="${id}" value="${r.id}" /> <label for="${id}">${label}</label>`;
-            container.appendChild(item);
+    // --- ▼▼▼ 비밀 임무 1: '연결 영역' 드롭다운 목록 생성 ▼▼▼ ---
+    const selArea = document.getElementById('goalArea');
+    if (selArea) {
+        selArea.innerHTML = ''; // 기존 목록 초기화
+        userAreas.forEach(area => {
+            const opt = document.createElement('option');
+            opt.value = area.id;
+            opt.textContent = area.name;
+            selArea.appendChild(opt);
         });
+    }
+    // --- ▲▲▲ 비밀 임무 1 종료 ▲▲▲ ---
+
+    // --- ▼▼▼ 비밀 임무 2: '루틴 연결하기' 체크박스 목록 생성 ▼▼▼ ---
+    const containerRoutines = document.getElementById('linkableRoutines');
+    if (containerRoutines) {
+        containerRoutines.innerHTML = ''; // 기존 목록 초기화
+        sampleRoutines
+            .filter(r => r.type === 'number' || r.type === 'reading') // 숫자/독서 타입만 필터링
+            .forEach(r => {
+                const id = `link-r-${r.id}`;
+                const label = `${r.name} (${getTypeLabel(r.type)})`;
+                const item = document.createElement('div');
+                item.className = 'area-checkbox-item';
+                item.innerHTML = `<input type="checkbox" id="${id}" value="${r.id}" /> <label for="${id}">${label}</label>`;
+                containerRoutines.appendChild(item);
+            });
+    }
+    // --- ▲▲▲ 비밀 임무 2 종료 ▲▲▲ ---
+
+    const goalType = goal ? goal.goalType : 'units';
+    safeSetValue('goalTypeSelect', goalType);
     
-    const goalUpdateMethodSelect = document.getElementById('goalUpdateMethod');
-
     if (goal) {
-        // [수정 모드]: 기존 목표 데이터로 폼을 채웁니다.
+        // [수정 모드]
         console.log('📝 수정 모드: 기존 데이터로 폼을 채웁니다.');
-        document.getElementById('goalName').value = goal.name || '';
-        document.getElementById('goalTargetValue').value = goal.targetValue || '';
-        document.getElementById('goalCurrentValue').value = goal.currentValue || 0;
-        document.getElementById('goalUnit').value = goal.unit || '';
-        document.getElementById('goalStartDate').value = goal.startDate || '';
-        document.getElementById('goalEndDate').value = goal.endDate || '';
-        document.getElementById('goalArea').value = goal.area || '';
-        document.getElementById('goalDirection').value = goal.direction || 'increase';
-
-
-        // 저장된 '진행 방식' 값을 드롭다운에 설정합니다.
-        goalUpdateMethodSelect.value = goal.updateMethod || 'accumulate';
+        if (goal.goalType === 'points') {
+            safeSetValue('goalNamePoints', goal.name || '');
+            safeSetValue('goalTargetValuePoints', goal.targetValue || '');
+        } else { // units
+            safeSetValue('goalNameUnits', goal.name || '');
+            safeSetValue('goalTargetValueUnits', goal.targetValue || '');
+            safeSetValue('goalCurrentValue', goal.currentValue || 0);
+            safeSetValue('goalUnit', goal.unit || '');
+            safeSetValue('goalDirection', goal.direction || 'increase');
+            safeSetValue('goalUpdateMethod', goal.updateMethod || 'accumulate');
+        }
+        
+        safeSetValue('goalStartDate', goal.startDate || '');
+        safeSetValue('goalEndDate', goal.endDate || '');
+        safeSetValue('goalArea', goal.area || '');
 
         if (goal.linkedRoutines && Array.isArray(goal.linkedRoutines)) {
             goal.linkedRoutines.forEach(routineId => {
@@ -2455,24 +2475,22 @@ function populateGoalModalFields(goal = null) {
             });
         }
     } else {
-        // [추가 모드]: 폼을 초기화합니다.
+        // [추가 모드]
         console.log('✨ 추가 모드: 폼을 초기화합니다.');
-        document.getElementById('goalName').value = '';
-        document.getElementById('goalTargetValue').value = '';
-        document.getElementById('goalCurrentValue').value = 0;
-        document.getElementById('goalUnit').value = '';
-        document.getElementById('goalStartDate').value = todayDateString;
-        document.getElementById('goalEndDate').value = '';
-        document.getElementById('goalDirection').value = 'increase';
-
-        
-        // '진행 방식'을 기본값으로 설정합니다.
-        goalUpdateMethodSelect.value = 'accumulate';
+        safeSetValue('goalNameUnits', '');
+        safeSetValue('goalTargetValueUnits', '');
+        safeSetValue('goalCurrentValue', 0);
+        safeSetValue('goalUnit', '');
+        safeSetValue('goalDirection', 'increase');
+        safeSetValue('goalUpdateMethod', 'accumulate');
+        safeSetValue('goalNamePoints', '');
+        safeSetValue('goalTargetValuePoints', '');
+        safeSetValue('goalStartDate', todayDateString);
+        safeSetValue('goalEndDate', '');
     }
     console.log('🏁 [populateGoalModalFields]: 폼 필드 설정 완료');
 }
-// ▲▲▲ 여기까지 2025-08-17(수정일) populateGoalModalFields 장군 복원 ▲▲▲
-
+// ▲▲▲ 여기까지 08/18(수정일) populateGoalModalFields 최종 완전판 (비밀 임무 포함) ▲▲▲
 // --- 페이지 네비게이션 (Page Navigation) ---
 
 function showHomePage() {
