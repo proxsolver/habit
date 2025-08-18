@@ -420,7 +420,7 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 // script.js의 기존 calculateStats 함수를 이 코드로 교체하세요.
 
-// ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (모든 암호 해제) ▼▼▼
+// ▼▼▼ 08/18(수정일) 주간 활동 기록이 표시되지 않는 버그 수정 ▼▼▼
 async function calculateStats(period = 'weekly') {
     if (!currentUser) return null;
 
@@ -432,6 +432,7 @@ async function calculateStats(period = 'weekly') {
     const histories = historySnapshot.docs.map(doc => {
         const data = doc.data();
         data.dateObj = new Date(data.date);
+        // 시간 정보를 제거하여 날짜만 비교하도록 표준화
         data.dateObj.setHours(0, 0, 0, 0);
         return data;
     });
@@ -446,13 +447,11 @@ async function calculateStats(period = 'weekly') {
 
     // 3. 보고 기간에 따른 분기 처리 (바 차트 데이터)
     if (period === 'monthly') {
-        // --- ▼▼▼ 월간 보고 시 '주차별' 데이터 집계 로직 ▼▼▼ ---
         dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
         dateFrom.setHours(0, 0, 0, 0);
 
         console.log('📊 [calculateStats]: 월간 모드 - 주차별 데이터 집계 시작');
         for (let i = 6; i >= 0; i--) {
-            // 이번 주를 기준으로 i주 전의 시작일(일요일)과 종료일(토요일)을 계산합니다.
             const weekEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - (i * 7) + 6);
             const weekStartDate = new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate() - 6);
             weekStartDate.setHours(0, 0, 0, 0);
@@ -462,26 +461,24 @@ async function calculateStats(period = 'weekly') {
             barChartData.push(weeklyCompletions);
             barChartLabels.push(`${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}주`);
         }
-        // --- ▲▲▲ 월간 보고 로직 종료 ▲▲▲ ---
     } else { // 'weekly'
-        // --- ▼▼▼ 주간 보고 시 '일별' 데이터 집계 로직 (암호 해제) ▼▼▼ ---
         dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
         dateFrom.setHours(0, 0, 0, 0);
 
         console.log('📊 [calculateStats]: 주간 모드 - 일별 데이터 집계 시작');
-        barChartData = [0, 0, 0, 0, 0, 0, 0];
+        barChartData = []; // 초기화를 빈 배열로 변경
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
         for (let i = 0; i < 7; i++) {
             const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
             barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
             
+            // ★★★ 핵심 수정: 엄격한 시간 비교(===) 대신, 날짜가 같은지만 비교하도록 변경 ★★★
             const dailyCompletions = histories.filter(h => h.dateObj.getTime() === date.getTime()).length;
-            barChartData[i] = dailyCompletions;
+            barChartData.push(dailyCompletions);
         }
-        // --- ▲▲▲ 주간 보고 로직 종료 ▲▲▲ ---
     }
-
+    
     // 4. 기타 핵심 통계 집계
     let periodCompletions = 0;
     let periodTotalRoutines = 0;
