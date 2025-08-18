@@ -57,6 +57,7 @@
         /* ▲▲▲ 여기까지 08/18(수정일) 아이폰 레이아웃 깨짐 방지 코드 ▲▲▲ */
 
 
+        /* ▼▼▼ 08/18(수정일) body의 불필요한 min-width 제거 ▼▼▼ */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
@@ -69,8 +70,14 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-        }
 
+            /* min-width: 1171px;  <-- 만약 이와 같은 라인이 있다면 반드시 삭제하십시오! */
+
+            /* 아래 두 라인을 추가하여 body의 너비를 화면에 맞춥니다. */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* ▲▲▲ 여기까지 08/18(수정일) body의 불필요한 min-width 제거 ▲▲▲ */
         /* ▼▼▼ 08/18(수정일) 전장 규격 통일을 위한 .container 패딩 수정 ▼▼▼ */
         .container {
             max-width: 480px;
