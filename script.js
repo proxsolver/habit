@@ -2372,7 +2372,7 @@ async function renderGoalCompassPage() {
         };
             
 
-        };
+        
     } catch (error) {
         console.error("목표 렌더링 실패:", error);
         list.innerHTML = `
