@@ -319,6 +319,16 @@ async function updateGoalInFirebase(goalId, updatedFields) {
     await goalRef.update({ ...updatedFields, updatedAt: new Date() });
 }
 
+// ▼▼▼ 08/18(수정일) 목표 완료 처리 함수 추가 ▼▼▼
+async function completeGoalInFirebase(goalId) {
+    if (!currentUser) return;
+    const goalRef = db.collection('users').doc(currentUser.uid).collection('goals').doc(goalId);
+    await goalRef.update({ status: 'completed', completedAt: new Date() });
+}
+// ▲▲▲ 여기까지 08/18(수정일) 목표 완료 처리 함수 추가 ▲▲▲
+
+
+
 async function deleteGoalFromFirebase(goalId) {
     if (!currentUser) return;
     const goalRef = db.collection('users').doc(currentUser.uid).collection('goals').doc(goalId);
@@ -2209,14 +2219,17 @@ async function renderGoalCompassPage() {
     list.innerHTML = '<div class="empty-state"><div class="empty-state-title">목표를 불러오는 중...</div></div>'; // 로딩 표시
 
     try {
-        // .get()을 사용하여 데이터를 한 번만 가져옵니다.
         const goals = await getUserGoals(currentUser.uid);
-        list.innerHTML = ''; // 로딩 표시 제거
+        list.innerHTML = '';
+        
+        // 1. 진행 중인 목표와 완료된 목표를 분리합니다.
+        const activeGoals = goals.filter(g => g.status !== 'completed');
+        const completedGoals = goals.filter(g => g.status === 'completed');
 
-        if (!goals.length) {
-            list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
+        if (activeGoals.length === 0) {
+            list.innerHTML = `<div class="empty-state">...</div>`;
         } else {
-            goals.forEach(goal => {
+            activeGoals.forEach(goal => {
                 // ★★★ 핵심: '작전 방향'에 따라 진행률(pct) 계산식을 분기합니다. ★★★
                 let pct = 0;
                 if (goal.direction === 'decrease') {
@@ -2240,25 +2253,25 @@ async function renderGoalCompassPage() {
 
                 const card = document.createElement('div');
                 card.className = 'goal-card';
+                let actionButtonsHTML = '';
+                // ★★★ 핵심: 목표 달성(100% 이상) 여부에 따라 다른 버튼을 표시 ★★★
+                if (pct >= 100) {
+                    card.classList.add('goal-achieved'); // 완료 스타일을 위한 클래스 추가
+                    actionButtonsHTML = `
+                        <button class="complete-btn" data-goal-id="${goal.id}">🏆 완료 처리</button>
+                    `;
+                } else {
+                    actionButtonsHTML = `
+                        <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
+                        <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+                    `;
+                }
+
                 card.innerHTML = `
                     <div class="goal-card-header">
                         <div style="font-weight:800;">${goal.name}</div>
-                        <div>
-                            <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
-                            <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
-                        </div>
-                    </div>
-                    <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
-                    <div class="goal-progress-wrap">
-                        <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
-                        <div style="flex:1;">
-                            <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
-                            <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
-                            <div style="color:#6b7280;">${ddayInfo.label}</div>
-                            <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
-                        </div>
-                    </div>
-                `;
+                        <div>${actionButtonsHTML}</div>
+                    </div>                `;
                 list.appendChild(card);
                 
                 const paceMsg = getPaceMessage(goal);

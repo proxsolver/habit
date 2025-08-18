@@ -2070,3 +2070,30 @@
     }
 }
 /* ▲▲▲ 여기까지 08/17(수정일) 독서 루틴 상세 정보 스타일 추가 ▲▲▲ */
+
+/* ▼▼▼ 08/18(수정일) 목표 달성 카드 및 완료 버튼 스타일 추가 ▼▼▼ */
+/* 달성된 목표 카드 스타일 */
+.goal-card.goal-achieved {
+    background: linear-gradient(135deg, #fef3c7, #fde68a); /* 금빛 그라데이션 */
+    border: 2px solid #f59e0b;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+}
+
+/* 완료 처리 버튼 스타일 */
+.complete-btn {
+    background: linear-gradient(135deg, var(--success), #16a34a);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.complete-btn:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+}
+/* ▲▲▲ 여기까지 08/18(수정일) 목표 달성 카드 및 완료 버튼 스타일 추가 ▲▲▲ */
