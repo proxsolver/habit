@@ -2114,20 +2114,67 @@
     box-shadow: var(--shadow-md);
 }
 /* ▲▲▲ 여기까지 08/18(수정일) 목표 달성 카드 및 완료 버튼 스타일 추가 ▲▲▲ */
-
-/* styles.css의 .section-card 스타일 정의 근처에 추가 */
-/* ▼▼▼ 08/18(수정일) 모든 하위 구역에 표준 패딩 적용 ▼▼▼ */
-/*
-  모든 페이지 레벨의 컨테이너에
-  동일한 좌우 패딩(여백)을 부여하여
-  전체적인 레이아웃 너비를 통일합니다.
-*/
-#main-app-content > .daily-progress,
-#main-app-content > .section-card,
-#dashboard-view,
-#goal-compass-page {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    box-sizing: border-box; /* 패딩이 너비에 영향을 주지 않도록 보장 */
+/* ▼▼▼ 08/19(수정일) 상단 헤더 및 하단 탭 바 스타일 추가 ▼▼▼ */
+/* 상단 헤더 */
+.app-header {
+    background-color: #fff;
+    padding: 10px 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    max-width: 480px;
+    margin: 0 auto;
 }
-/* ▲▲▲ 여기까지 08/18(수정일) 모든 하위 구역에 표준 패딩 적용 ▲▲▲ */
+.user-photo { width: 32px; height: 32px; border-radius: 50%; }
+.user-name { font-weight: 600; }
+.nav-btn-top {
+    background: none; border: none; font-size: 1.5rem; cursor: pointer;
+}
+
+/* 하단 탭 바 */
+.bottom-tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 100;
+    max-width: 480px;
+    margin: 0 auto;
+}
+.tab-item {
+    flex: 1;
+    padding: 8px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--gray-400);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: color 0.2s;
+}
+.tab-item:hover, .tab-item.active {
+    color: var(--primary);
+}
+.tab-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+/* 컨테이너 상단/하단 여백 확보 */
+.container {
+    padding-top: 60px; /* 상단 헤더 높이만큼 */
+    padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
+}
+/* ▲▲▲ 여기까지 08/19(수정일) 상단 헤더 및 하단 탭 바 스타일 추가 ▲▲▲ */

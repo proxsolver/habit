@@ -27,69 +27,84 @@ const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).p
 // ====================================================================
 // 3. 앱 시작점 (Application Entry Point)
 // ====================================================================
+// ▼▼▼ 08/19(수정일) 초기화 로직 안정화 ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
-    // UI 요소 변수 선언
+    // 1. 주요 UI 요소를 찾습니다.
     const userInfoDiv = document.getElementById('user-info');
     const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const userNameSpan = document.getElementById('user-name');
     const userPhotoImg = document.getElementById('user-photo');
     const mainAppContent = document.querySelector('.container');
-    const navButtons = document.querySelector('.navigation-buttons');
-    const provider = new firebase.auth.GoogleAuthProvider();
+    const bottomTabBar = document.querySelector('.bottom-tab-bar'); // 새로운 '하단 탭 바' 부대
+
     
-    // ▼▼▼ 구글 로그인 설정 개선 ▼▼▼
+    const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
-    
-    // 로그인 방식을 리다이렉트로 변경 (팝업 문제 해결)
-    loginBtn.addEventListener('click', async () => {
-        try {
-            // 모바일에서는 리다이렉트, 데스크톱에서는 팝업 시도
-            if (window.innerWidth <= 768) {
-                await firebase.auth().signInWithRedirect(provider);
-            } else {
-                await firebase.auth().signInWithPopup(provider);
-            }
-        } catch (error) {
-            console.error("Login failed:", error);
-            // 팝업이 실패하면 리다이렉트로 재시도
-            if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-                try {
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async () => {
+            try {
+                // 모바일(화면 폭 768px 이하)에서는 리다이렉트, 데스크톱에서는 팝업 시도
+                if (window.innerWidth <= 768) {
+                    console.log('📱 모바일 환경 감지. 리다이렉트 방식으로 로그인합니다.');
                     await firebase.auth().signInWithRedirect(provider);
-                } catch (redirectError) {
-                    console.error("Redirect login also failed:", redirectError);
-                    showNotification('로그인에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.', 'error');
+                } else {
+                    console.log('💻 데스크톱 환경 감지. 팝업 방식으로 로그인합니다.');
+                    await firebase.auth().signInWithPopup(provider);
+                }
+            } catch (error) {
+                console.error("Login failed:", error);
+                // 팝업이 차단되거나 사용자에 의해 닫혔을 경우, 리다이렉트로 재시도
+                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+                    console.log('팝업 실패. 리다이렉트 방식으로 재시도합니다.');
+                    try {
+                        await firebase.auth().signInWithRedirect(provider);
+                    } catch (redirectError) {
+                        console.error("Redirect login also failed:", redirectError);
+                        showNotification('로그인에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.', 'error');
+                    }
                 }
             }
-        }
-    });
-    // ▲▲▲ 여기까지 교체 ▲▲▲
+        });
+    } else {
+        console.warn('⚠️ [DOMContentLoaded] 경고: login-btn을 찾을 수 없습니다.');
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => firebase.auth().signOut());
+    } else {
+        console.warn('⚠️ [DOMContentLoaded] 경고: logout-btn을 찾을 수 없습니다.');
+    }
 
-    logoutBtn.addEventListener('click', () => firebase.auth().signOut());
+  // 3. Firebase 인증 상태 변경 감지 (핵심 수정)
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+        currentUser = user;
+        if (userInfoDiv) userInfoDiv.style.display = 'flex';
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (userNameSpan) userNameSpan.textContent = user.displayName;
+        if (userPhotoImg) userPhotoImg.src = user.photoURL;
+        if (mainAppContent) mainAppContent.style.opacity = 1;
+        // ★★★ 유령 부대(navButtons) 참조를 새로운 부대(bottomTabBar)로 교체 ★★★
+        if (bottomTabBar) bottomTabBar.style.display = 'flex';
+        
+        // 에러로 인해 실행되지 못했던 보급 명령을 다시 활성화합니다.
+        await loadAllDataForUser(currentUser.uid);
+        showHomePage();
 
-    // 로그인 상태 변경 감지
-    firebase.auth().onAuthStateChanged(async (user) => {
-        if (user) {
-            currentUser = user;
-            userInfoDiv.style.display = 'flex';
-            loginBtn.style.display = 'none';
-            userNameSpan.textContent = user.displayName;
-            userPhotoImg.src = user.photoURL;
-            mainAppContent.style.opacity = 1;
-            navButtons.style.display = 'flex';
-            await loadAllDataForUser(currentUser.uid);
-            showHomePage();
-        } else {
-            currentUser = null;
-            userInfoDiv.style.display = 'none';
-            loginBtn.style.display = 'block';
-            mainAppContent.style.opacity = 0.2;
-            navButtons.style.display = 'none';
-            sampleRoutines = []; userAreas = []; userStats = {};
-            renderRoutines();
-        }
-    });
+    } else {
+        currentUser = null;
+        if (userInfoDiv) userInfoDiv.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = 'block';
+        if (mainAppContent) mainAppContent.style.opacity = 0.2;
+        // ★★★ 유령 부대(navButtons) 참조를 새로운 부대(bottomTabBar)로 교체 ★★★
+        if (bottomTabBar) bottomTabBar.style.display = 'none';
+        
+        sampleRoutines = []; userAreas = []; userStats = {};
+        renderRoutines();
+    }
+});
 
     // 리다이렉트 결과 처리
     firebase.auth().getRedirectResult()
@@ -2605,19 +2620,49 @@ function showHomePage() {
     renderRoutines();
 }
 
+// ▼▼▼ 08/19(수정일) showManagePage 함수 완전 복원 ▼▼▼
 function showManagePage() {
+    console.log('📌 [showManagePage]: 관리 페이지 표시');
+
+    // --- 1. 페이지 전환 ---
     document.getElementById('main-app-content').style.display = 'block';
     document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('goal-compass-page').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
     document.getElementById('incomplete-section').style.display = 'none';
     document.getElementById('inprogress-section').style.display = 'none';
     document.getElementById('completed-section').style.display = 'none';
     document.getElementById('skipped-section').style.display = 'none';
-    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
-    document.getElementById('manage-section').style.display = 'block';
+    
+    const manageSection = document.getElementById('manage-section');
+    manageSection.style.display = 'block';
+
+    // --- 2. '루틴 추가' 버튼 동적 생성 ---
+    // 기존 버튼이 있다면 중복 생성을 막기 위해 먼저 제거합니다.
+    const existingAddBtn = manageSection.querySelector('.add-routine-btn-in-manage');
+    if (existingAddBtn) {
+        existingAddBtn.remove();
+    }
+    
+    const addRoutineBtn = document.createElement('button');
+    addRoutineBtn.id = 'addRoutineBtnInManagePage';
+    addRoutineBtn.className = 'btn add-routine-btn-in-manage'; // 식별을 위한 클래스 추가
+    addRoutineBtn.textContent = '➕ 새 루틴 추가하기';
+    addRoutineBtn.style.width = '100%';
+    addRoutineBtn.style.marginTop = '1.5rem';
+    
+    // 생성된 버튼에 모달 호출 임무 부여
+    addRoutineBtn.addEventListener('click', showAddRoutineModal);
+    
+    // '순서 저장' 버튼 앞에 '루틴 추가' 버튼을 배치합니다.
+    const saveOrderBtn = document.getElementById('saveOrderBtn');
+    manageSection.insertBefore(addRoutineBtn, saveOrderBtn);
+    
+    // --- 3. 관리 페이지 내용 렌더링 ---
     renderAreaStats();
     renderManagePage();
 }
+// ▲▲▲ 여기까지 08/19(수정일) showManagePage 함수 완전 복원 ▲▲▲
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
@@ -2977,12 +3022,57 @@ function showCelebrationMessage() {
 function setupAllEventListeners() {
     console.log('📌 [setupAllEventListeners]: 모든 이벤트 리스너 설정 시작');
 
-    // --- 네비게이션 버튼 ---
-    document.getElementById('navHomeBtn').addEventListener('click', showHomePage);
-    document.getElementById('navManageBtn').addEventListener('click', showManagePage);
-    document.getElementById('navAddRoutineBtn').addEventListener('click', showAddRoutineModal);
-    document.getElementById('navStatsBtn').addEventListener('click', showDashboardPage);
-    document.getElementById('navGoalCompassBtn').addEventListener('click', showGoalCompassPage);
+    // --- 임무 1: 하단 탭 바 명령 체계 구축 ---
+    const tabItems = document.querySelectorAll('.tab-item');
+    tabItems.forEach(button => {
+        button.addEventListener('click', () => {
+            tabItems.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            const pageName = button.dataset.page;
+            if (pageName === 'home') showHomePage();
+            else if (pageName === 'goal') showGoalCompassPage();
+            else if (pageName === 'stats') showDashboardPage();
+            else if (pageName === 'rewards') {
+                showNotification('보상 기능은 준비 중입니다.', 'info');
+            }
+        });
+    });
+
+    // --- 임무 2: 상단 관리(설정) 버튼 명령 체계 구축 ---
+    const navManageBtn = document.getElementById('navManageBtn');
+    if (navManageBtn) {
+        navManageBtn.addEventListener('click', showManagePage);
+    }
+
+    // --- 임무 3: 목표 유형 선택(드롭다운) UI 변경 명령 체계 구축 ---
+    const goalTypeSelect = document.getElementById('goalTypeSelect');
+    if (goalTypeSelect) {
+        goalTypeSelect.addEventListener('change', () => {
+            const unitsOptions = document.getElementById('goalUnitsOptions');
+            const pointsOptions = document.getElementById('goalPointsOptions');
+            if (unitsOptions && pointsOptions) {
+                if (goalTypeSelect.value === 'points') {
+                    unitsOptions.style.display = 'none';
+                    pointsOptions.style.display = 'block';
+                } else {
+                    unitsOptions.style.display = 'block';
+                    pointsOptions.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // --- 임무 4: 관리 페이지 내 버튼 명령 체계 구축 ---
+    const saveOrderBtn = document.getElementById('saveOrderBtn');
+    if(saveOrderBtn) {
+        saveOrderBtn.addEventListener('click', saveRoutineOrder);
+    }
+    const manageAreasBtn = document.getElementById('manageAreasBtn');
+    if(manageAreasBtn) {
+        manageAreasBtn.addEventListener('click', showManageAreasModal);
+    }
+
 
     // --- 통계 페이지 필터 버튼 ---
     document.getElementById('filter-weekly')?.addEventListener('click', () => {
@@ -3006,8 +3096,6 @@ function setupAllEventListeners() {
         document.getElementById('newReadingOptions').style.display = selectedType === 'reading' ? 'block' : 'none';
     });
     
-    // --- 관리 페이지 순서 저장 버튼 ---
-    document.getElementById('saveOrderBtn').addEventListener('click', saveRoutineOrder);
     
     // --- 각종 모달 버튼들 (setupModal을 통해 일괄 설정) ---
     // ▼▼▼ 이 부분을 아래 코드로 교체해주세요 ▼▼▼
@@ -3041,24 +3129,7 @@ function setupAllEventListeners() {
         });
     });
 
-    const goalTypeSelect = document.getElementById('goalTypeSelect');
-    if (goalTypeSelect) {
-        goalTypeSelect.addEventListener('change', () => {
-            const unitsOptions = document.getElementById('goalUnitsOptions');
-            const pointsOptions = document.getElementById('goalPointsOptions');
-            if (goalTypeSelect.value === 'points') {
-                unitsOptions.style.display = 'none';
-                pointsOptions.style.display = 'block';
-            } else {
-                unitsOptions.style.display = 'block';
-                pointsOptions.style.display = 'none';
-            }
-        });
-    }
-
 }
-
-// ... (이전 코드 생략) ...
 
 // ▼▼▼ 이 함수를 아래 코드로 교체해주세요 ▼▼▼
 function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
