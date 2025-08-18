@@ -473,7 +473,23 @@ async function calculateStats(period = 'weekly') {
             const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
             barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
             
-            const dailyCompletions = histories.filter(h => h.dateObj.getTime() === date.getTime()).length;
+            let dailyCompletions = 0;
+
+            // --- ▼▼▼ '나노 정찰 드론' 침투 시작 ▼▼▼ ---
+            histories.forEach(h => {
+                // 오늘 날짜(루프의 마지막 날)에 대해서만 모든 비교 과정을 감청합니다.
+                if (i === 6) { // i가 6일 때가 오늘입니다.
+                    console.log(
+                        `[정찰 보고] 아군 기록(${h.date}): ${h.dateObj.getTime()}`,
+                        `| 표적: ${date.getTime()}`,
+                        `| 일치 여부: ${h.dateObj.getTime() === date.getTime()}`
+                    );
+                }
+                if (h.dateObj.getTime() === date.getTime()) {
+                    dailyCompletions++;
+                }
+            });
+            // --- ▲▲▲ '나노 정찰 드론' 임무 종료 ▲▲▲ ---
             barChartData.push(dailyCompletions);
         }
     }
@@ -2000,11 +2016,13 @@ async function renderStatsPage() {
     weeklyChartInstance = new Chart(ctxBar, {
         type: 'bar',
         data: {
-            labels: stats.weeklyActivityLabels || [],
+            // ★★★ 핵심 수정 #1 ★★★
+            labels: stats.barChartLabels || [], // 'weeklyActivityLabels' -> 'barChartLabels'
             datasets: [{
                 label: '일일 완료 루틴 개수',
-                data: stats.weeklyActivityData || [],
-                backgroundColor: 'rgba(99, 102, 241, 0.7)', // indigo-500
+                // ★★★ 핵심 수정 #2 ★★★
+                data: stats.barChartData || [],   // 'weeklyActivityData' -> 'barChartData'
+                backgroundColor: 'rgba(99, 102, 241, 0.7)',
                 borderColor: 'rgba(99, 102, 241, 1)',
                 borderWidth: 1,
                 borderRadius: 4
