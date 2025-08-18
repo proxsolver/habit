@@ -416,11 +416,12 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 
 
-// 기존 calculateStats 관련 코드를 모두 지우고 아래 코드로 교체하세요.
+// ====================================================================
+// 6. 핸들러, 렌더링, 유틸리티 등 나머지 모든 함수
+// ====================================================================
 
-// script.js의 기존 calculateStats 함수를 이 코드로 교체하세요.
 
-// ▼▼▼ 08/18(수정일) 주간 활동 기록이 표시되지 않는 버그 수정 ▼▼▼
+// ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▼▼▼
 async function calculateStats(period = 'weekly') {
     if (!currentUser) return null;
 
@@ -431,22 +432,17 @@ async function calculateStats(period = 'weekly') {
     const historySnapshot = await historyQuery.get();
     const histories = historySnapshot.docs.map(doc => {
         const data = doc.data();
-        data.dateObj = new Date(data.date);
-        // 시간 정보를 제거하여 날짜만 비교하도록 표준화
-        data.dateObj.setHours(0, 0, 0, 0);
+        
+        // 'YYYY-MM-DD' 문자열을 KST 기준으로 정확히 파싱
+        const parts = data.date.split('-');
+        data.dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        
         return data;
     });
 
-    // ▼▼▼ 08/18(수정일) 도청 장치 #1 설치 ▼▼▼
-        console.log("--- 첩보: 아군 활동 기록 전체 목록 ---");
-        console.table(histories.map(h => ({ date: h.date, timestamp: h.dateObj.getTime() })));
-        console.log("--- 첩보: 보고 종료 ---");
-    // ▲▲▲ 여기까지 08/18(수정일) 도청 장치 #1 설치 ▲▲▲
-
-
     const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    
+    today.setHours(0, 0, 0, 0);
+
     // 2. 통계 계산 변수 초기화
     let barChartData = [];
     let barChartLabels = [];
@@ -455,9 +451,7 @@ async function calculateStats(period = 'weekly') {
     // 3. 보고 기간에 따른 분기 처리 (바 차트 데이터)
     if (period === 'monthly') {
         dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
-        dateFrom.setHours(0, 0, 0, 0);
-
-        console.log('📊 [calculateStats]: 월간 모드 - 주차별 데이터 집계 시작');
+        
         for (let i = 6; i >= 0; i--) {
             const weekEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - (i * 7) + 6);
             const weekStartDate = new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate() - 6);
@@ -468,23 +462,17 @@ async function calculateStats(period = 'weekly') {
             barChartData.push(weeklyCompletions);
             barChartLabels.push(`${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}주`);
         }
+
     } else { // 'weekly'
         dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
         dateFrom.setHours(0, 0, 0, 0);
 
-        console.log('📊 [calculateStats]: 주간 모드 - 일별 데이터 집계 시작');
-        barChartData = []; // 초기화를 빈 배열로 변경
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
         for (let i = 0; i < 7; i++) {
             const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
-
-            // ▼▼▼ 08/18(수정일) 도청 장치 #2 설치 ▼▼▼
-                console.log(`[첩보] ${i+1}일차 표적 탐색 - 날짜: ${date.toLocaleString()}, 타임스탬프: ${date.getTime()}`);
-            // ▲▲▲ 여기까지 08/18(수정일) 도청 장치 #2 설치 ▲▲▲
             barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
             
-            // ★★★ 핵심 수정: 엄격한 시간 비교(===) 대신, 날짜가 같은지만 비교하도록 변경 ★★★
             const dailyCompletions = histories.filter(h => h.dateObj.getTime() === date.getTime()).length;
             barChartData.push(dailyCompletions);
         }
@@ -545,7 +533,9 @@ async function calculateStats(period = 'weekly') {
     console.log("📊 [calculateStats]: 통계 계산 완료:", stats);
     return stats;
 }
-// ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (모든 암호 해제) ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▲▲▲
+
+
 
 
 // ====================================================================
