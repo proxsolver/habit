@@ -319,6 +319,16 @@ async function updateGoalInFirebase(goalId, updatedFields) {
     await goalRef.update({ ...updatedFields, updatedAt: new Date() });
 }
 
+// ▼▼▼ 08/18(수정일) 목표 완료 처리 함수 추가 ▼▼▼
+async function completeGoalInFirebase(goalId) {
+    if (!currentUser) return;
+    const goalRef = db.collection('users').doc(currentUser.uid).collection('goals').doc(goalId);
+    await goalRef.update({ status: 'completed', completedAt: new Date() });
+}
+// ▲▲▲ 여기까지 08/18(수정일) 목표 완료 처리 함수 추가 ▲▲▲
+
+
+
 async function deleteGoalFromFirebase(goalId) {
     if (!currentUser) return;
     const goalRef = db.collection('users').doc(currentUser.uid).collection('goals').doc(goalId);
@@ -2246,38 +2256,68 @@ async function showGoalCompassPage() {
 }
 // ▲▲▲ 여기까지 08/17(수정일) 불필요한 모달 기습 호출 제거 ▲▲▲
 
-// ▼▼▼ 08/17(수정일) renderGoalCompassPage 전우 완전 복원 ▼▼▼
+// ▼▼▼ 08/18(수정일) '명예의 전당' 표시 로직 추가 ▼▼▼
 async function renderGoalCompassPage() {
     if (!currentUser) return;
     const page = document.getElementById('goal-compass-page');
     const list = document.getElementById('goalsList');
-    list.innerHTML = '<div class="empty-state"><div class="empty-state-title">목표를 불러오는 중...</div></div>'; // 로딩 표시
+    const completedList = document.getElementById('completedGoalsList');
+    const activeSection = document.getElementById('activeGoalsSection');
+    const completedSection = document.getElementById('completedGoalsSection');
+    const showCompletedBtn = document.getElementById('showCompletedGoalsBtn');
+
+    list.innerHTML = '로딩 중...';
 
     try {
-        // .get()을 사용하여 데이터를 한 번만 가져옵니다.
         const goals = await getUserGoals(currentUser.uid);
-        list.innerHTML = ''; // 로딩 표시 제거
+        const activeGoals = goals.filter(g => g.status !== 'completed');
+        const completedGoals = goals.filter(g => g.status === 'completed');
 
-        if (!goals.length) {
-            list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
+        // --- 진행 중 목표 렌더링 (기존 로직과 거의 동일) ---
+        list.innerHTML = '';
+        if (activeGoals.length === 0) {
+            list.innerHTML = `<div class="empty-state">...</div>`;
         } else {
-            goals.forEach(goal => {
-                // ★★★ 핵심: '작전 방향'에 따라 진행률(pct) 계산식을 분기합니다. ★★★
+                activeGoals.forEach(goal => {
                 let pct = 0;
                 if (goal.direction === 'decrease') {
-                    // [감소 목표 계산식]
-                    const startValue = goal.startValue || 0;
+                    const startValue = goal.startValue || goal.currentValue;
                     const range = startValue - goal.targetValue;
                     const achieved = startValue - goal.currentValue;
                     if (range > 0) {
                         pct = Math.min(100, Math.max(0, Math.round((achieved / range) * 100)));
                     }
                 } else {
-                    // [증가 목표 계산식] (기존 방식)
                     if (goal.targetValue > 0) {
                         pct = Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100));
                     }
                 }
+
+                    // --- 완료된 목표(명예의 전당) 렌더링 ---
+                    completedList.innerHTML = '';
+                    if (completedGoals.length > 0) {
+                        showCompletedBtn.style.display = 'inline-block'; // 완료된 목표가 있을 때만 버튼 표시
+                        completedGoals.forEach(goal => {
+                            const card = document.createElement('div');
+                            card.className = 'goal-card goal-achieved'; // 완료 스타일 적용
+                            card.innerHTML = `
+                                <div class="goal-card-header">
+                                    <div style="font-weight:800;">🏆 ${goal.name}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                        완료일: ${new Date(goal.completedAt.seconds * 1000).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; text-align: center; font-weight: 600;">
+                                    최종 성과: ${goal.currentValue} / ${goal.targetValue} ${goal.unit || 'P'}
+                                </div>
+                            `;
+                            completedList.appendChild(card);
+                        });
+                    } else {
+                        showCompletedBtn.style.display = 'none';
+                    }
+
+
 
                 const deg = Math.round(360 * (pct / 100));
                 const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
@@ -2285,15 +2325,27 @@ async function renderGoalCompassPage() {
 
                 const card = document.createElement('div');
                 card.className = 'goal-card';
+                
+                let actionButtonsHTML = '';
+                if (pct >= 100) {
+                    card.classList.add('goal-achieved');
+                    actionButtonsHTML = `<button class="complete-btn" data-goal-id="${goal.id}">🏆 완료 처리</button>`;
+                } else {
+                    actionButtonsHTML = `
+                        <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
+                        <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+                    `;
+                }
+
+                // --- ▼▼▼ 이전에 누락되었던 '진척도 표시' HTML 부분 ▼▼▼ ---
                 card.innerHTML = `
                     <div class="goal-card-header">
                         <div style="font-weight:800;">${goal.name}</div>
-                        <div>
-                            <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
-                            <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
-                        </div>
+                        <div>${actionButtonsHTML}</div>
                     </div>
-                    <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">영역: ${getAreaName(goal.area)} · 기간: ${goal.startDate} ~ ${goal.endDate}</div>
+                    <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">
+                        ${goal.goalType === 'points' ? '포인트 목표' : `단위 목표 (${getAreaName(goal.area)})`} · 기간: ${goal.startDate} ~ ${goal.endDate}
+                    </div>
                     <div class="goal-progress-wrap">
                         <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
                         <div style="flex:1;">
@@ -2304,6 +2356,8 @@ async function renderGoalCompassPage() {
                         </div>
                     </div>
                 `;
+                // --- ▲▲▲ '진척도 표시' HTML 복원 완료 ▲▲▲ ---
+
                 list.appendChild(card);
                 
                 const paceMsg = getPaceMessage(goal);
@@ -2311,8 +2365,7 @@ async function renderGoalCompassPage() {
                 if (paceEl && paceMsg) paceEl.textContent = paceMsg;
             });
         }
-
-        // --- 이벤트 리스너 지휘관 ---
+        
         page.onclick = (e) => {
             console.log('📌 [GoalPage Click]:', e.target);
             // '+ 새 목표' 버튼 클릭 시
@@ -2340,7 +2393,31 @@ async function renderGoalCompassPage() {
                     showAddGoalModal(goalToEdit);
                 }
             }
+              // '완료 처리' 버튼 클릭 시
+             if (e.target.matches('.complete-btn')) {
+                const goalId = e.target.dataset.goalId;
+                console.log(`🏆 목표 완료 처리 요청: ${goalId}`);
+                if (confirm('이 목표를 완료 처리하고 보관하시겠습니까?')) {
+                    completeGoalInFirebase(goalId).then(() => {
+                        renderGoalCompassPage(); // 목록을 새로고침하여 완료된 목표를 사라지게 함
+                        showNotification('목표 달성을 축하합니다! 명예의 전당에 보관되었습니다.', 'success');
+            });
+                }
+            }
+            if (e.target.id === 'showCompletedGoalsBtn') {
+                activeSection.style.display = 'none';
+                completedSection.style.display = 'block';
+                document.getElementById('goalPageTitle').textContent = '🏆 명예의 전당';
+            }
+            if (e.target.id === 'showActiveGoalsBtn') {
+                activeSection.style.display = 'block';
+                completedSection.style.display = 'none';
+                document.getElementById('goalPageTitle').textContent = '🧭 목표 나침반';
+            }
         };
+            
+
+        
     } catch (error) {
         console.error("목표 렌더링 실패:", error);
         list.innerHTML = `
