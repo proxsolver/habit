@@ -2308,6 +2308,17 @@ async function renderGoalCompassPage() {
                     showAddGoalModal(goalToEdit);
                 }
             }
+              // '완료 처리' 버튼 클릭 시
+             if (e.target.matches('.complete-btn')) {
+                const goalId = e.target.dataset.goalId;
+                console.log(`🏆 목표 완료 처리 요청: ${goalId}`);
+                if (confirm('이 목표를 완료 처리하고 보관하시겠습니까?')) {
+                    completeGoalInFirebase(goalId).then(() => {
+                        renderGoalCompassPage(); // 목록을 새로고침하여 완료된 목표를 사라지게 함
+                        showNotification('목표 달성을 축하합니다! 명예의 전당에 보관되었습니다.', 'success');
+            });
+        }
+    }
         };
     } catch (error) {
         console.error("목표 렌더링 실패:", error);
