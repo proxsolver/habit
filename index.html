@@ -145,15 +145,31 @@
 <!-- ▼▼▼ 나침반 식별 위치 내용을 이 코드로 교체하세요 ▼▼▼ -->
 
 <div id="goal-compass-page" class="dashboard-container" style="display:none;">
-    <h1>🧭 목표 나침반</h1>
     <div class="flex" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <div style="font-weight:600; color:#6b7280;">장기 목표를 설정하고, 루틴을 연결해 보세요.</div>
-        <button id="openAddGoalBtn" class="btn">+ 새 목표</button>
-    </div>
-    <div id="goalsList" class="grid" style="display:grid; gap:1rem; grid-template-columns: 1fr;">
+        <h1 id="goalPageTitle">🧭 목표 나침반</h1>
+        <div>
+             <button id="showCompletedGoalsBtn" class="btn btn-secondary" style="display: none;">🏆 명예의 전당 보기</button>
+            <button id="openAddGoalBtn" class="btn">+ 새 목표</button>
         </div>
-</div>
+    </div>
+    
+    <div id="activeGoalsSection">
+        <div class="flex" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="font-weight:600; color:#6b7280;">장기 목표를 설정하고, 루틴을 연결해 보세요.</div>
+        </div>
+        <div id="goalsList" class="grid" style="display:grid; gap:1rem; grid-template-columns: 1fr;">
+        </div>
+    </div>
 
+    <div id="completedGoalsSection" style="display: none;">
+         <div class="flex" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="font-weight:600; color:#6b7280;">과거에 달성한 영광스러운 목표들입니다.</div>
+            <button id="showActiveGoalsBtn" class="btn btn-secondary">↩️ 진행 중 목표 보기</button>
+        </div>
+        <div id="completedGoalsList" class="grid" style="display:grid; gap:1rem; grid-template-columns: 1fr;">
+        </div>
+    </div>
+</div>
     </div> <div class="navigation-buttons">
         <button id="navHomeBtn" class="nav-btn home">🏠 홈</button>
         <button id="navManageBtn" class="nav-btn manage">⚙️ 관리</button>

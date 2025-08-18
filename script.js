@@ -2211,23 +2211,29 @@ async function showGoalCompassPage() {
 }
 // ▲▲▲ 여기까지 08/17(수정일) 불필요한 모달 기습 호출 제거 ▲▲▲
 
-// ▼▼▼ 08/18(수정일) 목표 진척도 상세 정보 표시 로직 복원 ▼▼▼
+// ▼▼▼ 08/18(수정일) '명예의 전당' 표시 로직 추가 ▼▼▼
 async function renderGoalCompassPage() {
     if (!currentUser) return;
     const page = document.getElementById('goal-compass-page');
     const list = document.getElementById('goalsList');
-    list.innerHTML = '<div class="empty-state"><div class="empty-state-title">목표를 불러오는 중...</div></div>';
+    const completedList = document.getElementById('completedGoalsList');
+    const activeSection = document.getElementById('activeGoalsSection');
+    const completedSection = document.getElementById('completedGoalsSection');
+    const showCompletedBtn = document.getElementById('showCompletedGoalsBtn');
+
+    list.innerHTML = '로딩 중...';
 
     try {
         const goals = await getUserGoals(currentUser.uid);
-        list.innerHTML = '';
-        
         const activeGoals = goals.filter(g => g.status !== 'completed');
+        const completedGoals = goals.filter(g => g.status === 'completed');
 
+        // --- 진행 중 목표 렌더링 (기존 로직과 거의 동일) ---
+        list.innerHTML = '';
         if (activeGoals.length === 0) {
-            list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
+            list.innerHTML = `<div class="empty-state">...</div>`;
         } else {
-            activeGoals.forEach(goal => {
+                activeGoals.forEach(goal => {
                 let pct = 0;
                 if (goal.direction === 'decrease') {
                     const startValue = goal.startValue || goal.currentValue;
@@ -2241,6 +2247,32 @@ async function renderGoalCompassPage() {
                         pct = Math.min(100, Math.round((goal.currentValue / goal.targetValue) * 100));
                     }
                 }
+
+                    // --- 완료된 목표(명예의 전당) 렌더링 ---
+                    completedList.innerHTML = '';
+                    if (completedGoals.length > 0) {
+                        showCompletedBtn.style.display = 'inline-block'; // 완료된 목표가 있을 때만 버튼 표시
+                        completedGoals.forEach(goal => {
+                            const card = document.createElement('div');
+                            card.className = 'goal-card goal-achieved'; // 완료 스타일 적용
+                            card.innerHTML = `
+                                <div class="goal-card-header">
+                                    <div style="font-weight:800;">🏆 ${goal.name}</div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                        완료일: ${new Date(goal.completedAt.seconds * 1000).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem; text-align: center; font-weight: 600;">
+                                    최종 성과: ${goal.currentValue} / ${goal.targetValue} ${goal.unit || 'P'}
+                                </div>
+                            `;
+                            completedList.appendChild(card);
+                        });
+                    } else {
+                        showCompletedBtn.style.display = 'none';
+                    }
+
+
 
                 const deg = Math.round(360 * (pct / 100));
                 const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
@@ -2325,8 +2357,21 @@ async function renderGoalCompassPage() {
                         renderGoalCompassPage(); // 목록을 새로고침하여 완료된 목표를 사라지게 함
                         showNotification('목표 달성을 축하합니다! 명예의 전당에 보관되었습니다.', 'success');
             });
-        }
-    }
+                }
+            }
+            if (e.target.id === 'showCompletedGoalsBtn') {
+                activeSection.style.display = 'none';
+                completedSection.style.display = 'block';
+                document.getElementById('goalPageTitle').textContent = '🏆 명예의 전당';
+            }
+            if (e.target.id === 'showActiveGoalsBtn') {
+                activeSection.style.display = 'block';
+                completedSection.style.display = 'none';
+                document.getElementById('goalPageTitle').textContent = '🧭 목표 나침반';
+            }
+        };
+            
+
         };
     } catch (error) {
         console.error("목표 렌더링 실패:", error);
