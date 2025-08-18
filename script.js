@@ -420,6 +420,20 @@ async function logRoutineHistory(routineId, dataToLog) {
 // 6. 핸들러, 렌더링, 유틸리티 등 나머지 모든 함수
 // ====================================================================
 
+// ▼▼▼ 08/18(수정일) ISO 8601 주차 번호 계산 함수 추가 ▼▼▼
+function getISOWeek(date) {
+    const tempDate = new Date(date.valueOf());
+    const dayNum = (date.getDay() + 6) % 7;
+    tempDate.setDate(tempDate.getDate() - dayNum + 3);
+    const firstThursday = tempDate.valueOf();
+    tempDate.setMonth(0, 1);
+    if (tempDate.getDay() !== 4) {
+        tempDate.setMonth(0, 1 + ((4 - tempDate.getDay()) + 7) % 7);
+    }
+    return 1 + Math.ceil((firstThursday - tempDate) / 604800000);
+}
+// ▲▲▲ 여기까지 08/18(수정일) ISO 8601 주차 번호 계산 함수 추가 ▲▲▲
+
 
 // ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▼▼▼
 async function calculateStats(period = 'weekly') {
@@ -460,8 +474,12 @@ async function calculateStats(period = 'weekly') {
 
             const weeklyCompletions = histories.filter(h => h.dateObj >= weekStartDate && h.dateObj <= weekEndDate).length;
             barChartData.push(weeklyCompletions);
-            barChartLabels.push(`${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}주`);
-        }
+            // ▼▼▼ 08/18(수정일) 주차 라벨 생성 방식 수정 ▼▼▼
+            // 기존 코드: barChartLabels.push(`${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}주`);
+            
+            // 수정 코드
+            const weekNumber = getISOWeek(weekStartDate);
+            barChartLabels.push(`${weekNumber}주차`);        }
 
     } else { // 'weekly'
         dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
