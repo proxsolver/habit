@@ -71,6 +71,7 @@
             user-select: none;
         }
 
+        /* ▼▼▼ 08/18(수정일) 전장 규격 통일을 위한 .container 패딩 수정 ▼▼▼ */
         .container {
             max-width: 480px;
             margin: 0 auto;
@@ -79,8 +80,10 @@
             position: relative;
             overflow-x: hidden;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
+            /* padding: 1.5rem;  <-- 이 줄을 삭제하거나 주석 처리 */
+            padding: 0; /* <-- 이 줄을 추가하여 좌우 여백을 제거합니다. */
         }
+        /* ▲▲▲ 여기까지 08/18(수정일) 전장 규격 통일을 위한 .container 패딩 수정 ▲▲▲ */
 
         /* 애니메이션 키프레임 */
         @keyframes fadeInUp {
@@ -2105,3 +2108,20 @@
     box-shadow: var(--shadow-md);
 }
 /* ▲▲▲ 여기까지 08/18(수정일) 목표 달성 카드 및 완료 버튼 스타일 추가 ▲▲▲ */
+
+/* styles.css의 .section-card 스타일 정의 근처에 추가 */
+/* ▼▼▼ 08/18(수정일) 모든 하위 구역에 표준 패딩 적용 ▼▼▼ */
+/*
+  모든 페이지 레벨의 컨테이너에
+  동일한 좌우 패딩(여백)을 부여하여
+  전체적인 레이아웃 너비를 통일합니다.
+*/
+#main-app-content > .daily-progress,
+#main-app-content > .section-card,
+#dashboard-view,
+#goal-compass-page {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    box-sizing: border-box; /* 패딩이 너비에 영향을 주지 않도록 보장 */
+}
+/* ▲▲▲ 여기까지 08/18(수정일) 모든 하위 구역에 표준 패딩 적용 ▲▲▲ */
