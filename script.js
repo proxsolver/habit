@@ -437,6 +437,13 @@ async function calculateStats(period = 'weekly') {
         return data;
     });
 
+    // ▼▼▼ 08/18(수정일) 도청 장치 #1 설치 ▼▼▼
+        console.log("--- 첩보: 아군 활동 기록 전체 목록 ---");
+        console.table(histories.map(h => ({ date: h.date, timestamp: h.dateObj.getTime() })));
+        console.log("--- 첩보: 보고 종료 ---");
+    // ▲▲▲ 여기까지 08/18(수정일) 도청 장치 #1 설치 ▲▲▲
+
+
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     
@@ -471,6 +478,10 @@ async function calculateStats(period = 'weekly') {
 
         for (let i = 0; i < 7; i++) {
             const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
+
+            // ▼▼▼ 08/18(수정일) 도청 장치 #2 설치 ▼▼▼
+                console.log(`[첩보] ${i+1}일차 표적 탐색 - 날짜: ${date.toLocaleString()}, 타임스탬프: ${date.getTime()}`);
+            // ▲▲▲ 여기까지 08/18(수정일) 도청 장치 #2 설치 ▲▲▲
             barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
             
             // ★★★ 핵심 수정: 엄격한 시간 비교(===) 대신, 날짜가 같은지만 비교하도록 변경 ★★★
@@ -478,7 +489,7 @@ async function calculateStats(period = 'weekly') {
             barChartData.push(dailyCompletions);
         }
     }
-    
+
     // 4. 기타 핵심 통계 집계
     let periodCompletions = 0;
     let periodTotalRoutines = 0;
