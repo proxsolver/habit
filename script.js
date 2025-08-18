@@ -2560,19 +2560,49 @@ function showHomePage() {
     renderRoutines();
 }
 
+// ▼▼▼ 08/19(수정일) showManagePage 함수 완전 복원 ▼▼▼
 function showManagePage() {
+    console.log('📌 [showManagePage]: 관리 페이지 표시');
+
+    // --- 1. 페이지 전환 ---
     document.getElementById('main-app-content').style.display = 'block';
     document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('goal-compass-page').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
     document.getElementById('incomplete-section').style.display = 'none';
     document.getElementById('inprogress-section').style.display = 'none';
     document.getElementById('completed-section').style.display = 'none';
     document.getElementById('skipped-section').style.display = 'none';
-    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
-    document.getElementById('manage-section').style.display = 'block';
+    
+    const manageSection = document.getElementById('manage-section');
+    manageSection.style.display = 'block';
+
+    // --- 2. '루틴 추가' 버튼 동적 생성 ---
+    // 기존 버튼이 있다면 중복 생성을 막기 위해 먼저 제거합니다.
+    const existingAddBtn = manageSection.querySelector('.add-routine-btn-in-manage');
+    if (existingAddBtn) {
+        existingAddBtn.remove();
+    }
+    
+    const addRoutineBtn = document.createElement('button');
+    addRoutineBtn.id = 'addRoutineBtnInManagePage';
+    addRoutineBtn.className = 'btn add-routine-btn-in-manage'; // 식별을 위한 클래스 추가
+    addRoutineBtn.textContent = '➕ 새 루틴 추가하기';
+    addRoutineBtn.style.width = '100%';
+    addRoutineBtn.style.marginTop = '1.5rem';
+    
+    // 생성된 버튼에 모달 호출 임무 부여
+    addRoutineBtn.addEventListener('click', showAddRoutineModal);
+    
+    // '순서 저장' 버튼 앞에 '루틴 추가' 버튼을 배치합니다.
+    const saveOrderBtn = document.getElementById('saveOrderBtn');
+    manageSection.insertBefore(addRoutineBtn, saveOrderBtn);
+    
+    // --- 3. 관리 페이지 내용 렌더링 ---
     renderAreaStats();
     renderManagePage();
 }
+// ▲▲▲ 여기까지 08/19(수정일) showManagePage 함수 완전 복원 ▲▲▲
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
@@ -2996,6 +3026,31 @@ function setupAllEventListeners() {
         });
     });
 
+    // --- 새로운 하단 탭 바 이벤트 리스너 ---
+    const tabItems = document.querySelectorAll('.tab-item');
+    tabItems.forEach(button => {
+        button.addEventListener('click', () => {
+            // 모든 버튼에서 active 클래스 제거
+            tabItems.forEach(btn => btn.classList.remove('active'));
+            // 클릭된 버튼에만 active 클래스 추가
+            button.classList.add('active');
+            
+            // 페이지 전환
+            const pageName = button.dataset.page;
+            if (pageName === 'home') showHomePage();
+            else if (pageName === 'goal') showGoalCompassPage();
+            else if (pageName === 'stats') showDashboardPage();
+            else if (pageName === 'rewards') {
+                // 아직 보상 페이지가 없으므로 알림만 표시
+                showNotification('보상 기능은 준비 중입니다.', 'info');
+            }
+        });
+    });
+
+    // --- 새로운 상단 관리 버튼 이벤트 리스너 ---
+    document.getElementById('navManageBtn').addEventListener('click', showManagePage);
+
+
     const goalTypeSelect = document.getElementById('goalTypeSelect');
     if (goalTypeSelect) {
         goalTypeSelect.addEventListener('change', () => {
@@ -3012,8 +3067,6 @@ function setupAllEventListeners() {
     }
 
 }
-
-// ... (이전 코드 생략) ...
 
 // ▼▼▼ 이 함수를 아래 코드로 교체해주세요 ▼▼▼
 function setupModal(modalId, hideFn, confirmFn = null, confirmInputId = null) {
