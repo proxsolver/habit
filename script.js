@@ -420,11 +420,11 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 // script.js의 기존 calculateStats 함수를 이 코드로 교체하세요.
 
-// ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (모든 로직 포함) ▼▼▼
+// ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (모든 암호 해제) ▼▼▼
 async function calculateStats(period = 'weekly') {
     if (!currentUser) return null;
 
-    // --- 1. 모든 활동 기록(history) 데이터 수집 ---
+    // 1. 모든 활동 기록(history) 데이터 수집
     const historyQuery = db.collectionGroup('history')
                            .where('__name__', '>=', `users/${currentUser.uid}/`)
                            .where('__name__', '<', `users/${currentUser.uid}0/`);
@@ -439,36 +439,57 @@ async function calculateStats(period = 'weekly') {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     
-    // --- 2. 통계 계산 변수 초기화 ---
-    let periodCompletions = 0;
-    let periodTotalRoutines = 0;
-    const areaPoints = { health: 0, relationships: 0, work: 0 };
-    const areaCompletions = { health: 0, relationships: 0, work: 0 };
-    let totalPoints = 0;
+    // 2. 통계 계산 변수 초기화
     let barChartData = [];
     let barChartLabels = [];
     let dateFrom;
 
-    // --- 3. 보고 기간에 따른 분기 처리 (바 차트 데이터) ---
+    // 3. 보고 기간에 따른 분기 처리 (바 차트 데이터)
     if (period === 'monthly') {
+        // --- ▼▼▼ 월간 보고 시 '주차별' 데이터 집계 로직 ▼▼▼ ---
         dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
         dateFrom.setHours(0, 0, 0, 0);
 
         console.log('📊 [calculateStats]: 월간 모드 - 주차별 데이터 집계 시작');
         for (let i = 6; i >= 0; i--) {
-            // ... (주차별 바 차트 데이터 집계 로직, 이전과 동일) ...
+            // 이번 주를 기준으로 i주 전의 시작일(일요일)과 종료일(토요일)을 계산합니다.
+            const weekEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - (i * 7) + 6);
+            const weekStartDate = new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate() - 6);
+            weekStartDate.setHours(0, 0, 0, 0);
+            weekEndDate.setHours(23, 59, 59, 999);
+
+            const weeklyCompletions = histories.filter(h => h.dateObj >= weekStartDate && h.dateObj <= weekEndDate).length;
+            barChartData.push(weeklyCompletions);
+            barChartLabels.push(`${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}주`);
         }
+        // --- ▲▲▲ 월간 보고 로직 종료 ▲▲▲ ---
     } else { // 'weekly'
+        // --- ▼▼▼ 주간 보고 시 '일별' 데이터 집계 로직 (암호 해제) ▼▼▼ ---
         dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
         dateFrom.setHours(0, 0, 0, 0);
 
         console.log('📊 [calculateStats]: 주간 모드 - 일별 데이터 집계 시작');
-        // ... (일별 바 차트 데이터 집계 로직, 이전과 동일) ...
+        barChartData = [0, 0, 0, 0, 0, 0, 0];
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
+            barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
+            
+            const dailyCompletions = histories.filter(h => h.dateObj.getTime() === date.getTime()).length;
+            barChartData[i] = dailyCompletions;
+        }
+        // --- ▲▲▲ 주간 보고 로직 종료 ▲▲▲ ---
     }
 
-    // --- ▼▼▼ 이전에 누락되었던 '비밀 임무' 시작 ▼▼▼ ---
-    // 4. 기간 내 총 루틴 개수 계산
-    const totalDays = Math.round((today - dateFrom) / (1000 * 60 * 60 * 24));
+    // 4. 기타 핵심 통계 집계
+    let periodCompletions = 0;
+    let periodTotalRoutines = 0;
+    const areaPoints = { health: 0, relationships: 0, work: 0 };
+    const areaCompletions = { health: 0, relationships: 0, work: 0 };
+    let totalPoints = 0;
+
+    const totalDays = Math.ceil((today.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24));
     for (let i = 0; i < totalDays; i++) {
         const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
         const dayOfWeek = date.getDay();
@@ -486,19 +507,13 @@ async function calculateStats(period = 'weekly') {
         });
     }
 
-    // 5. 기록 기반 핵심 통계 집계
     histories.forEach(hist => {
-        // 기간 필터링
         if (hist.dateObj < dateFrom) return;
-
         periodCompletions++;
-        
         const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId);
         if (parentRoutine && parentRoutine.areas) {
             parentRoutine.areas.forEach(areaId => {
-                if (areaCompletions[areaId] !== undefined) {
-                    areaCompletions[areaId]++;
-                }
+                if (areaCompletions[areaId] !== undefined) areaCompletions[areaId]++;
                 if (areaPoints[areaId] !== undefined && hist.pointsEarned) {
                     areaPoints[areaId] += hist.pointsEarned;
                     totalPoints += hist.pointsEarned;
@@ -508,8 +523,8 @@ async function calculateStats(period = 'weekly') {
     });
 
     const completionRate = periodTotalRoutines > 0 ? Math.round((periodCompletions / periodTotalRoutines) * 100) : 0;
-    // --- ▲▲▲ '비밀 임무' 종료 ▲▲▲ ---
 
+    // 5. 최종 보고서 작성
     const stats = {
         completionRate,
         totalPoints,
@@ -522,7 +537,7 @@ async function calculateStats(period = 'weekly') {
     console.log("📊 [calculateStats]: 통계 계산 완료:", stats);
     return stats;
 }
-// ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (모든 로직 포함) ▲▲▲
+// ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (모든 암호 해제) ▲▲▲
 
 
 // ====================================================================
