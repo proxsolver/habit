@@ -568,7 +568,7 @@
 /* ▼▼▼ 08/19(수정일) 루틴 타입 아이콘 여백 수정 ▼▼▼ */
     .type-icon {
         font-size: 1rem;
-        margin-right: 0.5rem;
+        margin-right: 0.2rem;
         opacity: 0.8;
         transition: all 0.3s ease;
     }
