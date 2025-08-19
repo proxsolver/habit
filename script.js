@@ -37,8 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const userPhotoImg = document.getElementById('user-photo');
     const mainAppContent = document.querySelector('.container');
     const bottomTabBar = document.querySelector('.bottom-tab-bar'); // 새로운 '하단 탭 바' 부대
-    const provider = new firebase.auth.GoogleAuthProvider();
-
     
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
