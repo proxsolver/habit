@@ -1563,8 +1563,8 @@
 
     /* ✨ 대시보드 스타일 새로 추가 시작 ✨ */
 
-/* ▼▼▼ 기존의 모든 .dashboard-container 스타일을 삭제하고 아래 코드로 교체하세요 ▼▼▼ */
-.dashboard-container {
+/* ▼▼▼ 기존의 모든 page-container스타일을 삭제하고 아래 코드로 교체하세요 ▼▼▼ */
+page-container{
 background-color: #ffffff;
 border-radius: 1rem; /* rounded-xl */
 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
@@ -1575,14 +1575,14 @@ margin-top: 20px;
 overflow-y: visible; /* 내용이 길어지면 내부 스크롤 대신 페이지 전체가 스크롤되도록 설정 */
 }
 /* ▲▲▲ 여기까지 교체 ▲▲▲ */
-    .dashboard-container .progress-bar-container { /* Specificity for dashboard's progress bar */
+    .progress-bar-container { /* Specificity for dashboard's progress bar */
         width: 100%;
         background-color: #e5e7eb; /* gray-200 */
         border-radius: 9999px; /* rounded-full */
         height: 1.25rem; /* h-5 */
         overflow: hidden;
     }
-    .dashboard-container .progress-bar-fill { /* Specificity for dashboard's progress bar */
+     .progress-bar-fill { /* Specificity for dashboard's progress bar */
         height: 100%;
         background-color: #22c55e; /* green-500 */
         border-radius: 9999px; /* rounded-full */
@@ -1673,34 +1673,34 @@ overflow-y: visible; /* 내용이 길어지면 내부 스크롤 대신 페이지
     /* 통계 페이지 반응형 개선 */
 
 
-.dashboard-container h2 {
+page-containerh2 {
 margin-bottom: 0.5rem !important;
 }
 
-.dashboard-container .grid {
+page-container.grid {
 margin-bottom: 2rem;
 }
 
 /* 차트 컨테이너 반응형 */
-.dashboard-container canvas {
+page-containercanvas {
 max-height: 300px;
 }
 
 @media (max-width: 480px) {
-.dashboard-container {
+page-container{
     padding: 1rem !important;
 }
 
-.dashboard-container h1 {
+page-containerh1 {
     font-size: 1.5rem !important;
     margin-bottom: 1rem !important;
 }
 
-.dashboard-container h2 {
+page-containerh2 {
     font-size: 1.1rem !important;
 }
 
-.dashboard-container .grid {
+page-container.grid {
     grid-template-columns: 1fr !important;
 }
 }
@@ -2166,15 +2166,12 @@ padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
     white-space: nowrap; /* 줄바꿈을 하지 않도록 강제합니다. */
 }
 /* ▲▲▲ 여기까지 08/19(수정일) 목표 카드 제목 줄바꿈 방지 ▲▲▲ */
-/* ▼▼▼ 08/19(수정일) 편집/삭제 버튼 '고정 너비'로 규격 통일 ▼▼▼ */
+/* ▼▼▼ 08/19(수정일) 편집/삭제 버튼 크기 통일 ▼▼▼ */
 .edit-btn, .delete-btn {
-    width: 60px; /* 고정 너비를 부여합니다. */
-    min-width: auto; /* 기존 min-width를 초기화합니다. */
-    padding: 8px 0; /* 좌우 패딩을 0으로 하여 너비 계산의 변수를 제거합니다. */
-    text-align: center;
-    box-sizing: border-box; /* 패딩과 보더가 너비에 영향을 주지 않도록 보장합니다. */
+    min-width: 50px; /* 최소 너비를 50px로 설정합니다. */
+    text-align: center; /* 텍스트를 중앙 정렬합니다. */
 }
-/* ▲▲▲ 여기까지 08/19(수정일) 편집/삭제 버튼 '고정 너비'로 규격 통일 ▲▲▲ */
+/* ▲▲▲ 여기까지 08/19(수정일) 편집/삭제 버튼 크기 통일 ▲▲▲ */
 /* ▼▼▼ 08/19(수정일) 목표 페이지 신규 헤더 스타일 추가 ▼▼▼ */
 .goal-page-header {
     margin-bottom: 1.5rem;
