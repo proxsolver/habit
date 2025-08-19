@@ -2257,19 +2257,6 @@ function createSimpleHeatmap(container, historyData) {
 // ▲▲▲ 여기까지 교체 ▲▲▲
 
 
-// ▼▼▼ 08/17(수정일) 불필요한 모달 기습 호출 제거 ▼▼▼
-async function showGoalCompassPage() {
-    console.log('📌 [showGoalCompassPage]: 나침반 페이지 표시');
-    document.getElementById('main-app-content').style.display = 'none';
-    document.getElementById('dashboard-view').style.display = 'none';
-    document.getElementById('goal-compass-page').style.display = 'block';
-    
-    // 아래 라인은 '+ 새 목표' 버튼이 눌렸을 때만 호출되어야 하므로 삭제합니다.
-    // showAddGoalModal(); // <--- 이 라인을 삭제!
-    
-    await renderGoalCompassPage();
-}
-// ▲▲▲ 여기까지 08/17(수정일) 불필요한 모달 기습 호출 제거 ▲▲▲
 
 // ▼▼▼ 08/18(수정일) '명예의 전당' 표시 로직 추가 ▼▼▼
 async function renderGoalCompassPage() {
@@ -2610,74 +2597,101 @@ function populateGoalModalFields(goal = null) {
 // ▲▲▲ 여기까지 08/18(수정일) populateGoalModalFields 최종 완전판 (비밀 임무 포함) ▲▲▲
 // --- 페이지 네비게이션 (Page Navigation) ---
 
+// ▼▼▼ 08/19(수정일) 페이지 전환 통합 지휘관 함수 추가 ▼▼▼
+function showPage(pageIdToShow) {
+    console.log(`[showPage] >> "${pageIdToShow}" 페이지로 전환합니다.`);
+    // 1. 모든 최상위 페이지 컨테이너 ID를 명단에 기입합니다.
+    const allPages = ['main-app-content', 'dashboard-view', 'goal-compass-page'];
+    
+    // 2. 모든 페이지를 일단 시야에서 숨깁니다.
+    allPages.forEach(pageId => {
+        const page = document.getElementById(pageId);
+        if (page) {
+            page.style.display = 'none';
+        }
+    });
+
+    // 3. 목표가 되는 페이지만을 전면에 내세웁니다.
+    const pageToShow = document.getElementById(pageIdToShow);
+    if (pageToShow) {
+        pageToShow.style.display = 'block';
+
+        // 'main-app-content'는 내부적으로 manage-section을 제어해야 하므로 특별 관리합니다.
+        if (pageIdToShow === 'main-app-content') {
+            document.getElementById('manage-section').style.display = 'none';
+        }
+    }
+}
+// ▲▲▲ 여기까지 08/19(수정일) 페이지 전환 통합 지휘관 함수 추가 ▲▲▲
+
+
+// ▼▼▼ 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▼▼▼
 function showHomePage() {
-    document.getElementById('main-app-content').style.display = 'block';
-    document.getElementById('dashboard-view').style.display = 'none';
-    document.getElementById('manage-section').style.display = 'none';
-    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
+    showPage('main-app-content'); // "main-app-content를 보여줘" 라고 보고
+    document.getElementById('incomplete-section').style.display = 'block'; // 홈 화면의 기본 섹션만 표시
     document.querySelector('.daily-progress').style.display = 'block';
-    document.getElementById('incomplete-section').style.display = 'block';
     renderRoutines();
 }
-
-// ▼▼▼ 08/19(수정일) showManagePage 함수 완전 복원 ▼▼▼
+// ▼▼▼ 08/19(수정일) showManagePage 함수에 '새 루틴 추가' 버튼 생성 로직 복원 ▼▼▼
 function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
-    // --- 1. 페이지 전환 ---
-    document.getElementById('main-app-content').style.display = 'block';
-    document.getElementById('dashboard-view').style.display = 'none';
-    document.getElementById('goal-compass-page').style.display = 'none';
-    document.querySelector('.daily-progress').style.display = 'none';
+    // 1. '단일 지휘 체계'에 따라 페이지를 전환합니다.
+    showPage('main-app-content');
+
+    // 2. main-app-content 내부의 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
-    document.getElementById('inprogress-section').style.display = 'none';
-    document.getElementById('completed-section').style.display = 'none';
-    document.getElementById('skipped-section').style.display = 'none';
-    
+    document.querySelector('.daily-progress').style.display = 'none';
     const manageSection = document.getElementById('manage-section');
     manageSection.style.display = 'block';
 
-    // --- 2. '루틴 추가' 버튼 동적 생성 ---
-    // 기존 버튼이 있다면 중복 생성을 막기 위해 먼저 제거합니다.
-    const existingAddBtn = manageSection.querySelector('.add-routine-btn-in-manage');
-    if (existingAddBtn) {
-        existingAddBtn.remove();
+    // --- ▼▼▼ 누락되었던 핵심 임무 복원 ▼▼▼ ---
+    // 3. '새 루틴 추가' 버튼이 이미 존재하는지 확인하고, 없다면 생성합니다.
+    const existingAddBtn = manageSection.querySelector('#addRoutineBtnInManagePage');
+    if (!existingAddBtn) {
+        const addRoutineBtn = document.createElement('button');
+        addRoutineBtn.id = 'addRoutineBtnInManagePage';
+        addRoutineBtn.className = 'btn'; // 기본 버튼 스타일 적용
+        addRoutineBtn.textContent = '➕ 새 루틴 추가하기';
+        addRoutineBtn.style.width = '100%';
+        addRoutineBtn.style.marginTop = '1.5rem';
+        addRoutineBtn.style.backgroundColor = 'var(--success)'; // 녹색 배경 적용
+        
+        // 생성된 버튼에 모달 호출 임무를 부여합니다.
+        addRoutineBtn.addEventListener('click', showAddRoutineModal);
+        
+        // '순서 저장' 버튼 앞에 '루틴 추가' 버튼을 배치합니다.
+        const saveOrderBtn = document.getElementById('saveOrderBtn');
+        if (saveOrderBtn) {
+            manageSection.insertBefore(addRoutineBtn, saveOrderBtn);
+        } else {
+            manageSection.appendChild(addRoutineBtn); // 순서 저장 버튼이 없을 경우를 대비
+        }
     }
-    
-    const addRoutineBtn = document.createElement('button');
-    addRoutineBtn.id = 'addRoutineBtnInManagePage';
-    addRoutineBtn.className = 'btn add-routine-btn-in-manage'; // 식별을 위한 클래스 추가
-    addRoutineBtn.textContent = '➕ 새 루틴 추가하기';
-    addRoutineBtn.style.width = '100%';
-    addRoutineBtn.style.marginTop = '1.5rem';
-    
-    // 생성된 버튼에 모달 호출 임무 부여
-    addRoutineBtn.addEventListener('click', showAddRoutineModal);
-    
-    // '순서 저장' 버튼 앞에 '루틴 추가' 버튼을 배치합니다.
-    const saveOrderBtn = document.getElementById('saveOrderBtn');
-    manageSection.insertBefore(addRoutineBtn, saveOrderBtn);
-    
-    // --- 3. 관리 페이지 내용 렌더링 ---
+    // --- ▲▲▲ 핵심 임무 복원 완료 ▲▲▲ ---
+
+    // 4. 관리 페이지의 내용을 렌더링합니다.
     renderAreaStats();
     renderManagePage();
 }
-// ▲▲▲ 여기까지 08/19(수정일) showManagePage 함수 완전 복원 ▲▲▲
+// ▲▲▲ 여기까지 08/19(수정일) showManagePage 함수에 '새 루틴 추가' 버튼 생성 로직 복원 ▲▲▲
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
 function showDashboardPage() {
     // 다른 페이지 숨기기
-    document.getElementById('main-app-content').style.display = 'none';
-    document.getElementById('goal-compass-page').style.display = 'none'; // <-- 이 명령을 추가합니다.
-    
-    // 통계 페이지 보이기
-    const dashboardView = document.getElementById('dashboard-view');
-    dashboardView.style.display = 'block';
+    showPage('dashboard-view'); // "dashboard-view를 보여줘" 라고 보고
+
 
     // 통계 데이터 렌더링 함수 호출
     renderStatsPage();
 }
+
+function showGoalCompassPage() {
+    showPage('goal-compass-page'); // "goal-compass-page를 보여줘" 라고 보고
+    renderGoalCompassPage();
+}
+// ▲▲▲ 여기까지 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▲▲▲
 
 
 // --- 대시보드 함수 (Dashboard) ---
