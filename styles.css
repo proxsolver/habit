@@ -2166,9 +2166,29 @@ padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
     white-space: nowrap; /* 줄바꿈을 하지 않도록 강제합니다. */
 }
 /* ▲▲▲ 여기까지 08/19(수정일) 목표 카드 제목 줄바꿈 방지 ▲▲▲ */
-/* ▼▼▼ 08/19(수정일) 편집/삭제 버튼 크기 통일 ▼▼▼ */
+/* ▼▼▼ 08/19(수정일) 편집/삭제 버튼 '고정 너비'로 규격 통일 ▼▼▼ */
 .edit-btn, .delete-btn {
-    min-width: 50px; /* 최소 너비를 50px로 설정합니다. */
-    text-align: center; /* 텍스트를 중앙 정렬합니다. */
+    width: 60px; /* 고정 너비를 부여합니다. */
+    min-width: auto; /* 기존 min-width를 초기화합니다. */
+    padding: 8px 0; /* 좌우 패딩을 0으로 하여 너비 계산의 변수를 제거합니다. */
+    text-align: center;
+    box-sizing: border-box; /* 패딩과 보더가 너비에 영향을 주지 않도록 보장합니다. */
 }
-/* ▲▲▲ 여기까지 08/19(수정일) 편집/삭제 버튼 크기 통일 ▲▲▲ */
+/* ▲▲▲ 여기까지 08/19(수정일) 편집/삭제 버튼 '고정 너비'로 규격 통일 ▲▲▲ */
+/* ▼▼▼ 08/19(수정일) 목표 페이지 신규 헤더 스타일 추가 ▼▼▼ */
+.goal-page-header {
+    margin-bottom: 1.5rem;
+}
+
+.goal-page-header h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.goal-page-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+}
+/* ▲▲▲ 여기까지 08/19(수정일) 목표 페이지 신규 헤더 스타일 추가 ▲▲▲ */
