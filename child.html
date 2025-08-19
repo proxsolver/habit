@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+        
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>나의 미션 트래커</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <div id="user-info" style="display: none;" class="user-info-cluster">
+            <img id="user-photo" class="user-photo">
+            <span id="user-name" class="user-name"></span>
+            <button id="logout-btn" class="btn-logout">로그아웃</button>
+        </div>
+        <button id="login-btn" class="btn">Google 계정으로 로그인</button>
+    </header>
+
+    <div class="container">
+        <div id="main-app-content" class="page-container">
+            <div class="daily-progress">
+                </div>
+            <div class="section-card" id="incomplete-section">
+                <h2>📋 오늘의 미션</h2>
+                <div class="routine-list" id="incompleteRoutineList"></div>
+            </div>
+             <div class="section-card" id="completed-section" style="display: none;">
+                <h2>✅ 완료한 미션</h2>
+                <div class="routine-list" id="completedRoutineList"></div>
+            </div>
+        </div>
+        
+        <div id="rewards-page" class="page-container" style="display: none;">
+            <h1>🎁 보상 상점</h1>
+            <p>획득한 포인트로 보상을 요청하세요!</p>
+            </div>
+    </div>
+
+    <nav class="bottom-tab-bar">
+        <button id="navHomeBtn" class="tab-item active" data-page="home">🏠<span class="tab-label">오늘의 미션</span></button>
+        <button id="navRewardsBtn" class="tab-item" data-page="rewards">🎁<span class="tab-label">보상 상점</span></button>
+    </nav>
+
+    <script>
+        // Firebase 초기화 코드
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
+            authDomain: "habit-dc62a.firebaseapp.com",
+            projectId: "habit-dc62a",
+            storageBucket: "habit-dc62a.firebasestorage.app",
+            messagingSenderId: "668374525477",
+            appId: "1:668374525477:web:ecbecd95ec631fb82cc1cc",
+            measurementId: "G-DV5Z9YVTZG"
+        };
+    
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+    <script defer src="child.js"></script>
+
+</body>
+</html>
