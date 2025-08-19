@@ -1788,8 +1788,8 @@ function createImprovedRoutineElement(routine) {
     ${actionButton}
     <div class="routine-content">
         <div class="routine-name">
-            ${routine.name}
             <span class="type-icon">${getTypeIcon(routine.type)}</span>
+            ${routine.name}
         </div>
         <div class="routine-details">
             <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
