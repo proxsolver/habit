@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userPhotoImg = document.getElementById('user-photo');
     const mainAppContent = document.querySelector('.container');
     const bottomTabBar = document.querySelector('.bottom-tab-bar'); // 새로운 '하단 탭 바' 부대
+    const provider = new firebase.auth.GoogleAuthProvider();
 
     
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -77,28 +78,39 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('⚠️ [DOMContentLoaded] 경고: logout-btn을 찾을 수 없습니다.');
     }
 
-  // 3. Firebase 인증 상태 변경 감지 (핵심 수정)
+  // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
+        // [관문] 사용자의 역할을 확인합니다.
+        const userDocRef = db.collection('users').doc(user.uid);
+        const userDoc = await userDocRef.get();
+
+        if (userDoc.exists && userDoc.data().role === 'child') {
+            // 역할이 'child'이면, 즉시 전방 기지(child.html)로 전송합니다.
+            if (!window.location.pathname.endsWith('child.html')) {
+                window.location.href = 'child.html';
+            }
+            return; // 부모용 로직 실행을 중단합니다.
+        }
+
+        // [비밀 임무] 부모 사용자용 UI를 업데이트합니다.
         currentUser = user;
         if (userInfoDiv) userInfoDiv.style.display = 'flex';
         if (loginBtn) loginBtn.style.display = 'none';
         if (userNameSpan) userNameSpan.textContent = user.displayName;
         if (userPhotoImg) userPhotoImg.src = user.photoURL;
         if (mainAppContent) mainAppContent.style.opacity = 1;
-        // ★★★ 유령 부대(navButtons) 참조를 새로운 부대(bottomTabBar)로 교체 ★★★
         if (bottomTabBar) bottomTabBar.style.display = 'flex';
         
-        // 에러로 인해 실행되지 못했던 보급 명령을 다시 활성화합니다.
         await loadAllDataForUser(currentUser.uid);
         showHomePage();
 
     } else {
+        // [비밀 임무] 로그아웃 시 UI를 정리합니다.
         currentUser = null;
         if (userInfoDiv) userInfoDiv.style.display = 'none';
         if (loginBtn) loginBtn.style.display = 'block';
         if (mainAppContent) mainAppContent.style.opacity = 0.2;
-        // ★★★ 유령 부대(navButtons) 참조를 새로운 부대(bottomTabBar)로 교체 ★★★
         if (bottomTabBar) bottomTabBar.style.display = 'none';
         
         sampleRoutines = []; userAreas = []; userStats = {};
@@ -106,21 +118,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-    // 리다이렉트 결과 처리
-    firebase.auth().getRedirectResult()
-        .then((result) => {
-            if (result.user) {
-                console.log('리다이렉트 로그인 성공:', result.user.displayName);
-            }
-        })
-        .catch((error) => {
-            console.error('리다이렉트 로그인 오류:', error);
-        });
+// --- 임무 4: 리다이렉트 로그인 결과 처리 ---
+firebase.auth().getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            console.log('리다이렉트 로그인 성공:', result.user.displayName);
+        }
+    })
+    .catch((error) => {
+        console.error('리다이렉트 로그인 오류:', error);
+    });
 
-    // 모든 UI 이벤트 리스너 설정
-    setupAllEventListeners();
+// --- 임무 5: 나머지 모든 이벤트 리스너 설정 지시 ---
+setupAllEventListeners();
 });
-// ▲▲▲ 여기까지 교체 ▲▲▲
+// ▲▲▲ 여기까지 08/19(수정일) 3번 소대(DOMContentLoaded) 최종 임무 수첩 ▲▲▲
 
 // ====================================================================
 // 4. 사용자 데이터 로직 (User Data Logic)
