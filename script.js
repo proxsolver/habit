@@ -481,6 +481,7 @@ async function createFamily() {
         // ★★★ 핵심 수정: 데이터베이스뿐만 아니라 로컬 지휘관의 정보도 즉시 갱신합니다. ★★★
         currentUser.familyId = newFamilyDoc.id;
         currentUser.role = 'parent';
+        
         // 3. 최신 사용자 정보를 다시 불러와 UI를 갱신합니다.
         await loadAllDataForUser(currentUser.uid);
         showManagePage(); // 관리 페이지를 새로고침하여 '초대하기' 버튼을 보여줍니다.
