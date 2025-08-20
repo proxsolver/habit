@@ -2330,7 +2330,234 @@ function createSimpleHeatmap(container, historyData) {
 // ▲▲▲ 여기까지 교체 ▲▲▲
 
 
+// 1. 총괄 지휘관 (데이터 수집 및 임무 분배)
+async function renderGoalCompassPage() {
+    if (!currentUser) {
+        console.error("🚨 [renderGoalCompassPage] 비상: currentUser가 없어 작전을 개시할 수 없습니다.");
+        return;
+    }
+    console.log('📌 [renderGoalCompassPage]: 나침반 페이지 작전 개시');
 
+    try {
+        const list = document.getElementById('goalsList');
+        list.innerHTML = '로딩 중...';
+
+        const allGoals = await getUserGoals(currentUser.uid);
+        const activeGoals = allGoals.filter(g => g.status !== 'completed');
+        const completedGoals = allGoals.filter(g => g.status === 'completed');
+
+        // 각 전문 장교에게 임무 하달
+        renderActiveGoalsList(activeGoals, completedGoals.length > 0);
+        renderCompletedGoalsList(completedGoals);
+        setupGoalPageEventListeners(allGoals); // 모든 목표 데이터를 통신 장교에게 전달
+
+    } catch (error) {
+        console.error("❌ [renderGoalCompassPage] 목표 렌더링 실패:", error);
+        document.getElementById('goalsList').innerHTML = `<div class="empty-state">⚠️ 목표 로딩 실패.</div>`;
+    }
+}
+
+
+
+
+// 2. 현장 지휘관 (진행 중 목표 렌더링)
+// ▼▼▼ 08/21(수정일) renderActiveGoalsList 최종 임무 수첩 (완전판) ▼▼▼
+function renderActiveGoalsList(activeGoals, hasCompletedGoals) {
+    const list = document.getElementById('goalsList');
+    if (!list) return;
+
+    list.innerHTML = ''; // 기존 목록 초기화
+
+    // 1. 진행 중인 목표와 완료된 목표가 모두 없을 때만 초기 메시지를 표시합니다.
+    if (activeGoals.length === 0 && !hasCompletedGoals) {
+        list.innerHTML = `<div class="empty-state"> <div class="empty-state-icon">🧭</div> <div class="empty-state-title">아직 목표가 없어요</div> <div class="empty-state-description">‘+ 새 목표’를 눌러 분기/연간 목표를 만들어 보세요.</div> </div>`;
+        return;
+    }
+
+    // 2. 진행 중인 목표들을 순회하며 현황판(카드)을 생성합니다.
+    activeGoals.forEach(goal => {
+        // 2a. 진행률(pct) 계산
+        let pct = 0;
+        if (goal.direction === 'decrease') {
+            const startValue = goal.startValue !== undefined ? goal.startValue : goal.currentValue;
+            const range = startValue - goal.targetValue;
+            const achieved = startValue - goal.currentValue;
+            if (range > 0) {
+                pct = Math.min(100, Math.max(0, Math.round((achieved / range) * 100)));
+            }
+        } else { // 'increase' 또는 'points'
+            if (goal.targetValue > 0) {
+                pct = Math.min(100, Math.round(((goal.currentValue || 0) / goal.targetValue) * 100));
+            }
+        }
+
+        // 2b. 기타 표시 정보 계산
+        const deg = Math.round(360 * (pct / 100));
+        const ddayInfo = getGoalDdayInfo(goal.startDate, goal.endDate);
+        const kpi = `${goal.currentValue || 0} / ${goal.targetValue || 0} ${goal.unit || 'P'}`;
+
+        const card = document.createElement('div');
+        card.className = 'goal-card';
+        
+        // 2c. 목표 달성 여부에 따른 버튼 분기 처리
+        let actionButtonsHTML = '';
+        if (pct >= 100) {
+            card.classList.add('goal-achieved');
+            actionButtonsHTML = `<button class="complete-btn" data-goal-id="${goal.id}">🏆 완료 처리</button>`;
+        } else {
+            actionButtonsHTML = `
+                <button class="edit-btn" data-goal-id="${goal.id}">편집</button>
+                <button class="delete-btn" data-goal-id="${goal.id}">삭제</button>
+            `;
+        }
+
+        // 2d. 최종 HTML 구조 생성
+        card.innerHTML = `
+            <div class="goal-card-header">
+                <div style="font-weight:800;">${goal.name}</div>
+                <div>${actionButtonsHTML}</div>
+            </div>
+            <div style="color:#6b7280; font-size:0.85rem; margin-bottom:0.5rem;">
+                ${goal.goalType === 'points' ? '포인트 목표' : `단위 목표 (${getAreaName(goal.area)})`} · 기간: ${goal.startDate} ~ ${goal.endDate}
+            </div>
+            <div class="goal-progress-wrap">
+                <div class="goal-meter" style="--deg:${deg}deg;">${pct}%</div>
+                <div style="flex:1;">
+                    <div style="font-weight:700; margin-bottom:4px;">달성 현황</div>
+                    <div style="color:#374151; font-weight:700; margin-bottom:6px;">${kpi}</div>
+                    <div style="color:#6b7280;">${ddayInfo.label}</div>
+                    <div id="pace-${goal.id}" style="color:#10b981; font-weight:600; margin-top:6px;"></div>
+                </div>
+            </div>
+        `;
+
+        // 2e. 생성된 카드를 전장에 배치
+        list.appendChild(card);
+        
+        // 2f. 페이스 메시지 업데이트
+        const paceMsg = getPaceMessage(goal);
+        const paceEl = document.getElementById(`pace-${goal.id}`);
+        if (paceEl && paceMsg) paceEl.textContent = paceMsg;
+    });
+}
+
+// ▲▲▲ 여기까지 08/21(수정일) renderActiveGoalsList 최종 임무 수첩 (완전판) ▲▲▲
+
+// ▼▼▼ 08/21(수정일) renderCompletedGoalsList 최종 임무 수첩 (완전판) ▼▼▼
+function renderCompletedGoalsList(completedGoals) {
+    const completedList = document.getElementById('completedGoalsList');
+    const showCompletedBtn = document.getElementById('showCompletedGoalsBtn');
+    
+    if (!completedList || !showCompletedBtn) return;
+
+    completedList.innerHTML = ''; // 기존 목록 초기화
+
+    // 1. 완료된 목표가 하나라도 있는지 확인합니다.
+    if (completedGoals && completedGoals.length > 0) {
+        // 완료된 목표가 있다면 '명예의 전당 보기' 버튼을 표시합니다.
+        showCompletedBtn.style.display = 'inline-block';
+        
+        // 2. 완료된 목표들을 순회하며 기념 명패(카드)를 생성합니다.
+        completedGoals.forEach(goal => {
+            const card = document.createElement('div');
+            card.className = 'goal-card goal-achieved'; // 완료 스타일 적용
+
+            // Firestore Timestamp 객체를 JavaScript Date 객체로 변환합니다.
+            const completionDate = goal.completedAt ? new Date(goal.completedAt.seconds * 1000).toLocaleDateString('ko-KR') : '날짜 기록 없음';
+
+            card.innerHTML = `
+                <div class="goal-card-header">
+                    <div style="font-weight:800;">🏆 ${goal.name}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        완료일: ${completionDate}
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; text-align: center; font-weight: 600;">
+                    최종 성과: ${goal.currentValue} / ${goal.targetValue} ${goal.unit || 'P'}
+                </div>
+            `;
+            completedList.appendChild(card);
+        });
+    } else {
+        // 완료된 목표가 없다면 '명예의 전당 보기' 버튼을 숨깁니다.
+        showCompletedBtn.style.display = 'none';
+    }
+}
+// ▲▲▲ 여기까지 08/21(수정일) renderCompletedGoalsList 최종 임무 수첩 (완전판) ▲▲▲
+
+// ▼▼▼ 08/21(수정일) setupGoalPageEventListeners 최종 임무 수첩 (완전판) ▼▼▼
+function setupGoalPageEventListeners(allGoals) {
+    const page = document.getElementById('goal-compass-page');
+    if (!page) {
+        console.error("🚨 [setupGoalPageEventListeners] 비상: 'goal-compass-page'를 찾을 수 없어 통신망 구축에 실패했습니다.");
+        return;
+    }
+
+    const activeSection = document.getElementById('activeGoalsSection');
+    const completedSection = document.getElementById('completedGoalsSection');
+    const goalPageTitle = document.getElementById('goalPageTitle');
+    const list = document.getElementById('goalsList'); // 동적 버튼이 있는 곳
+
+    // 1. 페이지 전체에 대한 단일 명령 수신 체계(이벤트 리스너)를 구축합니다.
+    // 기존 리스너를 제거하여 중복 명령을 방지합니다.
+    page.onclick = null;
+    page.onclick = (e) => {
+        const target = e.target.closest('button'); // 버튼 또는 버튼 내부의 아이콘/텍스트 클릭 모두 감지
+        if (!target) return; // 버튼이 아닌 곳을 클릭했다면 무시
+
+        console.log('📌 [GoalPage Click]:', target.id || `.${target.className}`);
+
+        // --- 2. 수신된 신호에 따라 작전 분기 ---
+
+        // '새 목표' 버튼 신호
+        if (target.id === 'openAddGoalBtn') {
+            showAddGoalModal();
+            return;
+        }
+        // '명예의 전당 보기' 버튼 신호
+        if (target.id === 'showCompletedGoalsBtn') {
+            if(activeSection) activeSection.style.display = 'none';
+            if(completedSection) completedSection.style.display = 'block';
+            if(goalPageTitle) goalPageTitle.textContent = '🏆 명예의 전당';
+            return;
+        }
+        // '진행 중 목표 보기' 버튼 신호
+        if (target.id === 'showActiveGoalsBtn') {
+            if(activeSection) activeSection.style.display = 'block';
+            if(completedSection) completedSection.style.display = 'none';
+            if(goalPageTitle) goalPageTitle.textContent = '🧭 목표 나침반';
+            return;
+        }
+        // '삭제', '편집', '완료' 버튼 신호 (이벤트 위임)
+        const goalId = target.dataset.goalId;
+        if (!goalId) return;
+
+        if (target.matches('.delete-btn')) {
+            if (confirm('이 목표를 정말로 삭제하시겠습니까?')) {
+                deleteGoalFromFirebase(goalId).then(() => {
+                    renderGoalCompassPage(); // 화면 새로고침
+                    showNotification('목표가 삭제되었습니다.');
+                });
+            }
+        } else if (target.matches('.edit-btn')) {
+            const goalToEdit = allGoals.find(g => g.id === goalId);
+            if (goalToEdit) showAddGoalModal(goalToEdit);
+
+        } else if (target.matches('.complete-btn')) {
+            if (confirm('이 목표를 완료 처리하고 보관하시겠습니까?')) {
+                completeGoalInFirebase(goalId).then(() => {
+                    renderGoalCompassPage(); // 화면 새로고침
+                    showNotification('목표 달성을 축하합니다! 명예의 전당에 보관되었습니다.', 'success');
+                });
+            }
+        }
+    };
+}
+// ▲▲▲ 여기까지 08/21(수정일) setupGoalPageEventListeners 최종 임무 수첩 (완전판) ▲▲▲
+
+
+
+/** 
 // ▼▼▼ 08/18(수정일) '명예의 전당' 표시 로직 추가 ▼▼▼
 async function renderGoalCompassPage() {
     if (!currentUser) return;
@@ -2339,7 +2566,7 @@ async function renderGoalCompassPage() {
     const completedList = document.getElementById('completedGoalsList');
     const activeSection = document.getElementById('activeGoalsSection');
     const completedSection = document.getElementById('completedGoalsSection');
-    const showCompletedBtn = document.getElementById('showCompletedGoalsBtn');
+    const goalPageTitle = document.getElementById('goalPageTitle'); // 제목 요소를 변수로 지정
 
     list.innerHTML = '로딩 중...';
 
@@ -2509,7 +2736,7 @@ async function renderGoalCompassPage() {
     }
 }
 // ▲▲▲ 여기까지 08/17(수정일) renderGoalCompassPage 전우 완전 복원 ▲▲▲
-
+*/
 
 function getAreaName(id) {
     const area = userAreas.find(a => a.id === id);
@@ -2697,6 +2924,23 @@ function showPage(pageIdToShow) {
 }
 // ▲▲▲ 여기까지 08/19(수정일) 페이지 전환 통합 지휘관 함수 추가 ▲▲▲
 
+// ▼▼▼ 08/20(수정일) 누락된 showMainSection 함수 추가 ▼▼▼
+function showMainSection(sectionIdToShow) {
+    const allSections = document.querySelectorAll('#main-app-content .main-section');
+    allSections.forEach(section => {
+        section.style.display = 'none';
+    });
+
+    const sectionToShow = document.getElementById(sectionIdToShow);
+    if (sectionToShow) {
+        sectionToShow.style.display = 'block';
+        if (!['manage-section'].includes(sectionIdToShow)) {
+            document.querySelector('.daily-progress').style.display = 'block';
+        }
+    }
+}
+// ▲▲▲ 여기까지 08/20(수정일) 누락된 showMainSection 함수 추가 ▲▲▲
+
 
 // ▼▼▼ 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▼▼▼
 function showHomePage() {
@@ -2712,7 +2956,7 @@ function showManagePage() {
 
     showPage('main-app-content');
     showMainSection('manage-section');
-    
+
     // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
