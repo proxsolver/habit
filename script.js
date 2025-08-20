@@ -80,47 +80,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
   firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-        // [관문] 사용자의 역할을 확인합니다.
-        const userDocRef = db.collection('users').doc(user.uid);
-        const userDoc = await userDocRef.get();
+    const bottomTabBar = document.querySelector('.bottom-tab-bar');
 
-        if (userDoc.exists && userDoc.data().role === 'child') {
-            // 역할이 'child'이면, 즉시 전방 기지(child.html)로 전송합니다.
+    if (user) {
+        // 1. 기본 인증 정보로 '임시' 지휘관을 임명합니다.
+        let tempUser = {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL
+        };
+
+        // 2. 보급 장교(loadAllDataForUser)가 상세 정보를 가져와 임명을 '완료'합니다.
+        // 이제 loadAllDataForUser는 완전한 사용자 객체를 반환합니다.
+        const fullUserData = await loadAllDataForUser(tempUser.uid);
+        
+        // 3. 완전한 정보로 currentUser를 최종 임명합니다.
+        currentUser = { ...tempUser, ...fullUserData };
+        console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
+
+        // 4. 최종 임명된 지휘관의 역할에 따라 전장을 배치합니다.
+        if (currentUser.role === 'child') {
             if (!window.location.pathname.endsWith('child.html')) {
                 window.location.href = 'child.html';
             }
-            return; // 부모용 로직 실행을 중단합니다.
+            return;
         }
 
-        // [비밀 임무] 부모 사용자용 UI를 업데이트합니다.
-        currentUser = user;
-        if (userInfoDiv) userInfoDiv.style.display = 'flex';
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (userNameSpan) userNameSpan.textContent = user.displayName;
-        if (userPhotoImg) userPhotoImg.src = user.photoURL;
-        if (mainAppContent) mainAppContent.style.opacity = 1;
+        // 5. 모든 정보가 완벽한 상태에서만 부모용 UI와 작전을 개시합니다.
+        updateUserInfoUI(currentUser); // UI 업데이트 함수 호출
         if (bottomTabBar) bottomTabBar.style.display = 'flex';
-        
-        await loadAllDataForUser(currentUser.uid);
-            // ★★★ 핵심: showHomePage() 직접 호출 대신, UI 상태를 수동으로 설정 ★★★
-            // 이렇게 하면 불필요한 이벤트 연쇄 반응을 막아 currentUser 실종 문제를 해결합니다.
-            document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('navHomeBtn')?.classList.add('active');
-            showHomePage();
-            // ★★★ 핵심: 모든 데이터 로드가 끝난 후, 최종적으로 렌더링 명령 하달 ★★★
-            renderCurrentPage();
+        renderCurrentPage();
 
     } else {
-        // [비밀 임무] 로그아웃 시 UI를 정리합니다.
+        // 로그아웃 절차
         currentUser = null;
-        if (userInfoDiv) userInfoDiv.style.display = 'none';
-        if (loginBtn) loginBtn.style.display = 'block';
-        if (mainAppContent) mainAppContent.style.opacity = 0.2;
+        updateUserInfoUI(null);
         if (bottomTabBar) bottomTabBar.style.display = 'none';
-        
-        sampleRoutines = []; userAreas = []; userStats = {};
-        renderRoutines();
+        // 로그인 화면이므로 홈 화면 렌더링은 불필요. 필요하다면 로그인 버튼 표시 로직 추가.
     }
 });
 
@@ -144,45 +141,41 @@ setupAllEventListeners();
 // 4. 사용자 데이터 로직 (User Data Logic)
 // ====================================================================
 
-// ▼▼▼ 08/20(수정일) 사용자 프로필 정보(role, familyId) 로딩 로직 추가 ▼▼▼
+// ▼▼▼ 08/21(수정일) loadAllDataForUser가 사용자 정보를 '반환'하도록 수정 ▼▼▼
 async function loadAllDataForUser(userId) {
     try {
-        console.log(`사용자(${userId}) 데이터 로드 시작...`);
+        console.log(`[loadAllDataForUser] >> 사용자(${userId}) 데이터 보급 시작...`);
         const userDocRef = db.collection('users').doc(userId);
         const userDoc = await userDocRef.get();
 
+        let userData = {};
         if (!userDoc.exists) {
-            console.log("신규 사용자 감지, 초기 데이터 생성 시작.");
             await uploadInitialDataForUser(userId);
-            // 신규 사용자의 경우에도 currentUser를 업데이트합니다.
             const newUserDoc = await userDocRef.get();
-            if (newUserDoc.exists) {
-                currentUser = { ...currentUser, ...newUserDoc.data() };
-            }
+            if (newUserDoc.exists) userData = newUserDoc.data();
         } else {
-            // ★★★ 핵심 수정: Firestore의 사용자 정보를 로컬 currentUser 객체에 병합합니다. ★★★
-            console.log("기존 사용자 정보 로딩 및 currentUser 객체 갱신.");
-            currentUser = { ...currentUser, ...userDoc.data() };
-            
+            userData = userDoc.data();
             const [routinesSnapshot, areasSnapshot, statsDoc] = await Promise.all([
                 userDocRef.collection('routines').orderBy('order').get(),
                 userDocRef.collection('areas').get(),
                 userDocRef.collection('stats').doc('userStats').get()
             ]);
-
             sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             userStats = statsDoc.exists ? statsDoc.data() : {};
-            console.log('기존 사용자 데이터 로드 완료.');
         }
         await resetDailyProgressForUser(userId);
+        
+        console.log(`[loadAllDataForUser] >> 보급 완료. 사용자 프로필 반환.`);
+        return userData; // ★★★ 핵심: currentUser를 직접 수정하지 않고, 데이터를 반환합니다.
 
     } catch (error) {
-        console.error("사용자 데이터 로드 실패: ", error);
+        console.error("[loadAllDataForUser] >> 데이터 보급 실패: ", error);
         showNotification("데이터를 불러오는데 실패했습니다.", "error");
+        return {}; // 실패 시 빈 객체 반환
     }
 }
-// ▲▲▲ 여기까지 08/20(수정일) 사용자 프로필 정보(role, familyId) 로딩 로직 추가 ▲▲▲
+// ▲▲▲ 여기까지 08/21(수정일) loadAllDataForUser가 사용자 정보를 '반환'하도록 수정 ▲▲▲
 
 async function uploadInitialDataForUser(userId) {
     const batch = db.batch();
