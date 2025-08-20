@@ -15,7 +15,9 @@ let currentStatsPeriod = 'weekly'; // <-- 이 라인을 추가하세요.
 let isEditingGoal = false;
 let editingGoalId = null;
 // ▲▲▲ 여기까지 08/17(수정일) 목표 편집을 위한 전역 변수 추가 ▲▲▲
-
+// ▼▼▼ 08/20(수정일) '현재 페이지' 상태 변수 추가 ▼▼▼
+let activePage = 'home'; // 앱 시작 시 기본 페이지는 '홈'
+// ▲▲▲ 여기까지 08/20(수정일) '현재 페이지' 상태 변수 추가 ▲▲▲
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
 
@@ -101,7 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bottomTabBar) bottomTabBar.style.display = 'flex';
         
         await loadAllDataForUser(currentUser.uid);
-        showHomePage();
+            // ★★★ 핵심: showHomePage() 직접 호출 대신, UI 상태를 수동으로 설정 ★★★
+            // 이렇게 하면 불필요한 이벤트 연쇄 반응을 막아 currentUser 실종 문제를 해결합니다.
+            document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('navHomeBtn')?.classList.add('active');
+            showHomePage();
+            // ★★★ 핵심: 모든 데이터 로드가 끝난 후, 최종적으로 렌더링 명령 하달 ★★★
+            renderCurrentPage();
 
     } else {
         // [비밀 임무] 로그아웃 시 UI를 정리합니다.
@@ -136,16 +144,26 @@ setupAllEventListeners();
 // 4. 사용자 데이터 로직 (User Data Logic)
 // ====================================================================
 
+// ▼▼▼ 08/20(수정일) 사용자 프로필 정보(role, familyId) 로딩 로직 추가 ▼▼▼
 async function loadAllDataForUser(userId) {
     try {
-        debugLog(`사용자(${userId}) 데이터 로드 시작...`);
+        console.log(`사용자(${userId}) 데이터 로드 시작...`);
         const userDocRef = db.collection('users').doc(userId);
         const userDoc = await userDocRef.get();
 
         if (!userDoc.exists) {
-            debugLog("신규 사용자 감지, 초기 데이터 생성 시작.");
+            console.log("신규 사용자 감지, 초기 데이터 생성 시작.");
             await uploadInitialDataForUser(userId);
+            // 신규 사용자의 경우에도 currentUser를 업데이트합니다.
+            const newUserDoc = await userDocRef.get();
+            if (newUserDoc.exists) {
+                currentUser = { ...currentUser, ...newUserDoc.data() };
+            }
         } else {
+            // ★★★ 핵심 수정: Firestore의 사용자 정보를 로컬 currentUser 객체에 병합합니다. ★★★
+            console.log("기존 사용자 정보 로딩 및 currentUser 객체 갱신.");
+            currentUser = { ...currentUser, ...userDoc.data() };
+            
             const [routinesSnapshot, areasSnapshot, statsDoc] = await Promise.all([
                 userDocRef.collection('routines').orderBy('order').get(),
                 userDocRef.collection('areas').get(),
@@ -155,14 +173,16 @@ async function loadAllDataForUser(userId) {
             sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             userStats = statsDoc.exists ? statsDoc.data() : {};
-            debugLog('기존 사용자 데이터 로드 완료.');
+            console.log('기존 사용자 데이터 로드 완료.');
         }
         await resetDailyProgressForUser(userId);
+
     } catch (error) {
         console.error("사용자 데이터 로드 실패: ", error);
         showNotification("데이터를 불러오는데 실패했습니다.", "error");
     }
 }
+// ▲▲▲ 여기까지 08/20(수정일) 사용자 프로필 정보(role, familyId) 로딩 로직 추가 ▲▲▲
 
 async function uploadInitialDataForUser(userId) {
     const batch = db.batch();
@@ -2689,10 +2709,19 @@ function showHomePage() {
 function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
-    // 1. 페이지 전환
+    // 1. '단일 지휘 체계'에 따라 페이지를 전환합니다.
     showPage('main-app-content');
+
+    // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
+    
+    // ★★★ 누락되었던 철수 명령 추가 ★★★
+    document.getElementById('inprogress-section').style.display = 'none';
+    document.getElementById('completed-section').style.display = 'none';
+    document.getElementById('skipped-section').style.display = 'none';
+    
+    // 3. 관리 섹션만 전면에 내세웁니다.
     const manageSection = document.getElementById('manage-section');
     manageSection.style.display = 'block';
 
@@ -3105,6 +3134,22 @@ function showCelebrationMessage() {
 // 7. 이벤트 리스너 설정 함수
 // ====================================================================
 
+// ▼▼▼ 08/20(수정일) 'renderCurrentPage' 통합 사령관 임명 ▼▼▼
+function renderCurrentPage() {
+    // 지휘관(currentUser)이 없으면 어떤 작전도 개시하지 않는다.
+    if (!currentUser) return;
+
+    console.log(`[renderCurrentPage] >> "${activePage}" 페이지 렌더링을 시작합니다.`);
+
+    if (activePage === 'home') showHomePage();
+    else if (activePage === 'goal') showGoalCompassPage();
+    else if (activePage === 'stats') showDashboardPage();
+    else if (activePage === 'manage') showManagePage();
+    // 'rewards' 등 다른 페이지도 여기에 추가 가능
+}
+// ▲▲▲ 여기까지 08/20(수정일) 'renderCurrentPage' 통합 사령관 임명 ▲▲▲
+
+
 // ▼▼▼ 08/17(수정일) 모든 이벤트 리스너를 재구성한 최종 버전 ▼▼▼
 function setupAllEventListeners() {
     console.log('📌 [setupAllEventListeners]: 모든 이벤트 리스너 설정 시작');
@@ -3116,15 +3161,14 @@ function setupAllEventListeners() {
             tabItems.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             
-            const pageName = button.dataset.page;
-            if (pageName === 'home') showHomePage();
-            else if (pageName === 'goal') showGoalCompassPage();
-            else if (pageName === 'stats') showDashboardPage();
-            else if (pageName === 'rewards') {
-                showNotification('보상 기능은 준비 중입니다.', 'info');
-            }
+            // ★★★ 핵심: 직접 함수를 호출하는 대신, activePage 변수만 변경 ★★★
+            activePage = button.dataset.page;
+            
+            // 변경된 상태에 따라 화면을 다시 그리라는 명령을 내립니다.
+            renderCurrentPage(); 
         });
     });
+
 
     // --- 임무 2: 상단 관리(설정) 버튼 명령 체계 구축 ---
     const navManageBtn = document.getElementById('navManageBtn');
