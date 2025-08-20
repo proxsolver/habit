@@ -532,7 +532,7 @@ function updateUserInfoUI(user) {
 }
 // ▲▲▲ 여기까지 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▲▲▲
 
-
+//정상작동
 
 
 // ▼▼▼ 08/18(수정일) ISO 8601 주차 번호 계산 함수 추가 ▼▼▼
