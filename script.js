@@ -2706,12 +2706,13 @@ function showHomePage() {
     renderRoutines();
 }
 // ▼▼▼ 08/20(수정일) showManagePage 최종 임무 수첩 (가족 기능 포함) ▼▼▼
+// ▼▼▼ 08/20(수정일) showManagePage 최종 안정화 ▼▼▼
 function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
-    // 1. '단일 지휘 체계'에 따라 페이지를 전환합니다.
     showPage('main-app-content');
-
+    showMainSection('manage-section');
+    
     // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
@@ -3134,46 +3135,56 @@ function showCelebrationMessage() {
 // 7. 이벤트 리스너 설정 함수
 // ====================================================================
 
-// ▼▼▼ 08/20(수정일) 'renderCurrentPage' 통합 사령관 임명 ▼▼▼
+// ▼▼▼ 08/20(수정일) renderCurrentPage 최종 안정화 ▼▼▼
 function renderCurrentPage() {
-    // 지휘관(currentUser)이 없으면 어떤 작전도 개시하지 않는다.
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.warn("⚠️ [renderCurrentPage] 지휘관(currentUser) 부재로 렌더링을 중단합니다.");
+        return;
+    }
 
     console.log(`[renderCurrentPage] >> "${activePage}" 페이지 렌더링을 시작합니다.`);
 
+    // 페이지 전환 로직
     if (activePage === 'home') showHomePage();
     else if (activePage === 'goal') showGoalCompassPage();
     else if (activePage === 'stats') showDashboardPage();
     else if (activePage === 'manage') showManagePage();
-    // 'rewards' 등 다른 페이지도 여기에 추가 가능
+    else if (activePage === 'rewards') {
+        // rewards 페이지를 위한 showRewardsPage() 함수가 필요합니다.
+        showNotification('보상 기능은 준비 중입니다.', 'info');
+    }
 }
-// ▲▲▲ 여기까지 08/20(수정일) 'renderCurrentPage' 통합 사령관 임명 ▲▲▲
+// ▲▲▲ 여기까지 08/20(수정일) renderCurrentPage 최종 안정화 ▲▲▲
 
-
-// ▼▼▼ 08/17(수정일) 모든 이벤트 리스너를 재구성한 최종 버전 ▼▼▼
+// ▼▼▼ 08/20(수정일) setupAllEventListeners 최종 안정화 ▼▼▼
 function setupAllEventListeners() {
     console.log('📌 [setupAllEventListeners]: 모든 이벤트 리스너 설정 시작');
 
-    // --- 임무 1: 하단 탭 바 명령 체계 구축 ---
-    const tabItems = document.querySelectorAll('.tab-item');
-    tabItems.forEach(button => {
-        button.addEventListener('click', () => {
-            tabItems.forEach(btn => btn.classList.remove('active'));
+    // --- 하단 탭 바 명령 체계 ---
+    const tabBar = document.querySelector('.bottom-tab-bar');
+    if (tabBar) {
+        tabBar.addEventListener('click', (e) => {
+            const button = e.target.closest('.tab-item');
+            if (!button) return;
+
+            // 모든 버튼에서 'active' 상태를 제거합니다.
+            document.querySelectorAll('.tab-item').forEach(btn => btn.classList.remove('active'));
+            // 클릭된 버튼에만 'active' 상태를 부여합니다.
             button.classList.add('active');
             
-            // ★★★ 핵심: 직접 함수를 호출하는 대신, activePage 변수만 변경 ★★★
             activePage = button.dataset.page;
-            
-            // 변경된 상태에 따라 화면을 다시 그리라는 명령을 내립니다.
-            renderCurrentPage(); 
+            renderCurrentPage();
         });
-    });
+    }
 
-
-    // --- 임무 2: 상단 관리(설정) 버튼 명령 체계 구축 ---
+    // --- 상단 관리 버튼 ---
     const navManageBtn = document.getElementById('navManageBtn');
     if (navManageBtn) {
-        navManageBtn.addEventListener('click', showManagePage);
+        navManageBtn.addEventListener('click', () => {
+             // 관리 페이지로 갈 때는 activePage 상태를 직접 변경하고 렌더링합니다.
+            activePage = 'manage';
+            renderCurrentPage();
+        });
     }
 
     // --- 임무 3: 목표 유형 선택(드롭다운) UI 변경 명령 체계 구축 ---
