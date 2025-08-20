@@ -450,6 +450,48 @@ async function logRoutineHistory(routineId, dataToLog) {
 // feat(stats): Implement stats calculation function using collection group query
 
 
+// 5번 구역: Firebase 데이터 처리 함수 (CRUD)에 추가하는 것을 권장합니다.
+// ▼▼▼ 08/19(수정일) '가족 생성' 함수 추가 ▼▼▼
+async function createFamily() {
+    if (!currentUser) return;
+    if (!confirm('새로운 가족을 생성하시겠습니까? 당신이 첫 번째 "부모"가 됩니다.')) return;
+
+    console.log('📌 [createFamily]: 가족 생성 절차 시작...');
+    const userDocRef = db.collection('users').doc(currentUser.uid);
+    const familiesRef = db.collection('families');
+
+    try {
+        // 1. 새로운 가족 문서를 생성합니다.
+        const newFamilyDoc = await familiesRef.add({
+            familyName: `${currentUser.displayName}의 가족`,
+            members: [currentUser.uid],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log(`✅ [createFamily]: 새로운 가족 생성 완료. ID: ${newFamilyDoc.id}`);
+
+        // 2. 현재 사용자의 문서를 '부모' 역할로 업데이트합니다.
+        await userDocRef.update({
+            familyId: newFamilyDoc.id,
+            role: 'parent'
+        });
+        console.log(`✅ [createFamily]: 사용자 역할을 'parent'로 업데이트 완료.`);
+        
+        showNotification('🎉 새로운 가족이 생성되었습니다!', 'success');
+
+        // ★★★ 핵심 수정: 데이터베이스뿐만 아니라 로컬 지휘관의 정보도 즉시 갱신합니다. ★★★
+        currentUser.familyId = newFamilyDoc.id;
+        currentUser.role = 'parent';
+        // 3. 최신 사용자 정보를 다시 불러와 UI를 갱신합니다.
+        await loadAllDataForUser(currentUser.uid);
+        showManagePage(); // 관리 페이지를 새로고침하여 '초대하기' 버튼을 보여줍니다.
+
+    } catch (error) {
+        console.error("❌ [createFamily]: 가족 생성 실패", error);
+        showNotification('가족 생성에 실패했습니다.', 'error');
+    }
+}
+// ▲▲▲ 여기까지 08/19(수정일) '가족 생성' 함수 추가 ▲▲▲
+
 
 // ====================================================================
 // 6. 핸들러, 렌더링, 유틸리티 등 나머지 모든 함수
@@ -2642,49 +2684,69 @@ function showHomePage() {
     document.querySelector('.daily-progress').style.display = 'block';
     renderRoutines();
 }
-// ▼▼▼ 08/19(수정일) showManagePage 함수에 '새 루틴 추가' 버튼 생성 로직 복원 ▼▼▼
+// ▼▼▼ 08/20(수정일) showManagePage 최종 임무 수첩 (가족 기능 포함) ▼▼▼
 function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
-    // 1. '단일 지휘 체계'에 따라 페이지를 전환합니다.
+    // 1. 페이지 전환
     showPage('main-app-content');
-
-    // 2. main-app-content 내부의 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
     const manageSection = document.getElementById('manage-section');
     manageSection.style.display = 'block';
 
-    // --- ▼▼▼ 누락되었던 핵심 임무 복원 ▼▼▼ ---
-    // 3. '새 루틴 추가' 버튼이 이미 존재하는지 확인하고, 없다면 생성합니다.
+    // 2. '가족 관리' UI 동적 제어 (신규 핵심 임무)
+    const familyContentDiv = document.getElementById('family-content');
+    if (familyContentDiv) { // familyContentDiv가 존재하는지 먼저 확인
+        if (currentUser && currentUser.familyId) {
+            // 이미 가족에 소속된 경우
+            familyContentDiv.innerHTML = `
+                <p style="color: var(--text-secondary);">당신은 이미 가족에 소속되어 있습니다.</p>
+                <button id="inviteMemberBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 가족원 초대하기</button>
+            `;
+            document.getElementById('inviteMemberBtn').addEventListener('click', () => {
+                showNotification('초대 기능은 현재 준비 중입니다.', 'info');
+            });
+        } else {
+            // 가족이 없는 경우
+            familyContentDiv.innerHTML = `
+                <p style="color: var(--text-secondary);">가족을 생성하여 자녀의 루틴을 관리하거나, 기존 가족에 참여하세요.</p>
+                <button id="createFamilyBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 새 가족 생성하기</button>
+                <button id="joinFamilyBtn" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">초대 코드로 참여하기</button>
+            `;
+            document.getElementById('createFamilyBtn').addEventListener('click', createFamily);
+            document.getElementById('joinFamilyBtn').addEventListener('click', () => {
+                showNotification('초대 코드로 참여하는 기능은 현재 준비 중입니다.', 'info');
+            });
+        }
+    }
+
+    // 3. '새 루틴 추가' 버튼 동적 생성 (기존 임무 유지)
     const existingAddBtn = manageSection.querySelector('#addRoutineBtnInManagePage');
     if (!existingAddBtn) {
         const addRoutineBtn = document.createElement('button');
         addRoutineBtn.id = 'addRoutineBtnInManagePage';
-        addRoutineBtn.className = 'btn'; // 기본 버튼 스타일 적용
+        addRoutineBtn.className = 'btn';
         addRoutineBtn.textContent = '➕ 새 루틴 추가하기';
         addRoutineBtn.style.width = '100%';
         addRoutineBtn.style.marginTop = '1.5rem';
-        addRoutineBtn.style.backgroundColor = 'var(--success)'; // 녹색 배경 적용
+        addRoutineBtn.style.backgroundColor = 'var(--success)';
         
-        // 생성된 버튼에 모달 호출 임무를 부여합니다.
         addRoutineBtn.addEventListener('click', showAddRoutineModal);
         
-        // '순서 저장' 버튼 앞에 '루틴 추가' 버튼을 배치합니다.
         const saveOrderBtn = document.getElementById('saveOrderBtn');
         if (saveOrderBtn) {
             manageSection.insertBefore(addRoutineBtn, saveOrderBtn);
         } else {
-            manageSection.appendChild(addRoutineBtn); // 순서 저장 버튼이 없을 경우를 대비
+            manageSection.appendChild(addRoutineBtn);
         }
     }
-    // --- ▲▲▲ 핵심 임무 복원 완료 ▲▲▲ ---
 
-    // 4. 관리 페이지의 내용을 렌더링합니다.
+    // 4. 관리 페이지 내용 렌더링 (기존 임무 유지)
     renderAreaStats();
     renderManagePage();
 }
-// ▲▲▲ 여기까지 08/19(수정일) showManagePage 함수에 '새 루틴 추가' 버튼 생성 로직 복원 ▲▲▲
+// ▲▲▲ 여기까지 08/20(수정일) showManagePage 최종 임무 수첩 (가족 기능 포함) ▲▲▲
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
