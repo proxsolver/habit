@@ -511,6 +511,30 @@ async function createFamily() {
 // 6. 핸들러, 렌더링, 유틸리티 등 나머지 모든 함수
 // ====================================================================
 
+// ▼▼▼ 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▼▼▼
+function updateUserInfoUI(user) {
+    const userInfoDiv = document.getElementById('user-info');
+    const loginBtn = document.getElementById('login-btn');
+    const userNameSpan = document.getElementById('user-name');
+    const userPhotoImg = document.getElementById('user-photo');
+
+    if (user) {
+        // 사용자가 로그인한 경우
+        if (userInfoDiv) userInfoDiv.style.display = 'flex';
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (userNameSpan) userNameSpan.textContent = user.displayName;
+        if (userPhotoImg) userPhotoImg.src = user.photoURL;
+    } else {
+        // 사용자가 로그아웃한 경우
+        if (userInfoDiv) userInfoDiv.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = 'block';
+    }
+}
+// ▲▲▲ 여기까지 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▲▲▲
+
+
+
+
 // ▼▼▼ 08/18(수정일) ISO 8601 주차 번호 계산 함수 추가 ▼▼▼
 function getISOWeek(date) {
     const tempDate = new Date(date.valueOf());
@@ -660,12 +684,6 @@ async function calculateStats(period = 'weekly') {
 }
 // ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▲▲▲
 
-
-
-
-// ====================================================================
-// 6. 핸들러, 렌더링, 유틸리티 등 나머지 모든 함수
-// ====================================================================
 
 // --- 핸들러 함수 (Handlers) ---
 
