@@ -211,6 +211,47 @@ async function uploadInitialDataForUser(user) { // ★★★ 수정: userId -> u
     await batch.commit();
     // await loadAllDataForUser(user.uid); // 여기서는 재호출 불필요
 }
+
+// ▼▼▼ 2025-08-21 기존 루틴 마이그레이션 함수 추가 ▼▼▼
+async function migrateUserRoutines(userId) {
+    console.log('📌 [migrateUserRoutines]: 기존 루틴 데이터 구조 검사 시작...');
+    
+    // 1. assignedTo 필드가 없는 루틴을 찾아냅니다.
+    const routinesToMigrate = sampleRoutines.filter(r => !r.hasOwnProperty('assignedTo'));
+
+    if (routinesToMigrate.length === 0) {
+        console.log('✅ [migrateUserRoutines]: 모든 루틴이 최신 구조입니다. 작전 종료.');
+        return; // 업데이트할 루틴이 없으면 즉시 종료
+    }
+
+    console.warn(`[migrateUserRoutines]: ${routinesToMigrate.length}개의 구형 루틴 발견! 데이터 마이그레이션을 시작합니다.`);
+
+    // 2. Firebase Batch를 사용하여 여러 문서를 한 번에 업데이트합니다.
+    const batch = db.batch();
+    const routinesRef = db.collection('users').doc(userId).collection('routines');
+
+    routinesToMigrate.forEach(routine => {
+        const docRef = routinesRef.doc(String(routine.id));
+        batch.update(docRef, { assignedTo: userId });
+        
+        // 로컬 데이터(sampleRoutines)도 즉시 업데이트하여 화면에 바로 반영되도록 합니다.
+        routine.assignedTo = userId;
+    });
+
+    try {
+        // 3. 일괄 업데이트를 실행합니다.
+        await batch.commit();
+        console.log(`🎉 [migrateUserRoutines]: ${routinesToMigrate.length}개의 루틴에 인식표 부착 완료!`);
+        showNotification('기존 루틴 데이터를 성공적으로 업데이트했습니다.', 'success');
+    } catch (error) {
+        console.error("❌ [migrateUserRoutines]: 데이터 업데이트 실패", error);
+        showNotification('기존 루틴 업데이트에 실패했습니다.', 'error');
+    }
+}
+// ▲▲▲ 여기까지 2025-08-21 기존 루틴 마이그레이션 함수 추가 ▲▲▲
+
+
+
 // ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 3/3 ▲▲▲
 async function resetDailyProgressForUser(userId) {
     const userDocRef = db.collection('users').doc(userId);
