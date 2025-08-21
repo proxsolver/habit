@@ -2190,3 +2190,28 @@ padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
     gap: 0.75rem;
 }
 /* ▲▲▲ 여기까지 08/19(수정일) 목표 페이지 신규 헤더 스타일 추가 ▲▲▲ */
+
+/* ▼▼▼ 2025-08-21 로그아웃 버튼 스타일 추가 ▼▼▼ */
+.btn-logout {
+    background-color: var(--gray-200);
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-left: 12px;
+}
+
+.btn-logout:hover {
+    background-color: var(--gray-300);
+    color: var(--text-primary);
+}
+
+#user-info {
+    display: flex;
+    align-items: center;
+}
+/* ▲▲▲ 여기까지 2025-08-21 로그아웃 버튼 스타일 추가 ▲▲▲ */
