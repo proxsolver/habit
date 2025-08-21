@@ -18,6 +18,9 @@ let editingGoalId = null;
 // ▼▼▼ 08/20(수정일) '현재 페이지' 상태 변수 추가 ▼▼▼
 let activePage = 'home'; // 앱 시작 시 기본 페이지는 '홈'
 // ▲▲▲ 여기까지 08/20(수정일) '현재 페이지' 상태 변수 추가 ▲▲▲
+// ▼▼▼ 2025-08-22 작전 모드 기록 변수 추가 ▼▼▼
+let currentRoutineMode = null; // 'parent' 또는 'child' 모드를 저장
+// ▲▲▲ 여기까지 2025-08-22 작전 모드 기록 변수 추가 ▲▲▲
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
 
@@ -1121,14 +1124,21 @@ async function handleReadingProgressConfirm() {
 // ▲▲▲ 여기까지 08/18(수정일) handleReadingProgressConfirm 최종 완전판 (포인트 로직 포함) ▲▲▲
 
 
-        async function handleAddRoutineConfirm() {
+        // ▼▼▼ 2025-08-22 handleAddRoutineConfirm 함수가 작전 모드를 직접 참조하도록 수정 ▼▼▼
+    async function handleAddRoutineConfirm() {
+         console.log(`📌 [handleAddRoutineConfirm]: 루틴 저장 시작. 현재 모드: '${currentRoutineMode}'`);
             const assigneeSelect = document.getElementById('routineAssignee');
-            // ★★★ 담당자 ID를 가져오는 로직 수정 ★★★
-            // 선택 메뉴가 보이거나, 수정 모드일 때만 메뉴의 값을 사용하고,
-            // 그 외 (내 루틴 추가)의 경우에는 현재 사용자 ID를 사용합니다.
-            const assigneeId = (assigneeSelect.style.display !== 'none' || isEditingRoutine) 
-                             ? assigneeSelect.value 
-                             : currentUser.uid;
+                let assigneeId;
+
+                // ★★★ 핵심: UI 상태 대신, 기록된 작전 모드를 직접 참조합니다. ★★★
+                if (currentRoutineMode === 'parent') {
+                    assigneeId = currentUser.uid;
+                } else { // 'child' 또는 'edit' 모드
+                    assigneeId = assigneeSelect.value;
+                }
+    
+            console.log(`- 최종 결정된 담당자 ID: ${assigneeId}`);
+
             const name = document.getElementById('newRoutineName').value.trim();
             const points = parseInt(document.getElementById('newRoutinePoints').value);
             const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked')).map(cb => cb.value);
@@ -1201,10 +1211,13 @@ async function handleReadingProgressConfirm() {
                 showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
             }
             hideAddRoutineModal();
+            currentRoutineMode = null; 
+
         }
 
 
 // ▲▲▲ 여기까지 2025-08-22 handleAddRoutineConfirm 함수 안정화 ▲▲▲
+
 async function handleGoalConfirm() {
     console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
 
@@ -1367,15 +1380,23 @@ function showEditRoutineModal(routine) {
     
 // ▼▼▼ showRoutineForm 함수에 삭제 버튼 처리 로직을 추가하세요 ▼▼▼
 // ▼▼▼ 2025-08-22 showRoutineForm 함수 전면 개편 ▼▼▼
-async function showRoutineForm(routine = null, options = {}) { // ★★★ options 인자 추가
+// ▼▼▼ 2025-08-22 showRoutineForm 함수에 작전 모드 기록 기능 추가 ▼▼▼
+async function showRoutineForm(routine = null, options = {}) {
     const modal = document.getElementById('addRoutineModal');
     const deleteBtn = document.getElementById('deleteRoutineBtn');
     
+    // ★★★ 핵심: 모달이 열릴 때 작전 모드를 전역 변수에 기록합니다. ★★★
+    currentRoutineMode = routine ? 'edit' : (options.mode || 'parent');
+    console.log(`📌 [showRoutineForm]: 작전 모드를 '${currentRoutineMode}'로 설정`);
+
     modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
     document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
     
-    // --- 담당자 목록 로딩 로직 개편 ---
     const assigneeSelect = document.getElementById('routineAssignee');
+    if (!assigneeSelect) {
+        console.error("❌ 'routineAssignee' 요소를 찾을 수 없습니다.");
+        return;
+    }
     const assigneeGroup = assigneeSelect.closest('.form-group');
 
     assigneeSelect.innerHTML = '<option>로딩 중...</option>';
@@ -1383,39 +1404,27 @@ async function showRoutineForm(routine = null, options = {}) { // ★★★ opti
     assigneeSelect.innerHTML = '';
     
     let membersToShow = familyMembers;
-
-    // '수정' 모드가 아닐 때만 담당자 목록을 필터링합니다.
-    if (!routine) {
-        if (options.mode === 'parent') {
-            membersToShow = familyMembers.filter(m => m.id === currentUser.uid);
-            // 부모 루틴 추가 시에는 담당자 선택이 불필요하므로 숨깁니다.
-            if(assigneeGroup) assigneeGroup.style.display = 'none';
-        } else if (options.mode === 'child') {
-            membersToShow = familyMembers.filter(m => m.id !== currentUser.uid);
-            // 자녀 루틴 추가 시에는 담당자 선택을 보이게 합니다.
-            if(assigneeGroup) assigneeGroup.style.display = 'flex';
-        }
-    } else {
-        // 수정 모드에서는 항상 담당자 선택을 보이게 합니다.
-        if(assigneeGroup) assigneeGroup.style.display = 'flex';
+    
+    // 모드에 따라 담당자 목록 필터링 및 UI 제어
+    if (currentRoutineMode === 'parent') {
+        membersToShow = familyMembers.filter(m => m.id === currentUser.uid);
+        if (assigneeGroup) assigneeGroup.style.display = 'none';
+    } else if (currentRoutineMode === 'child') {
+        membersToShow = familyMembers.filter(m => m.id !== currentUser.uid);
+        if (assigneeGroup) assigneeGroup.style.display = 'flex';
+    } else { // 'edit' 모드
+        if (assigneeGroup) assigneeGroup.style.display = 'flex';
     }
 
     membersToShow.forEach(member => {
         const option = document.createElement('option');
         option.value = member.id;
         option.textContent = member.name;
-        if (routine && routine.assignedTo === member.id) {
-            option.selected = true;
-        }
+        if (routine && routine.assignedTo === member.id) option.selected = true;
         assigneeSelect.appendChild(option);
     });
 
-    if (options.mode === 'child' && membersToShow.length === 0) {
-        assigneeSelect.innerHTML = '<option value="">추가할 자녀가 없습니다</option>';
-        assigneeSelect.disabled = true;
-    } else {
-        assigneeSelect.disabled = false;
-    }
+    assigneeSelect.disabled = (currentRoutineMode === 'child' && membersToShow.length === 0);
 
 
     // 삭제 버튼 표시/숨김
