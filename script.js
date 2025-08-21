@@ -79,27 +79,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
-  firebase.auth().onAuthStateChanged(async (user) => {
+// ▼▼▼ 2025-08-21 신규 사용자 오류 해결 1/3 ▼▼▼
+firebase.auth().onAuthStateChanged(async (user) => {
     const bottomTabBar = document.querySelector('.bottom-tab-bar');
 
     if (user) {
-        // 1. 기본 인증 정보로 '임시' 지휘관을 임명합니다.
-        let tempUser = {
+        // 1. Firebase로부터 받은 user 객체를 그대로 활용합니다.
+        // const fullUserData = await loadAllDataForUser(user.uid); // 기존 코드
+        const fullUserData = await loadAllDataForUser(user); // ★★★ 수정: user 객체 전체를 전달
+        
+        // 2. 완전한 정보로 currentUser를 최종 임명합니다.
+        currentUser = { 
             uid: user.uid,
             displayName: user.displayName,
             email: user.email,
-            photoURL: user.photoURL
+            photoURL: user.photoURL,
+            ...fullUserData 
         };
-
-        // 2. 보급 장교(loadAllDataForUser)가 상세 정보를 가져와 임명을 '완료'합니다.
-        // 이제 loadAllDataForUser는 완전한 사용자 객체를 반환합니다.
-        const fullUserData = await loadAllDataForUser(tempUser.uid);
-        
-        // 3. 완전한 정보로 currentUser를 최종 임명합니다.
-        currentUser = { ...tempUser, ...fullUserData };
         console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
 
-        // 4. 최종 임명된 지휘관의 역할에 따라 전장을 배치합니다.
+        // 3. 역할에 따라 전장을 배치합니다. (이하 동일)
         if (currentUser.role === 'child') {
             if (!window.location.pathname.endsWith('child.html')) {
                 window.location.href = 'child.html';
@@ -107,19 +106,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 5. 모든 정보가 완벽한 상태에서만 부모용 UI와 작전을 개시합니다.
-        updateUserInfoUI(currentUser); // UI 업데이트 함수 호출
+        updateUserInfoUI(currentUser);
         if (bottomTabBar) bottomTabBar.style.display = 'flex';
         renderCurrentPage();
 
     } else {
-        // 로그아웃 절차
         currentUser = null;
         updateUserInfoUI(null);
         if (bottomTabBar) bottomTabBar.style.display = 'none';
-        // 로그인 화면이므로 홈 화면 렌더링은 불필요. 필요하다면 로그인 버튼 표시 로직 추가.
     }
 });
+// ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 1/3 ▲▲▲
 
 // --- 임무 4: 리다이렉트 로그인 결과 처리 ---
 firebase.auth().getRedirectResult()
@@ -142,15 +139,18 @@ setupAllEventListeners();
 // ====================================================================
 
 // ▼▼▼ 08/21(수정일) loadAllDataForUser가 사용자 정보를 '반환'하도록 수정 ▼▼▼
-async function loadAllDataForUser(userId) {
+// ▼▼▼ 2025-08-21 신규 사용자 오류 해결 2/3 ▼▼▼
+async function loadAllDataForUser(user) { // ★★★ 수정: userId -> user
     try {
+        const userId = user.uid; // user 객체에서 uid를 추출하여 사용
         console.log(`[loadAllDataForUser] >> 사용자(${userId}) 데이터 보급 시작...`);
         const userDocRef = db.collection('users').doc(userId);
         const userDoc = await userDocRef.get();
 
         let userData = {};
         if (!userDoc.exists) {
-            await uploadInitialDataForUser(userId);
+            // await uploadInitialDataForUser(userId); // 기존 코드
+            await uploadInitialDataForUser(user); // ★★★ 수정: user 객체 전체를 전달
             const newUserDoc = await userDocRef.get();
             if (newUserDoc.exists) userData = newUserDoc.data();
         } else {
@@ -167,29 +167,32 @@ async function loadAllDataForUser(userId) {
         await resetDailyProgressForUser(userId);
         
         console.log(`[loadAllDataForUser] >> 보급 완료. 사용자 프로필 반환.`);
-        return userData; // ★★★ 핵심: currentUser를 직접 수정하지 않고, 데이터를 반환합니다.
+        return userData;
 
     } catch (error) {
         console.error("[loadAllDataForUser] >> 데이터 보급 실패: ", error);
         showNotification("데이터를 불러오는데 실패했습니다.", "error");
-        return {}; // 실패 시 빈 객체 반환
+        return {};
     }
 }
-// ▲▲▲ 여기까지 08/21(수정일) loadAllDataForUser가 사용자 정보를 '반환'하도록 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 2/3 ▲▲▲
 
-async function uploadInitialDataForUser(userId) {
+
+// ▼▼▼ 2025-08-21 신규 사용자 오류 해결 3/3 ▼▼▼
+async function uploadInitialDataForUser(user) { // ★★★ 수정: userId -> user
     const batch = db.batch();
-    const userDocRef = db.collection('users').doc(userId);
-    batch.set(userDocRef, { email: currentUser.email, name: currentUser.displayName, createdAt: new Date() });
+    const userDocRef = db.collection('users').doc(user.uid);
+    // batch.set(userDocRef, { email: currentUser.email, name: currentUser.displayName, createdAt: new Date() }); // 기존 코드
+    batch.set(userDocRef, { email: user.email, name: user.displayName, createdAt: new Date() }); // ★★★ 수정: 전달받은 user 객체 사용
 
     const INITIAL_SAMPLE_ROUTINES = [
-        { id: "init_1", name: '첫 루틴: 운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 0, order: 0, active: true, areas: ['physical'], basePoints: 10 },
-        { id: "init_2", name: '첫 루틴: 물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 0, status: null, streak: 0, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['physical'], basePoints: 5 },
+        { id: "init_1", name: '첫 루틴: 운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 0, order: 0, active: true, areas: ['health'], basePoints: 10 },
+        { id: "init_2", name: '첫 루틴: 물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 0, status: null, streak: 0, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['health'], basePoints: 5 },
     ];
     const DEFAULT_AREAS = [
-    { id: 'health', name: '건강' },
-    { id: 'relationships', name: '관계' },
-    { id: 'work', name: '업무' }
+        { id: 'health', name: '건강' },
+        { id: 'relationships', name: '관계' },
+        { id: 'work', name: '업무' }
     ];
 
     INITIAL_SAMPLE_ROUTINES.forEach(routine => {
@@ -206,9 +209,9 @@ async function uploadInitialDataForUser(userId) {
     batch.set(userDocRef.collection('meta').doc('lastReset'), { date: todayDateString });
     
     await batch.commit();
-    await loadAllDataForUser(userId);
+    // await loadAllDataForUser(user.uid); // 여기서는 재호출 불필요
 }
-
+// ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 3/3 ▲▲▲
 async function resetDailyProgressForUser(userId) {
     const userDocRef = db.collection('users').doc(userId);
     const metaRef = userDocRef.collection('meta').doc('lastReset');
