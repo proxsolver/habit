@@ -265,6 +265,80 @@ async function resetDailyProgressForUser(userId) {
 // 5. Firebase 데이터 처리 함수 (CRUD)
 // ====================================================================
 
+// ▼▼▼ 08/21(수정일) 초대 코드 생성 및 가족 참여 함수 추가 ▼▼▼
+// 1. 초대 코드 생성 및 표시 함수
+async function generateAndShowInviteCode() {
+    if (!currentUser || !currentUser.familyId) return;
+    console.log('📌 [generateInviteCode]: 초대 코드 생성 시작...');
+    
+    // 간단한 6자리 랜덤 코드 생성
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const expiry = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // 24시간 후 만료
+
+    try {
+        const familyRef = db.collection('families').doc(currentUser.familyId);
+        await familyRef.update({
+            inviteCode: code,
+            inviteExpiry: expiry
+        });
+        
+        document.getElementById('inviteCodeDisplay').textContent = code;
+        document.getElementById('inviteCodeModal').style.display = 'flex';
+        console.log(`✅ [generateInviteCode]: 코드(${code}) 생성 및 DB 저장 완료.`);
+    } catch (error) {
+        console.error("❌ [generateInviteCode]: 초대 코드 생성 실패", error);
+        showNotification('초대 코드 생성에 실패했습니다.', 'error');
+    }
+}
+
+// 2. 코드를 사용하여 가족에 참여하는 함수
+async function joinFamilyWithCode() {
+    if (!currentUser) return;
+    const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+    if (code.length < 6) {
+        showNotification('정확한 초대 코드를 입력해주세요.', 'error');
+        return;
+    }
+
+    console.log(`📌 [joinFamilyWithCode]: 코드(${code})로 가족 참여 시도...`);
+    const familiesRef = db.collection('families');
+    // 코드가 일치하고 만료되지 않은 가족을 찾습니다.
+    const q = await familiesRef.where('inviteCode', '==', code)
+                             .where('inviteExpiry', '>', firebase.firestore.Timestamp.now())
+                             .get();
+
+    if (q.empty) {
+        showNotification('유효하지 않거나 만료된 초대 코드입니다.', 'error');
+        return;
+    }
+
+    const familyDoc = q.docs[0];
+    const familyId = familyDoc.id;
+    const userRef = db.collection('users').doc(currentUser.uid);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            // 1. 사용자의 문서를 'child' 역할로 업데이트
+            transaction.update(userRef, { familyId: familyId, role: 'child' });
+            // 2. 가족 문서의 members 배열에 사용자 추가
+            transaction.update(familyDoc.ref, { members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
+        });
+        
+        console.log(`✅ [joinFamilyWithCode]: 가족(${familyId}) 참여 성공.`);
+        showNotification('🎉 가족에 성공적으로 참여했습니다!', 'success');
+        
+        // 정보 갱신 및 UI 새로고침
+        await loadAllDataForUser(currentUser.uid);
+        document.getElementById('joinFamilyModal').style.display = 'none';
+        showManagePage();
+
+    } catch (error) {
+        console.error("❌ [joinFamilyWithCode]: 가족 참여 실패", error);
+        showNotification('가족 참여에 실패했습니다.', 'error');
+    }
+}
+
+
 async function updateRoutineInFirebase(routineId, updatedFields) {
     if (!currentUser) return;
     const routineRef = db.collection('users').doc(currentUser.uid).collection('routines').doc(String(routineId));
@@ -2990,9 +3064,8 @@ function showManagePage() {
                 <p style="color: var(--text-secondary);">당신은 이미 가족에 소속되어 있습니다.</p>
                 <button id="inviteMemberBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 가족원 초대하기</button>
             `;
-            document.getElementById('inviteMemberBtn').addEventListener('click', () => {
-                showNotification('초대 기능은 현재 준비 중입니다.', 'info');
-            });
+            document.getElementById('inviteMemberBtn').addEventListener('click', generateAndShowInviteCode);
+           
         } else {
             // 가족이 없는 경우
             familyContentDiv.innerHTML = `
@@ -3002,8 +3075,8 @@ function showManagePage() {
             `;
             document.getElementById('createFamilyBtn').addEventListener('click', createFamily);
             document.getElementById('joinFamilyBtn').addEventListener('click', () => {
-                showNotification('초대 코드로 참여하는 기능은 현재 준비 중입니다.', 'info');
-            });
+                document.getElementById('joinFamilyModal').style.display = 'flex';
+                });
         }
     }
 
@@ -3506,6 +3579,9 @@ function setupAllEventListeners() {
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
     setupModal('addGoalModal', hideAddGoalModal, handleGoalConfirm, 'addGoalConfirm');
     setupModal('routineDetailModal', hideDetailStatsModal);
+    setupModal('inviteCodeModal', () => { document.getElementById('inviteCodeModal').style.display = 'none'; });
+    setupModal('joinFamilyModal', () => { document.getElementById('joinFamilyModal').style.display = 'none'; }, joinFamilyWithCode);
+
     // ▲▲▲ 여기까지 교체 ▲▲▲
     // --- ESC로 모든 모달 닫기 ---
     document.addEventListener('keydown', (e) => {

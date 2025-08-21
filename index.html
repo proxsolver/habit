@@ -74,6 +74,43 @@
                 <div class="section-card" id="family-management-section">
     <h2>👨‍👩‍👧‍👦 가족 관리</h2>
     <div id="family-content">
+        <div id="inviteCodeModal" class="modal-overlay" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>+ 가족 초대 코드</h3>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <p style="margin-bottom: 1rem;">아래 코드를 가족에게 공유하여 초대를 완료하세요.</p>
+                    <div id="inviteCodeDisplay" style="font-size: 2rem; font-weight: bold; letter-spacing: 0.5rem; padding: 1rem; background: var(--gray-100); border-radius: var(--radius);">
+                        - - - - - -
+                    </div>
+                    <small style="display: block; margin-top: 1rem; color: var(--text-secondary);">이 코드는 24시간 동안 유효합니다.</small>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary">닫기</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="joinFamilyModal" class="modal-overlay" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>🤝 가족 참여하기</h3>
+                    <button class="modal-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="joinCodeInput">전달받은 초대 코드를 입력하세요:</label>
+                        <input type="text" id="joinCodeInput" placeholder="예: A6B3C9" style="text-align: center; font-size: 1.5rem;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary">취소</button>
+                    <button id="joinFamilyConfirmBtn" class="btn btn-confirm">참여</button>
+                </div>
+            </div>
+        </div>
         </div>
 </div>
                 <h2>⚙️ 루틴 순서 관리</h2>
