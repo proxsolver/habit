@@ -79,16 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
-// ▼▼▼ 2025-08-21 신규 사용자 오류 해결 1/3 ▼▼▼
+// ▼▼▼ 2025-08-21 로그인 시 마이그레이션 절차 추가 ▼▼▼
 firebase.auth().onAuthStateChanged(async (user) => {
     const bottomTabBar = document.querySelector('.bottom-tab-bar');
 
     if (user) {
-        // 1. Firebase로부터 받은 user 객체를 그대로 활용합니다.
-        // const fullUserData = await loadAllDataForUser(user.uid); // 기존 코드
-        const fullUserData = await loadAllDataForUser(user); // ★★★ 수정: user 객체 전체를 전달
+        const fullUserData = await loadAllDataForUser(user);
         
-        // 2. 완전한 정보로 currentUser를 최종 임명합니다.
         currentUser = { 
             uid: user.uid,
             displayName: user.displayName,
@@ -98,7 +95,9 @@ firebase.auth().onAuthStateChanged(async (user) => {
         };
         console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
 
-        // 3. 역할에 따라 전장을 배치합니다. (이하 동일)
+        // ★★★ 추가된 작전: 데이터 렌더링 전 마이그레이션 실행 ★★★
+        await migrateUserRoutines(currentUser.uid);
+
         if (currentUser.role === 'child') {
             if (!window.location.pathname.endsWith('child.html')) {
                 window.location.href = 'child.html';
@@ -116,7 +115,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
         if (bottomTabBar) bottomTabBar.style.display = 'none';
     }
 });
-// ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 1/3 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-21 로그인 시 마이그레이션 절차 추가 ▲▲▲
+
 
 // --- 임무 4: 리다이렉트 로그인 결과 처리 ---
 firebase.auth().getRedirectResult()
@@ -1122,12 +1122,19 @@ async function handleReadingProgressConfirm() {
 
 
         async function handleAddRoutineConfirm() {
+            const assigneeSelect = document.getElementById('routineAssignee');
+            // ★★★ 담당자 ID를 가져오는 로직 수정 ★★★
+            // 선택 메뉴가 보이거나, 수정 모드일 때만 메뉴의 값을 사용하고,
+            // 그 외 (내 루틴 추가)의 경우에는 현재 사용자 ID를 사용합니다.
+            const assigneeId = (assigneeSelect.style.display !== 'none' || isEditingRoutine) 
+                             ? assigneeSelect.value 
+                             : currentUser.uid;
             const name = document.getElementById('newRoutineName').value.trim();
             const points = parseInt(document.getElementById('newRoutinePoints').value);
             const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked')).map(cb => cb.value);
     
-            if (!name || !points || points <= 0 || selectedAreas.length === 0) {
-                showNotification('루틴 이름, 1 이상의 포인트, 1개 이상의 영역을 선택해주세요.', 'error');
+            if (!name || !points || points <= 0 || selectedAreas.length === 0 || !assigneeId) {
+                showNotification('모든 항목(담당자 포함)을 정확히 입력해주세요.', 'error');
                 return;
             }
     
@@ -1197,7 +1204,7 @@ async function handleReadingProgressConfirm() {
         }
 
 
-// ▼▼▼ 08/18(수정일) handleGoalConfirm 최종 완전판 (이중 작전 체계) ▼▼▼
+// ▲▲▲ 여기까지 2025-08-22 handleAddRoutineConfirm 함수 안정화 ▲▲▲
 async function handleGoalConfirm() {
     console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
 
@@ -1344,26 +1351,73 @@ async function saveRoutineOrder() {
 
 // --- 모달 관련 함수 (Modals) ---
 
-   function showAddRoutineModal() {
-            isEditingRoutine = false;
-            editingRoutineId = null;
-            showRoutineForm();
-        }
+// ▼▼▼ 2025-08-22 showAddRoutineModal 함수 수정 ▼▼▼
+function showAddRoutineModal(options = {}) { // ★★★ options 인자 추가
+    isEditingRoutine = false;
+    editingRoutineId = null;
+    showRoutineForm(null, options); // ★★★ options를 showRoutineForm으로 전달
+}
+// ▲▲▲ 여기까지 2025-08-22 showAddRoutineModal 함수 수정 ▲▲▲
     
-        function showEditRoutineModal(routine) {
-            isEditingRoutine = true;
-            editingRoutineId = routine.id;
-            showRoutineForm(routine);
-        }
+function showEditRoutineModal(routine) {
+    isEditingRoutine = true;
+    editingRoutineId = routine.id;
+    showRoutineForm(routine);
+}
     
 // ▼▼▼ showRoutineForm 함수에 삭제 버튼 처리 로직을 추가하세요 ▼▼▼
-function showRoutineForm(routine = null) {
+// ▼▼▼ 2025-08-22 showRoutineForm 함수 전면 개편 ▼▼▼
+async function showRoutineForm(routine = null, options = {}) { // ★★★ options 인자 추가
     const modal = document.getElementById('addRoutineModal');
     const deleteBtn = document.getElementById('deleteRoutineBtn');
     
     modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
     document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
     
+    // --- 담당자 목록 로딩 로직 개편 ---
+    const assigneeSelect = document.getElementById('routineAssignee');
+    const assigneeGroup = assigneeSelect.closest('.form-group');
+
+    assigneeSelect.innerHTML = '<option>로딩 중...</option>';
+    const familyMembers = await getFamilyMembers();
+    assigneeSelect.innerHTML = '';
+    
+    let membersToShow = familyMembers;
+
+    // '수정' 모드가 아닐 때만 담당자 목록을 필터링합니다.
+    if (!routine) {
+        if (options.mode === 'parent') {
+            membersToShow = familyMembers.filter(m => m.id === currentUser.uid);
+            // 부모 루틴 추가 시에는 담당자 선택이 불필요하므로 숨깁니다.
+            if(assigneeGroup) assigneeGroup.style.display = 'none';
+        } else if (options.mode === 'child') {
+            membersToShow = familyMembers.filter(m => m.id !== currentUser.uid);
+            // 자녀 루틴 추가 시에는 담당자 선택을 보이게 합니다.
+            if(assigneeGroup) assigneeGroup.style.display = 'flex';
+        }
+    } else {
+        // 수정 모드에서는 항상 담당자 선택을 보이게 합니다.
+        if(assigneeGroup) assigneeGroup.style.display = 'flex';
+    }
+
+    membersToShow.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.id;
+        option.textContent = member.name;
+        if (routine && routine.assignedTo === member.id) {
+            option.selected = true;
+        }
+        assigneeSelect.appendChild(option);
+    });
+
+    if (options.mode === 'child' && membersToShow.length === 0) {
+        assigneeSelect.innerHTML = '<option value="">추가할 자녀가 없습니다</option>';
+        assigneeSelect.disabled = true;
+    } else {
+        assigneeSelect.disabled = false;
+    }
+
+
     // 삭제 버튼 표시/숨김
     if (routine) {
         deleteBtn.style.display = 'block';
@@ -2007,9 +2061,10 @@ function renderManagePage() {
         }
     });
 
-    // 5. 각 '루틴 추가' 버튼에 맞는 모달 호출 로직을 연결합니다.
-    addParentBtn.onclick = () => showAddRoutineModal(null, { assignee: currentUser.uid });
-    addChildBtn.onclick = () => showAddRoutineModal(null, { assignee: 'child' });
+   // 5. 각 '루틴 추가' 버튼에 맞는 모달 호출 로직을 연결합니다.
+    // ★★★ 수정: options 객체를 전달하여 호출 의도를 명시합니다. ★★★
+    addParentBtn.onclick = () => showAddRoutineModal({ mode: 'parent' });
+    addChildBtn.onclick = () => showAddRoutineModal({ mode: 'child' });
 
     document.getElementById('saveParentOrderBtn').onclick = saveRoutineOrder;
 }
