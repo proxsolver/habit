@@ -1807,48 +1807,72 @@ async function showDetailStatsModal(routineId) {
 // ▲▲▲ 여기까지 교체 ▲▲▲
 
    
+// ▼▼▼ 2025-08-21 홈 화면 루틴 필터링 로직 수정 ▼▼▼
+function renderRoutines() {
+    const incompleteList = document.getElementById('incompleteRoutineList');
+    const inprogressList = document.getElementById('inprogressRoutineList');
+    const completedList = document.getElementById('completedRoutineList');
+    const skippedList = document.getElementById('skippedRoutineList');
+    const inprogressSection = document.getElementById('inprogress-section');
+    const completedSection = document.getElementById('completed-section');
+    const skippedSection = document.getElementById('skipped-section');
+    const emptyState = document.getElementById('emptyStateIncomplete');
 
-// --- 렌더링 함수 (Rendering) ---
-   function renderRoutines() {
-      const incompleteList = document.getElementById('incompleteRoutineList');
-      const inprogressList = document.getElementById('inprogressRoutineList');
-      const completedList = document.getElementById('completedRoutineList');
-      const skippedList = document.getElementById('skippedRoutineList');
-      const inprogressSection = document.getElementById('inprogress-section');
-      const completedSection = document.getElementById('completed-section');
-      const skippedSection = document.getElementById('skipped-section');
-      const emptyState = document.getElementById('emptyStateIncomplete');
+    if (!incompleteList || !inprogressList || !completedList || !skippedList) return;
 
     incompleteList.innerHTML = '';
     inprogressList.innerHTML = '';
     completedList.innerHTML = '';
     skippedList.innerHTML = '';
             
-            const activeRoutines = sampleRoutines.filter(r => r.active).sort((a, b) => a.order - b.order);
-            
-            let incompleteRoutines = 0;
+    // ★★★ 핵심 수정: 'active' 상태이면서, 'assignedTo'가 현재 사용자인 루틴만 필터링합니다. ★★★
+    const myActiveRoutines = sampleRoutines
+        .filter(r => r.active && r.assignedTo === currentUser.uid)
+        .sort((a, b) => a.order - b.order);
     
-            activeRoutines.forEach(routine => {
-                const element = createImprovedRoutineElement(routine);
-                if (routine.status === 'skipped') {
-                    skippedList.appendChild(element);
-                } else if (isRoutineCompleted(routine)) {
-                    completedList.appendChild(element);
-                } else if (isRoutineInProgress(routine)) {
-                    inprogressList.appendChild(element);
-                } else {
-                    incompleteList.appendChild(element);
-                    incompleteRoutines++;
-                }
-            });
-            
-            emptyState.style.display = incompleteRoutines === 0 && (inprogressList.children.length > 0 || completedList.children.length > 0) ? 'block' : 'none';
-            inprogressSection.style.display = inprogressList.children.length > 0 ? 'block' : 'none';
-            completedSection.style.display = completedList.children.length > 0 ? 'block' : 'none';
-            skippedSection.style.display = skippedList.children.length > 0 ? 'block' : 'none';
-            
-            updateDailyProgress();
+    let incompleteRoutines = 0;
+
+    myActiveRoutines.forEach(routine => {
+        const element = createImprovedRoutineElement(routine);
+        if (routine.status === 'skipped') {
+            skippedList.appendChild(element);
+        } else if (isRoutineCompleted(routine)) {
+            completedList.appendChild(element);
+        } else if (isRoutineInProgress(routine)) {
+            inprogressList.appendChild(element);
+        } else {
+            incompleteList.appendChild(element);
+            incompleteRoutines++;
         }
+    });
+    
+    // UI 업데이트 (기존 로직과 동일)
+    if (myActiveRoutines.length === 0) {
+        emptyState.style.display = 'block';
+        emptyState.innerHTML = `
+            <div class="empty-state-icon">🗺️</div>
+            <div class="empty-state-title">아직 루틴이 없어요</div>
+            <div class="empty-state-description">'관리' 페이지에서 '내 루틴 추가하기'를 통해<br>첫 번째 루틴을 만들어보세요.</div>
+        `;
+    } else {
+        emptyState.style.display = incompleteRoutines === 0 && (inprogressList.children.length > 0 || completedList.children.length > 0) ? 'block' : 'none';
+        emptyState.innerHTML = `
+            <div class="empty-state-icon">🎉</div>
+            <div class="empty-state-title">모든 루틴을 완료했습니다!</div>
+            <div class="empty-state-description">오늘 하루도 정말 수고하셨습니다.<br>꾸준한 노력이 큰 변화를 만들어냅니다!</div>
+        `;
+    }
+
+    inprogressSection.style.display = inprogressList.children.length > 0 ? 'block' : 'none';
+    completedSection.style.display = completedList.children.length > 0 ? 'block' : 'none';
+    skippedSection.style.display = skippedList.children.length > 0 ? 'block' : 'none';
+    
+    updateDailyProgress();
+}
+// ▲▲▲ 여기까지 2025-08-21 홈 화면 루틴 필터링 로직 수정 ▲▲▲
+
+
+
 
 // ▼▼▼ 2025-08-21 renderManagePage 함수를 탭 기반으로 전면 개편 ▼▼▼
 // ▼▼▼ 2025-08-21 renderManagePage 함수 안정성 강화 ▼▼▼
