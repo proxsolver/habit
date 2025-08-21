@@ -1851,6 +1851,7 @@ async function showDetailStatsModal(routineId) {
         }
 
 // ▼▼▼ 2025-08-21 renderManagePage 함수를 탭 기반으로 전면 개편 ▼▼▼
+// ▼▼▼ 2025-08-21 renderManagePage 함수 안정성 강화 ▼▼▼
 function renderManagePage() {
     // 1. 필요한 UI 요소들을 모두 선택합니다.
     const tabs = document.querySelectorAll('.routine-manage-tabs .tab-btn');
@@ -1859,15 +1860,22 @@ function renderManagePage() {
     const childListContainer = document.getElementById('childRoutinesByChild');
     const addParentBtn = document.getElementById('addParentRoutineBtn');
     const addChildBtn = document.getElementById('addChildRoutineBtn');
-    
+
+    // --- ★★★ 추가된 부분 시작 ★★★ ---
+    // '영역 관리' 기능 렌더링 및 이벤트 리스너 연결
+    renderAreaStats(); 
+    const manageAreasBtn = document.getElementById('manageAreasBtn');
+    if (manageAreasBtn) {
+        manageAreasBtn.addEventListener('click', showManageAreasModal);
+    }
+    // --- ★★★ 추가된 부분 끝 ★★★ ---
+
     // 2. 탭 전환 로직을 설정합니다.
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            // 모든 탭과 패널에서 'active' 클래스를 제거합니다.
             tabs.forEach(t => t.classList.remove('active'));
             panels.forEach(p => p.classList.remove('active'));
-            
-            // 클릭된 탭과 그에 맞는 패널에 'active' 클래스를 추가합니다.
+
             tab.classList.add('active');
             const targetPanelId = tab.dataset.tab + '-panel';
             document.getElementById(targetPanelId).classList.add('active');
@@ -1875,16 +1883,15 @@ function renderManagePage() {
     });
 
     // 3. '내 루틴' 탭의 내용을 렌더링합니다.
-    parentListEl.innerHTML = ''; // 목록 초기화
+    parentListEl.innerHTML = '';
     const parentRoutines = sampleRoutines
         .filter(r => r.assignedTo === currentUser.uid)
         .sort((a, b) => a.order - b.order);
-        
+
     parentRoutines.forEach(routine => {
         parentListEl.appendChild(createManageRoutineElement(routine));
     });
 
-    // Sortable.js를 '내 루틴' 목록에만 적용합니다.
     if (sortableInstance) sortableInstance.destroy();
     sortableInstance = new Sortable(parentListEl, {
         animation: 150,
@@ -1895,10 +1902,9 @@ function renderManagePage() {
     });
 
     // 4. '자녀 루틴' 탭의 내용을 렌더링합니다.
-    childListContainer.innerHTML = ''; // 컨테이너 초기화
+    childListContainer.innerHTML = '';
     const childRoutines = sampleRoutines.filter(r => r.assignedTo !== currentUser.uid);
-    
-    // 자녀별로 루틴을 그룹화합니다.
+
     const routinesByChild = childRoutines.reduce((acc, routine) => {
         const assigneeId = routine.assignedTo;
         if (!acc[assigneeId]) {
@@ -1908,20 +1914,19 @@ function renderManagePage() {
         return acc;
     }, {});
 
-    // 자녀별로 루틴 목록을 생성하여 화면에 추가합니다.
     getFamilyMembers().then(members => {
         const children = members.filter(m => m.id !== currentUser.uid);
         if (children.length === 0 && childRoutines.length > 0) {
             childListContainer.innerHTML = '<p>가족 구성원이 없습니다. 가족 관리에서 자녀를 먼저 추가해주세요.</p>';
-        } else {
+        } else if (children.length > 0) { // ★★★ 자녀가 있을 때만 렌더링하도록 조건 추가
             children.forEach(child => {
                 const childGroup = document.createElement('div');
                 childGroup.className = 'child-routine-group';
                 childGroup.innerHTML = `<h3>${child.name}의 루틴</h3>`;
-                
+
                 const childRoutineList = document.createElement('div');
                 childRoutineList.className = 'manage-routine-list';
-                
+
                 const routinesForThisChild = routinesByChild[child.id] || [];
                 if (routinesForThisChild.length > 0) {
                     routinesForThisChild.forEach(routine => {
@@ -1930,7 +1935,7 @@ function renderManagePage() {
                 } else {
                     childRoutineList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">할당된 루틴이 없습니다.</p>`;
                 }
-                
+
                 childGroup.appendChild(childRoutineList);
                 childListContainer.appendChild(childGroup);
             });
@@ -1940,10 +1945,10 @@ function renderManagePage() {
     // 5. 각 '루틴 추가' 버튼에 맞는 모달 호출 로직을 연결합니다.
     addParentBtn.onclick = () => showAddRoutineModal(null, { assignee: currentUser.uid });
     addChildBtn.onclick = () => showAddRoutineModal(null, { assignee: 'child' });
-    
-    // '내 순서 저장하기' 버튼 로직 연결
+
     document.getElementById('saveParentOrderBtn').onclick = saveRoutineOrder;
 }
+// ▲▲▲ 여기까지 2025-08-21 renderManagePage 함수 안정성 강화 ▲▲▲
 
 
 
@@ -3626,7 +3631,6 @@ function setupAllEventListeners() {
     });
 
     // --- 동적으로 생성되는 요소에 대한 이벤트 리스너 (루틴 타입 변경 등) ---
-    document.getElementById('manageAreasBtn').addEventListener('click', showManageAreasModal);
 // ▼▼▼ 08/17(수정일) 중복 가능성 있는 이벤트 리스너 제거 ▼▼▼
 // document.getElementById('openAddGoalBtn')?.addEventListener('click', showAddGoalModal); <-- 이 라인을 삭제!
 // ▲▲▲ 여기까지 08/17(수정일) 중복 가능성 있는 이벤트 리스너 제거 ▲▲▲    

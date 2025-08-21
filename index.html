@@ -87,10 +87,18 @@
                 <div class="routine-manage-panels">
                     <div id="parent-routines-panel" class="tab-panel active">
                         <p class="panel-description">드래그하여 나의 루틴 순서를 변경할 수 있습니다.</p>
+                        
+                        <div class="section-card" id="area-stats-section" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                            <h2>
+                                <div class="section-header"><span>✨ 영역별 포인트</span></div>
+                                <button class="edit-btn" id="manageAreasBtn">영역 관리</button>
+                            </h2>
+                            <div class="area-stats-grid" id="areaStatsGrid"></div>
+                        </div>
                         <div class="manage-routine-list" id="parentRoutineList"></div>
                         <button class="save-order-btn" id="saveParentOrderBtn">💾 내 순서 저장하기</button>
                         <button class="btn btn-add-routine" id="addParentRoutineBtn">➕ 내 루틴 추가하기</button>
-                    </div>
+                    </div>                    </div>
 
                     <div id="child-routines-panel" class="tab-panel">
                          <p class="panel-description">자녀에게 할당된 모든 루틴 목록입니다.</p>
