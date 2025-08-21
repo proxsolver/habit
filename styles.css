@@ -2215,3 +2215,67 @@ padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
     align-items: center;
 }
 /* ▲▲▲ 여기까지 2025-08-21 로그아웃 버튼 스타일 추가 ▲▲▲ */
+/* ▼▼▼ 2025-08-21 루틴 관리 탭 스타일 추가 ▼▼▼ */
+.routine-manage-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--gray-200);
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.routine-manage-tabs .tab-btn {
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    margin-bottom: -2px; /* 하단 보더와 겹치도록 */
+}
+
+.routine-manage-tabs .tab-btn:hover {
+    color: var(--primary);
+}
+
+.routine-manage-tabs .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-panel {
+    display: none;
+    animation: fadeInUp 0.4s;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.panel-description {
+    color: var(--text-secondary); 
+    font-size: 0.9rem; 
+    margin-bottom: 1rem;
+}
+
+.btn-add-routine {
+    width: 100%;
+    margin-top: 1rem;
+    background-color: var(--success);
+}
+
+.child-routine-group {
+    margin-bottom: 2rem;
+}
+
+.child-routine-group h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+/* ▲▲▲ 여기까지 2025-08-21 루틴 관리 탭 스타일 추가 ▲▲▲ */

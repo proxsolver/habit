@@ -110,6 +110,7 @@ async function loadAssignedRoutines(userId) {
 // ====================================================================
 // 4. 렌더링 (자녀용)
 // ====================================================================
+// ▼▼▼ 2025-08-21 루틴 렌더링 필터 로직 개선 ▼▼▼
 function renderMissions() {
     const incompleteList = document.getElementById('incompleteRoutineList');
     const completedList = document.getElementById('completedRoutineList');
@@ -119,10 +120,12 @@ function renderMissions() {
     incompleteList.innerHTML = '';
     completedList.innerHTML = '';
 
-    const activeRoutines = assignedRoutines.filter(r => r.active);
+    // const activeRoutines = assignedRoutines.filter(r => r.active); // 기존 코드
+    // ★★★ 수정: active 필드가 false가 아닌 모든 루틴(필드가 없는 경우 포함)을 표시하도록 변경
+    const activeRoutines = assignedRoutines.filter(r => r.active !== false);
     
     activeRoutines.forEach(routine => {
-        const isCompleted = (routine.status === 'completed'); // 단순화된 완료 조건
+        const isCompleted = (routine.status === 'completed' || routine.value === true);
         const element = createMissionElement(routine, isCompleted);
         
         if (isCompleted) {
@@ -132,9 +135,9 @@ function renderMissions() {
         }
     });
 
-    // 완료/미완료 섹션 표시 여부 업데이트
     document.getElementById('completed-section').style.display = completedList.children.length > 0 ? 'block' : 'none';
 }
+// ▲▲▲ 여기까지 2025-08-21 루틴 렌더링 필터 로직 개선 ▲▲▲
 
 function createMissionElement(routine, isCompleted) {
     const div = document.createElement('div');

@@ -326,6 +326,45 @@ async function updateAreasInFirebase(updatedAreas) {
     renderAreaStats();
 }
 
+// ▼▼▼ 2025-08-21 가족 구성원 정보 수집 함수 추가 ▼▼▼
+async function getFamilyMembers() {
+    if (!currentUser || !currentUser.familyId) {
+        // 가족이 없으면 '나' 자신만 반환
+        return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)` }];
+    }
+    
+    console.log('📌 [getFamilyMembers]: 가족 구성원 정보 수집 시작...');
+    try {
+        const querySnapshot = await db.collection('users')
+            .where('familyId', '==', currentUser.familyId)
+            .get();
+        
+        const members = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+            role: doc.data().role
+        }));
+        
+        // '나'를 목록 맨 위에 표시하고 구분하기 쉽게 "(나)" 추가
+        const me = members.find(m => m.id === currentUser.uid);
+        const others = members.filter(m => m.id !== currentUser.uid);
+        
+        const sortedMembers = [
+            { ...me, name: `${me.name} (나)` },
+            ...others
+        ];
+
+        console.log('✅ [getFamilyMembers]: 수집 완료.', sortedMembers);
+        return sortedMembers;
+
+    } catch (error) {
+        console.error("❌ [getFamilyMembers]: 가족 구성원 정보 수집 실패", error);
+        return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)` }]; // 실패 시 '나'만 반환
+    }
+}
+// ▲▲▲ 여기까지 2025-08-21 가족 구성원 정보 수집 함수 추가 ▲▲▲
+
+
 // ▼▼▼ 여기에 새 코드를 추가하세요 (목표 관리 함수) ▼▼▼
 async function addGoalToFirebase(goalData) {
     if (!currentUser) return null;
@@ -1227,25 +1266,29 @@ async function handleGoalConfirm() {
             }
         }
 
-        async function saveRoutineOrder() {
-            if (!orderChanged || !sortableInstance) return;
-    
-            const newOrderIds = sortableInstance.toArray();
-            const orderedRoutines = newOrderIds.map((id, index) => {
-                const routine = sampleRoutines.find(r => String(r.id) === id);
-                return { ...routine, order: index };
-            });
-    
-            try {
-                await updateRoutineOrderInFirebase(orderedRoutines);
-                orderChanged = false;
-                document.getElementById('saveOrderBtn').classList.remove('show');
+// 기존 'saveRoutineOrder' 함수도 수정이 필요합니다.
+async function saveRoutineOrder() {
+    if (!sortableInstance) return;
 
-                showNotification('✅ 루틴 순서가 저장되었습니다!');
-            } catch (error) {
-                showNotification('순서 저장에 실패했습니다.', 'error');
-            }
-        }
+    const newOrderIds = sortableInstance.toArray();
+    
+    // 전체 루틴에서 '내 루틴'만 필터링하여 순서를 업데이트합니다.
+    const orderedParentRoutines = newOrderIds.map((id, index) => {
+        const routine = sampleRoutines.find(r => String(r.id) === id);
+        return { ...routine, order: index };
+    });
+
+    try {
+        await updateRoutineOrderInFirebase(orderedParentRoutines);
+        document.getElementById('saveParentOrderBtn').style.display = 'none';
+        showNotification('✅ 내 루틴 순서가 저장되었습니다!');
+    } catch (error) {
+        showNotification('순서 저장에 실패했습니다.', 'error');
+    }
+}
+// ▲▲▲ 여기까지 2025-08-21 renderManagePage 함수를 탭 기반으로 전면 개편 ▲▲▲
+
+
 
     function editRoutine(routineId) {
           const routine = sampleRoutines.find(r => r.id === routineId);
@@ -1807,37 +1850,102 @@ async function showDetailStatsModal(routineId) {
             updateDailyProgress();
         }
 
+// ▼▼▼ 2025-08-21 renderManagePage 함수를 탭 기반으로 전면 개편 ▼▼▼
 function renderManagePage() {
-            const manageList = document.getElementById('manageRoutineList');
-            const saveBtn = document.getElementById('saveOrderBtn');
-            if (!manageList || !saveBtn) return;
+    // 1. 필요한 UI 요소들을 모두 선택합니다.
+    const tabs = document.querySelectorAll('.routine-manage-tabs .tab-btn');
+    const panels = document.querySelectorAll('.routine-manage-panels .tab-panel');
+    const parentListEl = document.getElementById('parentRoutineList');
+    const childListContainer = document.getElementById('childRoutinesByChild');
+    const addParentBtn = document.getElementById('addParentRoutineBtn');
+    const addChildBtn = document.getElementById('addChildRoutineBtn');
+    
+    // 2. 탭 전환 로직을 설정합니다.
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 모든 탭과 패널에서 'active' 클래스를 제거합니다.
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
             
-            manageList.innerHTML = '';
-            orderChanged = false;
-            saveBtn.classList.remove('show');
+            // 클릭된 탭과 그에 맞는 패널에 'active' 클래스를 추가합니다.
+            tab.classList.add('active');
+            const targetPanelId = tab.dataset.tab + '-panel';
+            document.getElementById(targetPanelId).classList.add('active');
+        });
+    });
+
+    // 3. '내 루틴' 탭의 내용을 렌더링합니다.
+    parentListEl.innerHTML = ''; // 목록 초기화
+    const parentRoutines = sampleRoutines
+        .filter(r => r.assignedTo === currentUser.uid)
+        .sort((a, b) => a.order - b.order);
+        
+    parentRoutines.forEach(routine => {
+        parentListEl.appendChild(createManageRoutineElement(routine));
+    });
+
+    // Sortable.js를 '내 루틴' 목록에만 적용합니다.
+    if (sortableInstance) sortableInstance.destroy();
+    sortableInstance = new Sortable(parentListEl, {
+        animation: 150,
+        handle: '.drag-handle',
+        onEnd: () => {
+            document.getElementById('saveParentOrderBtn').style.display = 'block';
+        }
+    });
+
+    // 4. '자녀 루틴' 탭의 내용을 렌더링합니다.
+    childListContainer.innerHTML = ''; // 컨테이너 초기화
+    const childRoutines = sampleRoutines.filter(r => r.assignedTo !== currentUser.uid);
     
-            const sortedRoutines = [...sampleRoutines].sort((a, b) => a.order - b.order);
-    
-            sortedRoutines.forEach(routine => {
-                const item = createManageRoutineElement(routine);
-                manageList.appendChild(item);
-            });
-    
-            if (sortableInstance) {
-                sortableInstance.destroy();
-            }
-    
-            sortableInstance = new Sortable(manageList, {
-                animation: 150,
-                handle: '.drag-handle',
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                onEnd: () => {
-                    orderChanged = true;
-                    saveBtn.classList.add('show');
+    // 자녀별로 루틴을 그룹화합니다.
+    const routinesByChild = childRoutines.reduce((acc, routine) => {
+        const assigneeId = routine.assignedTo;
+        if (!acc[assigneeId]) {
+            acc[assigneeId] = [];
+        }
+        acc[assigneeId].push(routine);
+        return acc;
+    }, {});
+
+    // 자녀별로 루틴 목록을 생성하여 화면에 추가합니다.
+    getFamilyMembers().then(members => {
+        const children = members.filter(m => m.id !== currentUser.uid);
+        if (children.length === 0 && childRoutines.length > 0) {
+            childListContainer.innerHTML = '<p>가족 구성원이 없습니다. 가족 관리에서 자녀를 먼저 추가해주세요.</p>';
+        } else {
+            children.forEach(child => {
+                const childGroup = document.createElement('div');
+                childGroup.className = 'child-routine-group';
+                childGroup.innerHTML = `<h3>${child.name}의 루틴</h3>`;
+                
+                const childRoutineList = document.createElement('div');
+                childRoutineList.className = 'manage-routine-list';
+                
+                const routinesForThisChild = routinesByChild[child.id] || [];
+                if (routinesForThisChild.length > 0) {
+                    routinesForThisChild.forEach(routine => {
+                        childRoutineList.appendChild(createManageRoutineElement(routine));
+                    });
+                } else {
+                    childRoutineList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">할당된 루틴이 없습니다.</p>`;
                 }
+                
+                childGroup.appendChild(childRoutineList);
+                childListContainer.appendChild(childGroup);
             });
         }
+    });
+
+    // 5. 각 '루틴 추가' 버튼에 맞는 모달 호출 로직을 연결합니다.
+    addParentBtn.onclick = () => showAddRoutineModal(null, { assignee: currentUser.uid });
+    addChildBtn.onclick = () => showAddRoutineModal(null, { assignee: 'child' });
+    
+    // '내 순서 저장하기' 버튼 로직 연결
+    document.getElementById('saveParentOrderBtn').onclick = saveRoutineOrder;
+}
+
+
 
 // ▼▼▼ 08/17(수정일) 독서 루틴 완료 예정일 표시 위치 및 구조 수정 (기존 함수 전체 교체) ▼▼▼
 function createImprovedRoutineElement(routine) {
