@@ -695,14 +695,13 @@ async function updateGoalProgressByRoutine(routineId, reportData) {
 // ▲▲▲ 여기까지 08/18(수정일) updateGoalProgressByRoutine 최종 진화형 ▲▲▲
 // feat(stats): Implement stats calculation function using collection group query
 
-// ▼▼▼ 2025-08-24 [재설계] 활동 기록 저장 경로 수정 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) history 문서에 familyId 필드 추가 ▼▼▼
 async function logRoutineHistory(routineId, dataToLog) {
     if (!currentUser || !currentUser.familyId) return;
     
     const today = new Date();
     const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    // ★★★ 핵심: 새로운 families 컬렉션 경로를 사용합니다. ★★★
     const historyRef = db.collection('families').doc(currentUser.familyId)
                          .collection('routines').doc(String(routineId))
                          .collection('history').doc(dateString);
@@ -711,15 +710,16 @@ async function logRoutineHistory(routineId, dataToLog) {
         await historyRef.set({
             routineId: routineId,
             date: dateString,
+            familyId: currentUser.familyId, // ★★★ 핵심: familyId를 기록에 추가
             ...dataToLog,
-            loggedBy: currentUser.uid // 누가 기록했는지도 남기면 좋습니다.
-        }, { merge: true }); // 동일한 날 여러 번 기록 시 덮어쓰지 않고 병합
+            loggedBy: currentUser.uid
+        }, { merge: true });
         debugLog(`History logged for routine ${routineId} on ${dateString}`);
     } catch (error) {
         console.error("Failed to log routine history:", error);
     }
 }
-// ▲▲▲ 여기까지 2025-08-24 [재설계] 활동 기록 저장 경로 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) history 문서에 familyId 필드 추가 ▲▲▲
 // feat(stats): Implement stats calculation function using collection group query
 
 
@@ -812,20 +812,18 @@ function getISOWeek(date) {
 
 // ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▼▼▼
 async function calculateStats(period = 'weekly') {
-    if (!currentUser) return null;
+    if (!currentUser || !currentUser.familyId) return null; // ★★★ familyId 확인 로직 추가
 
-    // 1. 모든 활동 기록(history) 데이터 수집
+
+    // 1. ★★★ 핵심 수정: 'families' 컬렉션 내에서 현재 가족의 활동 기록만 수집
     const historyQuery = db.collectionGroup('history')
-                           .where('__name__', '>=', `users/${currentUser.uid}/`)
-                           .where('__name__', '<', `users/${currentUser.uid}0/`);
+                           .where('familyId', '==', currentUser.familyId);
+    
     const historySnapshot = await historyQuery.get();
     const histories = historySnapshot.docs.map(doc => {
         const data = doc.data();
-        
-        // 'YYYY-MM-DD' 문자열을 KST 기준으로 정확히 파싱
         const parts = data.date.split('-');
         data.dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-        
         return data;
     });
 
