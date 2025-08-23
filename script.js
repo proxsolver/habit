@@ -593,28 +593,31 @@ async function updateGoalProgressByRoutine(routineId, reportData) {
 // ▲▲▲ 여기까지 08/18(수정일) updateGoalProgressByRoutine 최종 진화형 ▲▲▲
 // feat(stats): Implement stats calculation function using collection group query
 
+// ▼▼▼ 2025-08-24 [재설계] 활동 기록 저장 경로 수정 ▼▼▼
 async function logRoutineHistory(routineId, dataToLog) {
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.familyId) return;
     
     const today = new Date();
     const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    const historyRef = db.collection('users').doc(currentUser.uid)
+    // ★★★ 핵심: 새로운 families 컬렉션 경로를 사용합니다. ★★★
+    const historyRef = db.collection('families').doc(currentUser.familyId)
                          .collection('routines').doc(String(routineId))
                          .collection('history').doc(dateString);
     
     try {
         await historyRef.set({
-            routineId: routineId, // <-- 부모 루틴의 ID를 함께 저장
+            routineId: routineId,
             date: dateString,
-            ...dataToLog
-        });
+            ...dataToLog,
+            loggedBy: currentUser.uid // 누가 기록했는지도 남기면 좋습니다.
+        }, { merge: true }); // 동일한 날 여러 번 기록 시 덮어쓰지 않고 병합
         debugLog(`History logged for routine ${routineId} on ${dateString}`);
     } catch (error) {
         console.error("Failed to log routine history:", error);
     }
 }
-
+// ▲▲▲ 여기까지 2025-08-24 [재설계] 활동 기록 저장 경로 수정 ▲▲▲
 // feat(stats): Implement stats calculation function using collection group query
 
 
@@ -2491,14 +2494,15 @@ async function renderStatsPage() {
 
 async function calculateDetailStats(routineId) {
     const routine = sampleRoutines.find(r => r.id === routineId);
-    if (!routine) return null;
+    if (!routine || !currentUser.familyId) return null;
 
-    // 1. 해당 루틴의 모든 history 기록 가져오기
-    const historyRef = db.collection('users').doc(currentUser.uid)
+    // ★★★ 핵심: 새로운 families 컬렉션 경로를 사용합니다. ★★★
+    const historyRef = db.collection('families').doc(currentUser.familyId)
                          .collection('routines').doc(routineId)
                          .collection('history');
     const historySnapshot = await historyRef.orderBy('date', 'desc').get();
     const histories = historySnapshot.docs.map(doc => doc.data());
+
 
     if (histories.length === 0) {
         return {
