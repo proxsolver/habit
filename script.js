@@ -14,6 +14,8 @@ let currentStatsPeriod = 'weekly'; // <-- 이 라인을 추가하세요.
 // ▼▼▼ 08/17(수정일) 목표 편집을 위한 전역 변수 추가 ▼▼▼
 let isEditingGoal = false;
 let editingGoalId = null;
+let isEditingRoutine = false; // ★★★ 이 라인 추가
+let editingRoutineId = null; // ★★★ 이 라인 추가
 // ▲▲▲ 여기까지 08/17(수정일) 목표 편집을 위한 전역 변수 추가 ▲▲▲
 // ▼▼▼ 08/20(수정일) '현재 페이지' 상태 변수 추가 ▼▼▼
 let activePage = 'home'; // 앱 시작 시 기본 페이지는 '홈'
@@ -97,9 +99,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
             ...fullUserData 
         };
         console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
-
-        // ★★★ 추가된 작전: 데이터 렌더링 전 마이그레이션 실행 ★★★
-        await migrateUserRoutines(currentUser.uid);
 
         if (currentUser.role === 'child') {
             if (!window.location.pathname.endsWith('child.html')) {
@@ -225,44 +224,6 @@ async function uploadInitialDataForUser(user) { // ★★★ 수정: userId -> u
     await batch.commit();
     // await loadAllDataForUser(user.uid); // 여기서는 재호출 불필요
 }
-
-// ▼▼▼ 2025-08-21 기존 루틴 마이그레이션 함수 추가 ▼▼▼
-async function migrateUserRoutines(userId) {
-    console.log('📌 [migrateUserRoutines]: 기존 루틴 데이터 구조 검사 시작...');
-    
-    // 1. assignedTo 필드가 없는 루틴을 찾아냅니다.
-    const routinesToMigrate = sampleRoutines.filter(r => !r.hasOwnProperty('assignedTo'));
-
-    if (routinesToMigrate.length === 0) {
-        console.log('✅ [migrateUserRoutines]: 모든 루틴이 최신 구조입니다. 작전 종료.');
-        return; // 업데이트할 루틴이 없으면 즉시 종료
-    }
-
-    console.warn(`[migrateUserRoutines]: ${routinesToMigrate.length}개의 구형 루틴 발견! 데이터 마이그레이션을 시작합니다.`);
-
-    // 2. Firebase Batch를 사용하여 여러 문서를 한 번에 업데이트합니다.
-    const batch = db.batch();
-    const routinesRef = db.collection('users').doc(userId).collection('routines');
-
-    routinesToMigrate.forEach(routine => {
-        const docRef = routinesRef.doc(String(routine.id));
-        batch.update(docRef, { assignedTo: userId });
-        
-        // 로컬 데이터(sampleRoutines)도 즉시 업데이트하여 화면에 바로 반영되도록 합니다.
-        routine.assignedTo = userId;
-    });
-
-    try {
-        // 3. 일괄 업데이트를 실행합니다.
-        await batch.commit();
-        console.log(`🎉 [migrateUserRoutines]: ${routinesToMigrate.length}개의 루틴에 인식표 부착 완료!`);
-        showNotification('기존 루틴 데이터를 성공적으로 업데이트했습니다.', 'success');
-    } catch (error) {
-        console.error("❌ [migrateUserRoutines]: 데이터 업데이트 실패", error);
-        showNotification('기존 루틴 업데이트에 실패했습니다.', 'error');
-    }
-}
-// ▲▲▲ 여기까지 2025-08-21 기존 루틴 마이그레이션 함수 추가 ▲▲▲
 
 
 // ▼▼▼ 2025-08-23 [재설계] 일일 초기화 경로 수정 (전체 버전) ▼▼▼
@@ -476,6 +437,148 @@ async function getFamilyMembers() {
     }
 }
 // ▲▲▲ 여기까지 2025-08-21 가족 구성원 정보 수집 함수 추가 ▲▲▲
+
+// ▼▼▼ 2025-08-24 보상 관리 CRUD 함수 블록 ▼▼▼
+
+// 전역 변수 추가
+let isEditingReward = false;
+let editingRewardId = null;
+let userRewards = [];
+
+// [Create/Update] Firebase에 보상 정보 저장/수정
+async function saveRewardToFirebase(rewardData) {
+    if (!currentUser || !currentUser.familyId) return null;
+    const rewardsRef = db.collection('families').doc(currentUser.familyId).collection('rewards');
+    
+    if (isEditingReward) {
+        const rewardRef = rewardsRef.doc(editingRewardId);
+        await rewardRef.update(rewardData);
+        return { id: editingRewardId, ...rewardData };
+    } else {
+        const docRef = await rewardsRef.add({ ...rewardData, createdAt: new Date() });
+        return { id: docRef.id, ...rewardData };
+    }
+}
+
+// [Delete] Firebase에서 보상 정보 삭제
+async function deleteRewardFromFirebase(rewardId) {
+    if (!currentUser || !currentUser.familyId) return;
+    await db.collection('families').doc(currentUser.familyId).collection('rewards').doc(rewardId).delete();
+}
+
+// [Controller] '저장' 버튼 클릭 처리
+async function handleRewardConfirm() {
+    const name = document.getElementById('rewardName').value.trim();
+    const points = parseInt(document.getElementById('rewardPoints').value);
+    const description = document.getElementById('rewardDescription').value.trim();
+
+    if (!name || isNaN(points) || points <= 0) {
+        showNotification("보상 이름과 1 이상의 포인트를 정확히 입력해주세요.", "error");
+        return;
+    }
+
+    const rewardData = { name, points, description, isActive: true, stock: -1 };
+    
+    try {
+        const savedReward = await saveRewardToFirebase(rewardData);
+        if (isEditingReward) {
+            const index = userRewards.findIndex(r => r.id === savedReward.id);
+            if (index !== -1) userRewards[index] = savedReward;
+            showNotification("보상이 수정되었습니다.", "success");
+        } else {
+            userRewards.push(savedReward);
+            showNotification("새로운 보상이 추가되었습니다.", "success");
+        }
+        renderRewardManagement();
+        hideRewardModal();
+    } catch (error) {
+        console.error("❌ 보상 저장 실패:", error);
+        showNotification("보상 저장에 실패했습니다.", "error");
+    }
+}
+
+// [Controller] '삭제' 버튼 클릭 처리
+async function handleDeleteReward() {
+    if (!isEditingReward || !editingRewardId) return;
+    if (!confirm("정말로 이 보상을 삭제하시겠습니까?")) return;
+
+    try {
+        await deleteRewardFromFirebase(editingRewardId);
+        userRewards = userRewards.filter(r => r.id !== editingRewardId);
+        renderRewardManagement();
+        hideRewardModal();
+        showNotification("보상이 삭제되었습니다.", "info");
+    } catch (error) {
+        console.error("❌ 보상 삭제 실패:", error);
+        showNotification("보상 삭제에 실패했습니다.", "error");
+    }
+}
+
+// [UI] 보상 모달 표시/숨기기
+function showRewardModal(reward = null) {
+    const modal = document.getElementById('rewardModal');
+    if (reward) {
+        isEditingReward = true;
+        editingRewardId = reward.id;
+        document.getElementById('rewardModalTitle').textContent = "🎁 보상 편집";
+        document.getElementById('rewardName').value = reward.name;
+        document.getElementById('rewardPoints').value = reward.points;
+        document.getElementById('rewardDescription').value = reward.description || '';
+        document.getElementById('deleteRewardBtn').style.display = 'block';
+    } else {
+        isEditingReward = false;
+        editingRewardId = null;
+        document.getElementById('rewardModalTitle').textContent = "🎁 새 보상 추가";
+        document.getElementById('rewardName').value = '';
+        document.getElementById('rewardPoints').value = '';
+        document.getElementById('rewardDescription').value = '';
+        document.getElementById('deleteRewardBtn').style.display = 'none';
+    }
+    modal.style.display = 'flex';
+}
+
+function hideRewardModal() {
+    document.getElementById('rewardModal').style.display = 'none';
+}
+
+// [Render] 관리 페이지에 보상 목록 렌더링
+async function renderRewardManagement() {
+    if (!currentUser || !currentUser.familyId) return;
+    console.log("📌 [renderRewardManagement]: 보상 관리 목록 렌더링 시작...");
+    
+    try {
+        const rewardsRef = db.collection('families').doc(currentUser.familyId).collection('rewards');
+        const snapshot = await rewardsRef.orderBy('createdAt', 'desc').get();
+        userRewards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const container = document.getElementById('rewardListContainer');
+        container.innerHTML = '';
+
+        if (userRewards.length === 0) {
+            container.innerHTML = `<p class="panel-description" style="text-align: center;">아직 등록된 보상이 없습니다.</p>`;
+            return;
+        }
+
+        userRewards.forEach(reward => {
+            const item = document.createElement('div');
+            item.className = 'manage-routine-item';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+                <div class="routine-main-info" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="routine-main-name">${reward.name}</div>
+                    <div class="routine-main-details" style="font-weight: 600;">✨ ${reward.points} P</div>
+                </div>
+            `;
+            item.onclick = () => showRewardModal(reward);
+            container.appendChild(item);
+        });
+    } catch (error) {
+        console.error("❌ 보상 목록 로딩 실패:", error);
+        document.getElementById('rewardListContainer').innerHTML = `<p class="panel-description" style="text-align: center; color: var(--error);">보상 목록을 불러오지 못했습니다.</p>`;
+    }
+}
+// ▲▲▲ 여기까지 2025-08-24 보상 관리 CRUD 함수 블록 ▲▲▲
+
 
 
 // ▼▼▼ 여기에 새 코드를 추가하세요 (목표 관리 함수) ▼▼▼
@@ -1469,7 +1572,7 @@ function showEditRoutineModal(routine) {
 // ▼▼▼ showRoutineForm 함수에 삭제 버튼 처리 로직을 추가하세요 ▼▼▼
 // ▼▼▼ 2025-08-22 showRoutineForm 함수 전면 개편 ▼▼▼
 // ▼▼▼ 2025-08-22 showRoutineForm 함수에 작전 모드 기록 기능 추가 ▼▼▼
-async function showRoutineForm(// ▼▼▼ 2025-08-24 [완벽본] showRoutineForm 함수 ▼▼▼
+// ▼▼▼ 2025-08-24 [완벽본] showRoutineForm 함수 ▼▼▼
     async function showRoutineForm(routine = null, options = {}) {
         // --- 생산자: 작전 모드 설정 및 필수 요소 확인 ---
         // '수정' 모드('edit'), '부모 루틴 추가'('parent'), '자녀 루틴 추가'('child') 중 하나로 결정하여 전역 변수에 기록
