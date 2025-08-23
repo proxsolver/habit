@@ -3357,23 +3357,6 @@ function showPage(pageIdToShow) {
 
 // ▲▲▲ 여기까지 08/19(수정일) 페이지 전환 통합 지휘관 함수 추가 ▲▲▲
 
-// ▼▼▼ 08/20(수정일) 누락된 showMainSection 함수 추가 ▼▼▼
-function showMainSection(sectionIdToShow) {
-    const allSections = document.querySelectorAll('#main-app-content .main-section');
-    allSections.forEach(section => {
-        section.style.display = 'none';
-    });
-
-    const sectionToShow = document.getElementById(sectionIdToShow);
-    if (sectionToShow) {
-        sectionToShow.style.display = 'block';
-        if (!['manage-section'].includes(sectionIdToShow)) {
-            document.querySelector('.daily-progress').style.display = 'block';
-        }
-    }
-}
-// ▲▲▲ 여기까지 08/20(수정일) 누락된 showMainSection 함수 추가 ▲▲▲
-
 
 // ▼▼▼ 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▼▼▼
 function showHomePage() {
@@ -3393,8 +3376,6 @@ function showManagePage() {
     // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
     document.querySelector('.daily-progress').style.display = 'none';
-    
-    // ★★★ 누락되었던 철수 명령 추가 ★★★
     document.getElementById('inprogress-section').style.display = 'none';
     document.getElementById('completed-section').style.display = 'none';
     document.getElementById('skipped-section').style.display = 'none';
@@ -3454,7 +3435,7 @@ function showManagePage() {
     renderAreaStats();
     renderManagePage();
 }
-// ▲▲▲ 여기까지 08/20(수정일) showManagePage 최종 임무 수첩 (가족 기능 포함) ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) 구식 로직을 완전히 제거한 최종 버전 ▲▲▲
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
