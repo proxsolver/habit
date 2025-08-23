@@ -489,7 +489,6 @@ async function handleRewardConfirm() {
             userRewards.push(savedReward);
             showNotification("새로운 보상이 추가되었습니다.", "success");
         }
-        renderRewardManagement();
         hideRewardModal();
     } catch (error) {
         console.error("❌ 보상 저장 실패:", error);
@@ -2254,7 +2253,6 @@ function renderManagePage() {
     };
     
     saveOrderBtn.onclick = saveRoutineOrder;
-    renderRewardManagement(); // 보상 관리 기능은 독립적으로 렌더링
 }
 // ▲▲▲ 여기까지 2025-08-24 [완벽본] renderManagePage 함수 ▲▲▲
 
@@ -3476,6 +3474,16 @@ function showGoalCompassPage() {
 }
 // ▲▲▲ 여기까지 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▲▲▲
 
+  // ▼▼▼ 2025-08-24 showRewardsPage 함수 신설 ▼▼▼
+    // showGoalCompassPage 함수 아래에 추가하는 것을 권장합니다.
+    function showRewardsPage() {
+        showPage('rewards-page'); // "rewards-page를 보여줘" 라고 보고
+        renderRewardManagement(); // 보상 관리 목록 렌더링
+        // 향후 여기에 '요청 승인' 목록 렌더링 함수도 추가될 예정입니다.
+    }
+    // ▲▲▲ 여기까지 2025-08-24 showRewardsPage 함수 신설 ▲▲▲
+
+
 
 // --- 대시보드 함수 (Dashboard) ---
    // 독서 데이터 (임시 데이터)
@@ -3829,10 +3837,11 @@ function renderCurrentPage() {
     else if (activePage === 'goal') showGoalCompassPage();
     else if (activePage === 'stats') showDashboardPage();
     else if (activePage === 'manage') showManagePage();
-    else if (activePage === 'rewards') {
+    else if (activePage === 'rewards') showRewardsPage(); // ★★★ 이 라인을 추가합니다.
+      {
         // rewards 페이지를 위한 showRewardsPage() 함수가 필요합니다.
         showNotification('보상 기능은 준비 중입니다.', 'info');
-    }
+      }
 }
 // ▲▲▲ 여기까지 08/20(수정일) renderCurrentPage 최종 안정화 ▲▲▲
 

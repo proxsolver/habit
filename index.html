@@ -71,11 +71,14 @@
                 </h2>
                 <div class="routine-list" id="skippedRoutineList"></div>
             </div>
+
             <div class="section-card" id="manage-section" style="display: none;">
                 <div class="section-card" id="family-management-section">
-                <h2>👨‍👩‍👧‍👦 가족 관리</h2>
-                 <div id="family-content"> </div>
+                    <h2>👨‍👩‍👧‍👦 가족 관리</h2>
+                    <div id="family-content"></div>
                 </div>
+
+                
 
                 <h2>⚙️ 루틴 관리</h2>
                 
@@ -87,7 +90,6 @@
                 <div class="routine-manage-panels">
                     <div id="parent-routines-panel" class="tab-panel active">
                         <p class="panel-description">드래그하여 나의 루틴 순서를 변경할 수 있습니다.</p>
-                        
                         <div class="section-card" id="area-stats-section" style="margin-bottom: 1.5rem; padding: 1.5rem;">
                             <h2>
                                 <div class="section-header"><span>✨ 영역별 포인트</span></div>
@@ -96,9 +98,9 @@
                             <div class="area-stats-grid" id="areaStatsGrid"></div>
                         </div>
                         <div class="manage-routine-list" id="parentRoutineList"></div>
-                        <button class="save-order-btn" id="saveParentOrderBtn">💾 내 순서 저장하기</button>
+                        <button class="save-order-btn" id="saveParentOrderBtn" style="display: none;">💾 내 순서 저장하기</button>
                         <button class="btn btn-add-routine" id="addParentRoutineBtn">➕ 내 루틴 추가하기</button>
-                    </div>                    </div>
+                    </div>
 
                     <div id="child-routines-panel" class="tab-panel">
                          <p class="panel-description">자녀에게 할당된 모든 루틴 목록입니다.</p>
@@ -106,8 +108,8 @@
                          <button class="btn btn-add-routine" id="addChildRoutineBtn">➕ 자녀 루틴 추가하기</button>
                     </div>
                 </div>
-
             </div>
+        </div>
 
 
 <!-- ▼▼▼ 기존 dashboard-view 내용을 이 코드로 교체하세요 ▼▼▼ -->
@@ -194,6 +196,25 @@
     </div>
 </div>
     </div> 
+    <div id="rewards-page" class="page-container" style="display: none;">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">🎁 보상 작전 센터</h1>
+
+        <div class="section-card" id="reward-approval-section">
+            <h2> L </h2>
+            <p class="panel-description">현재 대기 중인 요청이 없습니다.</p>
+        </div>
+
+        <div class="section-card" id="reward-management-section">
+            <h2>🎁 보상 아이템 관리</h2>
+            <p class="panel-description">자녀가 획득한 포인트로 교환할 수 있는 보상 아이템을 관리합니다.</p>
+            <div id="rewardListContainer" class="manage-routine-list">
+                </div>
+            <button id="addRewardBtn" class="btn btn-add-routine">➕ 새 보상 추가하기</button>
+        </div>
+    </div>
+</div> 
+
+
 
     <div id="numberInputModal" class="modal-overlay" style="display: none;">
         <div class="modal">
@@ -440,7 +461,6 @@
                     </div>
                 </div>
             </div>
-<!-- ▼▼▼ addRoutineModal의 modal-footer를 이 코드로 교체하세요 ▼▼▼ -->
 <div class="modal-footer">
     <div class="footer-left">
         <button id="deleteRoutineBtn" class="btn btn-danger" style="display: none;">🗑️ 루틴 삭제</button>
@@ -450,28 +470,39 @@
         <button id="addRoutineConfirm" class="btn btn-confirm">루틴 추가</button>
     </div>
 </div>
-<!-- ▲▲▲ 여기까지 교체 ▲▲▲ --> 
+</div>  
+</div>    
+<div id="rewardModal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="rewardModalTitle">🎁 새 보상 추가</h3>
+            <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="rewardName">보상 이름</label>
+                <input type="text" id="rewardName" placeholder="예: 스마트폰 30분 사용권" required>
+            </div>
+            <div class="form-group">
+                <label for="rewardPoints">필요 포인트</label>
+                <input type="number" id="rewardPoints" placeholder="예: 100" min="1" required>
+            </div>
+            <div class="form-group">
+                <label for="rewardDescription">부가 설명 (선택)</label>
+                <textarea id="rewardDescription" rows="3" placeholder="예: 주말에만 사용 가능"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <div class="footer-left">
+                <button id="deleteRewardBtn" class="btn btn-danger" style="display: none;">🗑️ 삭제</button>
+            </div>
+            <div class="footer-right">
+                <button class="btn btn-secondary">취소</button>
+                <button id="saveRewardBtn" class="btn btn-confirm">저장</button>
+            </div>
         </div>
     </div>
-    <div id="manageAreasModal" class="modal-overlay" style="display: none;">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>📝 영역 관리</h3>
-                <button id="manageAreasClose" class="modal-close">×</button>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
-                    3개 핵심 영역의 이름을 수정할 수 있습니다.
-                </p>
-                <div class="manage-areas-list" id="manageAreasList"></div>
-            </div>
-            <div class="modal-footer">
-                <button id="manageAreasCancel" class="btn btn-secondary">취소</button>
-                <button id="manageAreasConfirm" class="btn btn-confirm">저장</button>
-            </div>
-        </div>
-    </div>
-
+</div>
      <div id="routineDetailModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
@@ -604,6 +635,25 @@
         </div>
     </div>
     
+    <div id="manageAreasModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📝 영역 관리</h3>
+                <button id="manageAreasClose" class="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    3개 핵심 영역의 이름을 수정할 수 있습니다.
+                </p>
+                <div class="manage-areas-list" id="manageAreasList"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="manageAreasCancel" class="btn btn-secondary">취소</button>
+                <button id="manageAreasConfirm" class="btn btn-confirm">저장</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="bottom-tab-bar">
         <button id="navHomeBtn" class="tab-item active" data-page="home">🏠<span class="tab-label">홈</span></button>
         <button id="navGoalCompassBtn" class="tab-item" data-page="goal">🧭<span class="tab-label">목표</span></button>
