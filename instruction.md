@@ -73,3 +73,18 @@ function calculatePace(goal) {
     console.log('🏁 [calculatePace]: 계산 완료, 결과:', result);
     return result;
 }
+
+
+4. 프로그램 데이터 구조문
+families (collection)
+└── {가족ID} (document)
+    ├── members (map)
+    │   ├── "{부모UID}": "parent"
+    │   └── "{자녀UID}": "child"
+    └── routines (subcollection)
+        ├── {루틴ID_1} (document)
+        │   ├── name: "운동하기"
+        │   └── assignedTo: "{부모UID}"
+        └── {루틴ID_2} (document)
+            ├── name: "숙제하기"
+            └── assignedTo: "{자녀UID}"

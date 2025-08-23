@@ -39,7 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 3. 데이터 로직 (자녀용)
 // ====================================================================
 // 자녀에게 할당된 루틴만 가져오는 최적화된 함수
-// ▼▼▼ 2025-08-21 자녀 루틴 로딩 로직 수정 ▼▼▼
+// ▼▼▼ 2025-08-21 컬렉션 그룹 쿼리로 검색 방식 변경 ▼▼▼
+// ▼▼▼ 2025-08-23 '가족 공유' 모델에 맞춰 자녀 루틴 로딩 방식 변경 ▼▼▼
 async function loadAssignedRoutines(userId) {
     if (!currentUser) return;
     console.log(`📌 [loadAssignedRoutines]: 자녀(${userId})의 미션 로딩 시작...`);
@@ -47,53 +48,22 @@ async function loadAssignedRoutines(userId) {
     try {
         // 1. 자신의 사용자 정보를 가져와 familyId를 확보합니다.
         const userDoc = await db.collection('users').doc(userId).get();
-        if (!userDoc.exists) {
-            console.error("❌ 자신의 사용자 문서를 찾을 수 없습니다.");
-            return;
-        }
-        const myData = userDoc.data();
-        const familyId = myData.familyId;
-        const myRole = myData.role;
-
-        // 만약 부모라면, 자녀 페이지에 있을 이유가 없으므로 중앙 사령부로 보냅니다.
-        if (myRole === 'parent') {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        if (!familyId) {
+        if (!userDoc.exists || !userDoc.data().familyId) {
             console.warn("⚠️ 가족에 소속되어 있지 않아 미션을 가져올 수 없습니다.");
             assignedRoutines = [];
             renderMissions();
             return;
         }
+        const familyId = userDoc.data().familyId;
         console.log(`- 소속 가족 ID: ${familyId}`);
 
-        // 2. 가족 ID를 이용해 부모 사용자를 찾습니다. (가족 내 첫 번째 부모)
-        const parentQuery = await db.collection('users')
-            .where('familyId', '==', familyId)
-            .where('role', '==', 'parent')
-            .limit(1)
-            .get();
-
-        if (parentQuery.empty) {
-            console.error("❌ 가족의 부모님을 찾을 수 없습니다.");
-            return;
-        }
-        const parentId = parentQuery.docs[0].id;
-        console.log(`- 발견된 부모 ID: ${parentId}`);
-
-        // 3. 부모님의 routines 하위 컬렉션에서 나에게 할당된(assignedTo) 루틴만 가져옵니다.
-        // ※ 참고: 이 쿼리가 작동하려면 추후 부모가 루틴 생성 시 'assignedTo' 필드에 자녀의 UID를 넣어줘야 합니다.
-        // 현재는 해당 기능이 없으므로, 테스트를 위해 부모의 루틴 중 하나에 수동으로 assignedTo 필드를 추가해야 합니다.
-        const routinesRef = db.collection('users').doc(parentId).collection('routines');
+        // 2. ★★★ 핵심 변경: 공유 families 컬렉션에서 자신에게 할당된 루틴만 직접 쿼리합니다. ★★★
+        const routinesRef = db.collection('families').doc(familyId).collection('routines');
         const snapshot = await routinesRef.where('assignedTo', '==', userId).get();
 
         assignedRoutines = snapshot.docs.map(doc => ({ 
             id: doc.id, 
             ...doc.data(),
-            // 완료 처리를 위해 부모의 ID와 루틴의 전체 경로를 저장해둡니다.
-            parentId: parentId,
             path: doc.ref.path 
         }));
 
@@ -101,11 +71,12 @@ async function loadAssignedRoutines(userId) {
         renderMissions();
 
     } catch (error) {
-        console.error("❌ [loadAssignedRoutines]: 미션 로딩 중 심각한 오류 발생:", error);
+        console.error("❌ [loadAssignedRoutines]: 미션 로딩 중 오류 발생:", error);
         showNotification("미션을 가져오는 데 실패했습니다.", "error");
     }
 }
-// ▲▲▲ 여기까지 2025-08-21 자녀 루틴 로딩 로직 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-23 '가족 공유' 모델에 맞춰 자녀 루틴 로딩 방식 변경 ▲▲▲
+
 
 // ====================================================================
 // 4. 렌더링 (자녀용)

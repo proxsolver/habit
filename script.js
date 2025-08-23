@@ -142,32 +142,43 @@ setupAllEventListeners();
 // ====================================================================
 
 // ▼▼▼ 08/21(수정일) loadAllDataForUser가 사용자 정보를 '반환'하도록 수정 ▼▼▼
-// ▼▼▼ 2025-08-21 신규 사용자 오류 해결 2/3 ▼▼▼
-async function loadAllDataForUser(user) { // ★★★ 수정: userId -> user
+// ▼▼▼ 2025-08-23 '가족 공유' 모델에 맞춰 데이터 로딩 방식 변경 ▼▼▼
+async function loadAllDataForUser(user) {
     try {
-        const userId = user.uid; // user 객체에서 uid를 추출하여 사용
-        console.log(`[loadAllDataForUser] >> 사용자(${userId}) 데이터 보급 시작...`);
+        const userId = user.uid;
+        console.log(`📌 [loadAllDataForUser]: 사용자(${userId}) 데이터 보급 시작...`);
         const userDocRef = db.collection('users').doc(userId);
         const userDoc = await userDocRef.get();
 
         let userData = {};
         if (!userDoc.exists) {
-            // await uploadInitialDataForUser(userId); // 기존 코드
-            await uploadInitialDataForUser(user); // ★★★ 수정: user 객체 전체를 전달
+            // 신규 사용자의 경우, 기본 데이터 생성 후 다시 로드
+            await uploadInitialDataForUser(user);
             const newUserDoc = await userDocRef.get();
             if (newUserDoc.exists) userData = newUserDoc.data();
         } else {
             userData = userDoc.data();
-            const [routinesSnapshot, areasSnapshot, statsDoc] = await Promise.all([
-                userDocRef.collection('routines').orderBy('order').get(),
-                userDocRef.collection('areas').get(),
-                userDocRef.collection('stats').doc('userStats').get()
-            ]);
-            sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            userStats = statsDoc.exists ? statsDoc.data() : {};
         }
-        await resetDailyProgressForUser(userId);
+
+        // ★★★ 핵심 변경: familyId를 기반으로 공유 routines 컬렉션을 쿼리합니다. ★★★
+        if (userData.familyId) {
+            const routinesSnapshot = await db.collection('families').doc(userData.familyId).collection('routines').get();
+            sampleRoutines = routinesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`✅ [loadAllDataForUser]: 가족 공유 루틴 ${sampleRoutines.length}개 보급 완료.`);
+        } else {
+            sampleRoutines = []; // 가족이 없으면 루틴은 비어있습니다.
+            console.log(`⚠️ [loadAllDataForUser]: 소속된 가족이 없어 루틴을 로드하지 않습니다.`);
+        }
+
+        // 기존의 areas, stats 로딩 로직은 user 하위에 그대로 유지 (변경 없음)
+        const [areasSnapshot, statsDoc] = await Promise.all([
+            userDocRef.collection('areas').get(),
+            userDocRef.collection('stats').doc('userStats').get()
+        ]);
+        userAreas = areasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        userStats = statsDoc.exists ? statsDoc.data() : {};
+        
+        await resetDailyProgressForUser(userId, userData.familyId); // familyId 전달
         
         console.log(`[loadAllDataForUser] >> 보급 완료. 사용자 프로필 반환.`);
         return userData;
@@ -178,7 +189,7 @@ async function loadAllDataForUser(user) { // ★★★ 수정: userId -> user
         return {};
     }
 }
-// ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 2/3 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-23 '가족 공유' 모델에 맞춰 데이터 로딩 방식 변경 ▲▲▲
 
 
 // ▼▼▼ 2025-08-21 신규 사용자 오류 해결 3/3 ▼▼▼
@@ -254,27 +265,42 @@ async function migrateUserRoutines(userId) {
 // ▲▲▲ 여기까지 2025-08-21 기존 루틴 마이그레이션 함수 추가 ▲▲▲
 
 
-
-// ▲▲▲ 여기까지 2025-08-21 신규 사용자 오류 해결 3/3 ▲▲▲
-async function resetDailyProgressForUser(userId) {
+// ▼▼▼ 2025-08-23 [재설계] 일일 초기화 경로 수정 (전체 버전) ▼▼▼
+async function resetDailyProgressForUser(userId, familyId) {
+    // 1. 메타데이터를 확인하여 오늘 이미 초기화를 진행했는지 확인합니다.
     const userDocRef = db.collection('users').doc(userId);
     const metaRef = userDocRef.collection('meta').doc('lastReset');
     
     const lastResetDoc = await metaRef.get();
     const lastResetDate = lastResetDoc.exists ? lastResetDoc.data().date : null;
 
+    // 2. 마지막 초기화 날짜가 오늘과 다를 경우에만 작전을 개시합니다.
     if (lastResetDate !== todayDateString) {
         debugLog(`사용자(${userId})의 일일 진행 상황 초기화 시작...`);
-        const batch = db.batch();
         
+        // 2-1. 소속된 가족이 없으면 초기화할 루틴도 없으므로 작전을 중단합니다.
+        if (!familyId) {
+            debugLog("가족 ID가 없어 초기화할 루틴이 없습니다.");
+            // 마지막 초기화 날짜만 오늘로 기록하여 불필요한 재검사를 방지합니다.
+            await metaRef.set({ date: todayDateString });
+            return;
+        }
+
+        // 3. 여러 문서를 한 번에 업데이트하기 위해 Batch 작전을 준비합니다.
+        const batch = db.batch();
+        const routinesRef = db.collection('families').doc(familyId).collection('routines');
+
+        // 4. 로컬에 로드된 모든 가족 루틴을 순회하며 초기화 대상을 식별합니다.
         sampleRoutines.forEach(routine => {
-            const routineRef = userDocRef.collection('routines').doc(String(routine.id));
+            const routineRef = routinesRef.doc(String(routine.id));
             const updatedFields = {};
             
+            // 4-1. 어제 목표를 달성하지 못한 루틴은 연속 기록(streak)을 0으로 초기화합니다.
             if (!isGoalAchieved(routine)) {
                 updatedFields.streak = 0;
             }
             
+            // 4-2. 루틴 타입에 따라 진행 상황(value, status)을 초기화합니다.
             if (routine.type === 'yesno' || routine.type === 'time' || (routine.type === 'number' && !routine.continuous)) {
                 updatedFields.value = null;
                 updatedFields.status = null;
@@ -287,19 +313,23 @@ async function resetDailyProgressForUser(userId) {
                 updatedFields.dailyGoalMetToday = false;
                 updatedFields.status = null;
             }
+            
+            // 4-3. 오늘 포인트를 받을 수 있도록 '포인트 지급 여부'를 초기화합니다.
             updatedFields.pointsGivenToday = false;
             
+            // 4-4. 변경할 필드가 있는 경우에만 Batch 작전에 추가합니다.
             if (Object.keys(updatedFields).length > 0) {
                 batch.update(routineRef, updatedFields);
             }
         });
         
+        // 5. 마지막 초기화 날짜를 오늘로 기록하는 명령을 Batch에 추가합니다.
         batch.set(metaRef, { date: todayDateString });
         
+        // 6. 준비된 모든 업데이트 명령을 데이터베이스에 일괄 전송합니다.
         try {
             await batch.commit();
-            debugLog("일일 진행 상황 초기화 완료. 사용자 데이터 다시 로드.");
-            await loadAllDataForUser(userId);
+            debugLog("일일 진행 상황 초기화 완료.");
         } catch (error) {
             console.error("일일 진행 상황 초기화 실패: ", error);
         }
@@ -307,21 +337,29 @@ async function resetDailyProgressForUser(userId) {
         debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
     }
 }
+// ▲▲▲ 여기까지 2025-08-23 [재설계] 일일 초기화 경로 수정 (전체 버전) ▲▲▲
+
+
+
 
 // ====================================================================
 // 5. Firebase 데이터 처리 함수 (CRUD)
 // ====================================================================
 
+// ▼▼▼ 2025-08-23 [재설계] 루틴 업데이트 경로 수정 ▼▼▼
 async function updateRoutineInFirebase(routineId, updatedFields) {
-    if (!currentUser) return;
-    const routineRef = db.collection('users').doc(currentUser.uid).collection('routines').doc(String(routineId));
+    if (!currentUser || !currentUser.familyId) return;
+    const routineRef = db.collection('families').doc(currentUser.familyId).collection('routines').doc(String(routineId));
     await routineRef.update(updatedFields);
+
+    // 로컬 데이터 업데이트
     const index = sampleRoutines.findIndex(r => String(r.id) === String(routineId));
     if (index !== -1) {
         sampleRoutines[index] = { ...sampleRoutines[index], ...updatedFields };
-        renderRoutines();
+        renderRoutines(); // 홈 화면 렌더링
     }
 }
+// ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 업데이트 경로 수정 ▲▲▲
 
 async function updateRoutineOrderInFirebase(orderedRoutines) {
     if (!currentUser) return;
@@ -342,21 +380,29 @@ async function updateUserStatsInFirebase(updatedStats) {
     renderAreaStats();
 }
 
+// ▼▼▼ 2025-08-23 [재설계] 루틴 추가 경로 수정 ▼▼▼
 async function addRoutineToFirebase(newRoutineData) {
-    if (!currentUser) return;
-    const routinesRef = db.collection('users').doc(currentUser.uid).collection('routines');
-    const docRef = routinesRef.doc();
+    if (!currentUser || !currentUser.familyId) {
+        showNotification("가족이 설정되지 않아 루틴을 추가할 수 없습니다.", "error");
+        return;
+    }
+    const routinesRef = db.collection('families').doc(currentUser.familyId).collection('routines');
+    const docRef = await routinesRef.add(newRoutineData);
+    
+    // 로컬 데이터에도 즉시 반영
     const newRoutine = { ...newRoutineData, id: docRef.id };
-    await docRef.set(newRoutine);
     sampleRoutines.push(newRoutine);
-    renderRoutines();
-    showManagePage();
+    renderManagePage(); // 관리 페이지 새로고침
+    // showManagePage(); // 이전 코드 대신 renderManagePage()로 변경하여 현재 탭 유지
 }
+// ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 추가 경로 수정 ▲▲▲
 
+// ▼▼▼ 2025-08-23 [재설계] 루틴 삭제 경로 수정 ▼▼▼
 async function deleteRoutineFromFirebase(routineId) {
-    if (!currentUser) return;
-    await db.collection('users').doc(currentUser.uid).collection('routines').doc(routineId).delete();
+    if (!currentUser || !currentUser.familyId) return;
+    await db.collection('families').doc(currentUser.familyId).collection('routines').doc(routineId).delete();
 }
+// ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 삭제 경로 수정 ▲▲▲
 
 async function updateAreasInFirebase(updatedAreas) {
     if (!currentUser) return;
