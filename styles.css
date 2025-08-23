@@ -1565,16 +1565,30 @@
     /* ✨ 대시보드 스타일 새로 추가 시작 ✨ */
 
 /* ▼▼▼ 기존의 모든 page-container스타일을 삭제하고 아래 코드로 교체하세요 ▼▼▼ */
-page-container{
-background-color: #ffffff;
-border-radius: 1rem; /* rounded-xl */
-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
-padding: 2.5rem; /* p-10 */
-width: 100%;
-max-width: 960px;
-margin-top: 20px;
-overflow-y: visible; /* 내용이 길어지면 내부 스크롤 대신 페이지 전체가 스크롤되도록 설정 */
+.page-container {
+    display: none; 
+    animation: fadeInUp 0.5s;
 }
+
+.page-container.active {
+    display: block;
+}
+
+/* 2. 사령관님께서 지적하신 누락된 핵심 스타일 (복원) */
+#stats-page h2, #goal-page h2, #rewards-page h2, #manage-page h2 {
+    margin-bottom: 0.5rem !important;
+}
+
+#stats-page .grid, #goal-page .grid, #rewards-page .grid, #manage-page .grid {
+    margin-bottom: 2rem;
+}
+
+/* 차트 컨테이너 반응형 */
+#stats-page canvas {
+    max-height: 300px;
+}
+
+
 /* ▲▲▲ 여기까지 교체 ▲▲▲ */
     .progress-bar-container { /* Specificity for dashboard's progress bar */
         width: 100%;
@@ -1674,37 +1688,40 @@ overflow-y: visible; /* 내용이 길어지면 내부 스크롤 대신 페이지
     /* 통계 페이지 반응형 개선 */
 
 
-page-containerh2 {
+.page-containerh2 {
 margin-bottom: 0.5rem !important;
 }
 
-page-container.grid {
+.page-container.grid {
 margin-bottom: 2rem;
 }
 
 /* 차트 컨테이너 반응형 */
-page-containercanvas {
+.page-containercanvas {
 max-height: 300px;
 }
 
+/* 모바일 반응형 스타일 */
 @media (max-width: 480px) {
-page-container{
-    padding: 1rem !important;
-}
+    #home-page, #goal-page, #stats-page, #rewards-page, #manage-page {
+        padding: 1rem !important;
+    }
 
-page-containerh1 {
-    font-size: 1.5rem !important;
-    margin-bottom: 1rem !important;
-}
+    #stats-page h1, #goal-page h1, #rewards-page h1, #manage-page h1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 1rem !important;
+    }
 
-page-containerh2 {
-    font-size: 1.1rem !important;
-}
+    #stats-page h2, #goal-page h2, #rewards-page h2, #manage-page h2 {
+        font-size: 1.1rem !important;
+    }
 
-page-container.grid {
-    grid-template-columns: 1fr !important;
+    #stats-page .grid, #goal-page .grid, #rewards-page .grid, #manage-page .grid {
+        grid-template-columns: 1fr !important;
+    }
 }
-}
+/* ▲▲▲ 여기까지 2025-08-24(수정일) 페이지 구조 재설계 및 누락 스타일 복원 ▲▲▲ */
+
 
 /* ▼▼▼ feat(heatmap): 365일 일별 히트맵을 52주 주별 히트맵으로 개선하여 가독성 향상 ▼▼▼ */
 .simple-heatmap {

@@ -2921,9 +2921,10 @@ function renderCompletedGoalsList(completedGoals) {
 
 // ▼▼▼ 08/21(수정일) setupGoalPageEventListeners 최종 임무 수첩 (완전판) ▼▼▼
 function setupGoalPageEventListeners(allGoals) {
-    const page = document.getElementById('goal-compass-page');
+    // const page = document.getElementById('goal-compass-page'); // 기존 코드
+    const page = document.getElementById('goal-page'); // ★★★ 수정: ID를 'goal-page'로 변경
     if (!page) {
-        console.error("🚨 [setupGoalPageEventListeners] 비상: 'goal-compass-page'를 찾을 수 없어 통신망 구축에 실패했습니다.");
+        console.error("🚨 [setupGoalPageEventListeners] 비상: 'goal-page'를 찾을 수 없어 통신망 구축에 실패했습니다.");
         return;
     }
 
@@ -3334,11 +3335,11 @@ function populateGoalModalFields(goal = null) {
 // ▼▼▼ 08/19(수정일) 페이지 전환 통합 지휘관 함수 추가 ▼▼▼
 function showPage(pageIdToShow) {
     console.log(`[showPage] >> "${pageIdToShow}" 페이지로 전환합니다.`);
-    // 1. 모든 최상위 페이지 컨테이너 ID를 명단에 기입합니다.
-    const allPages = ['main-app-content', 'dashboard-view', 'goal-compass-page'];
+    // 1. ★★★ 핵심 수정: 새로운 전장 지도(HTML ID)에 맞게 모든 페이지 ID를 업데이트합니다.
+    const allPageIds = ['home-page', 'goal-page', 'stats-page', 'rewards-page', 'manage-page'];
     
     // 2. 모든 페이지를 일단 시야에서 숨깁니다.
-    allPages.forEach(pageId => {
+    allPageIds.forEach(pageId => {
         const page = document.getElementById(pageId);
         if (page) {
             page.style.display = 'none';
@@ -3349,13 +3350,11 @@ function showPage(pageIdToShow) {
     const pageToShow = document.getElementById(pageIdToShow);
     if (pageToShow) {
         pageToShow.style.display = 'block';
-
-        // 'main-app-content'는 내부적으로 manage-section을 제어해야 하므로 특별 관리합니다.
-        if (pageIdToShow === 'main-app-content') {
-            document.getElementById('manage-section').style.display = 'none';
-        }
+    } else {
+        console.error(`[showPage] 비상: ID가 "${pageIdToShow}"인 페이지를 찾을 수 없습니다.`);
     }
 }
+
 // ▲▲▲ 여기까지 08/19(수정일) 페이지 전환 통합 지휘관 함수 추가 ▲▲▲
 
 // ▼▼▼ 08/20(수정일) 누락된 showMainSection 함수 추가 ▼▼▼
@@ -3378,7 +3377,7 @@ function showMainSection(sectionIdToShow) {
 
 // ▼▼▼ 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▼▼▼
 function showHomePage() {
-    showPage('main-app-content'); // "main-app-content를 보여줘" 라고 보고
+    showPage('home-page'); 
     document.getElementById('incomplete-section').style.display = 'block'; // 홈 화면의 기본 섹션만 표시
     document.querySelector('.daily-progress').style.display = 'block';
     renderRoutines();
@@ -3388,7 +3387,7 @@ function showHomePage() {
 function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
-    showPage('main-app-content');
+    showPage('manage-page');
     showMainSection('manage-section');
 
     // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
@@ -3461,7 +3460,7 @@ function showManagePage() {
 
 function showDashboardPage() {
     // 다른 페이지 숨기기
-    showPage('dashboard-view'); // "dashboard-view를 보여줘" 라고 보고
+    showPage('stats-page');
 
 
     // 통계 데이터 렌더링 함수 호출
@@ -3469,7 +3468,7 @@ function showDashboardPage() {
 }
 
 function showGoalCompassPage() {
-    showPage('goal-compass-page'); // "goal-compass-page를 보여줘" 라고 보고
+    showPage('goal-page'); 
     renderGoalCompassPage();
 }
 // ▲▲▲ 여기까지 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▲▲▲
