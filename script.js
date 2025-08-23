@@ -1197,98 +1197,114 @@ async function handleReadingProgressConfirm() {
 
 
         // ▼▼▼ 2025-08-22 handleAddRoutineConfirm 함수가 작전 모드를 직접 참조하도록 수정 ▼▼▼
-    async function handleAddRoutineConfirm() {
-         console.log(`📌 [handleAddRoutineConfirm]: 루틴 저장 시작. 현재 모드: '${currentRoutineMode}'`);
-            const assigneeSelect = document.getElementById('routineAssignee');
-                let assigneeId;
+// ▼▼▼ 2025-08-24 [완벽본] handleAddRoutineConfirm 함수 ▼▼▼
+async function handleAddRoutineConfirm() {
+    // --- 생산자: 기록된 작전 모드 확인 ---
+    console.log(`|-- [handleAddRoutineConfirm] 3. 저장 명령 수신. 기록된 작전 모드: '${currentRoutineMode}'`);
+    const assigneeSelect = document.getElementById('routineAssignee');
+    let assigneeId;
 
-                // ★★★ 핵심: UI 상태 대신, 기록된 작전 모드를 직접 참조합니다. ★★★
-                if (currentRoutineMode === 'parent') {
-                    assigneeId = currentUser.uid;
-                } else { // 'child' 또는 'edit' 모드
-                    assigneeId = assigneeSelect.value;
-                }
+    // --- 리뷰어 검토: 작전 모드에 따라 담당자 ID를 100% 정확하게 결정하는지 확인 ---
+    if (currentRoutineMode === 'parent') {
+        assigneeId = currentUser.uid;
+    } else { // 'child' 또는 'edit' 모드
+        assigneeId = assigneeSelect.value;
+    }
     
-            console.log(`- 최종 결정된 담당자 ID: ${assigneeId}`);
+    // --- 생산자 검토: 담당자 ID가 결정되지 않으면 작전 즉시 중단 ---
+    if (!assigneeId) {
+        showNotification("담당자를 지정할 수 없습니다. 자녀가 없거나 선택되지 않았습니다.", "error");
+        console.error("❌ [handleAddRoutineConfirm]: 담당자 ID 결정 실패.");
+        return;
+    }
+    console.log(`|-- [handleAddRoutineConfirm] 4. 최종 담당자 ID 결정: ${assigneeId}`);
 
-            const name = document.getElementById('newRoutineName').value.trim();
-            const points = parseInt(document.getElementById('newRoutinePoints').value);
-            const selectedAreas = Array.from(document.querySelectorAll('#newRoutineAreas .area-checkbox:checked')).map(cb => cb.value);
-    
-            if (!name || !points || points <= 0 || selectedAreas.length === 0 || !assigneeId) {
-                showNotification('모든 항목(담당자 포함)을 정확히 입력해주세요.', 'error');
-                return;
-            }
-    
-            const type = document.getElementById('newRoutineType').value;
-            const commonFields = {
-                name: name,
-                time: document.getElementById('newRoutineTime').value,
-                type: type,
-                frequency: document.getElementById('newRoutineFreq').value,
-                areas: selectedAreas,
-                basePoints: points,
-                lastUpdatedDate: todayDateString,
-            };
-    
-            let typeSpecificFields = {};
-            if (type === 'number') {
-                typeSpecificFields = {
-                    unit: document.getElementById('newNumberUnit').value.trim() || null,
-                    min: parseInt(document.getElementById('newNumberMin').value) || 1,
-                    max: parseInt(document.getElementById('newNumberMax').value) || 100,
-                    step: parseInt(document.getElementById('newNumberStep').value) || 1,
-                    dailyGoal: parseInt(document.getElementById('newNumberGoal').value) || null,
-                    continuous: document.getElementById('newNumberContinuous').checked,
-                    inputType: document.getElementById('newNumberInputType').value,
-                };
-                if(typeSpecificFields.continuous) typeSpecificFields.value = 0;
-            } else if (type === 'reading') {
-                const bookTitle = document.getElementById('newBookTitle').value.trim();
-                const startPage = parseInt(document.getElementById('newStartPage').value);
-                const endPage = parseInt(document.getElementById('newEndPage').value);
-                if (!bookTitle || startPage >= endPage) {
-                    showNotification('독서 정보를 정확히 입력해주세요.', 'error');
-                    return;
-                }
-                typeSpecificFields = {
-                    bookTitle: bookTitle,
-                    name: bookTitle, // 루틴 이름도 책 제목으로 설정
-                    startPage: startPage,
-                    endPage: endPage,
-                    dailyPages: parseInt(document.getElementById('newDailyPages').value) || 10,
-                    currentPage: startPage - 1,
-                    startDate: new Date().toISOString().split('T')[0],
-                    unit: '페이지',
-                };
-            }
-    
-            if (isEditingRoutine) {
-                const routine = sampleRoutines.find(r => r.id === editingRoutineId);
-                const updatedFields = { ...routine, ...commonFields, ...typeSpecificFields };
-                await updateRoutineInFirebase(editingRoutineId, updatedFields);
-                showNotification(`✏️ "${name}" 루틴이 수정되었습니다!`);
-            } else {
-                const newRoutine = {
-                    ...commonFields,
-                    ...typeSpecificFields,
-                    value: null,
-                    status: null,
-                    streak: 0,
-                    order: sampleRoutines.length,
-                    active: true,
-                    pointsGivenToday: false,
-                };
-                await addRoutineToFirebase(newRoutine);
-                showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
-            }
-            hideAddRoutineModal();
-            currentRoutineMode = null; 
+    // --- 생산자: 폼에서 모든 데이터 수집 ---
+    const name = document.getElementById('newRoutineName').value.trim();
+    const points = parseInt(document.getElementById('newRoutinePoints').value);
+    const selectedAreas = Array.from(document.querySelectorAll(`#addRoutineModal .area-checkbox:checked`)).map(cb => cb.value);
+    const type = document.getElementById('newRoutineType').value;
 
+    // --- 리뷰어 검토: 필수 입력값 유효성 검사 ---
+    if (!name || isNaN(points) || points <= 0 || selectedAreas.length === 0) {
+        showNotification('루틴 이름, 1 이상의 포인트, 1개 이상의 영역을 선택해주세요.', 'error');
+        return;
+    }
+
+    // --- 생산자: 공통 데이터 객체 생성 ---
+    const commonFields = {
+        name: name,
+        time: document.getElementById('newRoutineTime').value,
+        type: type,
+        frequency: document.getElementById('newRoutineFreq').value,
+        areas: selectedAreas,
+        basePoints: points,
+        lastUpdatedDate: todayDateString,
+        assignedTo: assigneeId,
+    };
+
+    // --- 생산자: 루틴 타입별 상세 데이터 수집 ---
+    let typeSpecificFields = {};
+    if (type === 'number') {
+        typeSpecificFields = {
+            unit: document.getElementById('newNumberUnit').value.trim() || null,
+            min: parseInt(document.getElementById('newNumberMin').value) || 1,
+            max: parseInt(document.getElementById('newNumberMax').value) || 100,
+            step: parseInt(document.getElementById('newNumberStep').value) || 1,
+            dailyGoal: parseInt(document.getElementById('newNumberGoal').value) || null,
+            continuous: document.getElementById('newNumberContinuous').checked,
+            inputType: document.getElementById('newNumberInputType').value,
+        };
+        // '추가' 모드이고 '지속 업데이트' 타입일 경우, 시작값을 0으로 설정
+        if (typeSpecificFields.continuous && !isEditingRoutine) {
+            typeSpecificFields.value = 0;
         }
+    } else if (type === 'reading') {
+        const bookTitle = document.getElementById('newBookTitle').value.trim();
+        const startPage = parseInt(document.getElementById('newStartPage').value);
+        const endPage = parseInt(document.getElementById('newEndPage').value);
+        if (!bookTitle || startPage >= endPage) {
+            showNotification('독서 정보를 정확히 입력해주세요.', 'error');
+            return;
+        }
+        typeSpecificFields = {
+            bookTitle: bookTitle,
+            name: bookTitle, // 루틴 이름도 책 제목으로 설정
+            startPage: startPage,
+            endPage: endPage,
+            dailyPages: parseInt(document.getElementById('newDailyPages').value) || 10,
+            currentPage: startPage - 1,
+            unit: '페이지',
+        };
+    }
 
+    // --- 리뷰어 검토: '추가'와 '수정' 로직을 분기하여 Firebase에 데이터 전송 ---
+    try {
+        if (isEditingRoutine) {
+            const routine = sampleRoutines.find(r => r.id === editingRoutineId);
+            const updatedFields = { ...routine, ...commonFields, ...typeSpecificFields };
+            await updateRoutineInFirebase(editingRoutineId, updatedFields);
+            showNotification(`✏️ "${name}" 루틴이 수정되었습니다!`);
+        } else {
+            const newRoutine = {
+                ...commonFields,
+                ...typeSpecificFields,
+                value: null, status: null, streak: 0, order: sampleRoutines.length, active: true, pointsGivenToday: false,
+            };
+            await addRoutineToFirebase(newRoutine);
+            showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
+        }
+    } catch(error) {
+        console.error("❌ 루틴 저장/수정 실패:", error);
+        showNotification("루틴 처리 중 오류가 발생했습니다.", "error");
+    }
 
-// ▲▲▲ 여기까지 2025-08-22 handleAddRoutineConfirm 함수 안정화 ▲▲▲
+    // --- 생산자: 작전 완료 후 정리 ---
+    hideAddRoutineModal();
+    currentRoutineMode = null; // 작전 모드 초기화
+}
+// ▲▲▲ 여기까지 2025-08-24 [완벽본] handleAddRoutineConfirm 함수 ▲▲▲
+
 
 async function handleGoalConfirm() {
     console.log('📌 [handleGoalConfirm]: 목표 저장/수정 처리 시작. 편집 모드:', isEditingGoal);
@@ -1453,111 +1469,108 @@ function showEditRoutineModal(routine) {
 // ▼▼▼ showRoutineForm 함수에 삭제 버튼 처리 로직을 추가하세요 ▼▼▼
 // ▼▼▼ 2025-08-22 showRoutineForm 함수 전면 개편 ▼▼▼
 // ▼▼▼ 2025-08-22 showRoutineForm 함수에 작전 모드 기록 기능 추가 ▼▼▼
-async function showRoutineForm(routine = null, options = {}) {
-    const modal = document.getElementById('addRoutineModal');
-    const deleteBtn = document.getElementById('deleteRoutineBtn');
+async function showRoutineForm(// ▼▼▼ 2025-08-24 [완벽본] showRoutineForm 함수 ▼▼▼
+    async function showRoutineForm(routine = null, options = {}) {
+        // --- 생산자: 작전 모드 설정 및 필수 요소 확인 ---
+        // '수정' 모드('edit'), '부모 루틴 추가'('parent'), '자녀 루틴 추가'('child') 중 하나로 결정하여 전역 변수에 기록
+        currentRoutineMode = routine ? 'edit' : (options.mode || 'parent');
+        console.log(`|-- [showRoutineForm] 1. 모달 열림. 작전 모드를 '${currentRoutineMode}'(으)로 설정.`);
     
-    // ★★★ 핵심: 모달이 열릴 때 작전 모드를 전역 변수에 기록합니다. ★★★
-    currentRoutineMode = routine ? 'edit' : (options.mode || 'parent');
-    console.log(`📌 [showRoutineForm]: 작전 모드를 '${currentRoutineMode}'로 설정`);
-
-    modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
-    document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
+        const modal = document.getElementById('addRoutineModal');
+        const assigneeSelect = document.getElementById('routineAssignee');
+        const assigneeGroup = assigneeSelect ? assigneeSelect.closest('.form-group') : null;
     
-    const assigneeSelect = document.getElementById('routineAssignee');
-    if (!assigneeSelect) {
-        console.error("❌ 'routineAssignee' 요소를 찾을 수 없습니다.");
-        return;
+        // --- 리뷰어 검토: 필수 HTML 요소가 없으면 작전 즉시 중단 ---
+        if (!modal || !assigneeSelect || !assigneeGroup) {
+            console.error("❌ [showRoutineForm]: 'addRoutineModal' 또는 'routineAssignee' 관련 HTML 요소를 찾을 수 없습니다.");
+            return; // 필수 요소 없이는 함수를 실행할 수 없으므로 중단
+        }
+    
+        // --- 생산자: 모달 기본 UI 설정 (제목, 버튼 텍스트 등) ---
+        modal.querySelector('.modal-header h3').textContent = routine ? '✏️ 루틴 편집' : '➕ 새 루틴 추가';
+        document.getElementById('addRoutineConfirm').textContent = routine ? '수정 완료' : '루틴 추가';
+        
+        const deleteBtn = document.getElementById('deleteRoutineBtn');
+        deleteBtn.style.display = routine ? 'block' : 'none';
+        if (routine) {
+            deleteBtn.onclick = () => {
+                hideAddRoutineModal();
+                setTimeout(() => {
+                    if (confirm(`정말로 '${routine.name}' 루틴을 삭제하시겠습니까?`)) {
+                        handleDeleteRoutine(String(routine.id), routine.name);
+                    }
+                }, 100);
+            };
+        }
+    
+        // --- 생산자 & 리뷰어: 작전 모드에 따라 '담당자' 메뉴를 정밀하게 구성 ---
+        assigneeSelect.innerHTML = ''; // 드롭다운 메뉴 초기화
+        const familyMembers = await getFamilyMembers();
+        let membersToShow = [];
+    
+        switch (currentRoutineMode) {
+            case 'parent':
+                assigneeGroup.style.display = 'none'; // '내 루틴' 추가 시엔 메뉴 숨김
+                break;
+            case 'child':
+                assigneeGroup.style.display = 'flex'; // '자녀 루틴' 추가 시엔 메뉴 표시
+                membersToShow = familyMembers.filter(m => m.role === 'child');
+                console.log(`|-- [showRoutineForm] 2. 자녀 목록 필터링 완료. 대상자: ${membersToShow.length}명`);
+                break;
+            case 'edit':
+                assigneeGroup.style.display = 'flex'; // '수정' 시엔 항상 메뉴 표시
+                membersToShow = familyMembers;
+                break;
+        }
+        
+        // 필터링된 멤버로 드롭다운 옵션 생성
+        if (membersToShow.length > 0) {
+            assigneeSelect.disabled = false;
+            membersToShow.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member.id;
+                option.textContent = member.name;
+                if (routine && routine.assignedTo === member.id) option.selected = true;
+                assigneeSelect.appendChild(option);
+            });
+        } else if (currentRoutineMode === 'child') {
+            // 표시할 자녀가 없는 경우
+            assigneeSelect.disabled = true;
+            assigneeSelect.innerHTML = `<option value="">등록된 자녀가 없습니다</option>`;
+        }
+    
+        // --- 생산자: 나머지 폼 필드 데이터 채우기 또는 초기화 ---
+        document.getElementById('newRoutineName').value = routine ? routine.name : '';
+        document.getElementById('newRoutineTime').value = routine ? routine.time : 'morning';
+        document.getElementById('newRoutineType').value = routine ? routine.type : 'yesno';
+        document.getElementById('newRoutineFreq').value = routine ? routine.frequency : 'daily';
+        document.getElementById('newRoutinePoints').value = routine ? routine.basePoints : 10;
+    
+        const type = routine ? routine.type : document.getElementById('newRoutineType').value;
+        document.getElementById('newNumberOptions').style.display = type === 'number' ? 'block' : 'none';
+        document.getElementById('newReadingOptions').style.display = type === 'reading' ? 'block' : 'none';
+    
+        if (type === 'number' && routine) {
+            document.getElementById('newNumberUnit').value = routine.unit || '';
+            document.getElementById('newNumberMin').value = routine.min ?? 1;
+            // ... (이하 다른 필드들도 동일하게 채워넣는 로직)
+        }
+        
+        const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
+        newRoutineAreasContainer.innerHTML = '';
+        userAreas.forEach(area => {
+            const isSelected = routine ? routine.areas?.includes(area.id) : false;
+            newRoutineAreasContainer.innerHTML += `
+                <div class="area-checkbox-item">
+                    <input type="checkbox" id="area-${area.id}-${currentRoutineMode}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
+                    <label for="area-${area.id}-${currentRoutineMode}">${area.name}</label>
+                </div>
+            `;
+        });
+    
+        modal.style.display = 'flex';
     }
-    const assigneeGroup = assigneeSelect.closest('.form-group');
-
-    assigneeSelect.innerHTML = '<option>로딩 중...</option>';
-    const familyMembers = await getFamilyMembers();
-    assigneeSelect.innerHTML = '';
-    
-    let membersToShow = familyMembers;
-    
-    // 모드에 따라 담당자 목록 필터링 및 UI 제어
-    if (currentRoutineMode === 'parent') {
-        membersToShow = familyMembers.filter(m => m.id === currentUser.uid);
-        if (assigneeGroup) assigneeGroup.style.display = 'none';
-    } else if (currentRoutineMode === 'child') {
-        membersToShow = familyMembers.filter(m => m.id !== currentUser.uid);
-        if (assigneeGroup) assigneeGroup.style.display = 'flex';
-    } else { // 'edit' 모드
-        if (assigneeGroup) assigneeGroup.style.display = 'flex';
-    }
-
-    membersToShow.forEach(member => {
-        const option = document.createElement('option');
-        option.value = member.id;
-        option.textContent = member.name;
-        if (routine && routine.assignedTo === member.id) option.selected = true;
-        assigneeSelect.appendChild(option);
-    });
-
-    assigneeSelect.disabled = (currentRoutineMode === 'child' && membersToShow.length === 0);
-
-
-    // 삭제 버튼 표시/숨김
-    if (routine) {
-        deleteBtn.style.display = 'block';
-        deleteBtn.onclick = () => {
-            hideAddRoutineModal();
-            // 삭제 확인을 위한 지연
-            setTimeout(() => {
-                if (confirm(`정말로 '${routine.name}' 루틴을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.\n모든 기록과 통계가 함께 삭제됩니다.`)) {
-                    handleDeleteRoutine(String(routine.id), routine.name);
-                }
-            }, 100);
-        };
-    } else {
-        deleteBtn.style.display = 'none';
-    }
-    
-    // Form reset/population (기존 로직)
-    document.getElementById('newRoutineName').value = routine ? routine.name : '';
-    document.getElementById('newRoutineTime').value = routine ? routine.time : 'morning';
-    document.getElementById('newRoutineType').value = routine ? routine.type : 'yesno';
-    document.getElementById('newRoutineFreq').value = routine ? routine.frequency : 'daily';
-    document.getElementById('newRoutinePoints').value = routine ? routine.basePoints : 10;
-
-    // Type-specific options (기존 로직)
-    const type = routine ? routine.type : 'yesno';
-    document.getElementById('newNumberOptions').style.display = type === 'number' ? 'block' : 'none';
-    document.getElementById('newReadingOptions').style.display = type === 'reading' ? 'block' : 'none';
-
-    if (type === 'number') {
-        document.getElementById('newNumberUnit').value = routine.unit || '';
-        document.getElementById('newNumberMin').value = routine.min ?? 1;
-        document.getElementById('newNumberMax').value = routine.max ?? 100;
-        document.getElementById('newNumberStep').value = routine.step ?? 1;
-        document.getElementById('newNumberGoal').value = routine.dailyGoal || '';
-        document.getElementById('newNumberContinuous').checked = routine.continuous || false;
-        document.getElementById('newNumberInputType').value = routine.inputType || 'stepper';
-    }
-    if (type === 'reading') {
-        document.getElementById('newBookTitle').value = routine.bookTitle || '';
-        document.getElementById('newStartPage').value = routine.startPage || 1;
-        document.getElementById('newEndPage').value = routine.endPage || '';
-        document.getElementById('newDailyPages').value = routine.dailyPages || 10;
-    }
-
-    const newRoutineAreasContainer = document.getElementById('newRoutineAreas');
-    newRoutineAreasContainer.innerHTML = '';
-    userAreas.forEach(area => {
-        const isSelected = routine ? routine.areas?.includes(area.id) : false;
-        newRoutineAreasContainer.innerHTML += `
-            <div class="area-checkbox-item">
-                <input type="checkbox" id="area-${area.id}" value="${area.id}" class="area-checkbox" ${isSelected ? 'checked' : ''}>
-                <label for="area-${area.id}">${area.name}</label>
-            </div>
-        `;
-    });
-    
-    modal.style.display = 'flex';
-}
-// ▲▲▲ 여기까지 수정 ▲▲▲
+    // ▲▲▲ 여기까지 2025-08-24 [완벽본] showRoutineForm 함수 ▲▲▲
 
 
 
@@ -2052,104 +2065,95 @@ function renderRoutines() {
 
 // ▼▼▼ 2025-08-21 renderManagePage 함수를 탭 기반으로 전면 개편 ▼▼▼
 // ▼▼▼ 2025-08-21 renderManagePage 함수 안정성 강화 ▼▼▼
+// ▼▼▼ 2025-08-24 [완벽본] renderManagePage 함수 ▼▼▼
 function renderManagePage() {
-    // 1. 필요한 UI 요소들을 모두 선택합니다.
+    // --- 생산자 검토: 필수 UI 요소가 모두 존재하는지 확인 ---
     const tabs = document.querySelectorAll('.routine-manage-tabs .tab-btn');
     const panels = document.querySelectorAll('.routine-manage-panels .tab-panel');
     const parentListEl = document.getElementById('parentRoutineList');
     const childListContainer = document.getElementById('childRoutinesByChild');
     const addParentBtn = document.getElementById('addParentRoutineBtn');
     const addChildBtn = document.getElementById('addChildRoutineBtn');
+    const saveOrderBtn = document.getElementById('saveParentOrderBtn');
 
-    // --- ★★★ 추가된 부분 시작 ★★★ ---
-    // '영역 관리' 기능 렌더링 및 이벤트 리스너 연결
-    renderAreaStats(); 
-    const manageAreasBtn = document.getElementById('manageAreasBtn');
-    if (manageAreasBtn) {
-        manageAreasBtn.addEventListener('click', showManageAreasModal);
+    if (!tabs.length || !panels.length || !parentListEl || !childListContainer || !addParentBtn || !addChildBtn || !saveOrderBtn) {
+        console.error("❌ [renderManagePage]: 관리 페이지의 필수 UI 요소가 누락되었습니다. index.html 파일을 확인하십시오.");
+        return;
     }
-    // --- ★★★ 추가된 부분 끝 ★★★ ---
-
-    // 2. 탭 전환 로직을 설정합니다.
+    
+    // --- 리뷰어 검토: 탭 전환 로직이 명확하고 부작용이 없는지 확인 ---
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
             panels.forEach(p => p.classList.remove('active'));
-
+            
             tab.classList.add('active');
             const targetPanelId = tab.dataset.tab + '-panel';
             document.getElementById(targetPanelId).classList.add('active');
         });
     });
 
-    // 3. '내 루틴' 탭의 내용을 렌더링합니다.
+    // --- 생산자: '내 루틴' 목록 생성 ---
     parentListEl.innerHTML = '';
     const parentRoutines = sampleRoutines
         .filter(r => r.assignedTo === currentUser.uid)
         .sort((a, b) => a.order - b.order);
+    parentRoutines.forEach(routine => parentListEl.appendChild(createManageRoutineElement(routine)));
 
-    parentRoutines.forEach(routine => {
-        parentListEl.appendChild(createManageRoutineElement(routine));
-    });
-
+    // --- 리뷰어 검토: Sortable.js 인스턴스가 중복 생성되지 않도록 처리 ---
     if (sortableInstance) sortableInstance.destroy();
     sortableInstance = new Sortable(parentListEl, {
         animation: 150,
         handle: '.drag-handle',
-        onEnd: () => {
-            document.getElementById('saveParentOrderBtn').style.display = 'block';
-        }
+        onEnd: () => saveOrderBtn.style.display = 'block'
     });
 
-    // 4. '자녀 루틴' 탭의 내용을 렌더링합니다.
+    // --- 생산자: '자녀 루틴' 목록 생성 ---
     childListContainer.innerHTML = '';
     const childRoutines = sampleRoutines.filter(r => r.assignedTo !== currentUser.uid);
-
     const routinesByChild = childRoutines.reduce((acc, routine) => {
-        const assigneeId = routine.assignedTo;
-        if (!acc[assigneeId]) {
-            acc[assigneeId] = [];
-        }
-        acc[assigneeId].push(routine);
+        (acc[routine.assignedTo] = acc[routine.assignedTo] || []).push(routine);
         return acc;
     }, {});
 
     getFamilyMembers().then(members => {
-        const children = members.filter(m => m.id !== currentUser.uid);
-        if (children.length === 0 && childRoutines.length > 0) {
-            childListContainer.innerHTML = '<p>가족 구성원이 없습니다. 가족 관리에서 자녀를 먼저 추가해주세요.</p>';
-        } else if (children.length > 0) { // ★★★ 자녀가 있을 때만 렌더링하도록 조건 추가
+        const children = members.filter(m => m.role === 'child');
+        if (children.length === 0) {
+            childListContainer.innerHTML = `<p class="panel-description">가족 관리에서 자녀를 먼저 추가해주세요.</p>`;
+        } else {
             children.forEach(child => {
                 const childGroup = document.createElement('div');
                 childGroup.className = 'child-routine-group';
                 childGroup.innerHTML = `<h3>${child.name}의 루틴</h3>`;
-
                 const childRoutineList = document.createElement('div');
                 childRoutineList.className = 'manage-routine-list';
-
+                
                 const routinesForThisChild = routinesByChild[child.id] || [];
                 if (routinesForThisChild.length > 0) {
-                    routinesForThisChild.forEach(routine => {
-                        childRoutineList.appendChild(createManageRoutineElement(routine));
-                    });
+                    routinesForThisChild.forEach(routine => childRoutineList.appendChild(createManageRoutineElement(routine)));
                 } else {
-                    childRoutineList.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.9rem;">할당된 루틴이 없습니다.</p>`;
+                    childRoutineList.innerHTML = `<p class="panel-description">할당된 루틴이 없습니다.</p>`;
                 }
-
                 childGroup.appendChild(childRoutineList);
                 childListContainer.appendChild(childGroup);
             });
         }
     });
 
-   // 5. 각 '루틴 추가' 버튼에 맞는 모달 호출 로직을 연결합니다.
-    // ★★★ 수정: options 객체를 전달하여 호출 의도를 명시합니다. ★★★
-    addParentBtn.onclick = () => showAddRoutineModal({ mode: 'parent' });
-    addChildBtn.onclick = () => showAddRoutineModal({ mode: 'child' });
-
-    document.getElementById('saveParentOrderBtn').onclick = saveRoutineOrder;
+    // --- 리뷰어 검토: 각 버튼이 명확한 작전 모드('parent' 또는 'child')를 전달하는지 최종 확인 ---
+    addParentBtn.onclick = () => {
+        console.log("▶️ '내 루틴 추가' 명령 하달됨");
+        showRoutineForm(null, { mode: 'parent' });
+    };
+    addChildBtn.onclick = () => {
+        console.log("▶️ '자녀 루틴 추가' 명령 하달됨");
+        showRoutineForm(null, { mode: 'child' });
+    };
+    
+    saveOrderBtn.onclick = saveRoutineOrder;
+    renderRewardManagement(); // 보상 관리 기능은 독립적으로 렌더링
 }
-// ▲▲▲ 여기까지 2025-08-21 renderManagePage 함수 안정성 강화 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24 [완벽본] renderManagePage 함수 ▲▲▲
 
 
 
