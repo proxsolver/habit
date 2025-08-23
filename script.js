@@ -361,16 +361,39 @@ async function updateRoutineInFirebase(routineId, updatedFields) {
 }
 // ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 업데이트 경로 수정 ▲▲▲
 
+// ▼▼▼ 2025-08-23 [재설계] 루틴 순서 저장 경로 수정 ▼▼▼
 async function updateRoutineOrderInFirebase(orderedRoutines) {
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.familyId) return;
+
     const batch = db.batch();
-    const routinesRef = db.collection('users').doc(currentUser.uid).collection('routines');
-    orderedRoutines.forEach((routine, index) => {
-        batch.update(routinesRef.doc(String(routine.id)), { order: index });
+    // ★★★ 핵심: 새로운 'families' 컬렉션 경로를 사용합니다. ★★★
+    const routinesRef = db.collection('families').doc(currentUser.familyId).collection('routines');
+
+    orderedRoutines.forEach(routine => {
+        // 루틴 ID를 문자열로 변환하여 안정성을 확보합니다.
+        const docRef = routinesRef.doc(String(routine.id));
+        batch.update(docRef, { order: routine.order });
     });
-    await batch.commit();
-    sampleRoutines = orderedRoutines;
+
+    try {
+        await batch.commit();
+        
+        // 로컬 데이터(sampleRoutines)에도 변경된 순서를 반영합니다.
+        orderedRoutines.forEach(updatedRoutine => {
+            const index = sampleRoutines.findIndex(r => r.id === updatedRoutine.id);
+            if (index !== -1) {
+                sampleRoutines[index].order = updatedRoutine.order;
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ 루틴 순서 업데이트 실패:", error);
+        showNotification('순서 저장에 실패했습니다.', 'error');
+        // 실패 시에는 페이지를 새로고침하여 데이터 불일치를 방지합니다.
+        window.location.reload();
+    }
 }
+// ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 순서 저장 경로 수정 ▲▲▲
 
 async function updateUserStatsInFirebase(updatedStats) {
     if (!currentUser) return;
