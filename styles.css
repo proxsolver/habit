@@ -2296,3 +2296,56 @@ padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
     border-bottom: 1px solid var(--gray-200);
 }
 /* ▲▲▲ 여기까지 2025-08-21 루틴 관리 탭 스타일 추가 ▲▲▲ */
+.reward-controls {
+    display: flex;
+    gap: 0.5rem; /* 버튼 사이 간격 조정 */
+    }
+    
+    .btn-approve-reward,
+    .btn-reject-reward {
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem; /* 패딩 조정 /
+    border-radius: 5px; / 둥근 모서리 적용 /
+    cursor: pointer;
+    font-size: 0.9rem; / 폰트 크기 약간 줄임 /
+    transition: opacity 0.3s ease; / 호버 시 부드러운 효과 */
+    }
+    
+    .btn-approve-reward {
+    background-color: var(--success); /* 초록색 계열 */
+    }
+    
+    .btn-reject-reward {
+    background-color: var(--error); /* 빨간색 계열 */
+    }
+    
+    .btn-approve-reward:hover,
+    .btn-reject-reward:hover {
+    opacity: 0.8; /* 호버 시 약간 어둡게 */
+    }
+    
+    .manage-routine-item .routine-controls button {
+    padding: 0.3rem 0.6rem; /* 기존 아이템 내 버튼과 통일성 유지 */
+    font-size: 0.8rem;
+    }
+    
+    .manage-routine-item .routine-controls {
+    min-width: 150px; /* 최소 너비 확보 /
+    justify-content: flex-end; / 오른쪽 정렬 */
+    }
+    
+    /* 기존의 button 스타일과 충돌 방지 및 우선순위 확보 */
+    #reward-approval-section .manage-routine-item .routine-controls button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    }
+    
+    #reward-approval-section .manage-routine-item .routine-controls {
+    display: flex;
+    gap: 0.5rem;
+    min-width: auto; /* 필요에 따라 자동 너비 */
+    justify-content: flex-end;
+    }
+    
+    
