@@ -3402,7 +3402,7 @@ function showManagePage() {
     // 임무 2: 자신의 페이지가 준비되면, 내용물 생성을 담당하는 예하 부대들을 호출한다.
     renderAreaStats();
     renderManagePage();
-
+}
 // feat(stats): Implement basic UI and rendering for statistics page
 
 function showDashboardPage() {
@@ -3849,6 +3849,15 @@ function setupAllEventListeners() {
     if(manageAreasBtn) {
         manageAreasBtn.addEventListener('click', showManageAreasModal);
     }
+
+    // ▼▼▼ 2025-08-24(수정일) 새 보상 추가 버튼 이벤트 리스너 추가 ▼▼▼
+    const addRewardBtn = document.getElementById('addRewardBtn');
+    if (addRewardBtn) {
+        // showRewardModal()을 호출하여 보상 추가 모달을 열도록 명령합니다.
+        addRewardBtn.addEventListener('click', () => showRewardModal(null));
+    }
+    // ▲▲▲ 여기까지 2025-08-24(수정일) 새 보상 추가 버튼 이벤트 리스너 추가 ▲▲▲
+
 
 
     // --- 통계 페이지 필터 버튼 ---
