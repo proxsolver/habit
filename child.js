@@ -30,31 +30,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    firebase.auth().onAuthStateChanged(async (user) => {
-        const bottomTabBar = document.querySelector('.bottom-tab-bar');
-        if (user) {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().role === 'parent') {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = user;
-            await updateUserInfoUI(user);
-            await loadAssignedRoutines(user.uid);
-            showHomePage();
-            if (bottomTabBar) bottomTabBar.style.display = 'flex';
-        } else {
-            currentUser = null;
-            updateUserInfoUI(null);
-            renderMissions();
-            if (bottomTabBar) bottomTabBar.style.display = 'none';
-        }
-    });
-
-    setupEventListeners();
 });
+// ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
 
+// ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
+firebase.auth().onAuthStateChanged(async (user) => {
+    const bottomTabBar = document.querySelector('.bottom-tab-bar');
+    if (user) {
+        // Firestore에서 상세 사용자 정보를 가져옵니다.
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        // ★★★ 핵심 수정: userDoc.exists() -> userDoc.exists 로 변경 ★★★
+        const userData = userDoc.exists ? userDoc.data() : {};
+
+        // 인증 정보와 Firestore 정보를 합쳐 완전한 currentUser 객체를 생성합니다.
+        currentUser = {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL,
+            ...userData
+        };
+
+        if (currentUser.role === 'parent') {
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        await updateUserInfoUI(currentUser);
+        await loadAssignedRoutines(currentUser.uid);
+        showHomePage();
+        if(bottomTabBar) bottomTabBar.style.display = 'flex';
+
+    } else {
+        currentUser = null;
+        updateUserInfoUI(null);
+        renderMissions();
+        if(bottomTabBar) bottomTabBar.style.display = 'none';
+    }
+});
+// ▲▲▲ 여기까지 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▲▲▲
+
+
+// ▲▲▲ 여기까지 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▲▲▲
+    
 // ====================================================================
 // 3. 데이터 로직
 // ====================================================================
@@ -679,33 +698,72 @@ async function testDirectWrite() {
 // ▼▼▼ 2025-08-25(수정일) '보유 쿠폰' 관련 기능 부대 창설 ▼▼▼
 
 // [쿠폰 목록화 장교] Firestore에서 승인된 보상(쿠폰)을 가져와 화면에 표시합니다.
+// ▼▼▼ 2025-08-25(수정일) '쿠폰 보관함' 기능에 첩보 위성 탑재 ▼▼▼
 async function loadAndRenderApprovedRewards() {
     if (!currentUser) return;
     const listContainer = document.getElementById('my-coupons-list');
     const section = document.getElementById('my-coupons-section');
     listContainer.innerHTML = '<p class="panel-description">쿠폰을 확인하는 중...</p>';
 
-    const requestsRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests');
-    const snapshot = await requestsRef
-        .where('childId', '==', currentUser.uid)
-        .where('status', '==', 'approved')
-        .orderBy('requestedAt', 'desc')
-        .get();
+    try {
+        // =================================================================
+        // ▼▼▼ 첩보 위성 데이터 수집 코드 ▼▼▼
+        console.log("🛰️ === 쿠폰 보관함 감청 시작 === 🛰️");
+        console.log(`[위성] 사용자 ID '${currentUser.uid}'의 'approved' 상태 쿠폰을 조회합니다.`);
+        console.log(`[위성] 소속 가족 ID: ${currentUser.familyId}`);
+        // ▲▲▲ 여기까지 첩보 위성 코드 ▲▲▲
+        // =================================================================
 
-    if (snapshot.empty) {
-        // 보유 쿠폰이 없으면 섹션 전체를 숨깁니다.
-        section.style.display = 'none';
-        return;
+        const requestsRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests');
+        const snapshot = await requestsRef
+            .where('childId', '==', currentUser.uid)
+            .where('status', '==', 'approved')
+            .orderBy('requestedAt', 'desc')
+            .get();
+
+        // =================================================================
+        // ▼▼▼ 첩보 위성 데이터 수집 코드 ▼▼▼
+        console.log(`[위성] Firestore 응답 수신. 발견된 쿠폰 수: ${snapshot.size}`);
+        console.log(`[위성] 쿠폰 목록이 비어있는가? (snapshot.empty): ${snapshot.empty}`);
+        // ▲▲▲ 여기까지 첩보 위성 코드 ▲▲▲
+        // =================================================================
+
+        if (snapshot.empty) {
+            section.style.display = 'none';
+            console.log("[위성] 발견된 쿠폰이 없어 작전을 중단합니다.");
+            return;
+        }
+        
+        section.style.display = 'block';
+        listContainer.innerHTML = '';
+        const rewards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // =================================================================
+        // ▼▼▼ 첩보 위성 데이터 수집 코드 ▼▼▼
+        console.log("[위성] 화면에 표시할 최종 쿠폰 데이터:", JSON.parse(JSON.stringify(rewards)));
+        // ▲▲▲ 여기까지 첩보 위성 코드 ▲▲▲
+        // =================================================================
+
+        rewards.forEach(reward => {
+            const couponElement = createApprovedRewardElement(reward);
+            listContainer.appendChild(couponElement);
+        });
+
+    } catch (error) {
+        // =================================================================
+        // ▼▼▼ 첩보 위성 데이터 수집 코드 ▼▼▼
+        console.error("❌ [위성] 쿠폰 보관함 조회 중 치명적인 에러 발생:", error);
+        if (error.code === 'failed-precondition') {
+            console.warn("🔥[제미군 경고] Firestore 색인이 필요할 수 있습니다. 콘솔의 다른 에러 메시지에 포함된 링크를 클릭하여 색인을 생성하십시오.");
+        }
+        // ▲▲▲ 여기까지 첩보 위성 코드 ▲▲▲
+        // =================================================================
+        section.style.display = 'none'; // 에러 발생 시에도 섹션을 숨김
+    } finally {
+        console.log("🛰️ === 쿠폰 보관함 감청 종료 === 🛰️");
     }
-
-    section.style.display = 'block';
-    listContainer.innerHTML = '';
-    const rewards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    rewards.forEach(reward => {
-        const couponElement = createApprovedRewardElement(reward);
-        listContainer.appendChild(couponElement);
-    });
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) '쿠폰 보관함' 기능에 첩보 위성 탑재 ▲▲▲
 
 // [쿠폰 디자인 병사] 개별 쿠폰 아이템의 HTML 구조를 생성합니다.
 function createApprovedRewardElement(reward) {
