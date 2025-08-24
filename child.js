@@ -372,6 +372,8 @@ async function updateUserInfoUI(user) {
 }
 
 // ▼▼▼ 2025-08-25(수정일) 반려묘 렌더링 함수 신설 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) expressionImageCounts 누락 수정 ▼▼▼
+// 기존 renderCompanionCat 함수를 이 코드로 완전히 교체합니다.
 function renderCompanionCat(petData) {
     const container = document.getElementById('companion-cat-container');
     if (!container || !petData) return;
@@ -380,16 +382,29 @@ function renderCompanionCat(petData) {
     const expression = petData.expression || 'default';
     const name = petData.name || '나의 고양이';
 
-    // 지금은 기본 이미지만 사용합니다. (파일명은 추후 규칙에 맞게 변경)
-    const imagePath = `images/cat_stage_1_default_0.png`;
+    // 1. ★★★ 바로 이 부분이 누락되었습니다 ★★★
+    // 각 표정별로 준비하신 이미지 개수를 이곳에 정확히 기록해주십시오.
+    const expressionImageCounts = {
+        default: 1, // default 표정 이미지가 2개일 경우
+        happy: 4,   // happy 표정 이미지가 2개일 경우
+        sad: 2,     // sad 표정 이미지가 3개일 경우
+        bored: 2    // bored 표정 이미지가 1개일 경우
+    };
+
+    // 2. 해당 표정의 이미지 개수 내에서 랜덤한 번호를 선택합니다.
+    const imageCount = expressionImageCounts[expression] || 1;
+    const randomIndex = Math.floor(Math.random() * imageCount);
+
+    // 3. 최종 이미지 파일 경로를 생성합니다.
+    const imagePath = `images/cat_stage_${level}_${expression}_${randomIndex}.png`;
+    console.log(`[renderCompanionCat] 렌더링 이미지: ${imagePath}`);
 
     container.innerHTML = `
         <h3 style="font-weight: 700; margin-bottom: 0.5rem;">${name} (Lv.${level})</h3>
-        <img src="${imagePath}" alt="${name}" style="width: 120px; height: 120px; image-rendering: gitpixelated; image-rendering: -moz-crisp-edges;">
+        <img src="${imagePath}" alt="${name}" style="width: 120px; height: 120px; image-rendering: pixelated; image-rendering: -moz-crisp-edges;">
     `;
 }
-// ▲▲▲ 여기까지 2025-08-25(수정일) 반려묘 렌더링 함수 신설 ▲▲▲
-
+// ▲▲▲ 여기까지 2025-08-25(수정일) expressionImageCounts 누락 수정 ▲▲▲
 
 
 
