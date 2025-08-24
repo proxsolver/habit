@@ -10,6 +10,7 @@ const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).p
 // ====================================================================
 // 2. 앱 시작점
 // ====================================================================
+// ▼▼▼ 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
@@ -30,8 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ★★★ 핵심: 모든 이벤트 리스너 설정 함수를 여기서 호출합니다.
+    setupEventListeners(); 
 });
-// ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
+// ▲▲▲ 여기까지 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▲▲▲
+// // ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
 
 // ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
 firebase.auth().onAuthStateChanged(async (user) => {
@@ -522,6 +527,8 @@ function showHomePage() {
 
 // ▼▼▼ 2025-08-25(수정일) showRewardsPage에 쿠폰 로딩 명령 추가 ▼▼▼
 function showRewardsPage() {
+    console.log("▶️ [child.js] '보상' 버튼 클릭 감지! showRewardsPage 함수 호출 성공!");
+
     document.getElementById('main-app-content').style.display = 'none';
     document.getElementById('rewards-page').style.display = 'block';
     document.getElementById('navHomeBtn').classList.remove('active');
