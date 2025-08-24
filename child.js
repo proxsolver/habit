@@ -208,6 +208,7 @@ async function loadAndRenderPointHistory() {
 // ====================================================================
 // 4. 핵심 로직
 // ====================================================================
+// ▼▼▼ 2025-08-25(수정일) completeMission 및 updateCatExpression 최종 수정 ▼▼▼
 async function completeMission(routine, updatedFields = {}) {
     if (!currentUser || !routine.path) {
         showNotification("미션 완료 처리에 필요한 정보가 부족합니다.", "error");
@@ -216,10 +217,8 @@ async function completeMission(routine, updatedFields = {}) {
     try {
         const routineRef = db.doc(routine.path);
         let dataToUpdate = {
-            status: 'completed',
-            value: true,
-            lastUpdatedDate: todayDateString,
-            ...updatedFields
+            status: 'completed', value: true,
+            lastUpdatedDate: todayDateString, ...updatedFields
         };
         const goalAchieved = dataToUpdate.dailyGoalMetToday === true || routine.type === 'yesno';
         if (goalAchieved && !routine.pointsGivenToday) {
@@ -227,10 +226,19 @@ async function completeMission(routine, updatedFields = {}) {
             dataToUpdate.streak = (routine.streak || 0) + 1;
             const userRef = db.collection('users').doc(currentUser.uid);
             const pointsToAward = routine.basePoints || 0;
+            
+            // Firestore에 포인트와 마지막 활동 시간을 함께 업데이트합니다.
             await userRef.update({
-                points: firebase.firestore.FieldValue.increment(pointsToAward)
+                points: firebase.firestore.FieldValue.increment(pointsToAward),
+                "companionCat.lastActivityTimestamp": firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // 로컬 currentUser 객체도 즉시 갱신합니다.
+            currentUser.points = (currentUser.points || 0) + pointsToAward;
+            currentUser.companionCat.lastActivityTimestamp = new Date();
+
             await logRoutineHistory(routine.id, { value: dataToUpdate.value, pointsEarned: pointsToAward });
+            updateCatExpression('happy', true);
             showNotification(`'${routine.name}' 미션 완료! ${pointsToAward}포인트를 획득했습니다!`, 'success');
         } else if (Object.keys(updatedFields).length > 0) {
             showNotification(`'${routine.name}' 미션이 업데이트되었습니다.`, 'info');
@@ -243,6 +251,26 @@ async function completeMission(routine, updatedFields = {}) {
         showNotification("미션 처리에 실패했습니다.", "error");
     }
 }
+
+async function updateCatExpression(newExpression, temporary = false) {
+    if (!currentUser || !currentUser.companionCat) return;
+
+    // 로컬 currentUser 객체에 즉시 반영
+    currentUser.companionCat.expression = newExpression;
+    renderCompanionCat(currentUser.companionCat);
+
+    const userRef = db.collection('users').doc(currentUser.uid);
+    await userRef.update({ "companionCat.expression": newExpression });
+
+    if (temporary) {
+        setTimeout(async () => {
+            if (currentUser.companionCat.expression === newExpression) {
+                await updateCatExpression(dailyCatMood);
+            }
+        }, 3000);
+    }
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) completeMission 및 updateCatExpression 최종 수정 ▲▲▲
 
 async function undoMission(routine) {
     if (!currentUser || !routine.path || !confirm(`'${routine.name}' 미션 완료를 취소하시겠습니까?`)) return;
