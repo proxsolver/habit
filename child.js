@@ -432,6 +432,8 @@ function showRewardsPage() {
     document.getElementById('navRewardsBtn').classList.add('active');
         // ★★★ 보상 페이지가 열릴 때마다 보상 목록을 새로 불러오도록 명령합니다.
     loadAndRenderRewards();
+    loadAndRenderPointHistory(); // 포인트 획득 기록 보고
+
 
 }
 
@@ -732,3 +734,64 @@ function getEstimatedCompletionDate(routine) {
 }
 
 // ▲▲▲ 여기까지 2025-08-24(수정일) 독서 관련 Helper 함수 부대 추가 ▲▲▲
+
+// ▼▼▼ 2025-08-24(수정일) 포인트 획득 기록 조회 및 렌더링 부대 추가 ▼▼▼
+
+// [기록 수집 장교] Firestore에서 최근 20개의 포인트 획득 기록을 가져옵니다.
+async function loadAndRenderPointHistory() {
+    if (!currentUser) return;
+    const listContainer = document.getElementById('point-history-list');
+    listContainer.innerHTML = '<p class="panel-description">기록을 불러오는 중...</p>';
+
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    if (!userDoc.exists || !userDoc.data().familyId) {
+        listContainer.innerHTML = '<p class="panel-description">소속된 가족이 없어 기록을 표시할 수 없습니다.</p>';
+        return;
+    }
+    const familyId = userDoc.data().familyId;
+
+    // 'history' 컬렉션 그룹에서 우리 가족의 기록만 최신순으로 20개 조회합니다.
+    const historyQuery = db.collectionGroup('history')
+                           .where('familyId', '==', familyId)
+                           .where('pointsEarned', '>', 0) // 포인트 획득 기록만 필터링
+                           .orderBy('date', 'desc')
+                           .limit(20);
+    
+    const snapshot = await historyQuery.get();
+
+    if (snapshot.empty) {
+        listContainer.innerHTML = '<p class="panel-description">아직 포인트 획득 기록이 없습니다.</p>';
+        return;
+    }
+
+    listContainer.innerHTML = '';
+    const histories = snapshot.docs.map(doc => doc.data());
+
+    histories.forEach(hist => {
+        const historyElement = createPointHistoryElement(hist);
+        listContainer.appendChild(historyElement);
+    });
+}
+
+// [보고서 작성병] 개별 기록 아이템의 HTML 구조를 생성합니다.
+function createPointHistoryElement(history) {
+    const item = document.createElement('div');
+    item.className = 'manage-routine-item';
+    
+    // assignedRoutines 배열에서 루틴 ID로 루틴 이름을 찾습니다.
+    const routine = assignedRoutines.find(r => r.id === history.routineId);
+    const routineName = routine ? routine.name : '알 수 없는 활동';
+
+    item.innerHTML = `
+        <div class="routine-main-info" style="gap: 1rem;">
+            <div class="routine-main-name" style="flex-grow: 1;">
+                ${routineName}
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">${history.date}</div>
+            </div>
+            <div class="routine-main-details" style="font-weight: 600; color: var(--success);">+${history.pointsEarned} P</div>
+        </div>
+    `;
+    return item;
+}
+
+// ▲▲▲ 여기까지 2025-08-24(수정일) 포인트 획득 기록 조회 및 렌더링 부대 추가 ▲▲▲
