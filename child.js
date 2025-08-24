@@ -738,6 +738,7 @@ function getEstimatedCompletionDate(routine) {
 // ▼▼▼ 2025-08-24(수정일) 포인트 획득 기록 조회 및 렌더링 부대 추가 ▼▼▼
 
 // [기록 수집 장교] Firestore에서 최근 20개의 포인트 획득 기록을 가져옵니다.
+// ▼▼▼ 2025-08-24(수정일) Firestore 쿼리 규칙에 맞게 정렬 순서 수정 ▼▼▼
 async function loadAndRenderPointHistory() {
     if (!currentUser) return;
     const listContainer = document.getElementById('point-history-list');
@@ -750,17 +751,18 @@ async function loadAndRenderPointHistory() {
     }
     const familyId = userDoc.data().familyId;
 
-    // 'history' 컬렉션 그룹에서 우리 가족의 기록만 최신순으로 20개 조회합니다.
+    // ★★★ 핵심: Firestore 규칙에 따라 'pointsEarned'를 기준으로 먼저 정렬합니다.
     const historyQuery = db.collectionGroup('history')
                            .where('familyId', '==', familyId)
-                           .where('pointsEarned', '>', 0) // 포인트 획득 기록만 필터링
-                           .orderBy('date', 'desc')
+                           .where('pointsEarned', '>', 0)
+                           .orderBy('pointsEarned', 'desc') // 1. 획득 포인트가 높은 순으로
+                           .orderBy('date', 'desc')       // 2. 포인트가 같다면 최신 날짜 순으로
                            .limit(20);
     
     const snapshot = await historyQuery.get();
 
     if (snapshot.empty) {
-        listContainer.innerHTML = '<p class="panel-description">아직 포인트 획득 기록이 없습니다.</p>';
+        listContainer.innerHTML = '<p class.panel-description">아직 포인트 획득 기록이 없습니다.</p>';
         return;
     }
 
@@ -772,6 +774,7 @@ async function loadAndRenderPointHistory() {
         listContainer.appendChild(historyElement);
     });
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) Firestore 쿼리 규칙에 맞게 정렬 순서 수정 ▲▲▲
 
 // [보고서 작성병] 개별 기록 아이템의 HTML 구조를 생성합니다.
 function createPointHistoryElement(history) {
