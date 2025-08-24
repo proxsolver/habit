@@ -250,7 +250,7 @@ function updateUserInfoUI(user) {
     }
 }
 
-// ▼▼▼ 2025-08-24(수정일) setupEventListeners 함수에 이벤트 위임 추가 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) setupEventListeners 함수에 최종 요청 로직 추가 ▼▼▼
 function setupEventListeners() {
     document.getElementById('logout-btn')?.addEventListener('click', () => firebase.auth().signOut());
     
@@ -261,7 +261,7 @@ function setupEventListeners() {
     homeBtn?.addEventListener('click', showHomePage);
     rewardsBtn?.addEventListener('click', showRewardsPage);
 
-    // ★★★ '보상 상점' 전체에 대한 이벤트 리스너를 추가합니다. (이벤트 위임)
+    // '보상 상점' 전체에 대한 이벤트 리스너 (이벤트 위임)
     const rewardList = document.getElementById('reward-store-list');
     if (rewardList) {
         rewardList.addEventListener('click', async (e) => {
@@ -272,21 +272,58 @@ function setupEventListeners() {
                 const rewardName = button.dataset.rewardName;
                 const requiredPoints = parseInt(button.dataset.rewardPoints);
                 
-                // 임시로 버튼을 비활성화하여 중복 요청 방지
                 button.disabled = true;
                 button.textContent = '확인 중...';
 
-                // ★★★ (다음 단계) 여기에 포인트 확인 및 요청 로직이 들어갑니다.
-                alert(`'${rewardName}' 요청 기능은 현재 개발 중입니다! (필요 포인트: ${requiredPoints})`);
+                try {
+                    // 1. 현재 사용자(자녀)의 최신 정보를 가져와 포인트를 확인합니다.
+                    const userRef = db.collection('users').doc(currentUser.uid);
+                    const userDoc = await userRef.get();
+                    const currentPoints = userDoc.data().points || 0;
 
-                // 다시 버튼 활성화
-                button.disabled = false;
-                button.textContent = '요청';
+                    if (currentPoints < requiredPoints) {
+                        // 2. 포인트가 부족할 경우
+                        showNotification(`포인트가 부족합니다! (현재: ${currentPoints} P)`, 'error');
+                        button.disabled = false;
+                        button.textContent = '요청';
+                        return;
+                    }
+
+                    // 3. 포인트가 충분할 경우, 사용자에게 최종 확인을 받습니다.
+                    if (confirm(`정말로 ${requiredPoints} 포인트를 사용해서 '${rewardName}'을(를) 요청하시겠습니까?`)) {
+                        
+                        // 4. 'reward_requests' 컬렉션에 새로운 요청 문서를 생성합니다.
+                        const familyId = userDoc.data().familyId;
+                        const requestsRef = db.collection('families').doc(familyId).collection('reward_requests');
+                        await requestsRef.add({
+                            childId: currentUser.uid,
+                            childName: currentUser.displayName,
+                            rewardId: rewardId,
+                            rewardName: rewardName,
+                            points: requiredPoints,
+                            status: 'pending', // 'pending', 'approved', 'rejected'
+                            requestedAt: new Date()
+                        });
+
+                        showNotification(`'${rewardName}'을(를) 성공적으로 요청했습니다! 부모님의 승인을 기다려주세요.`, 'success');
+                        button.textContent = '요청 완료'; // 성공 후 버튼 텍스트 변경
+                    } else {
+                        // 사용자가 취소한 경우
+                        button.disabled = false;
+                        button.textContent = '요청';
+                    }
+
+                } catch (error) {
+                    console.error("❌ 보상 요청 실패:", error);
+                    showNotification("보상 요청 중 오류가 발생했습니다.", "error");
+                    button.disabled = false;
+                    button.textContent = '요청';
+                }
             }
         });
     }
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners 함수에 이벤트 위임 추가 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners 함수에 최종 요청 로직 추가 ▲▲▲
 
 // 페이지 전환 함수
 function showHomePage() {

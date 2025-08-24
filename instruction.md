@@ -77,56 +77,76 @@ function calculatePace(goal) {
 4. 프로그램 데이터 구조 (v2.0 - '가족 공유' 모델)
 users (collection)
 
-{userId} (document) - Firebase Auth UID와 동일
+    {userId} (document) - Firebase Auth UID와 동일
 
-name: (string) 사용자 이름
+    name: (string) 사용자 이름
 
-email: (string) 사용자 이메일
+    email: (string) 사용자 이메일
 
-familyId: (string) 소속된 가족 문서의 ID (families 컬렉션의 문서 ID를 가리킴)
+    familyId: (string) 소속된 가족 문서의 ID (families 컬렉션의 문서 ID를 가리킴)
 
-role: (string) "parent" 또는 "child"
+    role: (string) "parent" 또는 "child"
 
-points: (number) 자녀가 획득한 총 포인트
+        points: (number) 자녀가 획득한 총 포인트
 
-areas (subcollection) - 개인의 영역 설정
+    areas (subcollection) - 개인의 영역 설정
 
-stats (subcollection) - 개인의 통계 데이터
+    stats (subcollection) - 개인의 통계 데이터
 
-meta (subcollection) - 앱 운영 데이터 (예: 마지막 루틴 초기화 날짜)
+    meta (subcollection) - 앱 운영 데이터 (예: 마지막 루틴 초기화 날짜)
 
 families (collection)
 
-{familyId} (document) - 가족 고유 ID
+    {familyId} (document) - 가족 고유 ID
 
-members (map) - 소속된 가족 구성원과 역할
+    members (map) - 소속된 가족 구성원과 역할
 
-"{부모UID}": "parent"
+        "{부모UID}": "parent"
 
-"{자녀UID}": "child"
+        "{자녀UID}": "child"
 
-routines (subcollection) - 가족의 모든 루틴
+    routines (subcollection) - 가족의 모든 루틴
 
-{routineId} (document)
+    {routineId} (document)
 
-assignedTo: (string) 이 루틴이 할당된 구성원의 UID
+        assignedTo: (string) 이 루틴이 할당된 구성원의 UID
 
-... (루틴 상세 정보)
+        ... (루틴 상세 정보)
 
-history (subcollection) - 해당 루틴의 과거 수행 기록
+        history (subcollection) - 해당 루틴의 과거 수행 기록
 
-{YYYY-MM-DD} (document)
+        {YYYY-MM-DD} (document)
 
-... (해당 날짜의 수행 기록)
+        ... (해당 날짜의 수행 기록)
 
-goals (subcollection) - 가족의 모든 목표
+    goals (subcollection) - 가족의 모든 목표
 
-{goalId} (document)
+        {goalId} (document)
 
-... (목표 상세 정보)
+        ... (목표 상세 정보)
 
-rewards (subcollection) - 가족의 모든 보상
+    rewards (subcollection) - 가족의 모든 보상
 
-{rewardId} (document)
+        {rewardId} (document)
 
-... (보상 상세 정보)
+        ... (보상 상세 정보)
+
+        이 작전으로 인해 Firestore에 다음과 같은 새로운 데이터 구조가 생성됩니다.
+
+경로: families/{familyId}/reward_requests/{requestId}
+
+필드:
+
+childId: (string) 요청한 자녀의 UID
+
+childName: (string) 요청한 자녀의 이름
+
+rewardId: (string) 요청한 보상의 ID
+
+rewardName: (string) 요청한 보상의 이름
+
+points: (number) 요청에 필요한 포인트
+
+status: (string) 현재 상태 ("pending")
+
+requestedAt: (Timestamp) 요청한 시간
