@@ -1,28 +1,56 @@
-// ▼▼▼ 08/19(수정일) 'child.js' 특수 작전 부대 편성 ▼▼▼
-
+// ▼▼▼ 2025-08-24(수정일) 전역 변수 추가 ▼▼▼
 // ====================================================================
 // 1. 전역 변수 (자녀용)
 // ====================================================================
 let currentUser = null;
 let assignedRoutines = [];
+let userStats = {}; // 부모 앱과의 호환성을 위해 추가
+let activeRoutineForModal = null; // 모달 상호작용을 위해 추가
+const today = new Date(); // 날짜 계산을 위해 추가
+const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+// ▲▲▲ 여기까지 2025-08-24(수정일) 전역 변수 추가 ▲▲▲
 
 // ====================================================================
 // 2. 앱 시작점 (자녀용)
 // ====================================================================
+// ▼▼▼ 2025-08-24(수정일) 누락된 Google 로그인 기능 긴급 복구 ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
-    // Firebase 인증 상태 감지
+    // --- Google 로그인 제공자 설정 ---
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+
+    // --- 로그인 버튼에 이벤트 연결 ---
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async () => {
+            try {
+                // 모바일/데스크탑 환경에 따라 다른 로그인 방식 제공
+                if (window.innerWidth <= 768) {
+                    await firebase.auth().signInWithRedirect(provider);
+                } else {
+                    await firebase.auth().signInWithPopup(provider);
+                }
+            } catch (error) {
+                console.error("❌ 자녀용 로그인 실패:", error);
+                showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+            }
+        });
+    }
+
+    // --- Firebase 인증 상태 감지 (기존 코드 유지) ---
     firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             currentUser = user;
-            // 부모 역할일 경우, 중앙 사령부(index.html)로 즉시 이동시킵니다.
+            // 부모 역할일 경우, 중앙 사령부(index.html)로 즉시 이동
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists && userDoc.data().role === 'parent') {
                 window.location.href = 'index.html';
                 return;
             }
             
-            // UI 업데이트
-            updateUserInfoUI(user);
+            // UI 업데이트 및 데이터 로딩
+            await updateUserInfoUI(user); // await 추가하여 포인트 로딩 대기
             await loadAssignedRoutines(user.uid);
             showHomePage();
         } else {
@@ -32,8 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- 기타 이벤트 리스너 설정 (기존 코드 유지) ---
     setupEventListeners();
 });
+// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 Google 로그인 기능 긴급 복구 ▲▲▲
 
 // ====================================================================
 // 3. 데이터 로직 (자녀용)
@@ -111,27 +141,64 @@ function renderMissions() {
 }
 // ▲▲▲ 여기까지 2025-08-21 루틴 렌더링 필터 로직 개선 ▲▲▲
 
+// ▼▼▼ 2025-08-24(수정일) createMissionElement 함수 전면 개선 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) createMissionElement의 이벤트 리스너 최종 수정 ▼▼▼
 function createMissionElement(routine, isCompleted) {
     const div = document.createElement('div');
-    div.className = `routine-item ${isCompleted ? 'completed' : ''}`;
+    div.className = `routine-item ${routine.time} ${isCompleted ? 'completed' : ''}`;
+    const streakBadge = routine.streak > 0 ? `<div class="streak-badge">🔥 ${routine.streak}</div>` : '';
     div.innerHTML = `
         <div class="routine-checkbox">${isCompleted ? '✓' : ''}</div>
         <div class="routine-content">
-            <div class="routine-name">${routine.name}</div>
+            <div class="routine-name">
+                <span class="type-icon">${getTypeIcon(routine.type)}</span> ${routine.name}
+            </div>
+            <div class="routine-details">
+                <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
+            </div>
         </div>
-        <div class="routine-value">${routine.basePoints || 0} P</div>
+        <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
+        ${streakBadge}
     `;
 
-    // 완료되지 않은 루틴에만 클릭 이벤트 추가
+    // ★★★ 완료되지 않은 루틴에만 클릭 이벤트 추가
     if (!isCompleted) {
-        div.querySelector('.routine-checkbox').addEventListener('click', () => {
-            if (confirm(`'${routine.name}' 미션을 완료하시겠습니까?`)) {
-                completeMission(routine);
+        div.addEventListener('click', () => {
+            // 루틴 타입에 따라 다른 작전을 수행하도록 라우팅합니다.
+            switch (routine.type) {
+                case 'yesno':
+                    if (confirm(`'${routine.name}' 미션을 완료하시겠습니까?`)) {
+                        completeMission(routine);
+                    }
+                    break;
+                case 'number':
+                    showStepperModal(routine); // 숫자 타입은 스테퍼 모달 호출
+                    break;
+                case 'reading':
+                    showReadingProgressModal(routine); // 독서 타입은 독서 모달 호출
+                    break;
+                default:
+                    showNotification("아직 지원되지 않는 미션 타입입니다.", "info");
             }
         });
     }
     return div;
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) createMissionElement의 이벤트 리스너 최종 수정 ▲▲▲
+
+// --- Helper Functions (script.js에서 복사해와야 합니다) ---
+// 아래 함수들이 child.js에 없다면 script.js에서 복사하여 추가해야 합니다.
+function getTypeIcon(type) { return { 'yesno': '✅', 'number': '🔢', 'time': '⏰', 'reading': '📚' }[type] || '📝'; }
+function getTimeEmoji(time) { return { 'morning': '🌅', 'afternoon': '🌞', 'evening': '🌙' }[time] || '⏰'; }
+function getTimeLabel(time) { return { 'morning': '아침', 'afternoon': '점심', 'evening': '저녁' }[time] || '시간'; }
+function getRoutineValueDisplay(routine) {
+    if (routine.type === 'yesno') return routine.value === true ? '완료!' : '';
+    if (routine.type === 'number' && routine.dailyGoal) {
+        return `${routine.value || 0} / ${routine.dailyGoal} ${routine.unit || ''}`;
+    }
+    return `${routine.value || 0} ${routine.unit || ''}`;
+}
+// ▲▲▲ 여기까지 2025-08-24(수정일) createMissionElement 함수 전면 개선 ▲▲▲
 
 // ▼▼▼ 2025-08-24(수정일) 보상 목록 로드 및 렌더링 함수 추가 ▼▼▼
 
@@ -236,31 +303,43 @@ async function completeMission(routine) {
 // ====================================================================
 // 6. UI 및 이벤트 리스너 (자녀용)
 // ====================================================================
-function updateUserInfoUI(user) {
+// child.js 파일
+
+// ▼▼▼ 2025-08-24(수정일) updateUserInfoUI 함수에 포인트 표시 기능 추가 ▼▼▼
+async function updateUserInfoUI(user) { // async 키워드 추가
     const userInfoDiv = document.getElementById('user-info');
     const loginBtn = document.getElementById('login-btn');
+    const pointsDisplay = document.getElementById('user-points-display'); // 포인트 표시부
+
     if (user) {
         userInfoDiv.style.display = 'flex';
         loginBtn.style.display = 'none';
         document.getElementById('user-name').textContent = user.displayName;
         document.getElementById('user-photo').src = user.photoURL;
+        
+        // Firestore에서 최신 사용자 정보를 가져와 포인트를 업데이트합니다.
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+            const userPoints = userDoc.data().points || 0;
+            pointsDisplay.textContent = `✨ ${userPoints} P`;
+        }
+
     } else {
         userInfoDiv.style.display = 'none';
         loginBtn.style.display = 'block';
     }
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) updateUserInfoUI 함수에 포인트 표시 기능 추가 ▲▲▲
 
 // ▼▼▼ 2025-08-24(수정일) setupEventListeners 함수에 최종 요청 로직 추가 ▼▼▼
 function setupEventListeners() {
     document.getElementById('logout-btn')?.addEventListener('click', () => firebase.auth().signOut());
     
     // 하단 탭 바 로직
-    const homeBtn = document.getElementById('navHomeBtn');
-    const rewardsBtn = document.getElementById('navRewardsBtn');
-    
-    homeBtn?.addEventListener('click', showHomePage);
-    rewardsBtn?.addEventListener('click', showRewardsPage);
+    document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
+    document.getElementById('navRewardsBtn')?.addEventListener('click', showRewardsPage);
 
+    
     // '보상 상점' 전체에 대한 이벤트 리스너 (이벤트 위임)
     const rewardList = document.getElementById('reward-store-list');
     if (rewardList) {
@@ -322,8 +401,14 @@ function setupEventListeners() {
             }
         });
     }
+    // ★★★ 모든 모달 부대를 지휘 체계에 등록합니다.
+    setupModal('stepperInputModal', hideStepperModal); // 확인 버튼은 자체 로직 사용
+    setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners 함수에 최종 요청 로직 추가 ▲▲▲
+
+
+
+// ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners 함수에 모달 설정 추가 ▲▲▲
 
 // 페이지 전환 함수
 function showHomePage() {
@@ -352,4 +437,55 @@ function showNotification(message, type = 'success') {
     setTimeout(() => notification.remove(), 3000);
 }
 
-// ▲▲▲ 여기까지 08/19(수정일) 'child.js' 특수 작전 부대 편성 ▲▲▲
+// ▲▲▲ 여기까지 08/19(수정일) 'child.js' 특수 작전 부대 편성 ▲▲
+
+// ▼▼▼ 2025-08-24(수정일) completeMission 함수 기능 격상 ▼▼▼
+async function completeMission(routine, updatedFields = {}) {
+    if (!currentUser || !routine.path) {
+        showNotification("미션 완료 처리에 필요한 정보가 부족합니다.", "error");
+        return;
+    }
+    console.log(`📌 [completeMission]: 미션(${routine.name}) 완료 처리 시작...`);
+
+    try {
+        const routineRef = db.doc(routine.path);
+        
+        // 1. 업데이트할 기본 데이터 설정
+        let dataToUpdate = {
+            status: 'completed',
+            value: true, // yesno 타입의 기본값
+            pointsGivenToday: true,
+            lastUpdatedDate: new Date().toISOString().split('T')[0],
+            ...updatedFields // 모달에서 받은 추가 데이터로 덮어쓰기
+        };
+
+        // 2. 연속 달성(streak) 업데이트
+        // (yesno 타입이거나, 다른 타입이지만 일일 목표를 달성했을 경우)
+        const goalAchieved = dataToUpdate.dailyGoalMetToday === true || routine.type === 'yesno';
+        if (goalAchieved && !routine.pointsGivenToday) {
+            dataToUpdate.streak = (routine.streak || 0) + 1;
+        }
+
+        // 3. 데이터베이스에 최종 업데이트
+        await routineRef.update(dataToUpdate);
+
+        // 4. 포인트 지급 (하루 한 번만)
+        if (!routine.pointsGivenToday) {
+            const userRef = db.collection('users').doc(currentUser.uid);
+            await userRef.update({
+                points: firebase.firestore.FieldValue.increment(routine.basePoints || 0)
+            });
+            showNotification(`'${routine.name}' 미션 완료! ${routine.basePoints || 0}포인트를 획득했습니다!`, 'success');
+        } else {
+            showNotification(`'${routine.name}' 미션이 업데이트되었습니다.`, 'info');
+        }
+
+        // 5. 화면 즉시 새로고침
+        await loadAssignedRoutines(currentUser.uid);
+        await updateUserInfoUI(currentUser); // 헤더의 포인트도 갱신
+    } catch (error) {
+        console.error("❌ [completeMission]: 미션 완료 처리 중 오류 발생:", error);
+        showNotification("미션 완료에 실패했습니다.", "error");
+    }
+}
+// ▲▲▲ 여기까지 2025-08-24(수정일) completeMission 함수 기능 격상 ▲▲▲
