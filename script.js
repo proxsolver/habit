@@ -317,7 +317,6 @@ async function updateRoutineInFirebase(routineId, updatedFields) {
     const index = sampleRoutines.findIndex(r => String(r.id) === String(routineId));
     if (index !== -1) {
         sampleRoutines[index] = { ...sampleRoutines[index], ...updatedFields };
-        renderRoutines(); // 홈 화면 렌더링
     }
 }
 // ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 업데이트 경로 수정 ▲▲▲
