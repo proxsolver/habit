@@ -112,45 +112,62 @@ async function loadAssignedRoutines(userId) {
 // ====================================================================
 // 4. 렌더링 (자녀용)
 // ====================================================================
-// ▼▼▼ 2025-08-21 루틴 렌더링 필터 로직 개선 ▼▼▼
+
+// ▼▼▼ 2025-08-24(수정일) '진행 중' 상태를 반영하도록 renderMissions 함수 개편 ▼▼▼
 function renderMissions() {
     const incompleteList = document.getElementById('incompleteRoutineList');
+    const inprogressList = document.getElementById('inprogressRoutineList'); // 진행 중 목록
     const completedList = document.getElementById('completedRoutineList');
     
-    if (!incompleteList || !completedList) return;
+    if (!incompleteList || !inprogressList || !completedList) return;
 
+    // 모든 목록 초기화
     incompleteList.innerHTML = '';
+    inprogressList.innerHTML = '';
     completedList.innerHTML = '';
 
-    // const activeRoutines = assignedRoutines.filter(r => r.active); // 기존 코드
-    // ★★★ 수정: active 필드가 false가 아닌 모든 루틴(필드가 없는 경우 포함)을 표시하도록 변경
     const activeRoutines = assignedRoutines.filter(r => r.active !== false);
     
     activeRoutines.forEach(routine => {
-        const isCompleted = (routine.status === 'completed' || routine.value === true);
-        const element = createMissionElement(routine, isCompleted);
+        const isCompleted = isRoutineCompleted(routine);
+        const isInProgress = isRoutineInProgress(routine); // 진행 중 상태 판단
+        const element = createMissionElement(routine, isCompleted, isInProgress); // isInProgress 전달
         
+        // 상태에 따라 다른 목록에 추가
         if (isCompleted) {
             completedList.appendChild(element);
+        } else if (isInProgress) {
+            inprogressList.appendChild(element);
         } else {
             incompleteList.appendChild(element);
         }
     });
 
+    // 목록에 내용이 있을 때만 해당 섹션을 표시
+    document.getElementById('inprogress-section').style.display = inprogressList.children.length > 0 ? 'block' : 'none';
     document.getElementById('completed-section').style.display = completedList.children.length > 0 ? 'block' : 'none';
 }
-// ▲▲▲ 여기까지 2025-08-21 루틴 렌더링 필터 로직 개선 ▲▲▲
 
 // ▼▼▼ 2025-08-24(수정일) createMissionElement 함수 전면 개선 ▼▼▼
-// ▼▼▼ 2025-08-24(수정일) createMissionElement의 이벤트 리스너 최종 수정 ▼▼▼
-function createMissionElement(routine, isCompleted) {
+// child.js의 createMissionElement 함수를 찾아 교체
+
+// ▼▼▼ 2025-08-24(수정일) 완료된 미션 취소 기능 추가 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) createMissionElement가 모달을 호출하도록 개편 ▼▼▼
+function createMissionElement(routine, isCompleted, isInProgress) {
     const div = document.createElement('div');
-    div.className = `routine-item ${routine.time} ${isCompleted ? 'completed' : ''}`;
+    let classNames = `routine-item ${routine.time}`;
+    if (isCompleted) {
+        classNames += ' completed';
+    } else if (isInProgress) {
+        classNames += ' inprogress';
+    }
+    div.className = classNames;
+
     const streakBadge = routine.streak > 0 ? `<div class="streak-badge">🔥 ${routine.streak}</div>` : '';
     div.innerHTML = `
         <div class="routine-checkbox">${isCompleted ? '✓' : ''}</div>
         <div class="routine-content">
-            <div class="routine-name">
+             <div class="routine-name">
                 <span class="type-icon">${getTypeIcon(routine.type)}</span> ${routine.name}
             </div>
             <div class="routine-details">
@@ -161,48 +178,62 @@ function createMissionElement(routine, isCompleted) {
         ${streakBadge}
     `;
 
-    // ★★★ 완료되지 않은 루틴에만 클릭 이벤트 추가
-    if (!isCompleted) {
-        div.addEventListener('click', () => {
-            // 루틴 타입에 따라 다른 작전을 수행하도록 라우팅합니다.
+    div.addEventListener('click', () => {
+        if (isCompleted) {
+            // 완료된 미션일 경우, '취소' 작전 수행
+            undoMission(routine);
+        } else {
+            // 완료되지 않은 미션일 경우, 타입에 맞는 모달 호출
             switch (routine.type) {
                 case 'yesno':
-                    if (confirm(`'${routine.name}' 미션을 완료하시겠습니까?`)) {
-                        completeMission(routine);
-                    }
+                    completeMission(routine); // Yes/No는 바로 완료 처리
                     break;
                 case 'number':
-                    showStepperModal(routine); // 숫자 타입은 스테퍼 모달 호출
+                    showStepperModal(routine);
                     break;
                 case 'reading':
-                    showReadingProgressModal(routine); // 독서 타입은 독서 모달 호출
+                    showReadingProgressModal(routine);
                     break;
-                       // ▼▼▼ 'time' 타입에 대한 명령 추가 ▼▼▼
                 case 'time':
-                    showTimeInputModal(routine); // 시간 타입은 시간 모달 호출
+                    showTimeInputModal(routine);
                     break;
-                // ▲▲▲ 'time' 타입에 대한 명령 추가 ▲▲▲
                 default:
                     showNotification("아직 지원되지 않는 미션 타입입니다.", "info");
             }
-        });
-    }
+        }
+    });
+
     return div;
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) createMissionElement의 이벤트 리스너 최종 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) createMissionElement가 모달을 호출하도록 개편 ▲▲▲
 
-// --- Helper Functions (script.js에서 복사해와야 합니다) ---
 // 아래 함수들이 child.js에 없다면 script.js에서 복사하여 추가해야 합니다.
 function getTypeIcon(type) { return { 'yesno': '✅', 'number': '🔢', 'time': '⏰', 'reading': '📚' }[type] || '📝'; }
 function getTimeEmoji(time) { return { 'morning': '🌅', 'afternoon': '🌞', 'evening': '🌙' }[time] || '⏰'; }
 function getTimeLabel(time) { return { 'morning': '아침', 'afternoon': '점심', 'evening': '저녁' }[time] || '시간'; }
+// ▼▼▼ 2025-08-24(수정일) getRoutineValueDisplay 함수 개선 ▼▼▼
 function getRoutineValueDisplay(routine) {
-    if (routine.type === 'yesno') return routine.value === true ? '완료!' : '';
-    if (routine.type === 'number' && routine.dailyGoal) {
-        return `${routine.value || 0} / ${routine.dailyGoal} ${routine.unit || ''}`;
+    if (routine.type === 'yesno') {
+        return routine.value === true ? '완료!' : '';
     }
-    return `${routine.value || 0} ${routine.unit || ''}`;
+    if (routine.type === 'reading') {
+        const progress = getReadingProgress(routine);
+        return `${routine.currentPage || routine.startPage - 1}/${routine.endPage}p (${progress}%)`;
+    }
+    if (routine.type === 'number') {
+        const value = routine.value || 0;
+        if (routine.dailyGoal) {
+            const progress = Math.min(100, Math.round((value / routine.dailyGoal) * 100));
+            return `${value} / ${routine.dailyGoal} ${routine.unit || ''} (${progress}%)`;
+        }
+        return `${value} ${routine.unit || ''}`;
+    }
+    if (routine.type === 'time') {
+        return routine.value || '';
+    }
+    return '';
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) getRoutineValueDisplay 함수 개선 ▲▲▲
 // ▲▲▲ 여기까지 2025-08-24(수정일) createMissionElement 함수 전면 개선 ▲▲▲
 
 // ▼▼▼ 2025-08-24(수정일) 보상 목록 로드 및 렌더링 함수 추가 ▼▼▼
@@ -264,46 +295,58 @@ function createRewardItemElement(reward) {
 // ====================================================================
 // 미션 완료 처리 함수
 // ▼▼▼ 2025-08-21 미션 완료 로직 수정 ▼▼▼
-async function completeMission(routine) {
+// ▼▼▼ 2025-08-24(수정일) completeMission 함수 기능 격상 ▼▼▼
+async function completeMission(routine, updatedFields = {}) {
     if (!currentUser || !routine.path) {
         showNotification("미션 완료 처리에 필요한 정보가 부족합니다.", "error");
         return;
     }
-
-    console.log(`📌 [completeMission]: 미션(${routine.name}) 완료 처리 시작...`);
-    console.log(`- 목표 경로: ${routine.path}`);
+    console.log(`📌 [completeMission]: 미션(${routine.name}) 처리 시작...`, updatedFields);
 
     try {
-        // 부모의 routines 컬렉션에 있는 루틴 문서의 경로를 직접 참조하여 업데이트합니다.
-        const routineRef = db.doc(routine.path); 
+        const routineRef = db.doc(routine.path);
+        
+        // 1. 업데이트할 기본 데이터 설정
+        let dataToUpdate = {
+            status: 'completed', // 기본적으로 완료로 설정
+            value: true, // yesno 타입의 기본값
+            lastUpdatedDate: new Date().toISOString().split('T')[0],
+            ...updatedFields // 모달에서 받은 추가 데이터로 덮어쓰기
+        };
 
-        // "완료" 상태로 변경하고, 포인트를 지급 받았다는 표시(pointsGivenToday)를 남깁니다.
-        // 이는 부모 앱에서 이 루틴이 '완료'된 것으로 보이게 하는 핵심 로직입니다.
-        await routineRef.update({
-            status: 'completed', // 'yesno' 타입의 경우 value: true 로 변경해야 할 수도 있습니다.
-            value: true, // yesno 타입의 완료 처리를 위해 추가
-            pointsGivenToday: true,
-            lastUpdatedDate: new Date().toISOString().split('T')[0]
-        });
+        // 2. 일일 목표 달성 여부 판단 및 스트릭 업데이트
+        // (yesno 타입이거나, 다른 타입이지만 일일 목표를 달성했을 경우)
+        const goalAchieved = dataToUpdate.dailyGoalMetToday === true || routine.type === 'yesno';
+        
+        // 3. 포인트 지급 (하루 한 번만, 그리고 목표를 달성했을 때만)
+        if (goalAchieved && !routine.pointsGivenToday) {
+            dataToUpdate.pointsGivenToday = true; // 포인트 지급됨으로 표시
+            dataToUpdate.streak = (routine.streak || 0) + 1; // 스트릭 증가
 
-        console.log(`- DB 업데이트 완료.`);
+            const userRef = db.collection('users').doc(currentUser.uid);
+            await userRef.update({
+                points: firebase.firestore.FieldValue.increment(routine.basePoints || 0)
+            });
+            showNotification(`'${routine.name}' 미션 완료! ${routine.basePoints || 0}포인트를 획득했습니다!`, 'success');
+        } else if (Object.keys(updatedFields).length > 0) {
+            // 포인트 지급 없이 값만 업데이트 된 경우
+            showNotification(`'${routine.name}' 미션이 업데이트되었습니다.`, 'info');
+        }
+        
+        // 4. 데이터베이스에 최종 업데이트
+        await routineRef.update(dataToUpdate);
 
-        // 자녀 본인의 'user' 문서에 포인트를 누적합니다.
-        const userRef = db.collection('users').doc(currentUser.uid);
-        await userRef.update({
-            points: firebase.firestore.FieldValue.increment(routine.basePoints || 0)
-        });
-        console.log(`- 포인트 ${routine.basePoints || 0} 누적 완료.`);
-
-        showNotification(`'${routine.name}' 미션 완료! ${routine.basePoints || 0}포인트를 획득했습니다!`, 'success');
-
-        // 화면을 즉시 새로고침하여 완료된 미션 목록으로 이동시킵니다.
+        // 5. 화면 즉시 새로고침
         await loadAssignedRoutines(currentUser.uid);
+        await updateUserInfoUI(currentUser); // 헤더의 포인트도 갱신
     } catch (error) {
-        console.error("❌ [completeMission]: 미션 완료 처리 중 오류 발생:", error);
-        showNotification("미션 완료에 실패했습니다.", "error");
+        console.error("❌ [completeMission]: 미션 처리 중 오류 발생:", error);
+        showNotification("미션 처리에 실패했습니다.", "error");
     }
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) completeMission 함수 기능 격상 ▲▲▲
+
+
 // ▲▲▲ 여기까지 2025-08-21 미션 완료 로직 수정 ▲▲▲
 // ====================================================================
 // 6. UI 및 이벤트 리스너 (자녀용)
@@ -337,6 +380,7 @@ async function updateUserInfoUI(user) { // async 키워드 추가
 // ▲▲▲ 여기까지 2025-08-24(수정일) updateUserInfoUI 함수에 포인트 표시 기능 추가 ▲▲▲
 
 // ▼▼▼ 2025-08-24(수정일) setupEventListeners 함수에 최종 요청 로직 추가 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) setupEventListeners에 모든 모달 등록 ▼▼▼
 function setupEventListeners() {
     document.getElementById('logout-btn')?.addEventListener('click', () => firebase.auth().signOut());
     
@@ -344,12 +388,10 @@ function setupEventListeners() {
     document.getElementById('navHomeBtn')?.addEventListener('click', showHomePage);
     document.getElementById('navRewardsBtn')?.addEventListener('click', showRewardsPage);
 
-    
-    // '보상 상점' 전체에 대한 이벤트 리스너 (이벤트 위임)
+    // '보상 상점' 이벤트 리스너 (기존 코드 유지)
     const rewardList = document.getElementById('reward-store-list');
     if (rewardList) {
         rewardList.addEventListener('click', async (e) => {
-            // 클릭된 것이 '요청' 버튼일 경우에만 작동
             if (e.target.matches('.btn-request-reward')) {
                 const button = e.target;
                 const rewardId = button.dataset.rewardId;
@@ -360,23 +402,18 @@ function setupEventListeners() {
                 button.textContent = '확인 중...';
 
                 try {
-                    // 1. 현재 사용자(자녀)의 최신 정보를 가져와 포인트를 확인합니다.
                     const userRef = db.collection('users').doc(currentUser.uid);
                     const userDoc = await userRef.get();
                     const currentPoints = userDoc.data().points || 0;
 
                     if (currentPoints < requiredPoints) {
-                        // 2. 포인트가 부족할 경우
                         showNotification(`포인트가 부족합니다! (현재: ${currentPoints} P)`, 'error');
                         button.disabled = false;
                         button.textContent = '요청';
                         return;
                     }
 
-                    // 3. 포인트가 충분할 경우, 사용자에게 최종 확인을 받습니다.
                     if (confirm(`정말로 ${requiredPoints} 포인트를 사용해서 '${rewardName}'을(를) 요청하시겠습니까?`)) {
-                        
-                        // 4. 'reward_requests' 컬렉션에 새로운 요청 문서를 생성합니다.
                         const familyId = userDoc.data().familyId;
                         const requestsRef = db.collection('families').doc(familyId).collection('reward_requests');
                         await requestsRef.add({
@@ -385,14 +422,13 @@ function setupEventListeners() {
                             rewardId: rewardId,
                             rewardName: rewardName,
                             points: requiredPoints,
-                            status: 'pending', // 'pending', 'approved', 'rejected'
+                            status: 'pending',
                             requestedAt: new Date()
                         });
 
                         showNotification(`'${rewardName}'을(를) 성공적으로 요청했습니다! 부모님의 승인을 기다려주세요.`, 'success');
-                        button.textContent = '요청 완료'; // 성공 후 버튼 텍스트 변경
+                        button.textContent = '요청 완료';
                     } else {
-                        // 사용자가 취소한 경우
                         button.disabled = false;
                         button.textContent = '요청';
                     }
@@ -406,13 +442,13 @@ function setupEventListeners() {
             }
         });
     }
-    // ★★★ 모든 모달 부대를 지휘 체계에 등록합니다.
-    setupModal('stepperInputModal', hideStepperModal); // 확인 버튼은 자체 로직 사용
+
+    // ★★★ 모든 모달 부대를 지휘 체계에 등록합니다. ★★★
+    setupModal('stepperInputModal', hideStepperModal, handleStepperConfirm);
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm);
-
 }
-
+// ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners에 모든 모달 등록 ▲▲▲
 
 
 // ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners 함수에 모달 설정 추가 ▲▲▲
@@ -504,6 +540,10 @@ async function completeMission(routine, updatedFields = {}) {
 // ====================================================================
 // 6-A. 모달 제어 함수 (Modal Controllers)
 // ====================================================================
+// ▼▼▼ 2025-08-24(수정일) 부모 앱의 모달 제어 및 핸들러 부대 이식 ▼▼▼
+// ====================================================================
+// 6-A. 모달 제어 함수 (Modal Controllers)
+// ====================================================================
 function showStepperModal(routine) {
     activeRoutineForModal = routine;
     const modal = document.getElementById('stepperInputModal');
@@ -524,6 +564,7 @@ function showStepperModal(routine) {
     const minusBtn = document.getElementById('stepperMinus');
     const plusBtn = document.getElementById('stepperPlus');
 
+    // 이벤트 리스너 중복을 막기 위해 기존 버튼을 복제하여 교체
     const newConfirmBtn = confirmBtn.cloneNode(true);
     confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
     const newMinusBtn = minusBtn.cloneNode(true);
@@ -558,7 +599,6 @@ function hideStepperModal() {
     document.getElementById('stepperInputModal').style.display = 'none';
 }
 
-// ▼▼▼ 2025-08-24(수정일) showReadingProgressModal 기능 전면 격상 ▼▼▼
 function showReadingProgressModal(routine) {
     activeRoutineForModal = routine;
     
@@ -570,12 +610,11 @@ function showReadingProgressModal(routine) {
     const todayRange = getTodayReadingRange(routine);
     const progress = getReadingProgress(routine);
 
-    // 상세 정보 표시부 업데이트
     const readingInfo = document.getElementById('readingInfo');
     if (readingInfo) {
         readingInfo.innerHTML = `
             <h4>📚 ${routine.bookTitle}</h4>
-            <p><strong>오늘의 목표:</strong> ${todayRange.start}~${todayRange.end} 페이지 (${todayRange.pages}페이지)</p>
+            <p><strong>오늘의 목표:</strong> ${todayRange.pages} 페이지</p>
             <p><strong>현재 진행률:</strong> ${routine.currentPage || routine.startPage-1}/${routine.endPage} 페이지 (${progress}%)</p>
         `;
     }
@@ -585,7 +624,6 @@ function showReadingProgressModal(routine) {
     if (readPagesInput) readPagesInput.value = todayRange.pages;
     if (recommendedPages) recommendedPages.textContent = todayRange.pages;
 
-    // 완료 예정일 계산 및 표시
     const completionDateEl = document.getElementById('completionDate');
     if (completionDateEl) {
         completionDateEl.textContent = getEstimatedCompletionDate(routine);
@@ -594,10 +632,28 @@ function showReadingProgressModal(routine) {
     modal.style.display = 'flex';
     if (readPagesInput) readPagesInput.focus();
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) showReadingProgressModal 기능 전면 격상 ▲▲▲
 
 function hideReadingProgressModal() {
     document.getElementById('readingProgressModal').style.display = 'none';
+}
+
+function showTimeInputModal(routine) {
+    activeRoutineForModal = routine;
+    const modal = document.getElementById('timeInputModal');
+    if(modal) {
+        modal.querySelector('.modal-header h3').textContent = `⏰ ${routine.name}`;
+        const timeInput = document.getElementById('timeInput');
+        if(timeInput) {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            timeInput.value = routine.value || currentTime;
+        }
+        modal.style.display = 'flex';
+    }
+}
+
+function hideTimeInputModal() {
+    document.getElementById('timeInputModal').style.display = 'none';
 }
 
 // ====================================================================
@@ -611,7 +667,7 @@ async function handleStepperConfirm(value) {
     
     const updateData = {
         value: finalValue,
-        status: null,
+        status: null, // 진행 중 상태로 변경
         lastUpdatedDate: todayDateString,
         dailyGoalMetToday: isNowGoalAchieved
     };
@@ -635,7 +691,7 @@ async function handleReadingProgressConfirm() {
     const updateData = {
         value: newCurrentPage,
         currentPage: newCurrentPage,
-        status: null,
+        status: null, // 진행 중 상태로 변경
         dailyReadPagesToday: newDailyReadPagesToday,
         dailyGoalMetToday: newDailyGoalMetToday,
         lastUpdatedDate: todayDateString
@@ -643,6 +699,23 @@ async function handleReadingProgressConfirm() {
     
     await completeMission(routine, updateData);
     hideReadingProgressModal();
+}
+
+async function handleTimeInputConfirm() {
+    if (!activeRoutineForModal) return;
+    const value = document.getElementById('timeInput').value;
+    if (!value) {
+        showNotification('시간을 선택해주세요.', 'error');
+        return;
+    }
+    
+    const updateData = {
+        value: value,
+        status: 'completed' // 시간 타입은 입력 즉시 완료
+    };
+
+    await completeMission(activeRoutineForModal, updateData);
+    hideTimeInputModal();
 }
 
 // ====================================================================
@@ -655,11 +728,11 @@ function setupModal(modalId, hideFn, confirmFn = null) {
     modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
     modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideFn(); });
     if (confirmFn) {
+        // 'btn-confirm' 클래스를 가진 확인 버튼에 이벤트 연결
         modal.querySelector('.btn-confirm')?.addEventListener('click', confirmFn);
     }
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 모달 제어 부대 긴급 투입 ▲▲▲
-
+// ▲▲▲ 여기까지 2025-08-24(수정일) 부모 앱의 모달 제어 및 핸들러 부대 이식 ▲▲▲
 // ▼▼▼ 2025-08-24(수정일) 누락된 시간 기록 모달 함수 추가 ▼▼▼
 
 // ====================================================================
@@ -739,6 +812,7 @@ function getEstimatedCompletionDate(routine) {
 
 // [기록 수집 장교] Firestore에서 최근 20개의 포인트 획득 기록을 가져옵니다.
 // ▼▼▼ 2025-08-24(수정일) Firestore 쿼리 규칙에 맞게 정렬 순서 수정 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) 현재 로그인한 자녀의 기록만 조회하도록 쿼리 수정 ▼▼▼
 async function loadAndRenderPointHistory() {
     if (!currentUser) return;
     const listContainer = document.getElementById('point-history-list');
@@ -751,45 +825,91 @@ async function loadAndRenderPointHistory() {
     }
     const familyId = userDoc.data().familyId;
 
-    // ★★★ 핵심: Firestore 규칙에 따라 'pointsEarned'를 기준으로 먼저 정렬합니다.
-    const historyQuery = db.collectionGroup('history')
-                           .where('familyId', '==', familyId)
-                           .where('pointsEarned', '>', 0)
-                           .orderBy('pointsEarned', 'desc') // 1. 획득 포인트가 높은 순으로
-                           .orderBy('date', 'desc')       // 2. 포인트가 같다면 최신 날짜 순으로
-                           .limit(20);
-    
-    const snapshot = await historyQuery.get();
+    try {
+        // ★★★ 1. 쿼리 수정: loggedBy 필터링을 제거합니다. ★★★
+        // 가족 전체의 기록을 넉넉하게 가져옵니다 (예: 30개).
+        const historyQuery = db.collectionGroup('history')
+                               .where('familyId', '==', familyId)
+                               .where('pointsEarned', '>', 0)
+                               .orderBy('pointsEarned') // Firestore 제약조건
+                               .orderBy('date', 'desc')   // Firestore 제약조건
+                               .limit(30);
 
-    if (snapshot.empty) {
-        listContainer.innerHTML = '<p class.panel-description">아직 포인트 획득 기록이 없습니다.</p>';
-        return;
+        const snapshot = await historyQuery.get();
+        if (snapshot.empty) {
+            listContainer.innerHTML = '<p class="panel-description">아직 포인트 획득 기록이 없습니다.</p>';
+            return;
+        }
+        const histories = snapshot.docs.map(doc => doc.data());
+
+        // 2. 각 history에 해당하는 루틴 정보를 병렬로 가져옵니다.
+        const fetchRoutinePromises = histories.map(hist => {
+            return db.collection('families').doc(familyId)
+                     .collection('routines').doc(hist.routineId).get();
+        });
+        const routineSnapshots = await Promise.all(fetchRoutinePromises);
+
+        // 3. history 정보와 routine 정보를 합칩니다.
+        const combinedData = histories.map((hist, index) => {
+            const routineDoc = routineSnapshots[index];
+            if (!routineDoc.exists) return null;
+            return {
+                ...hist,
+                routineName: routineDoc.data().name,      // 루틴 이름 추가
+                assignedTo: routineDoc.data().assignedTo  // 담당자 UID 추가
+            };
+        }).filter(item => item !== null); // 삭제된 루틴 기록은 제외
+
+        // ★★★ 4. 클라이언트에서 현재 사용자의 기록만 필터링합니다. ★★★
+        const myHistories = combinedData.filter(item => item.assignedTo === currentUser.uid);
+
+        if (myHistories.length === 0) {
+            listContainer.innerHTML = '<p class="panel-description">아직 포인트 획득 기록이 없습니다.</p>';
+            return;
+        }
+        
+        // 5. 최종적으로 날짜순으로 정렬하고 상위 5개만 선택합니다.
+        myHistories.sort((a, b) => b.date.localeCompare(a.date));
+        const finalHistories = myHistories.slice(0, 5);
+        
+        // 6. 화면에 렌더링합니다.
+        listContainer.innerHTML = '';
+        finalHistories.forEach(hist => {
+            // 이전에 수정한 createPointHistoryElement 함수를 그대로 사용하면 됩니다.
+            const historyElement = createPointHistoryElement(hist);
+            listContainer.appendChild(historyElement);
+        });
+
+    } catch (error) {
+        console.error("❌ 포인트 기록 조회 실패:", error);
+        listContainer.innerHTML = '<p class="panel-description" style="color: var(--error);">기록을 불러오는 데 실패했습니다.</p>';
+        if (error.code === 'failed-precondition') {
+            console.warn("🔥[제미군 경고] Firestore 색인이 필요할 수 있습니다. 콘솔의 오류 메시지 링크를 확인하세요.");
+        }
     }
-
-    listContainer.innerHTML = '';
-    const histories = snapshot.docs.map(doc => doc.data());
-
-    histories.forEach(hist => {
-        const historyElement = createPointHistoryElement(hist);
-        listContainer.appendChild(historyElement);
-    });
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) Firestore 쿼리 규칙에 맞게 정렬 순서 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) 현재 로그인한 자녀의 기록만 조회하도록 쿼리 수정 ▲▲▲
 
-// [보고서 작성병] 개별 기록 아이템의 HTML 구조를 생성합니다.
+// [보고서 작성병] 개별 기록 아이템의 HTML 구조를 생성합니다. (수정된 버전)
 function createPointHistoryElement(history) {
     const item = document.createElement('div');
     item.className = 'manage-routine-item';
     
-    // assignedRoutines 배열에서 루틴 ID로 루틴 이름을 찾습니다.
-    const routine = assignedRoutines.find(r => r.id === history.routineId);
-    const routineName = routine ? routine.name : '알 수 없는 활동';
+    // ★★★ 수정 1: 이 부분은 더 이상 필요 없으므로 삭제합니다. ★★★
+    // const routine = assignedRoutines.find(r => r.id === history.routineId);
+    
+    // ★★★ 수정 2: history 객체에 이미 포함된 routineName을 직접 사용합니다. ★★★
+    const routineName = history.routineName || '알 수 없는 활동';
 
+    // ★★★ 수정 3: Firestore Timestamp 객체를 "YYYY.M.D" 형식의 문자열로 변환합니다. ★★★
+    const dateString = history.date;
+    
+    // HTML 구조는 기존의 것을 그대로 사용합니다.
     item.innerHTML = `
         <div class="routine-main-info" style="gap: 1rem;">
             <div class="routine-main-name" style="flex-grow: 1;">
                 ${routineName}
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">${history.date}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">${dateString}</div>
             </div>
             <div class="routine-main-details" style="font-weight: 600; color: var(--success);">+${history.pointsEarned} P</div>
         </div>
@@ -798,3 +918,115 @@ function createPointHistoryElement(history) {
 }
 
 // ▲▲▲ 여기까지 2025-08-24(수정일) 포인트 획득 기록 조회 및 렌더링 부대 추가 ▲▲▲
+// ▼▼▼ 2025-08-24(수정일) '진행 중' 상태 판단을 위한 Helper 함수 파견 ▼▼▼
+
+function isRoutineInProgress(routine) {
+    // 이미 완료되었거나 건너뛴 루틴은 '진행 중'이 될 수 없습니다.
+    if (isRoutineCompleted(routine) || routine.status === 'skipped') {
+        return false;
+    }
+    // '독서' 타입은 시작 페이지보다 많이 읽었지만 아직 완독은 아닐 때 '진행 중'입니다.
+    if (routine.type === 'reading') {
+        return (routine.currentPage || 0) > (routine.startPage - 1);
+    }
+    // '지속 업데이트'가 가능한 '숫자' 타입은 값이 0보다 클 때 '진행 중'입니다.
+    if (routine.type === 'number' && routine.continuous === true) {
+        return (routine.value || 0) > 0;
+    }
+    // 그 외의 경우는 '진행 중' 상태가 없습니다.
+    return false;
+}
+
+// ▲▲▲ 여기까지 2025-08-24(수정일) '진행 중' 상태 판단을 위한 Helper 함수 파견 ▲▲▲
+
+// ▼▼▼ 2025-08-24(수정일) 누락된 핵심 Helper 함수 부대 긴급 투입 ▼▼▼
+
+function isRoutineCompleted(routine) {
+    if (routine.status === 'skipped') return false;
+    // 지속/독서 타입은 일일 목표 달성 여부(dailyGoalMetToday)로 완료를 판단합니다.
+    if (isContinuousRoutine(routine) || isReadingRoutine(routine)) {
+        return routine.dailyGoalMetToday === true;
+    }
+    // 그 외 타입들의 완료 조건
+    if (routine.type === 'yesno') return routine.value === true;
+    if (routine.type === 'number') return routine.value !== null && routine.value > 0;
+    if (routine.type === 'time') return !!routine.value;
+    return false;
+}
+
+function isRoutineInProgress(routine) {
+    if (isRoutineCompleted(routine) || routine.status === 'skipped') {
+        return false;
+    }
+    if (isReadingRoutine(routine)) {
+        return (routine.currentPage || 0) > (routine.startPage - 1);
+    }
+    if (isContinuousRoutine(routine)) {
+        return (routine.value || 0) > 0;
+    }
+    return false;
+}
+
+// isRoutineCompleted와 isRoutineInProgress를 지원하는 보조 함수들
+function isContinuousRoutine(routine) { 
+    return routine.continuous === true; 
+}
+function isReadingRoutine(routine) { 
+    return routine.type === 'reading'; 
+}
+
+// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 핵심 Helper 함수 부대 긴급 투입 ▲▲▲
+
+// ▼▼▼ 2025-08-24(수정일) '미션 취소' 담당 undoMission 함수 추가 ▼▼▼
+async function undoMission(routine) {
+    if (!currentUser || !routine.path) {
+        showNotification("미션 취소에 필요한 정보가 부족합니다.", "error");
+        return;
+    }
+    if (!confirm(`'${routine.name}' 미션 완료를 취소하시겠습니까?`)) {
+        return;
+    }
+    console.log(`📌 [undoMission]: 미션(${routine.name}) 완료 취소 처리 시작...`);
+
+    try {
+        const routineRef = db.doc(routine.path);
+        
+        // 1. 루틴 상태를 '미완료'로 되돌릴 데이터를 준비합니다.
+        const fieldsToReset = {
+            status: null,
+            value: routine.type === 'yesno' ? false : 0, // yesno는 false, 숫자는 0으로 초기화
+            dailyGoalMetToday: false,
+            pointsGivenToday: false,
+            lastUpdatedDate: new Date().toISOString().split('T')[0]
+        };
+        // 독서 타입은 읽었던 페이지 수도 되돌립니다.
+        if (routine.type === 'reading') {
+            fieldsToReset.currentPage = Math.max(routine.startPage - 1, (routine.currentPage || 0) - (routine.dailyReadPagesToday || 0));
+            fieldsToReset.dailyReadPagesToday = 0;
+        }
+
+        // 2. 만약 오늘 포인트를 받았다면, 스트릭과 총 포인트를 되돌립니다.
+        if (routine.pointsGivenToday) {
+            fieldsToReset.streak = Math.max(0, (routine.streak || 0) - 1);
+
+            const userRef = db.collection('users').doc(currentUser.uid);
+            await userRef.update({
+                points: firebase.firestore.FieldValue.increment(-(routine.basePoints || 0))
+            });
+            console.log(`- 차감된 포인트: ${routine.basePoints || 0}`);
+        }
+        
+        // 3. 루틴 문서를 최종적으로 업데이트합니다.
+        await routineRef.update(fieldsToReset);
+        
+        showNotification(`'${routine.name}' 미션 완료가 취소되었습니다.`, 'warning');
+        
+        // 4. 화면을 즉시 새로고침하여 변경사항을 반영합니다.
+        await loadAssignedRoutines(currentUser.uid);
+        await updateUserInfoUI(currentUser); // 헤더 포인트 갱신
+    } catch (error) {
+        console.error("❌ [undoMission]: 미션 취소 처리 중 오류 발생:", error);
+        showNotification("미션 취소에 실패했습니다.", "error");
+    }
+}
+// ▲▲▲ 여기까지 2025-08-24(수정일) '미션 취소' 담당 undoMission 함수 추가 ▲▲▲

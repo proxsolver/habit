@@ -116,8 +116,13 @@ families (collection)
         history (subcollection) - 해당 루틴의 과거 수행 기록
 
         {YYYY-MM-DD} (document)
-
         ... (해당 날짜의 수행 기록)
+            date : YYYY-MM-DD 날자 
+            familyId : 
+            pointsEarned : 
+            RoutineId :
+            Value :
+
 
     goals (subcollection) - 가족의 모든 목표
 
