@@ -177,6 +177,11 @@ function createMissionElement(routine, isCompleted) {
                 case 'reading':
                     showReadingProgressModal(routine); // 독서 타입은 독서 모달 호출
                     break;
+                       // ▼▼▼ 'time' 타입에 대한 명령 추가 ▼▼▼
+                case 'time':
+                    showTimeInputModal(routine); // 시간 타입은 시간 모달 호출
+                    break;
+                // ▲▲▲ 'time' 타입에 대한 명령 추가 ▲▲▲
                 default:
                     showNotification("아직 지원되지 않는 미션 타입입니다.", "info");
             }
@@ -404,6 +409,8 @@ function setupEventListeners() {
     // ★★★ 모든 모달 부대를 지휘 체계에 등록합니다.
     setupModal('stepperInputModal', hideStepperModal); // 확인 버튼은 자체 로직 사용
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
+    setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm);
+
 }
 
 
@@ -489,3 +496,181 @@ async function completeMission(routine, updatedFields = {}) {
     }
 }
 // ▲▲▲ 여기까지 2025-08-24(수정일) completeMission 함수 기능 격상 ▲▲▲
+
+
+// ▼▼▼ 2025-08-24(수정일) 누락된 모달 제어 부대 긴급 투입 ▼▼▼
+// ====================================================================
+// 6-A. 모달 제어 함수 (Modal Controllers)
+// ====================================================================
+function showStepperModal(routine) {
+    activeRoutineForModal = routine;
+    const modal = document.getElementById('stepperInputModal');
+    const title = modal.querySelector('.modal-header h3');
+    const valueDisplay = document.getElementById('stepperValue');
+    const unitDisplay = document.getElementById('stepperUnit');
+    
+    let currentValue = routine.value || routine.min || 1;
+    const minValue = routine.min || 1;
+    const maxValue = routine.max || 100;
+    const stepValue = routine.step || 1;
+    
+    title.textContent = routine.name;
+    valueDisplay.textContent = currentValue;
+    unitDisplay.textContent = routine.unit || '';
+
+    const confirmBtn = document.getElementById('stepperConfirmBtn');
+    const minusBtn = document.getElementById('stepperMinus');
+    const plusBtn = document.getElementById('stepperPlus');
+
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    const newMinusBtn = minusBtn.cloneNode(true);
+    minusBtn.parentNode.replaceChild(newMinusBtn, minusBtn);
+    const newPlusBtn = plusBtn.cloneNode(true);
+    plusBtn.parentNode.replaceChild(newPlusBtn, plusBtn);
+
+    const updateStepperButtons = () => {
+        newMinusBtn.disabled = currentValue <= minValue;
+        newPlusBtn.disabled = currentValue >= maxValue;
+    };
+
+    newMinusBtn.addEventListener('click', () => {
+        currentValue = Math.max(minValue, currentValue - stepValue);
+        valueDisplay.textContent = currentValue;
+        updateStepperButtons();
+    });
+    
+    newPlusBtn.addEventListener('click', () => {
+        currentValue = Math.min(maxValue, currentValue + stepValue);
+        valueDisplay.textContent = currentValue;
+        updateStepperButtons();
+    });
+    
+    newConfirmBtn.addEventListener('click', () => handleStepperConfirm(currentValue));
+    
+    updateStepperButtons();
+    modal.style.display = 'flex';
+}
+
+function hideStepperModal() {
+    document.getElementById('stepperInputModal').style.display = 'none';
+}
+
+function showReadingProgressModal(routine) {
+    activeRoutineForModal = routine;
+    const modal = document.getElementById('readingProgressModal');
+    if (modal) {
+        modal.querySelector('.modal-header h3').textContent = `📖 ${routine.bookTitle || routine.name}`;
+        const readPagesInput = document.getElementById('readPages');
+        if(readPagesInput) readPagesInput.value = routine.dailyPages || 10;
+        modal.style.display = 'flex';
+        if(readPagesInput) readPagesInput.focus();
+    }
+}
+
+function hideReadingProgressModal() {
+    document.getElementById('readingProgressModal').style.display = 'none';
+}
+
+// ====================================================================
+// 6-B. 모달 확인(Confirm) 핸들러
+// ====================================================================
+async function handleStepperConfirm(value) {
+    if (!activeRoutineForModal) return;
+    const routine = activeRoutineForModal;
+    const finalValue = value;
+    const isNowGoalAchieved = finalValue >= (routine.dailyGoal || 1);
+    
+    const updateData = {
+        value: finalValue,
+        status: null,
+        lastUpdatedDate: todayDateString,
+        dailyGoalMetToday: isNowGoalAchieved
+    };
+    
+    await completeMission(routine, updateData);
+    hideStepperModal();
+}
+
+async function handleReadingProgressConfirm() {
+    if (!activeRoutineForModal) return;
+    const readPages = parseInt(document.getElementById('readPages').value);
+    if (isNaN(readPages) || readPages <= 0) {
+        showNotification('읽은 페이지 수를 정확히 입력해주세요.', 'error');
+        return;
+    }
+    const routine = activeRoutineForModal;
+    const newCurrentPage = Math.min((routine.currentPage || (routine.startPage ? routine.startPage - 1 : 0)) + readPages, routine.endPage);
+    const newDailyReadPagesToday = (routine.dailyReadPagesToday || 0) + readPages;
+    const newDailyGoalMetToday = newDailyReadPagesToday >= routine.dailyPages;
+
+    const updateData = {
+        value: newCurrentPage,
+        currentPage: newCurrentPage,
+        status: null,
+        dailyReadPagesToday: newDailyReadPagesToday,
+        dailyGoalMetToday: newDailyGoalMetToday,
+        lastUpdatedDate: todayDateString
+    };
+    
+    await completeMission(routine, updateData);
+    hideReadingProgressModal();
+}
+
+// ====================================================================
+// 6-C. 범용 모달 설정 함수
+// ====================================================================
+function setupModal(modalId, hideFn, confirmFn = null) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.querySelector('.modal-close')?.addEventListener('click', hideFn);
+    modal.querySelector('.btn-secondary')?.addEventListener('click', hideFn);
+    modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) hideFn(); });
+    if (confirmFn) {
+        modal.querySelector('.btn-confirm')?.addEventListener('click', confirmFn);
+    }
+}
+// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 모달 제어 부대 긴급 투입 ▲▲▲
+
+// ▼▼▼ 2025-08-24(수정일) 누락된 시간 기록 모달 함수 추가 ▼▼▼
+
+// ====================================================================
+// 6-D. 시간 모달 제어 및 핸들러
+// ====================================================================
+
+function showTimeInputModal(routine) {
+    activeRoutineForModal = routine;
+    const modal = document.getElementById('timeInputModal');
+    if(modal) {
+        modal.querySelector('.modal-header h3').textContent = `⏰ ${routine.name}`;
+        const timeInput = document.getElementById('timeInput');
+        if(timeInput) {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            timeInput.value = routine.value || currentTime;
+        }
+        modal.style.display = 'flex';
+    }
+}
+
+function hideTimeInputModal() {
+    document.getElementById('timeInputModal').style.display = 'none';
+}
+
+async function handleTimeInputConfirm() {
+    if (!activeRoutineForModal) return;
+    const value = document.getElementById('timeInput').value;
+    if (!value) {
+        showNotification('시간을 선택해주세요.', 'error');
+        return;
+    }
+    
+    const updateData = {
+        value: value,
+        status: 'completed' // 시간 타입은 입력 즉시 완료로 간주
+    };
+
+    await completeMission(activeRoutineForModal, updateData);
+    hideTimeInputModal();
+}
+// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 시간 기록 모달 함수 추가 ▲▲▲
