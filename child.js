@@ -7,6 +7,18 @@ let activeRoutineForModal = null;
 const today = new Date();
 const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+// ▼▼▼ 2025-08-25(수정일) 고양이 대사 목록 추가 ▼▼▼
+const catDialogues = [
+    "오늘도 힘내!",
+    "루틴을 완료하면 기분이 좋아져!",
+    "꾸준함이 중요해, 야옹~",
+    "지금 바로 시작해볼까?",
+    "쓰다듬어줘서 고마워!",
+    "네가 자랑스러워!",
+    "어떤 미션부터 해볼까?"
+];
+// ▲▲▲ 여기까지 2025-08-25(수정일) 고양이 대사 목록 추가 ▲▲▲
+
 // ====================================================================
 // 2. 앱 시작점
 // ====================================================================
@@ -529,6 +541,14 @@ function setupEventListeners() {
             }
         });
     }
+        // ▼▼▼ 2025-08-25(수정일) 고양이 클릭 이벤트 리스너 추가 ▼▼▼
+    const catContainer = document.getElementById('companion-cat-container');
+        if (catContainer) {
+            catContainer.addEventListener('click', onCatClicked);
+    }
+        // ▲▲▲ 여기까지 2025-08-25(수정일) 고양이 클릭 이벤트 리스너 추가 ▲▲▲
+    
+    
     // ★★★ '보유 쿠폰' 목록에 대한 이벤트 리스너 추가 ★★★
     const couponList = document.getElementById('my-coupons-list');
     if (couponList) {
@@ -595,6 +615,42 @@ function showNotification(message, type = 'success') {
 // ====================================================================
 // 8. 헬퍼 함수
 // ====================================================================
+// ▼▼▼ 2025-08-25(수정일) 고양이 클릭 상호작용 함수 추가 ▼▼▼
+function onCatClicked() {
+    // 기존 말풍선이 있다면 제거
+    const existingBubble = document.querySelector('.speech-bubble');
+    if (existingBubble) existingBubble.remove();
+
+    const randomAction = Math.random(); // 0과 1 사이의 랜덤 숫자 생성
+
+    if (randomAction < 0.6) { // 60% 확률: 말하기
+        const randomIndex = Math.floor(Math.random() * catDialogues.length);
+        const message = catDialogues[randomIndex];
+        showCatSpeechBubble(message);
+    } else if (randomAction < 0.9) { // 30% 확률: 행복한 표정
+        updateCatExpression('happy', true);
+    } else { // 10% 확률: 화난 표정
+        updateCatExpression('angry', true);
+    }
+}
+
+function showCatSpeechBubble(message) {
+    const container = document.getElementById('companion-cat-container');
+    if (!container) return;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'speech-bubble';
+    bubble.textContent = message;
+    container.appendChild(bubble);
+
+    // 4초 후에 말풍선 자동 제거
+    setTimeout(() => {
+        bubble.remove();
+    }, 4000);
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) 고양이 클릭 상호작용 함수 추가 ▲▲▲
+
+
 function getTypeIcon(type) { return { 'yesno': '✅', 'number': '🔢', 'time': '⏰', 'reading': '📚' }[type] || '📝'; }
 function getTimeEmoji(time) { return { 'morning': '🌅', 'afternoon': '🌞', 'evening': '🌙' }[time] || '⏰'; }
 function getTimeLabel(time) { return { 'morning': '아침', 'afternoon': '점심', 'evening': '저녁' }[time] || '시간'; }
