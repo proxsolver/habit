@@ -296,6 +296,7 @@ function createRewardItemElement(reward) {
 // 미션 완료 처리 함수
 // ▼▼▼ 2025-08-21 미션 완료 로직 수정 ▼▼▼
 // ▼▼▼ 2025-08-24(수정일) completeMission 함수 기능 격상 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) completeMission 함수에 활동 보고(logRoutineHistory) 절차 추가 ▼▼▼
 async function completeMission(routine, updatedFields = {}) {
     if (!currentUser || !routine.path) {
         showNotification("미션 완료 처리에 필요한 정보가 부족합니다.", "error");
@@ -306,46 +307,42 @@ async function completeMission(routine, updatedFields = {}) {
     try {
         const routineRef = db.doc(routine.path);
         
-        // 1. 업데이트할 기본 데이터 설정
         let dataToUpdate = {
-            status: 'completed', // 기본적으로 완료로 설정
-            value: true, // yesno 타입의 기본값
+            status: 'completed',
+            value: true,
             lastUpdatedDate: new Date().toISOString().split('T')[0],
-            ...updatedFields // 모달에서 받은 추가 데이터로 덮어쓰기
+            ...updatedFields
         };
 
-        // 2. 일일 목표 달성 여부 판단 및 스트릭 업데이트
-        // (yesno 타입이거나, 다른 타입이지만 일일 목표를 달성했을 경우)
         const goalAchieved = dataToUpdate.dailyGoalMetToday === true || routine.type === 'yesno';
         
-        // 3. 포인트 지급 (하루 한 번만, 그리고 목표를 달성했을 때만)
         if (goalAchieved && !routine.pointsGivenToday) {
-            dataToUpdate.pointsGivenToday = true; // 포인트 지급됨으로 표시
-            dataToUpdate.streak = (routine.streak || 0) + 1; // 스트릭 증가
+            dataToUpdate.pointsGivenToday = true;
+            dataToUpdate.streak = (routine.streak || 0) + 1;
 
             const userRef = db.collection('users').doc(currentUser.uid);
             await userRef.update({
                 points: firebase.firestore.FieldValue.increment(routine.basePoints || 0)
             });
+
+            // ★★★ 핵심 수정: 포인트 지급 후 즉시 활동 보고서를 제출합니다. ★★★
+            await logRoutineHistory(routine.id, { value: dataToUpdate.value, pointsEarned: routine.basePoints || 0 });
+
             showNotification(`'${routine.name}' 미션 완료! ${routine.basePoints || 0}포인트를 획득했습니다!`, 'success');
         } else if (Object.keys(updatedFields).length > 0) {
-            // 포인트 지급 없이 값만 업데이트 된 경우
             showNotification(`'${routine.name}' 미션이 업데이트되었습니다.`, 'info');
         }
         
-        // 4. 데이터베이스에 최종 업데이트
         await routineRef.update(dataToUpdate);
 
-        // 5. 화면 즉시 새로고침
         await loadAssignedRoutines(currentUser.uid);
-        await updateUserInfoUI(currentUser); // 헤더의 포인트도 갱신
+        await updateUserInfoUI(currentUser);
     } catch (error) {
         console.error("❌ [completeMission]: 미션 처리 중 오류 발생:", error);
         showNotification("미션 처리에 실패했습니다.", "error");
     }
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) completeMission 함수 기능 격상 ▲▲▲
-
+// ▲▲▲ 여기까지 2025-08-25(수정일) completeMission 함수에 활동 보고(logRoutineHistory) 절차 추가 ▲▲▲
 
 // ▲▲▲ 여기까지 2025-08-21 미션 완료 로직 수정 ▲▲▲
 // ====================================================================
@@ -1020,3 +1017,29 @@ async function undoMission(routine) {
     }
 }
 // ▲▲▲ 여기까지 2025-08-24(수정일) '미션 취소' 담당 undoMission 함수 추가 ▲▲▲
+// ▼▼▼ 2025-08-25(수정일) 포인트 획득 보고서 작성을 위한 logRoutineHistory 함수 추가 ▼▼▼
+async function logRoutineHistory(routineId, dataToLog) {
+    // 자녀 앱에서는 '활동 역사' 기록 임무만 수행합니다.
+    if (!currentUser || !currentUser.familyId) return;
+
+    const today = new Date();
+    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    const historyRef = db.collection('families').doc(currentUser.familyId)
+                         .collection('routines').doc(String(routineId))
+                         .collection('history').doc(dateString);
+    
+    try {
+        await historyRef.set({
+            routineId: routineId,
+            date: dateString,
+            familyId: currentUser.familyId,
+            ...dataToLog,
+            loggedBy: currentUser.uid
+        }, { merge: true });
+        console.log(`✅ [logRoutineHistory]: 미션(${routineId}) 활동 보고서 제출 완료.`);
+    } catch (error) {
+        console.error("❌ [logRoutineHistory]: 활동 보고서 제출 실패:", error);
+    }
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) 포인트 획득 보고서 작성을 위한 logRoutineHistory 함수 추가 ▲▲▲
