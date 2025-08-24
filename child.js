@@ -813,69 +813,57 @@ function getEstimatedCompletionDate(routine) {
 // [기록 수집 장교] Firestore에서 최근 20개의 포인트 획득 기록을 가져옵니다.
 // ▼▼▼ 2025-08-24(수정일) Firestore 쿼리 규칙에 맞게 정렬 순서 수정 ▼▼▼
 // ▼▼▼ 2025-08-24(수정일) 현재 로그인한 자녀의 기록만 조회하도록 쿼리 수정 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) 포인트 기록 쿼리를 '핀포인트 타격' 방식으로 전면 수정 ▼▼▼
 async function loadAndRenderPointHistory() {
     if (!currentUser) return;
     const listContainer = document.getElementById('point-history-list');
     listContainer.innerHTML = '<p class="panel-description">기록을 불러오는 중...</p>';
 
-    const userDoc = await db.collection('users').doc(currentUser.uid).get();
-    if (!userDoc.exists || !userDoc.data().familyId) {
-        listContainer.innerHTML = '<p class="panel-description">소속된 가족이 없어 기록을 표시할 수 없습니다.</p>';
-        return;
-    }
-    const familyId = userDoc.data().familyId;
-
     try {
-        // ★★★ 1. 쿼리 수정: loggedBy 필터링을 제거합니다. ★★★
-        // 가족 전체의 기록을 넉넉하게 가져옵니다 (예: 30개).
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        if (!userDoc.exists || !userDoc.data().familyId) {
+            listContainer.innerHTML = '<p class="panel-description">소속된 가족이 없어 기록을 표시할 수 없습니다.</p>';
+            return;
+        }
+        const familyId = userDoc.data().familyId;
+
+        // ★★★ 핵심 전술 변경: 핀포인트 타격 쿼리 ★★★
+        // 1. 처음부터 '현재 로그인한 자녀(loggedBy)'의 기록만 '최신순(date desc)'으로 5개만 요청합니다.
+        console.log(`📌 [loadAndRenderPointHistory]: 자녀(${currentUser.uid})의 최신 포인트 기록 5개를 요청합니다.`);
         const historyQuery = db.collectionGroup('history')
                                .where('familyId', '==', familyId)
-                               .where('pointsEarned', '>', 0)
-                               .orderBy('pointsEarned') // Firestore 제약조건
-                               .orderBy('date', 'desc')   // Firestore 제약조건
-                               .limit(30);
+                               .where('loggedBy', '==', currentUser.uid) // <-- 타격 목표 지정
+                               .orderBy('date', 'desc')                  // <-- 최신순 정렬
+                               .limit(5);                                 // <-- 정예 5개만 선별
 
         const snapshot = await historyQuery.get();
+
         if (snapshot.empty) {
             listContainer.innerHTML = '<p class="panel-description">아직 포인트 획득 기록이 없습니다.</p>';
             return;
         }
+        
         const histories = snapshot.docs.map(doc => doc.data());
+        console.log(`✅ [loadAndRenderPointHistory]: ${histories.length}개의 기록 수신 완료.`);
 
-        // 2. 각 history에 해당하는 루틴 정보를 병렬로 가져옵니다.
+        // 2. 수신된 5개의 기록에 필요한 '루틴 이름' 정보를 추가합니다. (기존 로직 재활용)
         const fetchRoutinePromises = histories.map(hist => {
             return db.collection('families').doc(familyId)
                      .collection('routines').doc(hist.routineId).get();
         });
         const routineSnapshots = await Promise.all(fetchRoutinePromises);
 
-        // 3. history 정보와 routine 정보를 합칩니다.
         const combinedData = histories.map((hist, index) => {
             const routineDoc = routineSnapshots[index];
-            if (!routineDoc.exists) return null;
             return {
                 ...hist,
-                routineName: routineDoc.data().name,      // 루틴 이름 추가
-                assignedTo: routineDoc.data().assignedTo  // 담당자 UID 추가
+                routineName: routineDoc.exists ? routineDoc.data().name : '삭제된 미션',
             };
-        }).filter(item => item !== null); // 삭제된 루틴 기록은 제외
+        });
 
-        // ★★★ 4. 클라이언트에서 현재 사용자의 기록만 필터링합니다. ★★★
-        const myHistories = combinedData.filter(item => item.assignedTo === currentUser.uid);
-
-        if (myHistories.length === 0) {
-            listContainer.innerHTML = '<p class="panel-description">아직 포인트 획득 기록이 없습니다.</p>';
-            return;
-        }
-        
-        // 5. 최종적으로 날짜순으로 정렬하고 상위 5개만 선택합니다.
-        myHistories.sort((a, b) => b.date.localeCompare(a.date));
-        const finalHistories = myHistories.slice(0, 5);
-        
-        // 6. 화면에 렌더링합니다.
+        // 3. 더 이상 클라이언트에서 필터링할 필요 없이, 수신된 데이터를 즉시 화면에 보고합니다.
         listContainer.innerHTML = '';
-        finalHistories.forEach(hist => {
-            // 이전에 수정한 createPointHistoryElement 함수를 그대로 사용하면 됩니다.
+        combinedData.forEach(hist => {
             const historyElement = createPointHistoryElement(hist);
             listContainer.appendChild(historyElement);
         });
@@ -884,11 +872,13 @@ async function loadAndRenderPointHistory() {
         console.error("❌ 포인트 기록 조회 실패:", error);
         listContainer.innerHTML = '<p class="panel-description" style="color: var(--error);">기록을 불러오는 데 실패했습니다.</p>';
         if (error.code === 'failed-precondition') {
-            console.warn("🔥[제미군 경고] Firestore 색인이 필요할 수 있습니다. 콘솔의 오류 메시지 링크를 확인하세요.");
+            showNotification("데이터베이스 색인 문제일 수 있습니다. 콘솔을 확인해주세요.", "error");
+            console.warn("🔥[제미군 경고] Firestore 색인이 필요할 수 있습니다. 콘솔의 오류 메시지 링크를 클릭하여 색인을 생성하십시오.");
         }
     }
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) 현재 로그인한 자녀의 기록만 조회하도록 쿼리 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) 포인트 기록 쿼리를 '핀포인트 타격' 방식으로 전면 수정 ▲▲▲
+
 
 // [보고서 작성병] 개별 기록 아이템의 HTML 구조를 생성합니다. (수정된 버전)
 function createPointHistoryElement(history) {
