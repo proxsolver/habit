@@ -3508,43 +3508,28 @@ function createRewardRequestElement(request) {
 
 // ▼▼▼ 2025-08-25(수정일) 보상 요청 결재(승인/거절) 부대 추가 ▼▼▼
 
-// [승인 장교] '승인' 버튼 클릭 시 실행될 작전
-async function approveRewardRequest(requestId, childId, points) {
-    if (!confirm("정말로 이 요청을 승인하시겠습니까? 자녀의 포인트가 즉시 차감됩니다.")) return;
-
-    const familyId = currentUser.familyId;
-    const requestRef = db.collection('families').doc(familyId).collection('reward_requests').doc(requestId);
-    const childRef = db.collection('users').doc(childId);
+// ▼▼▼ 2025-08-25(수정일) 보상 승인 시 포인트 차감 로직 제거 ▼▼▼
+// [승인 장교] '승인' 버튼 클릭 시, 상태만 'approved'로 변경합니다.
+async function approveRewardRequest(requestId) {
+    if (!confirm("이 요청을 승인하여 자녀에게 보상 쿠폰을 발급하시겠습니까?")) return;
 
     try {
-        await db.runTransaction(async (transaction) => {
-            const childDoc = await transaction.get(childRef);
-            if (!childDoc.exists) {
-                throw "자녀 사용자를 찾을 수 없습니다.";
-            }
-
-            const currentPoints = childDoc.data().points || 0;
-            if (currentPoints < points) {
-                // 이 단계에서 포인트 부족이 발견되면, 요청 상태를 '거절'로 변경하고 작전 실패 처리
-                await transaction.update(requestRef, { status: 'rejected', processedAt: new Date() });
-                throw "자녀의 포인트가 부족하여 승인할 수 없습니다.";
-            }
-
-            // 포인트 차감 및 요청 상태 '승인'으로 변경
-            transaction.update(childRef, { points: firebase.firestore.FieldValue.increment(-points) });
-            transaction.update(requestRef, { status: 'approved', processedAt: new Date() });
+        const requestRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests').doc(requestId);
+        await requestRef.update({ 
+            status: 'approved',
+            processedAt: new Date()
         });
 
-        showNotification("요청을 성공적으로 승인했습니다.", "success");
+        showNotification("요청을 승인했습니다. 자녀가 쿠폰을 사용할 수 있습니다.", "success");
         await loadAndRenderRewardRequests(); // 목록 새로고침
 
     } catch (error) {
         console.error("❌ 보상 승인 실패:", error);
-        showNotification(`승인 실패: ${error}`, "error");
+        showNotification("승인 처리에 실패했습니다.", "error");
         await loadAndRenderRewardRequests(); // 실패 시에도 목록 새로고침
     }
 }
-
+// ▲▲▲ 여기까지 2025-08-25(수정일) 보상 승인 시 포인트 차감 로직 제거 ▲▲▲
 // [거절 장교] '거절' 버튼 클릭 시 실행될 작전
 async function rejectRewardRequest(requestId) {
     if (!confirm("정말로 이 요청을 거절하시겠습니까?")) return;
@@ -4019,8 +4004,6 @@ function setupAllEventListeners() {
             if (!requestId) return;
 
             if (target.matches('.btn-approve-reward')) {
-                const childId = target.dataset.childId;
-                const points = parseInt(target.dataset.points);
                 approveRewardRequest(requestId, childId, points);
             } else if (target.matches('.btn-reject-reward')) {
                 rejectRewardRequest(requestId);

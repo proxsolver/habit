@@ -461,6 +461,20 @@ function setupEventListeners() {
             }
         });
     }
+    // ★★★ '보유 쿠폰' 목록에 대한 이벤트 리스너 추가 ★★★
+    const couponList = document.getElementById('my-coupons-list');
+    if (couponList) {
+        couponList.addEventListener('click', (e) => {
+            if (e.target.matches('.btn-use-reward')) {
+                const button = e.target;
+                const requestId = button.dataset.id;
+                const rewardName = button.dataset.name;
+                const points = parseInt(button.dataset.points);
+                useReward(requestId, rewardName, points);
+            }
+        });
+    }
+    
     setupModal('stepperInputModal', hideStepperModal);
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm);
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm);
@@ -487,14 +501,18 @@ function showHomePage() {
     document.getElementById('navRewardsBtn').classList.remove('active');
 }
 
+// ▼▼▼ 2025-08-25(수정일) showRewardsPage에 쿠폰 로딩 명령 추가 ▼▼▼
 function showRewardsPage() {
     document.getElementById('main-app-content').style.display = 'none';
     document.getElementById('rewards-page').style.display = 'block';
     document.getElementById('navHomeBtn').classList.remove('active');
     document.getElementById('navRewardsBtn').classList.add('active');
-    loadAndRenderRewards();
-    loadAndRenderPointHistory();
+
+    loadAndRenderRewards(); // 보상 상점 목록 로드
+    loadAndRenderPointHistory(); // 포인트 획득 기록 로드
+    loadAndRenderApprovedRewards(); // ★★★ 보유 쿠폰 목록 로드 명령 추가 ★★★
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) showRewardsPage에 쿠폰 로딩 명령 추가 ▲▲▲
 
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
@@ -658,3 +676,83 @@ async function testDirectWrite() {
     }
 }
 // ▲▲▲ 여기까지 2025-08-25(수정일) 최종 테스트 함수 ▲▲▲
+// ▼▼▼ 2025-08-25(수정일) '보유 쿠폰' 관련 기능 부대 창설 ▼▼▼
+
+// [쿠폰 목록화 장교] Firestore에서 승인된 보상(쿠폰)을 가져와 화면에 표시합니다.
+async function loadAndRenderApprovedRewards() {
+    if (!currentUser) return;
+    const listContainer = document.getElementById('my-coupons-list');
+    const section = document.getElementById('my-coupons-section');
+    listContainer.innerHTML = '<p class="panel-description">쿠폰을 확인하는 중...</p>';
+
+    const requestsRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests');
+    const snapshot = await requestsRef
+        .where('childId', '==', currentUser.uid)
+        .where('status', '==', 'approved')
+        .orderBy('requestedAt', 'desc')
+        .get();
+
+    if (snapshot.empty) {
+        // 보유 쿠폰이 없으면 섹션 전체를 숨깁니다.
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    listContainer.innerHTML = '';
+    const rewards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    rewards.forEach(reward => {
+        const couponElement = createApprovedRewardElement(reward);
+        listContainer.appendChild(couponElement);
+    });
+}
+
+// [쿠폰 디자인 병사] 개별 쿠폰 아이템의 HTML 구조를 생성합니다.
+function createApprovedRewardElement(reward) {
+    const item = document.createElement('div');
+    item.className = 'manage-routine-item'; // 기존 스타일 재활용
+    item.style.cursor = 'pointer';
+    item.innerHTML = `
+        <div class="routine-main-info" style="gap: 1rem;">
+            <div class="routine-main-name" style="flex-grow: 1;">${reward.rewardName}</div>
+            <div class="routine-main-details" style="font-weight: 600; color: var(--primary);">✨ ${reward.points} P</div>
+        </div>
+        <button class="btn btn-use-reward" data-id="${reward.id}" data-name="${reward.rewardName}" data-points="${reward.points}" style="background-color: var(--secondary);">
+            사용하기
+        </button>
+    `;
+    return item;
+}
+
+// [포인트 집행 장교] '사용하기' 버튼 클릭 시, 포인트를 차감하고 상태를 변경합니다.
+async function useReward(requestId, rewardName, points) {
+    if (!confirm(`'${rewardName}' 쿠폰을 사용하시겠습니까? ${points}포인트가 차감됩니다.`)) return;
+
+    try {
+        const userRef = db.collection('users').doc(currentUser.uid);
+        const requestRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests').doc(requestId);
+
+        // 자녀의 현재 포인트를 다시 한번 확인합니다.
+        const userDoc = await userRef.get();
+        const currentPoints = userDoc.data().points || 0;
+        if (currentPoints < points) {
+            showNotification("포인트가 부족하여 쿠폰을 사용할 수 없습니다!", "error");
+            return;
+        }
+
+        // 포인트 차감 및 쿠폰 상태 '사용 완료'로 변경
+        await userRef.update({ points: firebase.firestore.FieldValue.increment(-points) });
+        await requestRef.update({ status: 'used' });
+
+        showNotification(`'${rewardName}' 쿠폰 사용 완료!`, 'success');
+
+        // 목록과 헤더 포인트를 즉시 새로고침
+        await loadAndRenderApprovedRewards();
+        await updateUserInfoUI(currentUser);
+
+    } catch (error) {
+        console.error("❌ 쿠폰 사용 실패:", error);
+        showNotification("쿠폰 사용 중 오류가 발생했습니다.", "error");
+    }
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) '보유 쿠폰' 관련 기능 부대 창설 ▲▲▲
