@@ -307,19 +307,19 @@ async function resetDailyProgressForUser(userId, familyId) {
 // 5. Firebase 데이터 처리 함수 (CRUD)
 // ====================================================================
 
-// ▼▼▼ 2025-08-23 [재설계] 루틴 업데이트 경로 수정 ▼▼▼
+// ▼▼▼ [최종 버전 1/3] updateRoutineInFirebase ▼▼▼
 async function updateRoutineInFirebase(routineId, updatedFields) {
     if (!currentUser || !currentUser.familyId) return;
     const routineRef = db.collection('families').doc(currentUser.familyId).collection('routines').doc(String(routineId));
     await routineRef.update(updatedFields);
 
-    // 로컬 데이터 업데이트
+    // 로컬 데이터('sampleRoutines' 배열) 업데이트
     const index = sampleRoutines.findIndex(r => String(r.id) === String(routineId));
     if (index !== -1) {
         sampleRoutines[index] = { ...sampleRoutines[index], ...updatedFields };
     }
 }
-// ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 업데이트 경로 수정 ▲▲▲
+// ▲▲▲ [최종 버전 1/3] updateRoutineInFirebase ▲▲▲
 
 // ▼▼▼ 2025-08-23 [재설계] 루틴 순서 저장 경로 수정 ▼▼▼
 async function updateRoutineOrderInFirebase(orderedRoutines) {
@@ -363,7 +363,7 @@ async function updateUserStatsInFirebase(updatedStats) {
     renderAreaStats();
 }
 
-// ▼▼▼ 2025-08-23 [재설계] 루틴 추가 경로 수정 ▼▼▼
+// ▼▼▼ [최종 버전 2/3] addRoutineToFirebase ▼▼▼
 async function addRoutineToFirebase(newRoutineData) {
     if (!currentUser || !currentUser.familyId) {
         showNotification("가족이 설정되지 않아 루틴을 추가할 수 없습니다.", "error");
@@ -372,12 +372,11 @@ async function addRoutineToFirebase(newRoutineData) {
     const routinesRef = db.collection('families').doc(currentUser.familyId).collection('routines');
     const docRef = await routinesRef.add(newRoutineData);
     
-    // 로컬 데이터에도 즉시 반영
+    // 로컬 데이터('sampleRoutines' 배열) 업데이트
     const newRoutine = { ...newRoutineData, id: docRef.id };
     sampleRoutines.push(newRoutine);
-    // showManagePage(); // 이전 코드 대신 renderManagePage()로 변경하여 현재 탭 유지
 }
-// ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 추가 경로 수정 ▲▲▲
+// ▲▲▲ [최종 버전 2/3] addRoutineToFirebase ▲▲▲
 
 // ▼▼▼ 2025-08-23 [재설계] 루틴 삭제 경로 수정 ▼▼▼
 async function deleteRoutineFromFirebase(routineId) {
@@ -1378,36 +1377,37 @@ async function handleAddRoutineConfirm() {
         };
     }
 
-    // --- 리뷰어 검토: '추가'와 '수정' 로직을 분기하여 Firebase에 데이터 전송 ---
     try {
         if (isEditingRoutine) {
+            // 1. '수정' 임무 시, 데이터 장교에게 명령
             const routine = sampleRoutines.find(r => r.id === editingRoutineId);
             const updatedFields = { ...routine, ...commonFields, ...typeSpecificFields };
             await updateRoutineInFirebase(editingRoutineId, updatedFields);
             showNotification(`✏️ "${name}" 루틴이 수정되었습니다!`);
         } else {
+            // 1. '추가' 임무 시, 데이터 장교에게 명령
             const newRoutine = {
-                ...commonFields,
-                ...typeSpecificFields,
+                ...commonFields, ...typeSpecificFields,
                 value: null, status: null, streak: 0, order: sampleRoutines.length, active: true, pointsGivenToday: false,
             };
             await addRoutineToFirebase(newRoutine);
             showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
-
-            // ★★★ 핵심: 작전 성공 후, 관리 페이지 화면을 즉시 갱신하라는 명령 추가
-            renderManagePage();
-
         }
+
+        // 2. ★★★ 모든 데이터 작전 완료 후, 화면 갱신을 직접 명령!
+        renderManagePage(); 
+
     } catch(error) {
         console.error("❌ 루틴 저장/수정 실패:", error);
         showNotification("루틴 처리 중 오류가 발생했습니다.", "error");
     }
 
-    // --- 생산자: 작전 완료 후 정리 ---
+    // 3. 뒷정리
     hideAddRoutineModal();
-    currentRoutineMode = null; // 작전 모드 초기화
+    currentRoutineMode = null;
 }
-// ▲▲▲ 여기까지 2025-08-24 [완벽본] handleAddRoutineConfirm 함수 ▲▲▲
+// ▲▲▲ [최종 버전 3/3] handleAddRoutineConfirm ▲▲▲
+
 
 
 async function handleGoalConfirm() {
@@ -3773,7 +3773,7 @@ function showCelebrationMessage() {
 // 7. 이벤트 리스너 설정 함수
 // ====================================================================
 
-// ▼▼▼ 08/20(수정일) renderCurrentPage 최종 안정화 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) 잘못된 알림을 유발하는 구문 오류 수정 ▼▼▼
 function renderCurrentPage() {
     if (!currentUser) {
         console.warn("⚠️ [renderCurrentPage] 지휘관(currentUser) 부재로 렌더링을 중단합니다.");
@@ -3782,18 +3782,22 @@ function renderCurrentPage() {
 
     console.log(`[renderCurrentPage] >> "${activePage}" 페이지 렌더링을 시작합니다.`);
 
-    // 페이지 전환 로직
-    if (activePage === 'home') showHomePage();
-    else if (activePage === 'goal') showGoalCompassPage();
-    else if (activePage === 'stats') showDashboardPage();
-    else if (activePage === 'manage') showManagePage();
-    else if (activePage === 'rewards') showRewardsPage(); // ★★★ 이 라인을 추가합니다.
-      {
-        // rewards 페이지를 위한 showRewardsPage() 함수가 필요합니다.
-        showNotification('보상 기능은 준비 중입니다.', 'info');
-      }
+    // 페이지 전환 로직을 명확한 if-else if 구문으로 정리합니다.
+    if (activePage === 'home') {
+        showHomePage();
+    } else if (activePage === 'goal') {
+        showGoalCompassPage();
+    } else if (activePage === 'stats') {
+        showDashboardPage();
+    } else if (activePage === 'manage') {
+        showManagePage();
+    } else if (activePage === 'rewards') {
+        showRewardsPage();
+    }
+    
+
 }
-// ▲▲▲ 여기까지 08/20(수정일) renderCurrentPage 최종 안정화 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) 잘못된 알림을 유발하는 구문 오류 수정 ▲▲▲
 
 // ▼▼▼ 08/20(수정일) setupAllEventListeners 최종 안정화 ▼▼▼
 function setupAllEventListeners() {
