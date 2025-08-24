@@ -153,6 +153,7 @@ function renderMissions() {
 
 // ▼▼▼ 2025-08-24(수정일) 완료된 미션 취소 기능 추가 ▼▼▼
 // ▼▼▼ 2025-08-24(수정일) createMissionElement가 모달을 호출하도록 개편 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) yesno 타입이 '목표 달성' 신호를 명시적으로 전달하도록 수정 ▼▼▼
 function createMissionElement(routine, isCompleted, isInProgress) {
     const div = document.createElement('div');
     let classNames = `routine-item ${routine.time}`;
@@ -180,13 +181,12 @@ function createMissionElement(routine, isCompleted, isInProgress) {
 
     div.addEventListener('click', () => {
         if (isCompleted) {
-            // 완료된 미션일 경우, '취소' 작전 수행
             undoMission(routine);
         } else {
-            // 완료되지 않은 미션일 경우, 타입에 맞는 모달 호출
             switch (routine.type) {
                 case 'yesno':
-                    completeMission(routine); // Yes/No는 바로 완료 처리
+                    // ★★★ 핵심 수정: '목표 달성' 신호를 함께 전달합니다. ★★★
+                    completeMission(routine, { dailyGoalMetToday: true });
                     break;
                 case 'number':
                     showStepperModal(routine);
@@ -205,6 +205,9 @@ function createMissionElement(routine, isCompleted, isInProgress) {
 
     return div;
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) yesno 타입이 '목표 달성' 신호를 명시적으로 전달하도록 수정 ▲▲▲
+
+
 // ▲▲▲ 여기까지 2025-08-24(수정일) createMissionElement가 모달을 호출하도록 개편 ▲▲▲
 
 // 아래 함수들이 child.js에 없다면 script.js에서 복사하여 추가해야 합니다.
@@ -297,6 +300,8 @@ function createRewardItemElement(reward) {
 // ▼▼▼ 2025-08-21 미션 완료 로직 수정 ▼▼▼
 // ▼▼▼ 2025-08-24(수정일) completeMission 함수 기능 격상 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) completeMission 함수에 활동 보고(logRoutineHistory) 절차 추가 ▼▼▼
+
+// ▼▼▼ 2025-08-25(수정일) 첩보 위성 발사: 상세 데이터 감청 코드 추가 ▼▼▼
 async function completeMission(routine, updatedFields = {}) {
     if (!currentUser || !routine.path) {
         showNotification("미션 완료 처리에 필요한 정보가 부족합니다.", "error");
@@ -316,6 +321,19 @@ async function completeMission(routine, updatedFields = {}) {
 
         const goalAchieved = dataToUpdate.dailyGoalMetToday === true || routine.type === 'yesno';
         
+        // =================================================================
+        // ▼▼▼ 첩보 위성 데이터 수집 코드 (임시) ▼▼▼
+        console.log("🛰️ === 첩보 위성 감청 시작 === 🛰️");
+        console.log("[위성] 작전 대상 루틴:", routine);
+        console.log(`[위성] 루틴 타입: ${routine.type}`);
+        console.log("[위성] 전달된 업데이트 정보(updatedFields):", updatedFields);
+        console.log("[위성] 최종 업데이트 데이터(dataToUpdate):", dataToUpdate);
+        console.log(`[위성] '목표 달성' 판단(goalAchieved): ${goalAchieved}`);
+        console.log(`[위성] '오늘 포인트 지급 여부'(routine.pointsGivenToday): ${routine.pointsGivenToday}`);
+        console.log("🛰️ === 첩보 위성 감청 종료 === 🛰️");
+        // ▲▲▲ 여기까지 첩보 위성 코드 ▲▲▲
+        // =================================================================
+        
         if (goalAchieved && !routine.pointsGivenToday) {
             dataToUpdate.pointsGivenToday = true;
             dataToUpdate.streak = (routine.streak || 0) + 1;
@@ -325,7 +343,6 @@ async function completeMission(routine, updatedFields = {}) {
                 points: firebase.firestore.FieldValue.increment(routine.basePoints || 0)
             });
 
-            // ★★★ 핵심 수정: 포인트 지급 후 즉시 활동 보고서를 제출합니다. ★★★
             await logRoutineHistory(routine.id, { value: dataToUpdate.value, pointsEarned: routine.basePoints || 0 });
 
             showNotification(`'${routine.name}' 미션 완료! ${routine.basePoints || 0}포인트를 획득했습니다!`, 'success');
@@ -342,6 +359,8 @@ async function completeMission(routine, updatedFields = {}) {
         showNotification("미션 처리에 실패했습니다.", "error");
     }
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) 첩보 위성 발사 버전 ▲▲▲
+
 // ▲▲▲ 여기까지 2025-08-25(수정일) completeMission 함수에 활동 보고(logRoutineHistory) 절차 추가 ▲▲▲
 
 // ▲▲▲ 여기까지 2025-08-21 미션 완료 로직 수정 ▲▲▲
@@ -482,54 +501,66 @@ function showNotification(message, type = 'success') {
 // ▲▲▲ 여기까지 08/19(수정일) 'child.js' 특수 작전 부대 편성 ▲▲
 
 // ▼▼▼ 2025-08-24(수정일) completeMission 함수 기능 격상 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) 첩보 위성 발사: 상세 데이터 감청 코드 추가 ▼▼▼
 async function completeMission(routine, updatedFields = {}) {
     if (!currentUser || !routine.path) {
         showNotification("미션 완료 처리에 필요한 정보가 부족합니다.", "error");
         return;
     }
-    console.log(`📌 [completeMission]: 미션(${routine.name}) 완료 처리 시작...`);
+    console.log(`📌 [completeMission]: 미션(${routine.name}) 처리 시작...`, updatedFields);
 
     try {
         const routineRef = db.doc(routine.path);
         
-        // 1. 업데이트할 기본 데이터 설정
         let dataToUpdate = {
             status: 'completed',
-            value: true, // yesno 타입의 기본값
-            pointsGivenToday: true,
+            value: true,
             lastUpdatedDate: new Date().toISOString().split('T')[0],
-            ...updatedFields // 모달에서 받은 추가 데이터로 덮어쓰기
+            ...updatedFields
         };
 
-        // 2. 연속 달성(streak) 업데이트
-        // (yesno 타입이거나, 다른 타입이지만 일일 목표를 달성했을 경우)
         const goalAchieved = dataToUpdate.dailyGoalMetToday === true || routine.type === 'yesno';
+        
+        // =================================================================
+        // ▼▼▼ 첩보 위성 데이터 수집 코드 (임시) ▼▼▼
+        console.log("🛰️ === 첩보 위성 감청 시작 === 🛰️");
+        console.log("[위성] 작전 대상 루틴:", routine);
+        console.log(`[위성] 루틴 타입: ${routine.type}`);
+        console.log("[위성] 전달된 업데이트 정보(updatedFields):", updatedFields);
+        console.log("[위성] 최종 업데이트 데이터(dataToUpdate):", dataToUpdate);
+        console.log(`[위성] '목표 달성' 판단(goalAchieved): ${goalAchieved}`);
+        console.log(`[위성] '오늘 포인트 지급 여부'(routine.pointsGivenToday): ${routine.pointsGivenToday}`);
+        console.log("🛰️ === 첩보 위성 감청 종료 === 🛰️");
+        // ▲▲▲ 여기까지 첩보 위성 코드 ▲▲▲
+        // =================================================================
+        
         if (goalAchieved && !routine.pointsGivenToday) {
+            dataToUpdate.pointsGivenToday = true;
             dataToUpdate.streak = (routine.streak || 0) + 1;
-        }
 
-        // 3. 데이터베이스에 최종 업데이트
-        await routineRef.update(dataToUpdate);
-
-        // 4. 포인트 지급 (하루 한 번만)
-        if (!routine.pointsGivenToday) {
             const userRef = db.collection('users').doc(currentUser.uid);
             await userRef.update({
                 points: firebase.firestore.FieldValue.increment(routine.basePoints || 0)
             });
+
+            await logRoutineHistory(routine.id, { value: dataToUpdate.value, pointsEarned: routine.basePoints || 0 });
+
             showNotification(`'${routine.name}' 미션 완료! ${routine.basePoints || 0}포인트를 획득했습니다!`, 'success');
-        } else {
+        } else if (Object.keys(updatedFields).length > 0) {
             showNotification(`'${routine.name}' 미션이 업데이트되었습니다.`, 'info');
         }
+        
+        await routineRef.update(dataToUpdate);
 
-        // 5. 화면 즉시 새로고침
         await loadAssignedRoutines(currentUser.uid);
-        await updateUserInfoUI(currentUser); // 헤더의 포인트도 갱신
+        await updateUserInfoUI(currentUser);
     } catch (error) {
-        console.error("❌ [completeMission]: 미션 완료 처리 중 오류 발생:", error);
-        showNotification("미션 완료에 실패했습니다.", "error");
+        console.error("❌ [completeMission]: 미션 처리 중 오류 발생:", error);
+        showNotification("미션 처리에 실패했습니다.", "error");
     }
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) 첩보 위성 발사 버전 ▲▲▲
+
 // ▲▲▲ 여기까지 2025-08-24(수정일) completeMission 함수 기능 격상 ▲▲▲
 
 
@@ -699,6 +730,7 @@ async function handleReadingProgressConfirm() {
 }
 
 // ▼▼▼ 2025-08-25(수정일) '목표 달성' 신호를 함께 보내도록 수정 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) '목표 달성' 신호를 함께 보내도록 재수정 ▼▼▼
 async function handleTimeInputConfirm() {
     if (!activeRoutineForModal) return;
     const value = document.getElementById('timeInput').value;
@@ -709,13 +741,15 @@ async function handleTimeInputConfirm() {
     
     const updateData = {
         value: value,
-        status: 'completed', // 시간 타입은 입력 즉시 완료로 간주
-        dailyGoalMetToday: true // ★★★ 핵심: 목표를 달성했다는 신호를 명시적으로 추가
+        status: 'completed',
+        dailyGoalMetToday: true // ★★★ 핵심: '목표 달성' 신호를 명시적으로 추가
     };
 
     await completeMission(activeRoutineForModal, updateData);
     hideTimeInputModal();
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) '목표 달성' 신호를 함께 보내도록 재수정 ▲▲▲
+
 // ▲▲▲ 여기까지 2025-08-25(수정일) '목표 달성' 신호를 함께 보내도록 수정 ▲▲▲
 
 // ====================================================================
@@ -758,6 +792,7 @@ function hideTimeInputModal() {
     document.getElementById('timeInputModal').style.display = 'none';
 }
 
+// ▼▼▼ 2025-08-25(수정일) handleTimeInputConfirm 함수의 최종 수정안 ▼▼▼
 async function handleTimeInputConfirm() {
     if (!activeRoutineForModal) return;
     const value = document.getElementById('timeInput').value;
@@ -768,13 +803,15 @@ async function handleTimeInputConfirm() {
     
     const updateData = {
         value: value,
-        status: 'completed' // 시간 타입은 입력 즉시 완료로 간주
+        status: 'completed',
+        // ★★★ 이 한 줄이 모든 문제의 해결책입니다 ★★★
+        dailyGoalMetToday: true 
     };
 
     await completeMission(activeRoutineForModal, updateData);
     hideTimeInputModal();
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 시간 기록 모달 함수 추가 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-25(수정일) handleTimeInputConfirm 함수의 최종 수정안 ▲▲▲// ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 시간 기록 모달 함수 추가 ▲▲▲
 
 // ▼▼▼ 2025-08-24(수정일) 독서 관련 Helper 함수 부대 추가 ▼▼▼
 
