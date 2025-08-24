@@ -3996,21 +3996,23 @@ function setupAllEventListeners() {
     }
 
     // ▼▼▼ 2025-08-25(수정일) 보상 요청 결재 버튼 이벤트 리스너 추가 ▼▼▼
-    const approvalSection = document.getElementById('reward-approval-section');
-    if (approvalSection) {
-        approvalSection.addEventListener('click', (e) => {
-            const target = e.target;
-            const requestId = target.dataset.id;
-            if (!requestId) return;
+// ▼▼▼ 2025-08-25(수정일) approveRewardRequest 호출부의 불필요한 인자 제거 ▼▼▼
+const approvalSection = document.getElementById('reward-approval-section');
+if (approvalSection) {
+    approvalSection.addEventListener('click', (e) => {
+        const target = e.target;
+        const requestId = target.dataset.id;
+        if (!requestId) return;
 
-            if (target.matches('.btn-approve-reward')) {
-                approveRewardRequest(requestId, childId, points);
-            } else if (target.matches('.btn-reject-reward')) {
-                rejectRewardRequest(requestId);
-            }
-        });
-    }
-    // ▲▲▲ 여기까지 2025-08-25(수정일) 보상 요청 결재 버튼 이벤트 리스너 추가 ▲▲▲
+        if (target.matches('.btn-approve-reward')) {
+            // ★★★ 핵심 수정: 불필요한 변수(childId, points) 없이 함수를 호출합니다. ★★★
+            approveRewardRequest(requestId);
+        } else if (target.matches('.btn-reject-reward')) {
+            rejectRewardRequest(requestId);
+        }
+    });
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) approveRewardRequest 호출부의 불필요한 인자 제거 ▲▲▲    // ▲▲▲ 여기까지 2025-08-25(수정일) 보상 요청 결재 버튼 이벤트 리스너 추가 ▲▲▲
 
     // --- 통계 페이지 필터 버튼 ---
     document.getElementById('filter-weekly')?.addEventListener('click', () => {
