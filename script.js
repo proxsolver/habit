@@ -375,7 +375,6 @@ async function addRoutineToFirebase(newRoutineData) {
     // 로컬 데이터에도 즉시 반영
     const newRoutine = { ...newRoutineData, id: docRef.id };
     sampleRoutines.push(newRoutine);
-    renderManagePage(); // 관리 페이지 새로고침
     // showManagePage(); // 이전 코드 대신 renderManagePage()로 변경하여 현재 탭 유지
 }
 // ▲▲▲ 여기까지 2025-08-23 [재설계] 루틴 추가 경로 수정 ▲▲▲
@@ -1395,8 +1394,8 @@ async function handleAddRoutineConfirm() {
             await addRoutineToFirebase(newRoutine);
             showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
 
-                    // ★★★ 핵심: 작전 성공 후, 관리 페이지 화면을 즉시 갱신하라는 명령 추가
-              renderManagePage();
+            // ★★★ 핵심: 작전 성공 후, 관리 페이지 화면을 즉시 갱신하라는 명령 추가
+            renderManagePage();
 
         }
     } catch(error) {
