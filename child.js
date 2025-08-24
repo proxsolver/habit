@@ -556,17 +556,43 @@ function hideStepperModal() {
     document.getElementById('stepperInputModal').style.display = 'none';
 }
 
+// ▼▼▼ 2025-08-24(수정일) showReadingProgressModal 기능 전면 격상 ▼▼▼
 function showReadingProgressModal(routine) {
     activeRoutineForModal = routine;
+    
     const modal = document.getElementById('readingProgressModal');
-    if (modal) {
-        modal.querySelector('.modal-header h3').textContent = `📖 ${routine.bookTitle || routine.name}`;
-        const readPagesInput = document.getElementById('readPages');
-        if(readPagesInput) readPagesInput.value = routine.dailyPages || 10;
-        modal.style.display = 'flex';
-        if(readPagesInput) readPagesInput.focus();
+    if (!modal) return;
+
+    modal.querySelector('.modal-header h3').textContent = `📖 ${routine.bookTitle || routine.name}`;
+
+    const todayRange = getTodayReadingRange(routine);
+    const progress = getReadingProgress(routine);
+
+    // 상세 정보 표시부 업데이트
+    const readingInfo = document.getElementById('readingInfo');
+    if (readingInfo) {
+        readingInfo.innerHTML = `
+            <h4>📚 ${routine.bookTitle}</h4>
+            <p><strong>오늘의 목표:</strong> ${todayRange.start}~${todayRange.end} 페이지 (${todayRange.pages}페이지)</p>
+            <p><strong>현재 진행률:</strong> ${routine.currentPage || routine.startPage-1}/${routine.endPage} 페이지 (${progress}%)</p>
+        `;
     }
+
+    const readPagesInput = document.getElementById('readPages');
+    const recommendedPages = document.getElementById('recommendedPages');
+    if (readPagesInput) readPagesInput.value = todayRange.pages;
+    if (recommendedPages) recommendedPages.textContent = todayRange.pages;
+
+    // 완료 예정일 계산 및 표시
+    const completionDateEl = document.getElementById('completionDate');
+    if (completionDateEl) {
+        completionDateEl.textContent = getEstimatedCompletionDate(routine);
+    }
+    
+    modal.style.display = 'flex';
+    if (readPagesInput) readPagesInput.focus();
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) showReadingProgressModal 기능 전면 격상 ▲▲▲
 
 function hideReadingProgressModal() {
     document.getElementById('readingProgressModal').style.display = 'none';
@@ -674,3 +700,35 @@ async function handleTimeInputConfirm() {
     hideTimeInputModal();
 }
 // ▲▲▲ 여기까지 2025-08-24(수정일) 누락된 시간 기록 모달 함수 추가 ▲▲▲
+
+// ▼▼▼ 2025-08-24(수정일) 독서 관련 Helper 함수 부대 추가 ▼▼▼
+
+function getReadingProgress(routine) {
+    if (routine.type !== 'reading' || !routine.endPage || !routine.startPage) return 0;
+    const totalPages = routine.endPage - routine.startPage + 1;
+    const readPages = (routine.currentPage || routine.startPage - 1) - routine.startPage + 1;
+    if (totalPages <= 0 || readPages < 0) return 0;
+    return Math.min(100, Math.round((readPages / totalPages) * 100));
+}
+
+function getTodayReadingRange(routine) {
+    if (routine.type !== 'reading') return null;
+    const currentPage = routine.currentPage || routine.startPage - 1;
+    const dailyPages = routine.dailyPages || 10;
+    const todayStart = currentPage + 1;
+    const todayEnd = Math.min(currentPage + dailyPages, routine.endPage);
+    return { start: todayStart, end: todayEnd, pages: Math.max(0, todayEnd - todayStart + 1) };
+}
+
+function getEstimatedCompletionDate(routine) {
+    if (routine.type !== 'reading' || routine.currentPage >= routine.endPage) return '완료';
+    const remainingPages = routine.endPage - (routine.currentPage || routine.startPage - 1);
+    const dailyPages = routine.dailyPages || 10;
+    if (dailyPages <= 0) return '계산 불가';
+    const remainingDays = Math.ceil(remainingPages / dailyPages);
+    const completionDate = new Date();
+    completionDate.setDate(completionDate.getDate() + remainingDays);
+    return completionDate.toLocaleDateString('ko-KR');
+}
+
+// ▲▲▲ 여기까지 2025-08-24(수정일) 독서 관련 Helper 함수 부대 추가 ▲▲▲
