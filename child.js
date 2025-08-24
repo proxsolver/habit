@@ -54,6 +54,43 @@ document.addEventListener('DOMContentLoaded', () => {
 // ▲▲▲ 여기까지 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▲▲▲
 // // ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
 
+// ▼▼▼ 2025-08-25(수정일) 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
+// DOMContentLoaded 리스너 바로 아래에 추가합니다.
+firebase.auth().getRedirectResult()
+    .then(async (result) => {
+        // 리다이렉트 결과에 사용자 정보가 포함되어 있다면,
+        // onAuthStateChanged가 작동하기 전에 선제적으로 앱을 초기화 시도합니다.
+        if (result && result.user) {
+            console.log('✅ [getRedirectResult] 리다이렉트 로그인 성공 확인:', result.user.displayName);
+            
+            const user = result.user;
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const userData = userDoc.exists ? userDoc.data() : {};
+
+            currentUser = {
+                uid: user.uid, displayName: user.displayName, email: user.email,
+                photoURL: user.photoURL, ...userData
+            };
+
+            console.log('✅ [getRedirectResult] 선제적 사용자 정보 구성 완료.');
+
+            // UI와 데이터를 즉시 업데이트합니다.
+            await updateUserInfoUI(currentUser);
+            await loadAssignedRoutines(currentUser.uid);
+            if (currentUser.companionCat) {
+                renderCompanionCat(currentUser.companionCat);
+            }
+            showHomePage();
+            document.querySelector('.bottom-tab-bar')?.style.display = 'flex';
+        }
+    })
+    .catch((error) => {
+        console.error('❌ [getRedirectResult] 리다이렉트 로그인 처리 중 오류 발생:', error);
+        showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
+    });
+// ▲▲▲ 여기까지 2025-08-25(수정일) 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
+
+
 // ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▼▼▼
 // 기존 onAuthStateChanged 함수를 이 코드로 교체합니다.
