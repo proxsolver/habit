@@ -695,30 +695,64 @@ async function updateGoalProgressByRoutine(routineId, reportData) {
 // feat(stats): Implement stats calculation function using collection group query
 
 // ▼▼▼ 2025-08-24(수정일) history 문서에 familyId 필드 추가 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) '일일 요약'을 기록하는 집계 로직 추가 ▼▼▼
 async function logRoutineHistory(routineId, dataToLog) {
     if (!currentUser || !currentUser.familyId) return;
-    
+
     const today = new Date();
     const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const familyRef = db.collection('families').doc(currentUser.familyId);
 
-    const historyRef = db.collection('families').doc(currentUser.familyId)
-                         .collection('routines').doc(String(routineId))
-                         .collection('history').doc(dateString);
+    // --- 임무 1: 개별 활동 기록 (기존과 동일) ---
+    const historyRef = familyRef.collection('routines').doc(String(routineId))
+                                .collection('history').doc(dateString);
     
-    try {
-        await historyRef.set({
-            routineId: routineId,
+    // --- 임무 2: 일일 요약 보고서 업데이트 (신규 임무) ---
+    const summaryRef = familyRef.collection('daily_summaries').doc(dateString);
+    const routine = sampleRoutines.find(r => r.id === routineId);
+    const points = dataToLog.pointsEarned || 0;
+
+    // Batch 작전을 준비하여 두 개의 쓰기 작업을 원자적으로 처리합니다.
+    const batch = db.batch();
+
+    // 개별 기록 쓰기
+    batch.set(historyRef, {
+        routineId: routineId,
+        date: dateString,
+        familyId: currentUser.familyId,
+        ...dataToLog,
+        loggedBy: currentUser.uid
+    }, { merge: true });
+
+    // 일일 요약 업데이트 (증가분만 기록)
+    if (points > 0) {
+        const summaryUpdatePayload = {
             date: dateString,
-            familyId: currentUser.familyId, // ★★★ 핵심: familyId를 기록에 추가
-            ...dataToLog,
-            loggedBy: currentUser.uid
-        }, { merge: true });
-        debugLog(`History logged for routine ${routineId} on ${dateString}`);
+            totalCompletions: firebase.firestore.FieldValue.increment(1),
+            totalPoints: firebase.firestore.FieldValue.increment(points),
+            areaPoints: {},
+            areaCompletions: {}
+        };
+        // 루틴에 연결된 모든 영역에 대해 증가분을 기록
+        if (routine && routine.areas) {
+            routine.areas.forEach(areaId => {
+                summaryUpdatePayload.areaPoints[`${areaId}`] = firebase.firestore.FieldValue.increment(points);
+                summaryUpdatePayload.areaCompletions[`${areaId}`] = firebase.firestore.FieldValue.increment(1);
+            });
+        }
+        batch.set(summaryRef, summaryUpdatePayload, { merge: true });
+    }
+
+    // 준비된 모든 작전을 일괄 실행
+    try {
+        await batch.commit();
+        debugLog(`History and daily summary logged for routine ${routineId} on ${dateString}`);
     } catch (error) {
-        console.error("Failed to log routine history:", error);
+        console.error("Failed to log history and summary:", error);
     }
 }
-// ▲▲▲ 여기까지 2025-08-24(수정일) history 문서에 familyId 필드 추가 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) '일일 요약'을 기록하는 집계 로직 추가 ▲▲▲
+//  ▲▲▲ 여기까지 2025-08-24(수정일) history 문서에 familyId 필드 추가 ▲▲▲
 // feat(stats): Implement stats calculation function using collection group query
 
 
@@ -810,123 +844,107 @@ function getISOWeek(date) {
 
 
 // ▼▼▼ 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) '일일 요약' 데이터를 사용하도록 통계 계산 방식 전면 재설계 ▼▼▼
 async function calculateStats(period = 'weekly') {
-    if (!currentUser || !currentUser.familyId) return null; // ★★★ familyId 확인 로직 추가
-
-
-    // 1. ★★★ 핵심 수정: 'families' 컬렉션 내에서 현재 가족의 활동 기록만 수집
-    const historyQuery = db.collectionGroup('history')
-                           .where('familyId', '==', currentUser.familyId);
-    
-    const historySnapshot = await historyQuery.get();
-    const histories = historySnapshot.docs.map(doc => {
-        const data = doc.data();
-        const parts = data.date.split('-');
-        data.dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-        return data;
-    });
+    if (!currentUser || !currentUser.familyId) return null;
+    console.log(`📊 [calculateStats]: '${period}' 통계 계산 시작 (집계 데이터 사용)`);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 2. 통계 계산 변수 초기화
+    let dateFrom;
+    // 1. 보고 기간 설정
+    if (period === 'monthly') {
+        // 최근 7주 (49일)치 데이터를 요청하여 주간 단위로 재집계
+        dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 48);
+    } else { // 'weekly'
+        // 최근 7일치 데이터를 요청
+        dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
+    }
+    dateFrom.setHours(0, 0, 0, 0);
+
+    const dateToString = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    // 2. ★★★ 핵심 최적화: 'daily_summaries' 컬렉션에서 필요한 기간의 데이터만 읽어옵니다. ★★★
+    const summariesSnapshot = await db.collection('families').doc(currentUser.familyId)
+                                      .collection('daily_summaries')
+                                      .where('date', '>=', dateToString(dateFrom))
+                                      .where('date', '<=', dateToString(today))
+                                      .get();
+    
+    const summaries = summariesSnapshot.docs.map(doc => doc.data());
+    console.log(`- ${summaries.length}개의 일일 요약 보고서 수신 완료.`);
+
+    // 3. 통계 계산 변수 초기화
     let barChartData = [];
     let barChartLabels = [];
-    let dateFrom;
-
-    // 3. 보고 기간에 따른 분기 처리 (바 차트 데이터)
-    if (period === 'monthly') {
-        dateFrom = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        for (let i = 6; i >= 0; i--) {
-            const weekEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - (i * 7) + 6);
-            const weekStartDate = new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate() - 6);
-            weekStartDate.setHours(0, 0, 0, 0);
-            weekEndDate.setHours(23, 59, 59, 999);
-
-            const weeklyCompletions = histories.filter(h => h.dateObj >= weekStartDate && h.dateObj <= weekEndDate).length;
-            barChartData.push(weeklyCompletions);
-            // ▼▼▼ 08/18(수정일) 주차 라벨 생성 방식 수정 ▼▼▼
-            // 기존 코드: barChartLabels.push(`${weekStartDate.getMonth() + 1}/${weekStartDate.getDate()}주`);
-            
-            // 수정 코드
-            const weekNumber = getISOWeek(weekStartDate);
-            barChartLabels.push(`${weekNumber}주차`);        }
-
-    } else { // 'weekly'
-        dateFrom = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
-        dateFrom.setHours(0, 0, 0, 0);
-
-        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
-            barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
-            
-            let dailyCompletions = 0;
-
-            // --- ▼▼▼ '나노 정찰 드론' 침투 시작 ▼▼▼ ---
-            histories.forEach(h => {
-                // 오늘 날짜(루프의 마지막 날)에 대해서만 모든 비교 과정을 감청합니다.
-                if (i === 6) { // i가 6일 때가 오늘입니다.
-                    console.log(
-                        `[정찰 보고] 아군 기록(${h.date}): ${h.dateObj.getTime()}`,
-                        `| 표적: ${date.getTime()}`,
-                        `| 일치 여부: ${h.dateObj.getTime() === date.getTime()}`
-                    );
-                }
-                if (h.dateObj.getTime() === date.getTime()) {
-                    dailyCompletions++;
-                }
-            });
-            // --- ▲▲▲ '나노 정찰 드론' 임무 종료 ▲▲▲ ---
-            barChartData.push(dailyCompletions);
-        }
-    }
-
-    // 4. 기타 핵심 통계 집계
-    let periodCompletions = 0;
-    let periodTotalRoutines = 0;
+    let totalCompletions = 0;
     const areaPoints = { health: 0, relationships: 0, work: 0 };
     const areaCompletions = { health: 0, relationships: 0, work: 0 };
     let totalPoints = 0;
 
-    const totalDays = Math.ceil((today.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24));
+    // 날짜별 요약 데이터를 빠르게 찾기 위한 Map 생성
+    const summaryMap = new Map(summaries.map(s => [s.date, s]));
+
+    // 4. 보고 기간에 따른 분기 처리
+    if (period === 'monthly') {
+        for (let i = 6; i >= 0; i--) {
+            const weekEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() - (i * 7) + 6);
+            const weekStartDate = new Date(weekEndDate.getFullYear(), weekEndDate.getMonth(), weekEndDate.getDate() - 6);
+
+            let weeklyCompletions = 0;
+            // 해당 주간의 일일 데이터를 순회하며 합산
+            for (let d = new Date(weekStartDate); d <= weekEndDate; d.setDate(d.getDate() + 1)) {
+                const summary = summaryMap.get(dateToString(d));
+                if (summary) {
+                    weeklyCompletions += (summary.totalCompletions || 0);
+                }
+            }
+            barChartData.push(weeklyCompletions);
+            barChartLabels.push(`${getISOWeek(weekStartDate)}주차`);
+        }
+    } else { // 'weekly'
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
+            const dateStr = dateToString(date);
+            barChartLabels.push(`${date.getMonth() + 1}/${date.getDate()}(${dayNames[date.getDay()]})`);
+            
+            const summary = summaryMap.get(dateStr);
+            barChartData.push(summary ? summary.totalCompletions || 0 : 0);
+        }
+    }
+    
+    // 5. 전체 기간 통계 집계
+    summaries.forEach(summary => {
+        totalCompletions += summary.totalCompletions || 0;
+        totalPoints += summary.totalPoints || 0;
+        for (const areaId in summary.areaPoints) {
+            areaPoints[areaId] = (areaPoints[areaId] || 0) + summary.areaPoints[areaId];
+        }
+        for (const areaId in summary.areaCompletions) {
+            areaCompletions[areaId] = (areaCompletions[areaId] || 0) + summary.areaCompletions[areaId];
+        }
+    });
+
+    // 달성률 계산 (기존 로직 유지)
+    let periodTotalRoutines = 0;
+    const totalDays = Math.ceil((today.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     for (let i = 0; i < totalDays; i++) {
         const date = new Date(dateFrom.getTime() + i * 24 * 60 * 60 * 1000);
         const dayOfWeek = date.getDay();
-        
         sampleRoutines.forEach(routine => {
             if (!routine.active) return;
             const isActiveOnThisDay = 
                 (routine.frequency === 'daily') ||
                 (routine.frequency === 'weekday' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
                 (routine.frequency === 'weekend' && (dayOfWeek === 0 || dayOfWeek === 6));
-            
-            if (isActiveOnThisDay) {
-                periodTotalRoutines++;
-            }
+            if (isActiveOnThisDay) periodTotalRoutines++;
         });
     }
+    const completionRate = periodTotalRoutines > 0 ? Math.round((totalCompletions / periodTotalRoutines) * 100) : 0;
 
-    histories.forEach(hist => {
-        if (hist.dateObj < dateFrom) return;
-        periodCompletions++;
-        const parentRoutine = sampleRoutines.find(r => r.id === hist.routineId);
-        if (parentRoutine && parentRoutine.areas) {
-            parentRoutine.areas.forEach(areaId => {
-                if (areaCompletions[areaId] !== undefined) areaCompletions[areaId]++;
-                if (areaPoints[areaId] !== undefined && hist.pointsEarned) {
-                    areaPoints[areaId] += hist.pointsEarned;
-                    totalPoints += hist.pointsEarned;
-                }
-            });
-        }
-    });
-
-    const completionRate = periodTotalRoutines > 0 ? Math.round((periodCompletions / periodTotalRoutines) * 100) : 0;
-
-    // 5. 최종 보고서 작성
+    // 6. 최종 보고서 작성
     const stats = {
         completionRate,
         totalPoints,
@@ -936,10 +954,11 @@ async function calculateStats(period = 'weekly') {
         barChartLabels
     };
 
-    console.log("📊 [calculateStats]: 통계 계산 완료:", stats);
+    console.log("📊 [calculateStats]: 통계 계산 완료 (집계 데이터 사용):", stats);
     return stats;
 }
-// ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▲▲▲
+// ▲▲▲ 여기까지 2025-08-24(수정일) '일일 요약' 데이터를 사용하도록 통계 계산 방식 전면 재설계 ▲▲▲
+// // ▲▲▲ 여기까지 08/18(수정일) calculateStats 최종 완전판 (시차 문제 해결) ▲▲▲
 
 
 // --- 핸들러 함수 (Handlers) ---
