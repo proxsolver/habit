@@ -3887,7 +3887,7 @@ function setupAllEventListeners() {
     // ▼▼▼ 이 부분을 아래 코드로 교체해주세요 ▼▼▼
     setupModal('numberInputModal', hideNumberInputModal, handleNumberInputConfirm, 'numberInput');
     setupModal('timeInputModal', hideTimeInputModal, handleTimeInputConfirm, 'timeInput');
-    setupModal('stepperInputModal', hideStepperModal, handleStepperConfirm, 'stepperConfirmBtn');
+    setupModal('stepperInputModal', hideStepperModal, null, 'stepperConfirmBtn'); // steppConfirmBtn에 직접 연결되어 있으므로 null
     setupModal('wheelInputModal', hideWheelModal, handleWheelConfirm, 'wheelConfirmBtn');
     setupModal('readingSetupModal', hideReadingSetupModal, handleReadingSetupConfirm, 'readingSetupConfirm');
     setupModal('readingProgressModal', hideReadingProgressModal, handleReadingProgressConfirm, 'readingProgressConfirm');
@@ -3895,6 +3895,8 @@ function setupAllEventListeners() {
     setupModal('manageAreasModal', hideManageAreasModal, handleManageAreasConfirm);
     setupModal('addGoalModal', hideAddGoalModal, handleGoalConfirm, 'addGoalConfirm');
     setupModal('routineDetailModal', hideDetailStatsModal);
+    setupModal('rewardModal', hideRewardModal, handleRewardConfirm);
+
     // ▲▲▲ 여기까지 교체 ▲▲▲
     // --- ESC로 모든 모달 닫기 ---
     document.addEventListener('keydown', (e) => {
