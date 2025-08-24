@@ -78,6 +78,7 @@ async function loadAssignedRoutines(userId) {
 // ▲▲▲ 여기까지 2025-08-23 '가족 공유' 모델에 맞춰 자녀 루틴 로딩 방식 변경 ▲▲▲
 
 
+
 // ====================================================================
 // 4. 렌더링 (자녀용)
 // ====================================================================
@@ -131,6 +132,60 @@ function createMissionElement(routine, isCompleted) {
     }
     return div;
 }
+
+// ▼▼▼ 2025-08-24(수정일) 보상 목록 로드 및 렌더링 함수 추가 ▼▼▼
+
+// [병참 장교] Firestore에서 보상 목록을 가져와 화면에 표시하는 주력 함수
+async function loadAndRenderRewards() {
+    if (!currentUser) return;
+    const listContainer = document.getElementById('reward-store-list');
+    listContainer.innerHTML = '<p class="panel-description">보상 목록을 불러오는 중...</p>';
+
+    // 1. 자신의 familyId를 확보합니다.
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    if (!userDoc.exists || !userDoc.data().familyId) {
+        listContainer.innerHTML = '<p class="panel-description">소속된 가족이 없어 보상 목록을 표시할 수 없습니다.</p>';
+        return;
+    }
+    const familyId = userDoc.data().familyId;
+
+    // 2. 가족의 'rewards' 컬렉션에서 모든 보상 데이터를 가져옵니다.
+    const rewardsRef = db.collection('families').doc(familyId).collection('rewards');
+    const snapshot = await rewardsRef.where('isActive', '==', true).orderBy('points').get();
+
+    if (snapshot.empty) {
+        listContainer.innerHTML = '<p class="panel-description">아직 등록된 보상이 없습니다. 부모님께 요청해보세요!</p>';
+        return;
+    }
+
+    listContainer.innerHTML = ''; // 로딩 메시지 제거
+    const rewards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // 3. 각 보상 아이템을 화면에 진열합니다.
+    rewards.forEach(reward => {
+        const rewardElement = createRewardItemElement(reward);
+        listContainer.appendChild(rewardElement);
+    });
+}
+
+// [설계 장교] 개별 보상 아이템의 HTML 구조를 생성하는 지원 함수
+function createRewardItemElement(reward) {
+    const item = document.createElement('div');
+    item.className = 'manage-routine-item'; // 기존 스타일 재활용
+    item.innerHTML = `
+        <div class="routine-main-info" style="gap: 1rem;">
+            <div class="routine-main-name" style="flex-grow: 1;">${reward.name}</div>
+            <div class="routine-main-details" style="font-weight: 600; color: var(--primary);">✨ ${reward.points} P</div>
+        </div>
+        <button class="btn btn-request-reward" data-reward-id="${reward.id}" data-reward-points="${reward.points}" data-reward-name="${reward.name}">
+            요청
+        </button>
+    `;
+    return item;
+}
+
+// ▲▲▲ 여기까지 2025-08-24(수정일) 보상 목록 로드 및 렌더링 함수 추가 ▲▲▲
+
 
 // ====================================================================
 // 5. 핵심 로직 (자녀용)
@@ -195,6 +250,7 @@ function updateUserInfoUI(user) {
     }
 }
 
+// ▼▼▼ 2025-08-24(수정일) setupEventListeners 함수에 이벤트 위임 추가 ▼▼▼
 function setupEventListeners() {
     document.getElementById('logout-btn')?.addEventListener('click', () => firebase.auth().signOut());
     
@@ -204,7 +260,33 @@ function setupEventListeners() {
     
     homeBtn?.addEventListener('click', showHomePage);
     rewardsBtn?.addEventListener('click', showRewardsPage);
+
+    // ★★★ '보상 상점' 전체에 대한 이벤트 리스너를 추가합니다. (이벤트 위임)
+    const rewardList = document.getElementById('reward-store-list');
+    if (rewardList) {
+        rewardList.addEventListener('click', async (e) => {
+            // 클릭된 것이 '요청' 버튼일 경우에만 작동
+            if (e.target.matches('.btn-request-reward')) {
+                const button = e.target;
+                const rewardId = button.dataset.rewardId;
+                const rewardName = button.dataset.rewardName;
+                const requiredPoints = parseInt(button.dataset.rewardPoints);
+                
+                // 임시로 버튼을 비활성화하여 중복 요청 방지
+                button.disabled = true;
+                button.textContent = '확인 중...';
+
+                // ★★★ (다음 단계) 여기에 포인트 확인 및 요청 로직이 들어갑니다.
+                alert(`'${rewardName}' 요청 기능은 현재 개발 중입니다! (필요 포인트: ${requiredPoints})`);
+
+                // 다시 버튼 활성화
+                button.disabled = false;
+                button.textContent = '요청';
+            }
+        });
+    }
 }
+// ▲▲▲ 여기까지 2025-08-24(수정일) setupEventListeners 함수에 이벤트 위임 추가 ▲▲▲
 
 // 페이지 전환 함수
 function showHomePage() {
@@ -219,7 +301,9 @@ function showRewardsPage() {
     document.getElementById('rewards-page').style.display = 'block';
     document.getElementById('navHomeBtn').classList.remove('active');
     document.getElementById('navRewardsBtn').classList.add('active');
-    showNotification('보상 상점은 현재 준비 중입니다.', 'info');
+        // ★★★ 보상 페이지가 열릴 때마다 보상 목록을 새로 불러오도록 명령합니다.
+    loadAndRenderRewards();
+
 }
 
 // 간단한 알림 함수
