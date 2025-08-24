@@ -489,6 +489,8 @@ async function handleRewardConfirm() {
             userRewards.push(savedReward);
             showNotification("새로운 보상이 추가되었습니다.", "success");
         }
+        renderRewardManagement(); // ★★★ 핵심: 이 명령을 추가하여 화면을 즉시 새로고침합니다.
+
         hideRewardModal();
     } catch (error) {
         console.error("❌ 보상 저장 실패:", error);
@@ -1393,6 +1395,10 @@ async function handleAddRoutineConfirm() {
             };
             await addRoutineToFirebase(newRoutine);
             showNotification(`➕ "${name}" 루틴이 추가되었습니다!`);
+
+                    // ★★★ 핵심: 작전 성공 후, 관리 페이지 화면을 즉시 갱신하라는 명령 추가
+              renderManagePage();
+
         }
     } catch(error) {
         console.error("❌ 루틴 저장/수정 실패:", error);
@@ -3858,6 +3864,11 @@ function setupAllEventListeners() {
     }
     // ▲▲▲ 여기까지 2025-08-24(수정일) 새 보상 추가 버튼 이벤트 리스너 추가 ▲▲▲
 
+    // ▼▼▼ 2025-08-24(수정일) 보상 삭제 버튼 이벤트 리스너 추가 ▼▼▼
+    const deleteRewardBtn = document.getElementById('deleteRewardBtn');
+    if (deleteRewardBtn) {
+        deleteRewardBtn.addEventListener('click', handleDeleteReward);
+    }
 
 
     // --- 통계 페이지 필터 버튼 ---
@@ -3896,6 +3907,7 @@ function setupAllEventListeners() {
     setupModal('addGoalModal', hideAddGoalModal, handleGoalConfirm, 'addGoalConfirm');
     setupModal('routineDetailModal', hideDetailStatsModal);
     setupModal('rewardModal', hideRewardModal, handleRewardConfirm);
+
 
     // ▲▲▲ 여기까지 교체 ▲▲▲
     // --- ESC로 모든 모달 닫기 ---
