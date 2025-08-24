@@ -698,6 +698,7 @@ async function handleReadingProgressConfirm() {
     hideReadingProgressModal();
 }
 
+// ▼▼▼ 2025-08-25(수정일) '목표 달성' 신호를 함께 보내도록 수정 ▼▼▼
 async function handleTimeInputConfirm() {
     if (!activeRoutineForModal) return;
     const value = document.getElementById('timeInput').value;
@@ -708,12 +709,14 @@ async function handleTimeInputConfirm() {
     
     const updateData = {
         value: value,
-        status: 'completed' // 시간 타입은 입력 즉시 완료
+        status: 'completed', // 시간 타입은 입력 즉시 완료로 간주
+        dailyGoalMetToday: true // ★★★ 핵심: 목표를 달성했다는 신호를 명시적으로 추가
     };
 
     await completeMission(activeRoutineForModal, updateData);
     hideTimeInputModal();
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) '목표 달성' 신호를 함께 보내도록 수정 ▲▲▲
 
 // ====================================================================
 // 6-C. 범용 모달 설정 함수
