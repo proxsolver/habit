@@ -83,6 +83,40 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('⚠️ [DOMContentLoaded] 경고: logout-btn을 찾을 수 없습니다.');
     }
 
+// ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
+firebase.auth().getRedirectResult()
+    .then(async (result) => {
+        // 리다이렉트 결과에 사용자 정보가 포함되어 있다면,
+        // onAuthStateChanged가 작동하기 전에 선제적으로 앱을 초기화합니다.
+        if (result && result.user) {
+            console.log('✅ [getRedirectResult] 부모 계정 리다이렉트 성공 확인:', result.user.displayName);
+            
+            const user = result.user;
+            // loadAllDataForUser 함수를 호출하여 모든 데이터를 로드합니다.
+            const fullUserData = await loadAllDataForUser(user);
+            
+            currentUser = { 
+                uid: user.uid,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                ...fullUserData 
+            };
+            console.log("✅ [getRedirectResult] 선제적 부모 정보 구성 완료.");
+
+            // UI를 즉시 업데이트하고, 현재 페이지를 렌더링합니다.
+            updateUserInfoUI(currentUser);
+            document.querySelector('.bottom-tab-bar')?.style.display = 'flex';
+            renderCurrentPage(); // 현재 활성화된 페이지를 다시 그림
+        }
+    })
+    .catch((error) => {
+        console.error('❌ [getRedirectResult] 부모 계정 처리 중 오류 발생:', error);
+        showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
+    });
+// ▲▲▲ 여기까지 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
+
+
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
 // ▼▼▼ 2025-08-21 로그인 시 마이그레이션 절차 추가 ▼▼▼
 firebase.auth().onAuthStateChanged(async (user) => {
