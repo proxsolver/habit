@@ -39,16 +39,31 @@ document.addEventListener('DOMContentLoaded', () => {
 // // ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
 
 // ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▼▼▼
+// 기존 onAuthStateChanged 함수를 이 코드로 교체합니다.
 firebase.auth().onAuthStateChanged(async (user) => {
     const bottomTabBar = document.querySelector('.bottom-tab-bar');
     if (user) {
-        // Firestore에서 상세 사용자 정보를 가져옵니다.
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        
-        // ★★★ 핵심 수정: userDoc.exists() -> userDoc.exists 로 변경 ★★★
+        const userDocRef = db.collection('users').doc(user.uid);
+        const userDoc = await userDocRef.get();
         const userData = userDoc.exists ? userDoc.data() : {};
 
-        // 인증 정보와 Firestore 정보를 합쳐 완전한 currentUser 객체를 생성합니다.
+        // 1. companionCat 데이터가 없으면, 기본값으로 생성해줍니다.
+        if (userDoc.exists && !userData.companionCat) {
+            console.log(`[onAuthStateChanged] ${user.displayName}님을 위한 새 반려묘를 생성합니다.`);
+            const initialCatData = {
+                name: "아기 고양이",
+                catType: "cheese_tabby",
+                level: 1,
+                exp: 0,
+                expression: "default",
+                lastActivityTimestamp: null
+            };
+            await userDocRef.update({ companionCat: initialCatData });
+            // 업데이트된 정보를 다시 불러오기 위해 userData에 반영합니다.
+            userData.companionCat = initialCatData;
+        }
+        
         currentUser = {
             uid: user.uid,
             displayName: user.displayName,
@@ -64,6 +79,12 @@ firebase.auth().onAuthStateChanged(async (user) => {
         
         await updateUserInfoUI(currentUser);
         await loadAssignedRoutines(currentUser.uid);
+        
+        // 2. 고양이 렌더링 함수를 호출합니다.
+        if (currentUser.companionCat) {
+            renderCompanionCat(currentUser.companionCat);
+        }
+
         showHomePage();
         if(bottomTabBar) bottomTabBar.style.display = 'flex';
 
@@ -74,7 +95,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
         if(bottomTabBar) bottomTabBar.style.display = 'none';
     }
 });
-// ▲▲▲ 여기까지 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▲▲▲
+// // ▲▲▲ 여기까지 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▲▲▲
 
 
 // ▲▲▲ 여기까지 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▲▲▲
@@ -336,6 +358,28 @@ async function updateUserInfoUI(user) {
         loginBtn.style.display = 'block';
     }
 }
+
+// ▼▼▼ 2025-08-25(수정일) 반려묘 렌더링 함수 신설 ▼▼▼
+function renderCompanionCat(petData) {
+    const container = document.getElementById('companion-cat-container');
+    if (!container || !petData) return;
+
+    const level = petData.level || 0;
+    const expression = petData.expression || 'default';
+    const name = petData.name || '나의 고양이';
+
+    // 지금은 기본 이미지만 사용합니다. (파일명은 추후 규칙에 맞게 변경)
+    const imagePath = `images/cat_stage_1_default_0.png`;
+
+    container.innerHTML = `
+        <h3 style="font-weight: 700; margin-bottom: 0.5rem;">${name} (Lv.${level})</h3>
+        <img src="${imagePath}" alt="${name}" style="width: 120px; height: 120px; image-rendering: pixelated; image-rendering: -moz-crisp-edges;">
+    `;
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) 반려묘 렌더링 함수 신설 ▲▲▲
+
+
+
 
 // ====================================================================
 // 6. 모달 제어
