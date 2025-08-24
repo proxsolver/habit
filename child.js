@@ -373,7 +373,7 @@ function renderCompanionCat(petData) {
 
     container.innerHTML = `
         <h3 style="font-weight: 700; margin-bottom: 0.5rem;">${name} (Lv.${level})</h3>
-        <img src="${imagePath}" alt="${name}" style="width: 120px; height: 120px; image-rendering: pixelated; image-rendering: -moz-crisp-edges;">
+        <img src="${imagePath}" alt="${name}" style="width: 120px; height: 120px; image-rendering: gitpixelated; image-rendering: -moz-crisp-edges;">
     `;
 }
 // ▲▲▲ 여기까지 2025-08-25(수정일) 반려묘 렌더링 함수 신설 ▲▲▲
