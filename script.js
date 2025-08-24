@@ -3443,12 +3443,131 @@ function showGoalCompassPage() {
 }
 // ▲▲▲ 여기까지 08/19(수정일) 각 페이지 전환 함수 임무 단순화 ▲▲▲
 
+// ▼▼▼ 2025-08-25(수정일) 보상 요청 수신 및 렌더링 부대 추가 ▼▼▼
+
+// [주력 부대] Firestore에서 '대기 중'인 보상 요청을 가져와 화면에 렌더링합니다.
+async function loadAndRenderRewardRequests() {
+    if (!currentUser || !currentUser.familyId) return;
+
+    const container = document.getElementById('reward-approval-section');
+    const listId = 'reward-request-list'; // 목록을 담을 div의 ID
+    // 기존에 있던 p 태그는 유지하고, 그 아래에 목록 div를 추가/관리합니다.
+    let listContainer = document.getElementById(listId);
+    if (!listContainer) {
+        listContainer = document.createElement('div');
+        listContainer.id = listId;
+        listContainer.className = 'manage-routine-list'; // 기존 스타일 재활용
+        container.appendChild(listContainer);
+    }
+    
+    const description = container.querySelector('.panel-description');
+    listContainer.innerHTML = '요청 목록을 확인하는 중...';
+
+    const requestsRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests');
+    const snapshot = await requestsRef.where('status', '==', 'pending').orderBy('requestedAt', 'desc').get();
+
+    if (snapshot.empty) {
+        description.textContent = '현재 대기 중인 요청이 없습니다.';
+        listContainer.innerHTML = '';
+        return;
+    }
+
+    description.textContent = '아래 요청을 승인하거나 거절할 수 있습니다.';
+    listContainer.innerHTML = ''; // 로딩 메시지 제거
+
+    const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    requests.forEach(req => {
+        const requestElement = createRewardRequestElement(req);
+        listContainer.appendChild(requestElement);
+    });
+}
+
+// [지원 부대] 개별 요청 아이템의 HTML 구조를 생성합니다.
+function createRewardRequestElement(request) {
+    const item = document.createElement('div');
+    item.className = 'manage-routine-item';
+    item.innerHTML = `
+        <div class="routine-main-info" style="flex-grow: 1;">
+            <div class="routine-main-name">
+                ${request.childName} → <span style="font-weight: 800;">${request.rewardName}</span>
+            </div>
+            <div class="routine-main-details" style="font-weight: 600; color: var(--primary);">
+                ✨ ${request.points} P
+            </div>
+        </div>
+        <div class="routine-controls">
+            <button class="btn-approve-reward" data-id="${request.id}" data-child-id="${request.childId}" data-points="${request.points}" style="background: var(--success);">승인</button>
+            <button class="btn-reject-reward" data-id="${request.id}" style="background: var(--error);">거절</button>
+        </div>
+    `;
+    return item;
+}
+
+// ▲▲▲ 여기까지 2025-08-25(수정일) 보상 요청 수신 및 렌더링 부대 추가 ▲▲▲
+
+
+// ▼▼▼ 2025-08-25(수정일) 보상 요청 결재(승인/거절) 부대 추가 ▼▼▼
+
+// [승인 장교] '승인' 버튼 클릭 시 실행될 작전
+async function approveRewardRequest(requestId, childId, points) {
+    if (!confirm("정말로 이 요청을 승인하시겠습니까? 자녀의 포인트가 즉시 차감됩니다.")) return;
+
+    const familyId = currentUser.familyId;
+    const requestRef = db.collection('families').doc(familyId).collection('reward_requests').doc(requestId);
+    const childRef = db.collection('users').doc(childId);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const childDoc = await transaction.get(childRef);
+            if (!childDoc.exists) {
+                throw "자녀 사용자를 찾을 수 없습니다.";
+            }
+
+            const currentPoints = childDoc.data().points || 0;
+            if (currentPoints < points) {
+                // 이 단계에서 포인트 부족이 발견되면, 요청 상태를 '거절'로 변경하고 작전 실패 처리
+                await transaction.update(requestRef, { status: 'rejected', processedAt: new Date() });
+                throw "자녀의 포인트가 부족하여 승인할 수 없습니다.";
+            }
+
+            // 포인트 차감 및 요청 상태 '승인'으로 변경
+            transaction.update(childRef, { points: firebase.firestore.FieldValue.increment(-points) });
+            transaction.update(requestRef, { status: 'approved', processedAt: new Date() });
+        });
+
+        showNotification("요청을 성공적으로 승인했습니다.", "success");
+        await loadAndRenderRewardRequests(); // 목록 새로고침
+
+    } catch (error) {
+        console.error("❌ 보상 승인 실패:", error);
+        showNotification(`승인 실패: ${error}`, "error");
+        await loadAndRenderRewardRequests(); // 실패 시에도 목록 새로고침
+    }
+}
+
+// [거절 장교] '거절' 버튼 클릭 시 실행될 작전
+async function rejectRewardRequest(requestId) {
+    if (!confirm("정말로 이 요청을 거절하시겠습니까?")) return;
+    try {
+        const requestRef = db.collection('families').doc(currentUser.familyId).collection('reward_requests').doc(requestId);
+        await requestRef.update({ status: 'rejected', processedAt: new Date() });
+        showNotification("요청을 거절했습니다.", "info");
+        await loadAndRenderRewardRequests(); // 목록 새로고침
+    } catch (error) {
+        console.error("❌ 보상 거절 실패:", error);
+        showNotification("요청 거절에 실패했습니다.", "error");
+    }
+}
+
+// ▲▲▲ 여기까지 2025-08-25(수정일) 보상 요청 결재(승인/거절) 부대 추가 ▲▲▲
+
+
   // ▼▼▼ 2025-08-24 showRewardsPage 함수 신설 ▼▼▼
     // showGoalCompassPage 함수 아래에 추가하는 것을 권장합니다.
     function showRewardsPage() {
         showPage('rewards-page'); // "rewards-page를 보여줘" 라고 보고
         renderRewardManagement(); // 보상 관리 목록 렌더링
-        // 향후 여기에 '요청 승인' 목록 렌더링 함수도 추가될 예정입니다.
+        loadAndRenderRewardRequests(); // ★★★ 이 명령을 추가합니다.
     }
     // ▲▲▲ 여기까지 2025-08-24 showRewardsPage 함수 신설 ▲▲▲
 
@@ -3891,6 +4010,24 @@ function setupAllEventListeners() {
         deleteRewardBtn.addEventListener('click', handleDeleteReward);
     }
 
+    // ▼▼▼ 2025-08-25(수정일) 보상 요청 결재 버튼 이벤트 리스너 추가 ▼▼▼
+    const approvalSection = document.getElementById('reward-approval-section');
+    if (approvalSection) {
+        approvalSection.addEventListener('click', (e) => {
+            const target = e.target;
+            const requestId = target.dataset.id;
+            if (!requestId) return;
+
+            if (target.matches('.btn-approve-reward')) {
+                const childId = target.dataset.childId;
+                const points = parseInt(target.dataset.points);
+                approveRewardRequest(requestId, childId, points);
+            } else if (target.matches('.btn-reject-reward')) {
+                rejectRewardRequest(requestId);
+            }
+        });
+    }
+    // ▲▲▲ 여기까지 2025-08-25(수정일) 보상 요청 결재 버튼 이벤트 리스너 추가 ▲▲▲
 
     // --- 통계 페이지 필터 버튼 ---
     document.getElementById('filter-weekly')?.addEventListener('click', () => {

@@ -566,10 +566,10 @@ function getEstimatedCompletionDate(routine) {
     return completionDate.toLocaleDateString('ko-KR');
 }
 // ▼▼▼ 2025-08-25(수정일) 자체적으로 최신 정보를 조회하는 logRoutineHistory 최종 버전 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
 async function logRoutineHistory(routineId, dataToLog) {
     console.log(`[logRoutineHistory] 미션(${routineId})에 대한 활동 보고서 작성을 시작합니다.`);
     
-    // 1. Firebase 사령부에서 현재 사용자 정보를 직접 확보
     const user = firebase.auth().currentUser;
     if (!user) {
         console.error("❌ [logRoutineHistory] 보고 장교가 현재 사용자 정보를 확보할 수 없습니다.");
@@ -577,15 +577,15 @@ async function logRoutineHistory(routineId, dataToLog) {
     }
 
     try {
-        // 2. 인사 기록부에서 최신 소속 부대(familyId) 정보를 직접 조회
         const userDoc = await db.collection('users').doc(user.uid).get();
-        if (!userDoc.exists() || !userDoc.data().familyId) {
+        
+        // ★★★ 핵심 수정: userDoc.exists() -> userDoc.exists 로 변경 ★★★
+        if (!userDoc.exists || !userDoc.data().familyId) {
             console.error("❌ [logRoutineHistory] 사용자의 familyId 정보를 찾을 수 없어 보고를 중단합니다.");
             return;
         }
         const familyId = userDoc.data().familyId;
 
-        // 3. 최신 정보로 보고서 작성 및 제출
         const today = new Date();
         const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const historyRef = db.collection('families').doc(familyId)
@@ -606,6 +606,8 @@ async function logRoutineHistory(routineId, dataToLog) {
         console.error("❌ [logRoutineHistory] 보고서 제출 중 치명적인 에러 발생:", error);
     }
 }
+// ▲▲▲ 여기까지 2025-08-25(수정일) logRoutineHistory 최종 버전 ▲▲▲
+
 // ▲▲▲ 여기까지 2025-08-25(수정일) logRoutineHistory 최종 버전 ▲▲▲
 // ▼▼▼ 2025-08-25(수정일) 타이밍 문제를 회피하고 직접 신원을 조회하는 최종 테스트 함수 ▼▼▼
 async function testDirectWrite() {
