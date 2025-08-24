@@ -2167,6 +2167,33 @@ function renderRoutines() {
 // ▼▼▼ 2025-08-21 renderManagePage 함수 안정성 강화 ▼▼▼
 // ▼▼▼ 2025-08-24 [완벽본] renderManagePage 함수 ▼▼▼
 function renderManagePage() {
+    // --- '가족 관리' UI 동적 제어 임무 시작 ---
+    const familyContentDiv = document.getElementById('family-content');
+    if (familyContentDiv) {
+        if (currentUser && currentUser.familyId) {
+            // 이미 가족에 소속된 경우
+            familyContentDiv.innerHTML = `
+                <p style="color: var(--text-secondary);">당신은 이미 가족에 소속되어 있습니다.</p>
+                <button id="inviteMemberBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 가족원 초대하기</button>
+            `;
+            // ★★★ 이벤트 리스너는 항상 innerHTML로 요소를 만든 '직후'에 연결해야 합니다.
+            document.getElementById('inviteMemberBtn').addEventListener('click', () => {
+                showNotification('초대 기능은 현재 준비 중입니다.', 'info');
+            });
+        } else {
+            // 가족이 없는 경우
+            familyContentDiv.innerHTML = `
+                <p style="color: var(--text-secondary);">가족을 생성하여 자녀의 루틴을 관리하거나, 기존 가족에 참여하세요.</p>
+                <button id="createFamilyBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 새 가족 생성하기</button>
+                <button id="joinFamilyBtn" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">초대 코드로 참여하기</button>
+            `;
+            document.getElementById('createFamilyBtn').addEventListener('click', createFamily);
+            document.getElementById('joinFamilyBtn').addEventListener('click', () => {
+                showNotification('초대 코드로 참여하는 기능은 현재 준비 중입니다.', 'info');
+            });
+        }
+    }
+    // --- '가족 관리' UI 동적 제어 임무 종료 ---
     // --- 생산자 검토: 필수 UI 요소가 모두 존재하는지 확인 ---
     const tabs = document.querySelectorAll('.routine-manage-tabs .tab-btn');
     const panels = document.querySelectorAll('.routine-manage-panels .tab-panel');
@@ -3363,76 +3390,18 @@ function showHomePage() {
     document.querySelector('.daily-progress').style.display = 'block';
     renderRoutines();
 }
-// ▼▼▼ 08/20(수정일) showManagePage 최종 임무 수첩 (가족 기능 포함) ▼▼▼
+
 // ▼▼▼ 08/20(수정일) showManagePage 최종 안정화 ▼▼▼
+// ▼▼▼ 2025-08-24(수정일) 책임과 역할이 명확해진 최종 버전 ▼▼▼
 function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
+    // 임무 1: 페이지 전환은 총괄 지휘관(showPage)에게 보고한다.
     showPage('manage-page');
 
-    // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
-    document.getElementById('incomplete-section').style.display = 'none';
-    document.querySelector('.daily-progress').style.display = 'none';
-    document.getElementById('inprogress-section').style.display = 'none';
-    document.getElementById('completed-section').style.display = 'none';
-    document.getElementById('skipped-section').style.display = 'none';
-    
-    // 3. 관리 섹션만 전면에 내세웁니다.
-    const manageSection = document.getElementById('manage-section');
-    manageSection.style.display = 'block';
-
-    // 2. '가족 관리' UI 동적 제어 (신규 핵심 임무)
-    const familyContentDiv = document.getElementById('family-content');
-    if (familyContentDiv) { // familyContentDiv가 존재하는지 먼저 확인
-        if (currentUser && currentUser.familyId) {
-            // 이미 가족에 소속된 경우
-            familyContentDiv.innerHTML = `
-                <p style="color: var(--text-secondary);">당신은 이미 가족에 소속되어 있습니다.</p>
-                <button id="inviteMemberBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 가족원 초대하기</button>
-            `;
-            document.getElementById('inviteMemberBtn').addEventListener('click', () => {
-                showNotification('초대 기능은 현재 준비 중입니다.', 'info');
-            });
-        } else {
-            // 가족이 없는 경우
-            familyContentDiv.innerHTML = `
-                <p style="color: var(--text-secondary);">가족을 생성하여 자녀의 루틴을 관리하거나, 기존 가족에 참여하세요.</p>
-                <button id="createFamilyBtn" class="btn" style="width: 100%; margin-top: 1rem;">+ 새 가족 생성하기</button>
-                <button id="joinFamilyBtn" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;">초대 코드로 참여하기</button>
-            `;
-            document.getElementById('createFamilyBtn').addEventListener('click', createFamily);
-            document.getElementById('joinFamilyBtn').addEventListener('click', () => {
-                showNotification('초대 코드로 참여하는 기능은 현재 준비 중입니다.', 'info');
-            });
-        }
-    }
-
-    // 3. '새 루틴 추가' 버튼 동적 생성 (기존 임무 유지)
-    const existingAddBtn = manageSection.querySelector('#addRoutineBtnInManagePage');
-    if (!existingAddBtn) {
-        const addRoutineBtn = document.createElement('button');
-        addRoutineBtn.id = 'addRoutineBtnInManagePage';
-        addRoutineBtn.className = 'btn';
-        addRoutineBtn.textContent = '➕ 새 루틴 추가하기';
-        addRoutineBtn.style.width = '100%';
-        addRoutineBtn.style.marginTop = '1.5rem';
-        addRoutineBtn.style.backgroundColor = 'var(--success)';
-        
-        addRoutineBtn.addEventListener('click', showAddRoutineModal);
-        
-        const saveOrderBtn = document.getElementById('saveOrderBtn');
-        if (saveOrderBtn) {
-            manageSection.insertBefore(addRoutineBtn, saveOrderBtn);
-        } else {
-            manageSection.appendChild(addRoutineBtn);
-        }
-    }
-
-    // 4. 관리 페이지 내용 렌더링 (기존 임무 유지)
+    // 임무 2: 자신의 페이지가 준비되면, 내용물 생성을 담당하는 예하 부대들을 호출한다.
     renderAreaStats();
     renderManagePage();
-}
-// ▲▲▲ 여기까지 2025-08-24(수정일) 구식 로직을 완전히 제거한 최종 버전 ▲▲▲
 
 // feat(stats): Implement basic UI and rendering for statistics page
 
