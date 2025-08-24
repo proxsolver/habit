@@ -3369,7 +3369,6 @@ function showManagePage() {
     console.log('📌 [showManagePage]: 관리 페이지 표시');
 
     showPage('manage-page');
-    showMainSection('manage-section');
 
     // 2. main-app-content 내부의 모든 홈 관련 섹션들을 정리합니다.
     document.getElementById('incomplete-section').style.display = 'none';
