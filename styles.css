@@ -2348,4 +2348,8 @@ padding-bottom: 70px; /* 하단 탭 바 높이만큼 */
     justify-content: flex-end;
     }
     
-    
+    /* ▼▼▼ 2025-08-25(수정일) 자녀 페이지 상단 진행률 바 숨김 처리 (정밀 타격) ▼▼▼ */
+    #child-page .daily-progress {
+    display: none;
+    }
+/* ▲▲▲ 여기까지 2025-08-25(수정일) 자녀 페이지 상단 진행률 바 숨김 처리 (정밀 타격) ▲▲▲ */
