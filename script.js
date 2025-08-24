@@ -398,25 +398,34 @@ async function updateAreasInFirebase(updatedAreas) {
 }
 
 // ▼▼▼ 2025-08-21 가족 구성원 정보 수집 함수 추가 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) Firestore 권한 문제를 해결하기 위해 가족 문서에서 멤버를 직접 읽어오도록 수정 ▼▼▼
 async function getFamilyMembers() {
     if (!currentUser || !currentUser.familyId) {
-        // 가족이 없으면 '나' 자신만 반환
-        return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)` }];
+        console.log('⚠️ [getFamilyMembers]: 가족 정보 없음. "나"만 반환.');
+        return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)`, role: 'parent' }];
     }
     
-    console.log('📌 [getFamilyMembers]: 가족 구성원 정보 수집 시작...');
+    console.log('📌 [getFamilyMembers]: 가족 문서에서 구성원 정보 수집 시작...');
     try {
-        const querySnapshot = await db.collection('users')
-            .where('familyId', '==', currentUser.familyId)
-            .get();
-        
-        const members = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            name: doc.data().name,
-            role: doc.data().role
+        // 1. users 컬렉션 대신, 현재 가족의 문서를 직접 조회합니다.
+        const familyDoc = await db.collection('families').doc(currentUser.familyId).get();
+
+        if (!familyDoc.exists) {
+            console.error("❌ [getFamilyMembers]: 가족 문서를 찾을 수 없습니다!");
+            return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)`, role: 'parent' }];
+        }
+
+        const familyData = familyDoc.data();
+        const membersMap = familyData.members || {};
+
+        // 2. members 맵(map)을 사용하기 쉬운 배열 형태로 변환합니다.
+        const members = Object.keys(membersMap).map(uid => ({
+            id: uid,
+            name: membersMap[uid].name,
+            role: membersMap[uid].role
         }));
         
-        // '나'를 목록 맨 위에 표시하고 구분하기 쉽게 "(나)" 추가
+        // '나'를 목록 맨 위에 표시하고 "(나)"를 추가합니다.
         const me = members.find(m => m.id === currentUser.uid);
         const others = members.filter(m => m.id !== currentUser.uid);
         
@@ -430,10 +439,12 @@ async function getFamilyMembers() {
 
     } catch (error) {
         console.error("❌ [getFamilyMembers]: 가족 구성원 정보 수집 실패", error);
-        return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)` }]; // 실패 시 '나'만 반환
+        // 실패 시에도 최소한 '나'의 정보는 반환하여 UI 오류를 방지합니다.
+        return [{ id: currentUser.uid, name: `${currentUser.displayName} (나)`, role: 'parent' }];
     }
 }
-// ▲▲▲ 여기까지 2025-08-21 가족 구성원 정보 수집 함수 추가 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-25(수정일) Firestore 권한 문제를 해결하기 위해 가족 문서에서 멤버를 직접 읽어오도록 수정 ▲▲▲
+// // ▲▲▲ 여기까지 2025-08-21 가족 구성원 정보 수집 함수 추가 ▲▲▲
 
 // ▼▼▼ 2025-08-24 보상 관리 CRUD 함수 블록 ▼▼▼
 
@@ -758,6 +769,7 @@ async function logRoutineHistory(routineId, dataToLog) {
 
 // 5번 구역: Firebase 데이터 처리 함수 (CRUD)에 추가하는 것을 권장합니다.
 // ▼▼▼ 08/19(수정일) '가족 생성' 함수 추가 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) createFamily 함수에 구성원 정보 저장 로직 추가 ▼▼▼
 async function createFamily() {
     if (!currentUser) return;
     if (!confirm('새로운 가족을 생성하시겠습니까? 당신이 첫 번째 "부모"가 됩니다.')) return;
@@ -767,11 +779,18 @@ async function createFamily() {
     const familiesRef = db.collection('families');
 
     try {
-        // 1. 새로운 가족 문서를 생성합니다.
+        // 1. 새로운 가족 문서를 생성할 때 members 필드에 현재 사용자 정보를 추가합니다.
         const newFamilyDoc = await familiesRef.add({
             familyName: `${currentUser.displayName}의 가족`,
-            members: [currentUser.uid],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            // ★★★ 핵심 변경: 기존 members 배열 대신, 상세 정보가 담긴 객체 맵(map)을 저장합니다.
+            members: {
+                [currentUser.uid]: {
+                    name: currentUser.displayName,
+                    role: 'parent',
+                    photoURL: currentUser.photoURL
+                }
+            }
         });
         console.log(`✅ [createFamily]: 새로운 가족 생성 완료. ID: ${newFamilyDoc.id}`);
 
@@ -783,21 +802,20 @@ async function createFamily() {
         console.log(`✅ [createFamily]: 사용자 역할을 'parent'로 업데이트 완료.`);
         
         showNotification('🎉 새로운 가족이 생성되었습니다!', 'success');
-
-        // ★★★ 핵심 수정: 데이터베이스뿐만 아니라 로컬 지휘관의 정보도 즉시 갱신합니다. ★★★
+        
         currentUser.familyId = newFamilyDoc.id;
         currentUser.role = 'parent';
         
-        // 3. 최신 사용자 정보를 다시 불러와 UI를 갱신합니다.
-        await loadAllDataForUser(currentUser.uid);
-        showManagePage(); // 관리 페이지를 새로고침하여 '초대하기' 버튼을 보여줍니다.
+        await loadAllDataForUser({ uid: currentUser.uid, ...currentUser }); // ★★★ 수정: user 객체 전체 전달
+        showManagePage();
 
     } catch (error) {
         console.error("❌ [createFamily]: 가족 생성 실패", error);
         showNotification('가족 생성에 실패했습니다.', 'error');
     }
 }
-// ▲▲▲ 여기까지 08/19(수정일) '가족 생성' 함수 추가 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-25(수정일) createFamily 함수에 구성원 정보 저장 로직 추가 ▲▲▲
+// // ▲▲▲ 여기까지 08/19(수정일) '가족 생성' 함수 추가 ▲▲▲
 
 
 // ====================================================================
