@@ -119,9 +119,9 @@ firebase.auth().getRedirectResult()
 
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
 // ▼▼▼ 2025-08-21 로그인 시 마이그레이션 절차 추가 ▼▼▼
+// ▼▼▼ 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▼▼▼
+// 기존 onAuthStateChanged 함수를 이 코드로 완전히 교체합니다.
 firebase.auth().onAuthStateChanged(async (user) => {
-    const bottomTabBar = document.querySelector('.bottom-tab-bar');
-
     if (user) {
         const fullUserData = await loadAllDataForUser(user);
         
@@ -142,17 +142,25 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
 
         updateUserInfoUI(currentUser);
-        if (bottomTabBar) bottomTabBar.style.display = 'flex';
+        
+        // ★★★ 문제의 코드를 아래와 같이 안정적인 코드로 변경했습니다 ★★★
+        const bottomTabBar = document.querySelector('.bottom-tab-bar');
+        if (bottomTabBar) {
+            bottomTabBar.style.display = 'flex';
+        }
+        
         renderCurrentPage();
 
     } else {
         currentUser = null;
         updateUserInfoUI(null);
-        if (bottomTabBar) bottomTabBar.style.display = 'none';
+        const bottomTabBar = document.querySelector('.bottom-tab-bar');
+        if (bottomTabBar) {
+            bottomTabBar.style.display = 'none';
+        }
     }
 });
-// ▲▲▲ 여기까지 2025-08-21 로그인 시 마이그레이션 절차 추가 ▲▲▲
-
+// ▲▲▲ 여기까지 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▲▲▲
 
 // --- 임무 4: 리다이렉트 로그인 결과 처리 ---
 firebase.auth().getRedirectResult()
