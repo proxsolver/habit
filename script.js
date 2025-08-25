@@ -71,59 +71,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
             firebase.auth().onAuthStateChanged(async (user) => {
-                console.log('🔍 [onAuthStateChanged] 인증 상태:', user ? {uid: user.uid, email: user.email} : 'null');                
-                if (user) {
-                    try {
-                        // 사용자 데이터 로딩 완료까지 대기
-                        const fullUserData = await loadAllDataForUser(user);
-                        
-                        currentUser = {
-                            uid: user.uid,
-                            displayName: user.displayName,
-                            email: user.email,
-                            photoURL: user.photoURL,
-                            ...fullUserData
-                        };
-                        
-                        console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
-                        
-                        // 자녀 페이지 리다이렉트 체크
-                        if (currentUser.role === 'child') {
-                            if (!window.location.pathname.endsWith('child.html')) {
-                                window.location.href = 'child.html';
-                            }
-                            return;
-                        }
-                        
-                        // UI 업데이트는 데이터 로딩 완료 후에만 실행
-                        updateUserInfoUI(currentUser);
-                        
-                        const bottomTabBar = document.querySelector('.bottom-tab-bar');
-                        if (bottomTabBar) {
-                            bottomTabBar.style.display = 'flex';
-                        }
-                        
-                        // 페이지 렌더링도 지연 실행
-                        setTimeout(() => {
-                            renderCurrentPage();
-                        }, 100);
-                        
-                    } catch (error) {
-                        console.error('❌ [onAuthStateChanged] 사용자 데이터 로딩 실패:', error);
-                        // 실패 시 로그아웃 처리
-                        firebase.auth().signOut();
+                try {
+                    if (user) {
+                        console.log('🔍 [onAuthStateChanged] 인증 상태:', { uid: user.uid, email: user.email });
+                        await loadAllDataForUser(user);
+                        // UI 업데이트 (예: 사용자 정보 표시)
+                        document.getElementById('user-info').style.display = 'block';
+                        document.getElementById('login-btn').style.display = 'none';
+                    } else {
+                        console.log('🔍 [onAuthStateChanged] 인증 상태: null');
+                        document.getElementById('user-info').style.display = 'none';
+                        document.getElementById('login-btn').style.display = 'block';
                     }
-                } else {
-                    currentUser = null;
-                    updateUserInfoUI(null);
-                    
-                    const bottomTabBar = document.querySelector('.bottom-tab-bar');
-                    if (bottomTabBar) {
-                        bottomTabBar.style.display = 'none';
-                    }
+                } catch (error) {
+                    console.error('❌ [onAuthStateChanged] 사용자 데이터 로딩 실패:', error);
+                    // 로그아웃 대신 사용자에게 알림
+                    showNotification('데이터 로드에 실패했습니다. 다시 시도해주세요.', 'error');
+                    // 필요 시 재시도 로직 추가
+                    // 예: setTimeout(() => loadAllDataForUser(user), 2000);
                 }
             });
-            
+                        
             // --- 임무 3: 리다이렉트 특수부대(getRedirectResult) 투입 ---
             firebase.auth().getRedirectResult()
             .then((result) => {
@@ -199,6 +167,16 @@ async function loadAllDataForUser(user) {
             const newUserDoc = await userDocRef.get();
             console.log(`📌 [loadAllDataForUser]: 신규 userDoc:`, newUserDoc.data());
         }
+
+// userData 명시적으로 정의
+const userData = userDoc.data();
+if (!userData) {
+    throw new Error('userData is undefined: 문서 데이터가 존재하지 않음');
+}
+
+// userData 사용 예시
+const { familyId, role } = userData;
+console.log(`📌 [loadAllDataForUser]: familyId: ${familyId}, role: ${role}`);
 
         // ★★★ 핵심 변경: familyId를 기반으로 공유 routines 컬렉션을 쿼리합니다. ★★★
         if (userData.familyId) {
