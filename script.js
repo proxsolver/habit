@@ -878,38 +878,13 @@ async function createFamily() {
 // ====================================================================
 
 // ▼▼▼ 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▼▼▼
+// ▼▼▼ 2025-08-25 중복 선언된 updateUserInfoUI 함수 단일화 ▼▼▼
 function updateUserInfoUI(user) {
     const userInfoDiv = document.getElementById('user-info');
     const userNameSpan = document.getElementById('user-name');
     const userPhotoImg = document.getElementById('user-photo');
-    const loginBtn = document.getElementById('login-btn'); // ← 이 라인을 추가
+    const loginBtn = document.getElementById('login-btn');
     
-    console.log('🖼️ [updateUserInfoUI] UI 업데이트 시작. 사용자:', user ? user.displayName : 'null');
-    
-    if (user) {
-        // 사용자가 로그인한 경우
-        if (userInfoDiv) {
-            userInfoDiv.style.display = 'flex';
-            console.log('✅ 사용자 정보 영역 표시');
-        }
-        if (loginBtn) {
-            loginBtn.style.display = 'none';
-            console.log('✅ 로그인 버튼 숨김');
-        }
-        if (userNameSpan) userNameSpan.textContent = user.displayName || '사용자';
-        if (userPhotoImg && user.photoURL) userPhotoImg.src = user.photoURL;
-    } else {
-        // 사용자가 로그아웃한 경우
-        if (userInfoDiv) {
-            userInfoDiv.style.display = 'none';
-            console.log('✅ 사용자 정보 영역 숨김');
-        }
-        if (loginBtn) {
-            loginBtn.style.display = 'block';
-            console.log('✅ 로그인 버튼 표시');
-        }
-    }
-}
     console.log('🖼️ [updateUserInfoUI] UI 업데이트 시작. 사용자:', user ? user.displayName : 'null');
     
     if (user) {
@@ -932,13 +907,15 @@ function updateUserInfoUI(user) {
         // 사용자가 로그아웃한 경우
         if (userInfoDiv) {
             userInfoDiv.style.display = 'none';
+            console.log('✅ 사용자 정보 영역 숨김');
         }
         if (loginBtn) {
             loginBtn.style.display = 'block';
+            console.log('✅ 로그인 버튼 표시');
         }
     }
-
-
+}
+// ▲▲▲ 여기까지 2025-08-25 중복 선언된 updateUserInfoUI 함수 단일화 ▲▲▲
 // ▲▲▲ 여기까지 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▲▲▲
 
 //정상작동
