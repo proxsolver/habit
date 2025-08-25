@@ -71,8 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
             firebase.auth().onAuthStateChanged(async (user) => {
-                console.log('🔍 [onAuthStateChanged] 인증 상태 변경 감지:', user ? '로그인' : '로그아웃');
-                
+                console.log('🔍 [onAuthStateChanged] 인증 상태:', user ? {uid: user.uid, email: user.email} : 'null');                
                 if (user) {
                     try {
                         // 사용자 데이터 로딩 완료까지 대기
@@ -135,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch((error) => {
-                console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류:', error);
+                console.error('❌ [getRedirectResult] 상세 오류:', error.code, error.message, error);
                 showNotification('로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
             });
                 })
@@ -149,12 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
 const loginBtn = document.getElementById('login-btn');
 if (loginBtn) {
     loginBtn.addEventListener('click', () => {
-        console.log('🖱️ [Login Button Click] 모든 환경에서 Redirect 방식으로 로그인을 시도합니다.');
-        // 분기 로직을 제거하고 signInWithRedirect로 통일
-        firebase.auth().signInWithRedirect(provider).catch(error => {
-            console.error("❌ 로그인 리다이렉트 실패:", error);
-            showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
-        });
+        console.log('🖱️ [Login Button Click] Popup 방식으로 로그인 시도');
+        firebase.auth().signInWithPopup(provider)
+            .then((result) => console.log('📌 [signInWithPopup] 성공:', result.user))
+            .catch((error) => console.error('❌ [signInWithPopup] 실패:', error.code, error.message));
     });
 }
 // ▲▲▲ 여기까지 2025-08-25(작전일) 로그인 방식 단일화 (script.js) ▲▲▲    
@@ -195,15 +192,12 @@ async function loadAllDataForUser(user) {
         console.log(`📌 [loadAllDataForUser]: 사용자(${userId}) 데이터 보급 시작...`);
         const userDocRef = db.collection('users').doc(userId);
         const userDoc = await userDocRef.get();
-
-        let userData = {};
+        console.log(`📌 [loadAllDataForUser]: userDoc exists: ${userDoc.exists}, data:`, userDoc.data());
         if (!userDoc.exists) {
-            // 신규 사용자의 경우, 기본 데이터 생성 후 다시 로드
+            console.log(`📌 [loadAllDataForUser]: 신규 사용자, 초기 데이터 생성 시도`);
             await uploadInitialDataForUser(user);
             const newUserDoc = await userDocRef.get();
-            if (newUserDoc.exists) userData = newUserDoc.data();
-        } else {
-            userData = userDoc.data();
+            console.log(`📌 [loadAllDataForUser]: 신규 userDoc:`, newUserDoc.data());
         }
 
         // ★★★ 핵심 변경: familyId를 기반으로 공유 routines 컬렉션을 쿼리합니다. ★★★
@@ -230,9 +224,8 @@ async function loadAllDataForUser(user) {
         return userData;
 
     } catch (error) {
-        console.error("[loadAllDataForUser] >> 데이터 보급 실패: ", error);
-        showNotification("데이터를 불러오는데 실패했습니다.", "error");
-        return {};
+        console.error("[loadAllDataForUser] >> 데이터 보급 실패: ", error.code, error.message, error);
+        throw error;
     }
 }
 // ▲▲▲ 여기까지 2025-08-23 '가족 공유' 모델에 맞춰 데이터 로딩 방식 변경 ▲▲▲
@@ -276,8 +269,7 @@ async function uploadInitialDataForUser(user) {
     // 이 조치를 통해 Firestore 권한 오류가 발생하는 원인을 제거합니다.
 
     await batch.commit();
-    console.log(`[uploadInitialDataForUser] 신병(${user.displayName})의 개인 인식표 생성이 완료되었습니다.`);
-}
+    console.log(`[uploadInitialDataForUser] 신병(${user.displayName})의 개인 인식표 생성 완료, 확인:`, (await userDocRef.get()).data());}
 // ▲▲▲ 여기까지 2025-08-25(작전일) 신병 훈련소 현대화 작전 ▲▲▲
 
 
@@ -347,8 +339,7 @@ async function resetDailyProgressForUser(userId, familyId) {
             await batch.commit();
             debugLog("일일 진행 상황 초기화 완료.");
         } catch (error) {
-            console.error("일일 진행 상황 초기화 실패: ", error);
-        }
+            console.error("일일 진행 상황 초기화 실패: ", error.code, error.message);        }
     } else {
         debugLog("일일 진행 상황 초기화 필요 없음. 이미 최신.");
     }
@@ -854,8 +845,7 @@ async function createFamily() {
             familyId: newFamilyDoc.id,
             role: 'parent'
         });
-        console.log(`✅ [createFamily]: 사용자 역할을 'parent'로 업데이트 완료.`);
-        
+        console.log(`✅ [createFamily]: familyId ${newFamilyDoc.id} 반영 확인`, (await userDocRef.get()).data());        
         showNotification('🎉 새로운 가족이 생성되었습니다!', 'success');
         
         currentUser.familyId = newFamilyDoc.id;
