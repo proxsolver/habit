@@ -233,38 +233,46 @@ async function loadAllDataForUser(user) {
 
 
 // ▼▼▼ 2025-08-21 신규 사용자 오류 해결 3/3 ▼▼▼
-async function uploadInitialDataForUser(user) { // ★★★ 수정: userId -> user
+// ▼▼▼ 2025-08-25(작전일) 신병 훈련소 현대화 작전 ▼▼▼
+// 기존 uploadInitialDataForUser 함수를 이 코드로 완전히 교체합니다.
+async function uploadInitialDataForUser(user) {
+    console.log(`[uploadInitialDataForUser] 신병(${user.displayName})을 위한 개인 인식표(users 문서)를 생성합니다.`);
     const batch = db.batch();
     const userDocRef = db.collection('users').doc(user.uid);
-    // batch.set(userDocRef, { email: currentUser.email, name: currentUser.displayName, createdAt: new Date() }); // 기존 코드
-    batch.set(userDocRef, { email: user.email, name: user.displayName, createdAt: new Date() }); // ★★★ 수정: 전달받은 user 객체 사용
+    
+    // 임무 1: 신규 사용자의 users 문서만 생성합니다. (email, name 등 기본 정보)
+    batch.set(userDocRef, { 
+        email: user.email, 
+        name: user.displayName, 
+        createdAt: new Date(),
+        familyId: null, // 가족은 아직 없습니다.
+        role: null      // 역할도 아직 없습니다.
+    });
 
-    const INITIAL_SAMPLE_ROUTINES = [
-        { id: "init_1", name: '첫 루틴: 운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 0, order: 0, active: true, areas: ['health'], basePoints: 10 },
-        { id: "init_2", name: '첫 루틴: 물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 0, status: null, streak: 0, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['health'], basePoints: 5 },
-    ];
+    // 임무 2: 기본 영역(Areas)을 설정합니다. (이것은 개인 데이터이므로 유지)
     const DEFAULT_AREAS = [
         { id: 'health', name: '건강' },
         { id: 'relationships', name: '관계' },
         { id: 'work', name: '업무' }
     ];
-
-    INITIAL_SAMPLE_ROUTINES.forEach(routine => {
-        const docRef = userDocRef.collection('routines').doc();
-        batch.set(docRef, { ...routine, id: docRef.id });
-    });
     DEFAULT_AREAS.forEach(area => {
         const docRef = userDocRef.collection('areas').doc(area.id);
         batch.set(docRef, area);
     });
+
+    // 임무 3: 초기 통계(Stats) 및 메타(Meta) 데이터를 생성합니다.
     const initialStats = {};
     DEFAULT_AREAS.forEach(area => { initialStats[area.id] = 0; });
     batch.set(userDocRef.collection('stats').doc('userStats'), initialStats);
     batch.set(userDocRef.collection('meta').doc('lastReset'), { date: todayDateString });
     
+    // 폐기된 임무: 샘플 루틴을 users 하위에 더 이상 생성하지 않습니다.
+    // 이 조치를 통해 Firestore 권한 오류가 발생하는 원인을 제거합니다.
+
     await batch.commit();
-    // await loadAllDataForUser(user.uid); // 여기서는 재호출 불필요
+    console.log(`[uploadInitialDataForUser] 신병(${user.displayName})의 개인 인식표 생성이 완료되었습니다.`);
 }
+// ▲▲▲ 여기까지 2025-08-25(작전일) 신병 훈련소 현대화 작전 ▲▲▲
 
 
 // ▼▼▼ 2025-08-23 [재설계] 일일 초기화 경로 수정 (전체 버전) ▼▼▼
