@@ -84,43 +84,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 // ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
+// ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▼▼▼
 firebase.auth().getRedirectResult()
-    .then(async (result) => {
-        // 리다이렉트 결과에 사용자 정보가 포함되어 있다면,
-        // onAuthStateChanged가 작동하기 전에 선제적으로 앱을 초기화합니다.
-        if (result && result.user) {
-            console.log('✅ [getRedirectResult] 부모 계정 리다이렉트 성공 확인:', result.user.displayName);
-            
-            const user = result.user;
-            // loadAllDataForUser 함수를 호출하여 모든 데이터를 로드합니다.
-            const fullUserData = await loadAllDataForUser(user);
-            
-            currentUser = { 
-                uid: user.uid,
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                ...fullUserData 
-            };
-            console.log("✅ [getRedirectResult] 선제적 부모 정보 구성 완료.");
-
-            // UI를 즉시 업데이트하고, 현재 페이지를 렌더링합니다.
-            updateUserInfoUI(currentUser);
-            document.querySelector('.bottom-tab-bar')?.style.display = 'flex';
-            renderCurrentPage(); // 현재 활성화된 페이지를 다시 그림
+    .then((result) => {
+        if (result.user) {
+            // 초기화 로직은 onAuthStateChanged에서 전담하므로 여기서는 로그만 남깁니다.
+            console.log('📌 [getRedirectResult]: 부모 페이지 리다이렉트 로그인 결과 확인됨. 초기화는 onAuthStateChanged에서 처리합니다.');
         }
     })
     .catch((error) => {
-        console.error('❌ [getRedirectResult] 부모 계정 처리 중 오류 발생:', error);
+        // 오류 처리는 유지합니다.
+        console.error('❌ [getRedirectResult] 부모 계정 리다이렉트 처리 중 오류 발생:', error);
         showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
     });
-// ▲▲▲ 여기까지 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
+// ▲▲▲ 여기까지 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▲▲▲
+// // ▲▲▲ 여기까지 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
 
 
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
 // ▼▼▼ 2025-08-21 로그인 시 마이그레이션 절차 추가 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▼▼▼
 // 기존 onAuthStateChanged 함수를 이 코드로 완전히 교체합니다.
+// ▼▼▼ onAuthStateChanged 최종 안정화 버전 ▼▼▼
 firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         const fullUserData = await loadAllDataForUser(user);
@@ -143,7 +128,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
         updateUserInfoUI(currentUser);
         
-        // ★★★ 문제의 코드를 아래와 같이 안정적인 코드로 변경했습니다 ★★★
         const bottomTabBar = document.querySelector('.bottom-tab-bar');
         if (bottomTabBar) {
             bottomTabBar.style.display = 'flex';
@@ -160,6 +144,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
     }
 });
+// ▲▲▲ onAuthStateChanged 최종 안정화 버전 ▲▲▲
+
 // ▲▲▲ 여기까지 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▲▲▲
 
 // --- 임무 4: 리다이렉트 로그인 결과 처리 ---
