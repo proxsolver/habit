@@ -131,63 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- 임무 3: Firebase 인증 상태 감지 및 관문 운용 ---
 // ▼▼▼ 2025-08-21 로그인 시 마이그레이션 절차 추가 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▼▼▼
-// 기존 onAuthStateChanged 함수를 이 코드로 완전히 교체합니다.
-// ▼▼▼ onAuthStateChanged 최종 안정화 버전 ▼▼▼
-firebase.auth().onAuthStateChanged(async (user) => {
-    if (user) {
-        const fullUserData = await loadAllDataForUser(user);
-        
-        currentUser = { 
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            ...fullUserData 
-        };
-        console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
+// 기존 onAuthStateChanged 함수를 이 코드로 완전히 교체합니다.호환성 문제 해결 ▲▲▲
 
-        if (currentUser.role === 'child') {
-            if (!window.location.pathname.endsWith('child.html')) {
-                window.location.href = 'child.html';
-            }
-            return;
-        }
-
-        updateUserInfoUI(currentUser);
-        
-        const bottomTabBar = document.querySelector('.bottom-tab-bar');
-        if (bottomTabBar) {
-            bottomTabBar.style.display = 'flex';
-        }
-        
-        renderCurrentPage();
-
-    } else {
-        currentUser = null;
-        updateUserInfoUI(null);
-        const bottomTabBar = document.querySelector('.bottom-tab-bar');
-        if (bottomTabBar) {
-            bottomTabBar.style.display = 'none';
-        }
-    }
-});
-// ▲▲▲ onAuthStateChanged 최종 안정화 버전 ▲▲▲
-
-// ▲▲▲ 여기까지 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▲▲▲
-
-// ▼▼▼ 2025-08-25(작전일) 잔존 병력 소탕 (script.js) ▼▼▼
-/* <-- 여기부터 주석 시작
-// --- 임무 4: 리다이렉트 로그인 결과 처리 ---
-firebase.auth().getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            console.log('리다이렉트 로그인 성공:', result.user.displayName);
-        }
-    })
-    .catch((error) => {
-        console.error('리다이렉트 로그인 오류:', error);
-    });
-*/ // <-- 여기까지 주석 종료
 // ▲▲▲ 여기까지 2025-08-25(작전일) 잔존 병력 소탕 (script.js) ▲▲▲
 
 // ▲▲▲ 여기까지 08/19(수정일) 3번 소대(DOMContentLoaded) 최종 임무 수첩 ▲▲▲
