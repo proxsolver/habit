@@ -636,6 +636,7 @@
 
     <script>
         // Firebase 초기화 코드
+        console.log('🛰️ [Satellite] index.html: Firebase 초기화 시작.');
         const firebaseConfig = {
             apiKey: "AIzaSyC6bvEaHsxpLtPv5zM99PmgAwOnRXnhkBM",
             authDomain: "habit-dc62a.firebaseapp.com",
@@ -648,6 +649,7 @@
     
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        console.log('🛰️ [Satellite] index.html: Firebase 초기화 완료.');
     </script>
     <script defer src="script.js"></script>
 

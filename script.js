@@ -1,3 +1,5 @@
+console.log('🛰️ [Satellite] script.js: 스크립트 파일 로드 및 구문 분석 완료.');
+
 // ====================================================================
 // 1. 전역 변수 (Global Variables)
 // ====================================================================
@@ -36,9 +38,12 @@ const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).p
 // ====================================================================
 // ▼▼▼ 08/19(수정일) 초기화 로직 안정화 ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료. 초기화 작전 개시.');
+
     // 1. 주요 UI 요소를 찾습니다.
     const userInfoDiv = document.getElementById('user-info');
     const loginBtn = document.getElementById('login-btn');
+    // 1. 주요 UI 요소를 찾습니다.
     const logoutBtn = document.getElementById('logout-btn');
     const userNameSpan = document.getElementById('user-name');
     const userPhotoImg = document.getElementById('user-photo');
@@ -49,8 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
     provider.addScope('profile');
     provider.addScope('email');
     if (loginBtn) {
+        console.log('🛰️ [Satellite] DOMContentLoaded: 로그인 버튼 식별 성공.');
+
         loginBtn.addEventListener('click', async () => {
             try {
+                console.log('🖱️ [Login Button Click] 로그인 버튼 클릭 감지.');
+
                 // 모바일(화면 폭 768px 이하)에서는 리다이렉트, 데스크톱에서는 팝업 시도
                 if (window.innerWidth <= 768) {
                     console.log('📱 모바일 환경 감지. 리다이렉트 방식으로 로그인합니다.');
@@ -85,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
 // ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▼▼▼
-firebase.auth().getRedirectResult()
+    firebase.auth().getRedirectResult()
     .then((result) => {
         if (result.user) {
             // 초기화 로직은 onAuthStateChanged에서 전담하므로 여기서는 로그만 남깁니다.
@@ -160,7 +169,11 @@ firebase.auth().getRedirectResult()
     });
 
 // --- 임무 5: 나머지 모든 이벤트 리스너 설정 지시 ---
+console.log('🛰️ [Satellite] DOMContentLoaded: setupAllEventListeners 함수 호출 직전.');
+
 setupAllEventListeners();
+console.log('🛰️ [Satellite] DOMContentLoaded: setupAllEventListeners 함수 호출 완료.');
+
 });
 // ▲▲▲ 여기까지 08/19(수정일) 3번 소대(DOMContentLoaded) 최종 임무 수첩 ▲▲▲
 

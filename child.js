@@ -28,14 +28,18 @@ const catDialogues = [
 // ====================================================================
 // ▼▼▼ 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료. 초기화 작전 개시.');
+
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
 
     const loginBtn = document.getElementById('login-btn');
     if (loginBtn) {
+        console.log('🛰️ [Satellite] DOMContentLoaded: 로그인 버튼 식별 성공.');
         loginBtn.addEventListener('click', async () => {
             try {
+                console.log('🖱️ [Login Button Click] 로그인 버튼 클릭 감지.');
                 if (window.innerWidth <= 768) {
                     await firebase.auth().signInWithRedirect(provider);
                 } else {
@@ -46,11 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
             }
         });
+    } else {
+        console.error('💣 [Satellite] DOMContentLoaded: 로그인 버튼 식별 실패! HTML 구조를 확인하십시오.');
     }
 
     // ★★★ 핵심: 모든 이벤트 리스너 설정 함수를 여기서 호출합니다.
-    setupEventListeners(); 
+    console.log('🛰️ [Satellite] DOMContentLoaded: setupEventListeners 함수 호출 직전.');
+    setupEventListeners();
+    console.log('🛰️ [Satellite] DOMContentLoaded: setupEventListeners 함수 호출 완료.');
 });
+// ▲▲▲ 여기까지 2025-08-25(작전일) 정찰 위성 발사 (child.js) ▲▲▲
 // ▲▲▲ 여기까지 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▲▲▲
 // // ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
 
