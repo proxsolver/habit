@@ -66,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // ▼▼▼ 2025-08-25(수정일) 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
 // DOMContentLoaded 리스너 바로 아래에 추가합니다.
 // ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (child.js) ▼▼▼
+// ▼▼▼ 2025-08-25(작전일) 용의자 고립 작전 (child.js) ▼▼▼
+/* <-- 여기부터 주석 시작
 firebase.auth().getRedirectResult()
     .then((result) => {
         if (result.user) {
@@ -77,7 +79,8 @@ firebase.auth().getRedirectResult()
         console.error('❌ [getRedirectResult] 자녀 계정 리다이렉트 처리 중 오류 발생:', error);
         showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
     });
-// ▲▲▲ 여기까지 2025-08-25(작전일) 지휘 체계 단일화 (child.js) ▲▲▲
+*/ // <-- 여기까지 주석 종료
+// ▲▲▲ 여기까지 2025-08-25(작전일) 용의자 고립 작전 (child.js) ▲▲▲// ▲▲▲ 여기까지 2025-08-25(작전일) 지휘 체계 단일화 (child.js) ▲▲▲
 // // ▲▲▲ 여기까지 2025-08-25(수정일) 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
 
 

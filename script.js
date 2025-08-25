@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
 // ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▼▼▼
+/* <-- 여기부터 주석 시작
+
     firebase.auth().getRedirectResult()
     .then((result) => {
         if (result.user) {
@@ -106,6 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('❌ [getRedirectResult] 부모 계정 리다이렉트 처리 중 오류 발생:', error);
         showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
     });
+*/ // <-- 여기까지 주석 종료
+
 // ▲▲▲ 여기까지 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▲▲▲
 // // ▲▲▲ 여기까지 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
 
