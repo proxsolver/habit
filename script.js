@@ -189,13 +189,7 @@ firebase.auth().getRedirectResult()
     });
 */ // <-- 여기까지 주석 종료
 // ▲▲▲ 여기까지 2025-08-25(작전일) 잔존 병력 소탕 (script.js) ▲▲▲
-// // --- 임무 5: 나머지 모든 이벤트 리스너 설정 지시 ---
-console.log('🛰️ [Satellite] DOMContentLoaded: setupAllEventListeners 함수 호출 직전.');
 
-setupAllEventListeners();
-console.log('🛰️ [Satellite] DOMContentLoaded: setupAllEventListeners 함수 호출 완료.');
-
-});
 // ▲▲▲ 여기까지 08/19(수정일) 3번 소대(DOMContentLoaded) 최종 임무 수첩 ▲▲▲
 
 // ====================================================================

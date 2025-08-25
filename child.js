@@ -28,49 +28,97 @@ const catDialogues = [
 // ====================================================================
 // ▼▼▼ 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▼▼▼
 // ▼▼▼ 2025-08-25(최종 작전) 인증 지휘 체계 전면 재구축 (child.js) ▼▼▼
+// ▼▼▼ 2025-08-25(최종 정찰) 나노 위성 투입 (child.js) ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료.');
+    console.log('🛰️ [Satellite] 1. DOMContentLoaded: 작전 개시.');
 
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
+    console.log('🛰️ [Satellite] 2. Google 인증 공급자 준비 완료.');
 
-    // --- 임무 1: 통신 채널 보안 설정 및 완료 대기 ---
+    console.log('🛰️ [Satellite] 3. Firebase Auth Persistence 설정 시도...');
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => {
-            console.log('🔒 Firebase Auth persistence set to LOCAL. 자녀용 인증 작전 개시.');
+            console.log('🛰️ [Satellite] 4. SUCCESS: Persistence 설정 완료. 인증 감시 시작.');
 
-            // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
+            console.log('🛰️ [Satellite] 5. onAuthStateChanged 감시자 배치 시도...');
             firebase.auth().onAuthStateChanged(async (user) => {
+                // 이 내부는 로그인이 성공해야만 보이므로, 현재 문제에서는 보이지 않을 것입니다.
+                console.log('🛰️ [Satellite] !! onAuthStateChanged 발동! 사용자 상태:', user ? user.uid : '로그아웃');
                 const bottomTabBar = document.querySelector('.bottom-tab-bar');
                 if (user) {
-                    const userDocRef = db.collection('users').doc(user.uid);
-                    let userDoc = await userDocRef.get();
-                    let userData = userDoc.exists ? userDoc.data() : {};
-// ▲▲▲ 여기까지 2025-08-25(작전일) 정찰 위성 발사 (child.js) ▲▲▲
-// ▲▲▲ 여기까지 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▲▲▲
-// // ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    const userData = userDoc.exists ? userDoc.data() : {};
+                    
+                    currentUser = {
+                        uid: user.uid, displayName: user.displayName, email: user.email,
+                        photoURL: user.photoURL, ...userData
+                    };
 
-// ▼▼▼ 2025-08-25(수정일) 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
-// DOMContentLoaded 리스너 바로 아래에 추가합니다.
-// ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (child.js) ▼▼▼
-// ▼▼▼ 2025-08-25(작전일) 용의자 고립 작전 (child.js) ▼▼▼
-/* <-- 여기부터 주석 시작
-firebase.auth().getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            // 여기서는 로그만 남기고, 모든 초기화는 onAuthStateChanged에서 처리합니다.
-            console.log('📌 [getRedirectResult]: 자녀 페이지 리다이렉트 로그인 결과 확인됨. 초기화는 onAuthStateChanged에서 처리합니다.');
-        }
-    })
-    .catch((error) => {
-        console.error('❌ [getRedirectResult] 자녀 계정 리다이렉트 처리 중 오류 발생:', error);
-        showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
-    });
-*/ // <-- 여기까지 주석 종료
-// ▲▲▲ 여기까지 2025-08-25(작전일) 용의자 고립 작전 (child.js) ▲▲▲// ▲▲▲ 여기까지 2025-08-25(작전일) 지휘 체계 단일화 (child.js) ▲▲▲
-// // ▲▲▲ 여기까지 2025-08-25(수정일) 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
+                    if (currentUser.role === 'parent') {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    
+                    await updateUserInfoUI(currentUser);
+                    await loadAssignedRoutines(currentUser.uid);
+                    
+                    if (currentUser.familyId) {
+                        dailyCatMood = await analyzeYesterdaysPerformance(currentUser.uid, currentUser.familyId);
+                        await updateCatExpression(dailyCatMood);
+                    }
+                    startBoredomChecker();
 
+                    if (currentUser.companionCat) {
+                        renderCompanionCat(currentUser.companionCat);
+                    }
+
+                    showHomePage();
+                    if(bottomTabBar) bottomTabBar.style.display = 'flex';
+
+                } else {
+                    currentUser = null;
+                    if (boredomCheckInterval) clearInterval(boredomCheckInterval);
+                    updateUserInfoUI(null);
+                    renderMissions();
+                    if(bottomTabBar) bottomTabBar.style.display = 'none';
+                }
+            });
+            console.log('🛰️ [Satellite] 6. onAuthStateChanged 감시자 배치 완료.');
+
+            console.log('🛰️ [Satellite] 7. getRedirectResult 정찰 시도...');
+            firebase.auth().getRedirectResult().then(result => {
+                if(result.user) console.log('🛰️ [Satellite] 7.1. getRedirectResult: 리다이렉트 사용자 확인됨.');
+            }).catch(error => {
+                console.error('🛰️ [Satellite] 7.2. getRedirectResult: 오류 발생', error);
+            });
+            console.log('🛰️ [Satellite] 8. getRedirectResult 정찰 명령 하달 완료.');
+
+        })
+        .catch((error) => {
+            console.error('💣 [CRITICAL] 4. FAILED: Persistence 설정 실패!', error);
+        });
+
+    console.log('🛰️ [Satellite] 9. 로그인 버튼 설정 시도...');
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            console.log('🖱️ 로그인 버튼 클릭됨! Firebase로 리다이렉트합니다.');
+            firebase.auth().signInWithRedirect(provider)
+        });
+        console.log('🛰️ [Satellite] 10. 로그인 버튼 설정 완료.');
+    } else {
+        console.error('💣 [CRITICAL] 10. 로그인 버튼을 찾을 수 없습니다!');
+    }
+
+    console.log('🛰️ [Satellite] 11. setupEventListeners() 호출 시도...');
+    setupEventListeners();
+    console.log('🛰️ [Satellite] 12. setupEventListeners() 호출 완료.');
+    
+    console.log('🛰️ [Satellite] 13. DOMContentLoaded의 모든 동기적 작전 완료.');
+});
+// ▲▲▲ 여기까지 2025-08-25(최종 정찰) 나노 위성 투입 (child.js) ▲▲▲
 
 // ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▼▼▼
@@ -133,30 +181,6 @@ firebase.auth().onAuthStateChanged(async (user) => {
 });
 
 
-            // --- 임무 3: 리다이렉트 특수부대(getRedirectResult) 투입 ---
-    firebase.auth().getRedirectResult()
-                .then((result) => {
-                    if (result.user) {
-                        console.log('📌 [getRedirectResult]: 리다이렉트 결과 확인. onAuthStateChanged가 처리합니다.');
-                    }
-                })
-                .catch((error) => {
-                    console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류 발생:', error);
-                });
-        })
-        .catch((error) => {
-            console.error('💣 [CRITICAL] Firebase Auth persistence 설정 실패! 앱 작동 불가:', error);
-            alert("앱 인증 시스템을 시작하는 데 실패했습니다.");
-        });
-
-    // --- 임무 4: 로그인 버튼 등 기타 UI 이벤트 리스너 설정 ---
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => firebase.auth().signInWithRedirect(provider));
-    }
-
-    setupEventListeners();
-});
 
 
 // ▲▲▲ 여기까지 2025-08-25(수정일) onAuthStateChanged에 감성 시스템 초기화 로직 통합 ▲▲▲
