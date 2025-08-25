@@ -24,6 +24,8 @@ let activePage = 'home'; // 앱 시작 시 기본 페이지는 '홈'
 // ▲▲▲ 여기까지 08/20(수정일) '현재 페이지' 상태 변수 추가 ▲▲▲
 // ▼▼▼ 2025-08-22 작전 모드 기록 변수 추가 ▼▼▼
 let currentRoutineMode = null; // 'parent' 또는 'child' 모드를 저장
+let isInitialized = false; // 선임 지휘관 임명 여부 플래그
+
 // ▲▲▲ 여기까지 2025-08-22 작전 모드 기록 변수 추가 ▲▲▲
 const DEBUG_MODE = true;
 const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
@@ -38,8 +40,18 @@ const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).p
 // ====================================================================
 // ▼▼▼ 08/19(수정일) 초기화 로직 안정화 ▼▼▼
 // ▼▼▼ 2025-08-25(최종 작전) 인증 지휘 체계 전면 재구축 (script.js) ▼▼▼
+// ▼▼▼ 2025-08-25(작전일) 중복 실행 방지 가드 배치 (script.js) ▼▼▼
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료.');
+    if (isInitialized) {
+        console.warn('⚠️ 중복 초기화 시도 감지. 작전을 중단합니다.');
+        return;
+    }
+    isInitialized = true; // 선임 지휘관 임명!
+    console.log('🛰️ [Satellite] DOMContentLoaded: 작전 개시.');
+// ▲▲▲ 여기까지 2025-08-25(작전일) 중복 실행 방지 가드 배치 (script.js) ▲▲▲
+
 
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
