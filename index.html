@@ -648,16 +648,7 @@
         };
     
         firebase.initializeApp(firebaseConfig);
-    
-    // ▼▼▼ 2025-08-25(작전일) 보안 통신 채널 강제 설정 ▼▼▼
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(() => {
-            console.log('🔒parents Firebase Auth persistence set to LOCAL.');
-        })
-        .catch((error) => {
-            console.error('❌ Failed to set Firebase Auth persistence:', error);
-        });
-    // ▲▲▲ 여기까지 2025-08-25(작전일) 보안 통신 채널 강제 설정 ▲▲▲
+  
     
     const db = firebase.firestore();
     console.log('🛰️ [Satellite] index.html: Firebase 초기화 완료.');
