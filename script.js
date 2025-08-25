@@ -885,8 +885,7 @@ function updateUserInfoUI(user) {
     const userPhotoImg = document.getElementById('user-photo');
     const loginBtn = document.getElementById('login-btn');
     
-    console.log('🖼️ [updateUserInfoUI] UI 업데이트 시작. 사용자:', user ? user.displayName : 'null');
-    
+
     if (user) {
         // 사용자가 로그인한 경우
         if (userInfoDiv) {
