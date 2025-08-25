@@ -42,8 +42,15 @@ const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).p
 // ▼▼▼ 2025-08-25(최종 작전) 인증 지휘 체계 전면 재구축 (script.js) ▼▼▼
 // ▼▼▼ 2025-08-25(작전일) 중복 실행 방지 가드 배치 (script.js) ▼▼▼
 
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료.');
+    console.log('📱 [Debug] 디바이스 정보:', {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        isStandalone: window.navigator.standalone,
+        viewport: `${window.innerWidth}x${window.innerHeight}`
+    });
     if (isInitialized) {
         console.warn('⚠️ 중복 초기화 시도 감지. 작전을 중단합니다.');
         return;
@@ -64,54 +71,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
             firebase.auth().onAuthStateChanged(async (user) => {
+                console.log('🔍 [onAuthStateChanged] 인증 상태 변경 감지:', user ? '로그인' : '로그아웃');
+                
                 if (user) {
-                    const fullUserData = await loadAllDataForUser(user);
-                    
-                    currentUser = { 
-                        uid: user.uid,
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        ...fullUserData 
-                    };
-                    console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
-
-                    if (currentUser.role === 'child') {
-                        if (!window.location.pathname.endsWith('child.html')) {
-                            window.location.href = 'child.html';
+                    try {
+                        // 사용자 데이터 로딩 완료까지 대기
+                        const fullUserData = await loadAllDataForUser(user);
+                        
+                        currentUser = {
+                            uid: user.uid,
+                            displayName: user.displayName,
+                            email: user.email,
+                            photoURL: user.photoURL,
+                            ...fullUserData
+                        };
+                        
+                        console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
+                        
+                        // 자녀 페이지 리다이렉트 체크
+                        if (currentUser.role === 'child') {
+                            if (!window.location.pathname.endsWith('child.html')) {
+                                window.location.href = 'child.html';
+                            }
+                            return;
                         }
-                        return;
+                        
+                        // UI 업데이트는 데이터 로딩 완료 후에만 실행
+                        updateUserInfoUI(currentUser);
+                        
+                        const bottomTabBar = document.querySelector('.bottom-tab-bar');
+                        if (bottomTabBar) {
+                            bottomTabBar.style.display = 'flex';
+                        }
+                        
+                        // 페이지 렌더링도 지연 실행
+                        setTimeout(() => {
+                            renderCurrentPage();
+                        }, 100);
+                        
+                    } catch (error) {
+                        console.error('❌ [onAuthStateChanged] 사용자 데이터 로딩 실패:', error);
+                        // 실패 시 로그아웃 처리
+                        firebase.auth().signOut();
                     }
-
-                    updateUserInfoUI(currentUser);
-                    
-                    const bottomTabBar = document.querySelector('.bottom-tab-bar');
-                    if (bottomTabBar) {
-                        bottomTabBar.style.display = 'flex';
-                    }
-                    
-                    renderCurrentPage();
-
                 } else {
                     currentUser = null;
                     updateUserInfoUI(null);
+                    
                     const bottomTabBar = document.querySelector('.bottom-tab-bar');
                     if (bottomTabBar) {
                         bottomTabBar.style.display = 'none';
                     }
                 }
             });
-
+            
             // --- 임무 3: 리다이렉트 특수부대(getRedirectResult) 투입 ---
             firebase.auth().getRedirectResult()
-                .then((result) => {
-                    if (result.user) {
-                        console.log('📌 [getRedirectResult]: 리다이렉트 결과 확인. onAuthStateChanged가 처리합니다.');
-                    }
-                })
-                .catch((error) => {
-                    console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류 발생:', error);
-                });
+            .then((result) => {
+                if (result.user) {
+                    console.log('📌 [getRedirectResult] 리다이렉트 로그인 성공. 사용자:', result.user.displayName);
+                    // onAuthStateChanged에서 처리하므로 추가 작업 불필요
+                } else {
+                    console.log('📌 [getRedirectResult] 리다이렉트 결과 없음 (일반 페이지 로드)');
+                }
+            })
+            .catch((error) => {
+                console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류:', error);
+                showNotification('로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+            });
+
         })
         .catch((error) => {
             console.error('💣 [CRITICAL] Firebase Auth persistence 설정 실패! 앱 작동 불가:', error);
@@ -119,11 +147,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     // --- 임무 4: 로그인 버튼 등 기타 UI 이벤트 리스너 설정 ---
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => firebase.auth().signInWithRedirect(provider));
-    }
-    
+// ▼▼▼ 2025-08-25(작전일) 로그인 방식 단일화 (script.js) ▼▼▼
+const loginBtn = document.getElementById('login-btn');
+if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
+        console.log('🖱️ [Login Button Click] 모든 환경에서 Redirect 방식으로 로그인을 시도합니다.');
+        // 분기 로직을 제거하고 signInWithRedirect로 통일
+        firebase.auth().signInWithRedirect(provider).catch(error => {
+            console.error("❌ 로그인 리다이렉트 실패:", error);
+            showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+        });
+    });
+}
+// ▲▲▲ 여기까지 2025-08-25(작전일) 로그인 방식 단일화 (script.js) ▲▲▲    
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => firebase.auth().signOut());
@@ -846,22 +882,56 @@ async function createFamily() {
 // ▼▼▼ 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▼▼▼
 function updateUserInfoUI(user) {
     const userInfoDiv = document.getElementById('user-info');
-    const loginBtn = document.getElementById('login-btn');
     const userNameSpan = document.getElementById('user-name');
     const userPhotoImg = document.getElementById('user-photo');
-
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            loginBtn.disabled = true;
+            loginBtn.textContent = '로그인 중...';
+            
+            console.log('🖱️ [Login Button Click] 모바일 환경에서 리다이렉트 로그인 시도');
+            
+            firebase.auth().signInWithRedirect(provider)
+                .catch(error => {
+                    console.error("❌ 로그인 리다이렉트 실패:", error);
+                    showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+                    
+                    // 버튼 상태 복구
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '구글로 로그인';
+                });
+        });
+    }    
+    console.log('🖼️ [updateUserInfoUI] UI 업데이트 시작. 사용자:', user ? user.displayName : 'null');
+    
     if (user) {
         // 사용자가 로그인한 경우
-        if (userInfoDiv) userInfoDiv.style.display = 'flex';
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (userNameSpan) userNameSpan.textContent = user.displayName;
-        if (userPhotoImg) userPhotoImg.src = user.photoURL;
+        if (userInfoDiv) {
+            userInfoDiv.style.display = 'flex';
+            console.log('✅ 사용자 정보 영역 표시');
+        }
+        if (loginBtn) {
+            loginBtn.style.display = 'none';
+            console.log('✅ 로그인 버튼 숨김');
+        }
+        if (userNameSpan) {
+            userNameSpan.textContent = user.displayName || '사용자';
+        }
+        if (userPhotoImg && user.photoURL) {
+            userPhotoImg.src = user.photoURL;
+        }
     } else {
         // 사용자가 로그아웃한 경우
-        if (userInfoDiv) userInfoDiv.style.display = 'none';
-        if (loginBtn) loginBtn.style.display = 'block';
+        if (userInfoDiv) {
+            userInfoDiv.style.display = 'none';
+        }
+        if (loginBtn) {
+            loginBtn.style.display = 'block';
+        }
     }
 }
+
 // ▲▲▲ 여기까지 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▲▲▲
 
 //정상작동
