@@ -27,38 +27,26 @@ const catDialogues = [
 // 2. 앱 시작점
 // ====================================================================
 // ▼▼▼ 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▼▼▼
+// ▼▼▼ 2025-08-25(최종 작전) 인증 지휘 체계 전면 재구축 (child.js) ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료. 초기화 작전 개시.');
+    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료.');
 
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
 
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) {
-        console.log('🛰️ [Satellite] DOMContentLoaded: 로그인 버튼 식별 성공.');
-        loginBtn.addEventListener('click', async () => {
-            try {
-                console.log('🖱️ [Login Button Click] 로그인 버튼 클릭 감지.');
-                if (window.innerWidth <= 768) {
-                    await firebase.auth().signInWithRedirect(provider);
-                } else {
-                    await firebase.auth().signInWithPopup(provider);
-                }
-            } catch (error) {
-                console.error("❌ 자녀용 로그인 실패:", error);
-                showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
-            }
-        });
-    } else {
-        console.error('💣 [Satellite] DOMContentLoaded: 로그인 버튼 식별 실패! HTML 구조를 확인하십시오.');
-    }
+    // --- 임무 1: 통신 채널 보안 설정 및 완료 대기 ---
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => {
+            console.log('🔒 Firebase Auth persistence set to LOCAL. 자녀용 인증 작전 개시.');
 
-    // ★★★ 핵심: 모든 이벤트 리스너 설정 함수를 여기서 호출합니다.
-    console.log('🛰️ [Satellite] DOMContentLoaded: setupEventListeners 함수 호출 직전.');
-    setupEventListeners();
-    console.log('🛰️ [Satellite] DOMContentLoaded: setupEventListeners 함수 호출 완료.');
-});
+            // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
+            firebase.auth().onAuthStateChanged(async (user) => {
+                const bottomTabBar = document.querySelector('.bottom-tab-bar');
+                if (user) {
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    let userDoc = await userDocRef.get();
+                    let userData = userDoc.exists ? userDoc.data() : {};
 // ▲▲▲ 여기까지 2025-08-25(작전일) 정찰 위성 발사 (child.js) ▲▲▲
 // ▲▲▲ 여기까지 2025-08-25(수정일) setupEventListeners 함수 호출 누락 수정 ▲▲▲
 // // ▼▼▼ 2025-08-25(수정일) Firestore 사용자 정보를 currentUser 객체에 통합 ▼▼▼
@@ -118,8 +106,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
         
         await updateUserInfoUI(currentUser);
-        await loadAssignedRoutines(currentUser.uid); // ★★★ 중요: 표정 분석 전, 루틴 목록이 먼저 로드되어야 합니다.
-        
+        await loadAssignedRoutines(currentUser.uid);
+
         if (currentUser.familyId) {
             dailyCatMood = await analyzeYesterdaysPerformance(currentUser.uid, currentUser.familyId);
             await updateCatExpression(dailyCatMood);
@@ -143,6 +131,34 @@ firebase.auth().onAuthStateChanged(async (user) => {
         if(bottomTabBar) bottomTabBar.style.display = 'none';
     }
 });
+
+
+            // --- 임무 3: 리다이렉트 특수부대(getRedirectResult) 투입 ---
+    firebase.auth().getRedirectResult()
+                .then((result) => {
+                    if (result.user) {
+                        console.log('📌 [getRedirectResult]: 리다이렉트 결과 확인. onAuthStateChanged가 처리합니다.');
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류 발생:', error);
+                });
+        })
+        .catch((error) => {
+            console.error('💣 [CRITICAL] Firebase Auth persistence 설정 실패! 앱 작동 불가:', error);
+            alert("앱 인증 시스템을 시작하는 데 실패했습니다.");
+        });
+
+    // --- 임무 4: 로그인 버튼 등 기타 UI 이벤트 리스너 설정 ---
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => firebase.auth().signInWithRedirect(provider));
+    }
+
+    setupEventListeners();
+});
+
+
 // ▲▲▲ 여기까지 2025-08-25(수정일) onAuthStateChanged에 감성 시스템 초기화 로직 통합 ▲▲▲
 // // ▲▲▲ 여기까지 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▲▲▲
 // // ▲▲▲ 여기까지 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▲▲▲

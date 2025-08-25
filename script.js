@@ -37,62 +37,90 @@ const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).p
 // 3. 앱 시작점 (Application Entry Point)
 // ====================================================================
 // ▼▼▼ 08/19(수정일) 초기화 로직 안정화 ▼▼▼
+// ▼▼▼ 2025-08-25(최종 작전) 인증 지휘 체계 전면 재구축 (script.js) ▼▼▼
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료. 초기화 작전 개시.');
+    console.log('🛰️ [Satellite] DOMContentLoaded: HTML 문서 로딩 완료.');
 
-    // 1. 주요 UI 요소를 찾습니다.
-    const userInfoDiv = document.getElementById('user-info');
-    const loginBtn = document.getElementById('login-btn');
-    // 1. 주요 UI 요소를 찾습니다.
-    const logoutBtn = document.getElementById('logout-btn');
-    const userNameSpan = document.getElementById('user-name');
-    const userPhotoImg = document.getElementById('user-photo');
-    const mainAppContent = document.querySelector('.container');
-    const bottomTabBar = document.querySelector('.bottom-tab-bar'); // 새로운 '하단 탭 바' 부대
-    
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.addScope('profile');
     provider.addScope('email');
-    if (loginBtn) {
-        console.log('🛰️ [Satellite] DOMContentLoaded: 로그인 버튼 식별 성공.');
 
-        loginBtn.addEventListener('click', async () => {
-            try {
-                console.log('🖱️ [Login Button Click] 로그인 버튼 클릭 감지.');
+    // --- 임무 1: 통신 채널 보안 설정 및 완료 대기 ---
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => {
+            console.log('🔒 Firebase Auth persistence set to LOCAL. 인증 작전 개시.');
 
-                // 모바일(화면 폭 768px 이하)에서는 리다이렉트, 데스크톱에서는 팝업 시도
-                if (window.innerWidth <= 768) {
-                    console.log('📱 모바일 환경 감지. 리다이렉트 방식으로 로그인합니다.');
-                    await firebase.auth().signInWithRedirect(provider);
+            // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    const fullUserData = await loadAllDataForUser(user);
+                    
+                    currentUser = { 
+                        uid: user.uid,
+                        displayName: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        ...fullUserData 
+                    };
+                    console.log("✅ 최종 지휘관 정보(currentUser) 임명 완료:", currentUser);
+
+                    if (currentUser.role === 'child') {
+                        if (!window.location.pathname.endsWith('child.html')) {
+                            window.location.href = 'child.html';
+                        }
+                        return;
+                    }
+
+                    updateUserInfoUI(currentUser);
+                    
+                    const bottomTabBar = document.querySelector('.bottom-tab-bar');
+                    if (bottomTabBar) {
+                        bottomTabBar.style.display = 'flex';
+                    }
+                    
+                    renderCurrentPage();
+
                 } else {
-                    console.log('💻 데스크톱 환경 감지. 팝업 방식으로 로그인합니다.');
-                    await firebase.auth().signInWithPopup(provider);
-                }
-            } catch (error) {
-                console.error("Login failed:", error);
-                // 팝업이 차단되거나 사용자에 의해 닫혔을 경우, 리다이렉트로 재시도
-                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-                    console.log('팝업 실패. 리다이렉트 방식으로 재시도합니다.');
-                    try {
-                        await firebase.auth().signInWithRedirect(provider);
-                    } catch (redirectError) {
-                        console.error("Redirect login also failed:", redirectError);
-                        showNotification('로그인에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.', 'error');
+                    currentUser = null;
+                    updateUserInfoUI(null);
+                    const bottomTabBar = document.querySelector('.bottom-tab-bar');
+                    if (bottomTabBar) {
+                        bottomTabBar.style.display = 'none';
                     }
                 }
-            }
+            });
+
+            // --- 임무 3: 리다이렉트 특수부대(getRedirectResult) 투입 ---
+            firebase.auth().getRedirectResult()
+                .then((result) => {
+                    if (result.user) {
+                        console.log('📌 [getRedirectResult]: 리다이렉트 결과 확인. onAuthStateChanged가 처리합니다.');
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류 발생:', error);
+                });
+        })
+        .catch((error) => {
+            console.error('💣 [CRITICAL] Firebase Auth persistence 설정 실패! 앱 작동 불가:', error);
+            alert("앱 인증 시스템을 시작하는 데 실패했습니다. 네트워크 연결을 확인하거나 브라우저를 재시작해주세요.");
         });
-    } else {
-        console.warn('⚠️ [DOMContentLoaded] 경고: login-btn을 찾을 수 없습니다.');
+
+    // --- 임무 4: 로그인 버튼 등 기타 UI 이벤트 리스너 설정 ---
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => firebase.auth().signInWithRedirect(provider));
     }
     
+    const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => firebase.auth().signOut());
-    } else {
-        console.warn('⚠️ [DOMContentLoaded] 경고: logout-btn을 찾을 수 없습니다.');
     }
 
-// ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
+    setupAllEventListeners();
+});
+// ▲▲▲ 여기까지 2025-08-25(최종 작전) 인증 지휘 체계 전면 재구축 (script.js) ▲▲▲
+// // ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
 // ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▼▼▼
 
 
