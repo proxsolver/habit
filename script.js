@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 임무 1: 통신 채널 보안 설정 및 완료 대기 ---
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => {
-            console.log('🔒 Firebase Auth persistence set to LOCAL. 인증 작전 개시.');
+            console.log('🔒 Firebase Auth persistence set to LOCAL. 부모 인증 작전 개시.');
 
             // --- 임무 2: '저장소 설정 완료' 보고 후, 정규 지휘관(onAuthStateChanged) 투입 ---
             firebase.auth().onAuthStateChanged(async (user) => {
