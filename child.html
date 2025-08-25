@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
         
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -339,8 +339,19 @@
         };
     
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        console.log('🛰️ [Satellite] child.html: Firebase 초기화 완료.');
+    
+    // ▼▼▼ 2025-08-25(작전일) 보안 통신 채널 강제 설정 ▼▼▼
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => {
+            console.log('🔒 Firebase Auth persistence set to LOCAL.');
+        })
+        .catch((error) => {
+            console.error('❌ Failed to set Firebase Auth persistence:', error);
+        });
+    // ▲▲▲ 여기까지 2025-08-25(작전일) 보안 통신 채널 강제 설정 ▲▲▲
+    
+    const db = firebase.firestore();
+    console.log('🛰️ [Satellite] index.html: Firebase 초기화 완료.');
     </script>
     <script defer src="child.js"></script>
 
