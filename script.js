@@ -94,21 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ▼▼▼ 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▼▼▼
 // ▼▼▼ 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▼▼▼
-/* <-- 여기부터 주석 시작
 
-    firebase.auth().getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            // 초기화 로직은 onAuthStateChanged에서 전담하므로 여기서는 로그만 남깁니다.
-            console.log('📌 [getRedirectResult]: 부모 페이지 리다이렉트 로그인 결과 확인됨. 초기화는 onAuthStateChanged에서 처리합니다.');
-        }
-    })
-    .catch((error) => {
-        // 오류 처리는 유지합니다.
-        console.error('❌ [getRedirectResult] 부모 계정 리다이렉트 처리 중 오류 발생:', error);
-        showNotification(`로그인 처리 중 오류가 발생했습니다: ${error.code}`, 'error');
-    });
-*/ // <-- 여기까지 주석 종료
 
 // ▲▲▲ 여기까지 2025-08-25(작전일) 지휘 체계 단일화 (script.js) ▲▲▲
 // // ▲▲▲ 여기까지 2025-08-25(수정일) 부모 페이지 모바일 리다이렉트 로그인 안정성 강화 ▲▲▲
@@ -161,6 +147,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
 // ▲▲▲ 여기까지 2025-08-25(수정일) Optional Chaining 문법 호환성 문제 해결 ▲▲▲
 
+// ▼▼▼ 2025-08-25(작전일) 잔존 병력 소탕 (script.js) ▼▼▼
+/* <-- 여기부터 주석 시작
 // --- 임무 4: 리다이렉트 로그인 결과 처리 ---
 firebase.auth().getRedirectResult()
     .then((result) => {
@@ -171,8 +159,9 @@ firebase.auth().getRedirectResult()
     .catch((error) => {
         console.error('리다이렉트 로그인 오류:', error);
     });
-
-// --- 임무 5: 나머지 모든 이벤트 리스너 설정 지시 ---
+*/ // <-- 여기까지 주석 종료
+// ▲▲▲ 여기까지 2025-08-25(작전일) 잔존 병력 소탕 (script.js) ▲▲▲
+// // --- 임무 5: 나머지 모든 이벤트 리스너 설정 지시 ---
 console.log('🛰️ [Satellite] DOMContentLoaded: setupAllEventListeners 함수 호출 직전.');
 
 setupAllEventListeners();
