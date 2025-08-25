@@ -129,8 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             firebase.auth().getRedirectResult()
             .then((result) => {
                 if (result.user) {
-                    console.log('📌 [getRedirectResult] 리다이렉트 로그인 성공. 사용자:', result.user.displayName);
-                    // onAuthStateChanged에서 처리하므로 추가 작업 불필요
+                    console.log('📌 [getRedirectResult] 리다이렉트 로그인 성공:', result.user.displayName);
                 } else {
                     console.log('📌 [getRedirectResult] 리다이렉트 결과 없음 (일반 페이지 로드)');
                 }
@@ -139,8 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ [getRedirectResult] 리다이렉트 처리 중 오류:', error);
                 showNotification('로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
             });
-
-        })
+                })
         .catch((error) => {
             console.error('💣 [CRITICAL] Firebase Auth persistence 설정 실패! 앱 작동 불가:', error);
             alert("앱 인증 시스템을 시작하는 데 실패했습니다. 네트워크 연결을 확인하거나 브라우저를 재시작해주세요.");
@@ -884,25 +882,34 @@ function updateUserInfoUI(user) {
     const userInfoDiv = document.getElementById('user-info');
     const userNameSpan = document.getElementById('user-name');
     const userPhotoImg = document.getElementById('user-photo');
-    const loginBtn = document.getElementById('login-btn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => {
-            loginBtn.disabled = true;
-            loginBtn.textContent = '로그인 중...';
-            
-            console.log('🖱️ [Login Button Click] 모바일 환경에서 리다이렉트 로그인 시도');
-            
-            firebase.auth().signInWithRedirect(provider)
-                .catch(error => {
-                    console.error("❌ 로그인 리다이렉트 실패:", error);
-                    showNotification('로그인에 실패했습니다. 다시 시도해주세요.', 'error');
-                    
-                    // 버튼 상태 복구
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = '구글로 로그인';
-                });
-        });
-    }    
+    const loginBtn = document.getElementById('login-btn'); // ← 이 라인을 추가
+    
+    console.log('🖼️ [updateUserInfoUI] UI 업데이트 시작. 사용자:', user ? user.displayName : 'null');
+    
+    if (user) {
+        // 사용자가 로그인한 경우
+        if (userInfoDiv) {
+            userInfoDiv.style.display = 'flex';
+            console.log('✅ 사용자 정보 영역 표시');
+        }
+        if (loginBtn) {
+            loginBtn.style.display = 'none';
+            console.log('✅ 로그인 버튼 숨김');
+        }
+        if (userNameSpan) userNameSpan.textContent = user.displayName || '사용자';
+        if (userPhotoImg && user.photoURL) userPhotoImg.src = user.photoURL;
+    } else {
+        // 사용자가 로그아웃한 경우
+        if (userInfoDiv) {
+            userInfoDiv.style.display = 'none';
+            console.log('✅ 사용자 정보 영역 숨김');
+        }
+        if (loginBtn) {
+            loginBtn.style.display = 'block';
+            console.log('✅ 로그인 버튼 표시');
+        }
+    }
+}
     console.log('🖼️ [updateUserInfoUI] UI 업데이트 시작. 사용자:', user ? user.displayName : 'null');
     
     if (user) {
@@ -930,7 +937,7 @@ function updateUserInfoUI(user) {
             loginBtn.style.display = 'block';
         }
     }
-}
+
 
 // ▲▲▲ 여기까지 08/20(수정일) 실종된 updateUserInfoUI 함수 복귀 ▲▲▲
 
