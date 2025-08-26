@@ -1531,16 +1531,31 @@
         
         .routine-item {
             padding: 14px;
+            align-items: flex-start; /* 콘텐츠가 여러 줄이 될 수 있으므로 상단 정렬로 변경합니다. */
+
+        }
+        
+/* * 핵심 수정: .routine-content 내부의 자식 요소(.routine-name, .routine-details)들이
+         * 항상 수직으로 쌓이도록 flex-direction: column을 명시합니다. 
+         */
+         .routine-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* 좌측 정렬 */
         }
         
         .routine-name {
-            font-size: 1rem;
+            font-size: 1rem; /* 모바일에서 글씨 크기를 약간 줄여 가독성을 확보합니다. */
+            font-weight: 700; /* 제목을 더 강조합니다. */
+            white-space: normal; /* 이름이 길 경우 자동으로 줄바꿈 되도록 합니다. */
+            margin-bottom: 6px; /* 아래 정보와의 간격을 명확하게 합니다. */
         }
         
         .routine-details {
             font-size: 0.75rem;
+            /* 이 부분은 이미 display: flex로 설정되어 있어 자식 요소들이 가로로 배열됩니다. */
+            /* 특별히 수정할 필요가 없습니다. */
         }
-
         .manage-routine-item {
             padding: 14px;
         }
