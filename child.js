@@ -7,6 +7,8 @@ let activeRoutineForModal = null;
 // ▼▼▼ 2025-08-25(수정일) 고양이 감성 시스템용 전역 변수 추가 ▼▼▼
 let dailyCatMood = 'default'; // 오늘의 기본 표정 (sad 또는 happy)
 let boredomCheckInterval = null; // 심심함 상태를 체크하는 타이머 ID
+let lastActivityTimestamp = null;
+
 // ▲▲▲ 여기까지 2025-08-25(수정일) 고양이 감성 시스템용 전역 변수 추가 ▲▲▲
 const today = new Date();
 const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -63,7 +65,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         const userDocRef = db.collection('users').doc(user.uid);
         let userDoc = await userDocRef.get(); // let으로 변경
         let userData = userDoc.exists ? userDoc.data() : {};
-        
+
         // 1. companionCat 데이터가 없으면, 기본값으로 생성해줍니다.
         if (userDoc.exists && !userData.companionCat) {
             console.log(`[onAuthStateChanged] ${user.displayName}님을 위한 새 반려묘를 생성합니다.`);
@@ -72,7 +74,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 catType: "cheese_tabby",
                 level: 1,
                 exp: 0,
-                expression: "default", lastActivityTimestamp: null
+                expression: "default", 
                 lastActivityTimestamp: null
             };
             await userDocRef.update({ companionCat: initialCatData });
