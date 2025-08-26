@@ -198,10 +198,6 @@ async function uploadInitialDataForUser(user) { // ★★★ 수정: userId -> u
     // batch.set(userDocRef, { email: currentUser.email, name: currentUser.displayName, createdAt: new Date() }); // 기존 코드
     batch.set(userDocRef, { email: user.email, name: user.displayName, createdAt: new Date() }); // ★★★ 수정: 전달받은 user 객체 사용
 
-    const INITIAL_SAMPLE_ROUTINES = [
-        { id: "init_1", name: '첫 루틴: 운동하기', time: 'morning', type: 'yesno', frequency: 'daily', value: null, status: null, streak: 0, order: 0, active: true, areas: ['health'], basePoints: 10 },
-        { id: "init_2", name: '첫 루틴: 물 마시기', time: 'afternoon', type: 'number', frequency: 'daily', value: 0, status: null, streak: 0, unit: '잔', order: 1, active: true, inputType: 'stepper', min: 1, max: 20, step: 1, continuous: true, dailyGoal: 8, areas: ['health'], basePoints: 5 },
-    ];
     const DEFAULT_AREAS = [
         { id: 'health', name: '건강' },
         { id: 'relationships', name: '관계' },
