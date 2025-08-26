@@ -52,9 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.addEventListener('click', async () => {
             try {
                 // 모바일(화면 폭 768px 이하)에서는 리다이렉트, 데스크톱에서는 팝업 시도
-                if (window.innerWidth <= 768) {
-                    console.log('📱 모바일 환경 감지. 리다이렉트 방식으로 로그인합니다.');
-                    await firebase.auth().signInWithRedirect(provider);
+                if (window.innerWidth <= 768) { // 모바일 환경
+                    console.log('📱 모바일 환경 감지. [테스트용] 팝업 방식으로 로그인합니다.');
+                    // 기존 signInWithRedirect를 주석 처리하고 팝업으로 변경
+                    // await firebase.auth().signInWithRedirect(provider);
+                    await firebase.auth().signInWithPopup(provider);
                 } else {
                     console.log('💻 데스크톱 환경 감지. 팝업 방식으로 로그인합니다.');
                     await firebase.auth().signInWithPopup(provider);
