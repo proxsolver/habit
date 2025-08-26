@@ -59,22 +59,25 @@ document.addEventListener('DOMContentLoaded', () => {
 // ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▼▼▼
 // 기존 onAuthStateChanged 함수를 이 코드로 교체합니다.
+// ▼▼▼ 2025-08-27 currentUser 객체 초기화 오류 수정 ▼▼▼
+// 기존 onAuthStateChanged 함수를 이 코드로 교체합니다.
 firebase.auth().onAuthStateChanged(async (user) => {
     const bottomTabBar = document.querySelector('.bottom-tab-bar');
     if (user) {
         const userDocRef = db.collection('users').doc(user.uid);
-        let userDoc = await userDocRef.get(); // let으로 변경
+        let userDoc = await userDocRef.get();
         let userData = userDoc.exists ? userDoc.data() : {};
 
         // 1. companionCat 데이터가 없으면, 기본값으로 생성해줍니다.
         if (userDoc.exists && !userData.companionCat) {
             console.log(`[onAuthStateChanged] ${user.displayName}님을 위한 새 반려묘를 생성합니다.`);
+            // 중복된 속성을 제거하여 객체를 정리했습니다.
             const initialCatData = {
-                name: "아기 고양이", catType: "cheese_tabby", level: 1, exp: 0,
+                name: "아기 고양이",
                 catType: "cheese_tabby",
                 level: 1,
                 exp: 0,
-                expression: "default", 
+                expression: "default",
                 lastActivityTimestamp: null
             };
             await userDocRef.update({ companionCat: initialCatData });
@@ -83,11 +86,12 @@ firebase.auth().onAuthStateChanged(async (user) => {
             userData = userDoc.data();
         }
         
+        // ★★★ 핵심 수정: 중복된 속성과 전개 구문을 제거하여 구문 오류를 해결했습니다.
         currentUser = {
-            uid: user.uid, displayName: user.displayName, email: user.email,
+            uid: user.uid,
             displayName: user.displayName,
             email: user.email,
-            photoURL: user.photoURL, ...userData
+            photoURL: user.photoURL,
             ...userData
         };
 
@@ -97,24 +101,25 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
         
         await updateUserInfoUI(currentUser);
-        await loadAssignedRoutines(currentUser.uid); // ★★★ 중요: 표정 분석 전, 루틴 목록이 먼저 로드되어야 합니다.
+        
+        // ★★★ 핵심 수정: 중복 호출을 제거하고, 순서를 명확히 했습니다.
+        // 루틴을 먼저 로드해야 어제 성과 분석이 가능합니다.
+        await loadAssignedRoutines(currentUser.uid); 
         
         if (currentUser.familyId) {
             dailyCatMood = await analyzeYesterdaysPerformance(currentUser.uid, currentUser.familyId);
-            await updateCatExpression(dailyCatMood);
+            // updateCatExpression은 renderCompanionCat 내부에서 호출되므로 여기서 직접 호출할 필요가 없습니다.
         } else {
             dailyCatMood = 'default';
         }
-        startBoredomChecker();
 
-
-        await loadAssignedRoutines(currentUser.uid);
-        
-        // 2. 고양이 렌더링 함수를 호출합니다.
+        // 2. 고양이 렌더링 함수를 호출합니다. (표정 업데이트 포함)
         if (currentUser.companionCat) {
+            currentUser.companionCat.expression = dailyCatMood; // 오늘의 기본 표정 설정
             renderCompanionCat(currentUser.companionCat);
         }
 
+        startBoredomChecker();
         showHomePage();
         if(bottomTabBar) bottomTabBar.style.display = 'flex';
 
@@ -126,6 +131,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
         if(bottomTabBar) bottomTabBar.style.display = 'none';
     }
 });
+// ▲▲▲ 여기까지 2025-08-27 currentUser 객체 초기화 오류 수정 ▲▲▲
 // ▲▲▲ 여기까지 2025-08-25(수정일) 반려묘 데이터 초기화 로직 추가 ▲▲▲
 // // ▲▲▲ 여기까지 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▲▲▲
 
