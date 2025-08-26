@@ -4,6 +4,10 @@
 let currentUser = null;
 let assignedRoutines = [];
 let activeRoutineForModal = null;
+// ▼▼▼ 2025-08-25(수정일) 고양이 감성 시스템용 전역 변수 추가 ▼▼▼
+let dailyCatMood = 'default'; // 오늘의 기본 표정 (sad 또는 happy)
+let boredomCheckInterval = null; // 심심함 상태를 체크하는 타이머 ID
+// ▲▲▲ 여기까지 2025-08-25(수정일) 고양이 감성 시스템용 전역 변수 추가 ▲▲▲
 const today = new Date();
 const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -57,30 +61,31 @@ firebase.auth().onAuthStateChanged(async (user) => {
     const bottomTabBar = document.querySelector('.bottom-tab-bar');
     if (user) {
         const userDocRef = db.collection('users').doc(user.uid);
-        const userDoc = await userDocRef.get();
-        const userData = userDoc.exists ? userDoc.data() : {};
-
+        let userDoc = await userDocRef.get(); // let으로 변경
+        let userData = userDoc.exists ? userDoc.data() : {};
+        
         // 1. companionCat 데이터가 없으면, 기본값으로 생성해줍니다.
         if (userDoc.exists && !userData.companionCat) {
             console.log(`[onAuthStateChanged] ${user.displayName}님을 위한 새 반려묘를 생성합니다.`);
             const initialCatData = {
-                name: "아기 고양이",
+                name: "아기 고양이", catType: "cheese_tabby", level: 1, exp: 0,
                 catType: "cheese_tabby",
                 level: 1,
                 exp: 0,
-                expression: "default",
+                expression: "default", lastActivityTimestamp: null
                 lastActivityTimestamp: null
             };
             await userDocRef.update({ companionCat: initialCatData });
-            // 업데이트된 정보를 다시 불러오기 위해 userData에 반영합니다.
-            userData.companionCat = initialCatData;
+            // 업데이트된 정보를 다시 불러옵니다.
+            userDoc = await userDocRef.get();
+            userData = userDoc.data();
         }
         
         currentUser = {
-            uid: user.uid,
+            uid: user.uid, displayName: user.displayName, email: user.email,
             displayName: user.displayName,
             email: user.email,
-            photoURL: user.photoURL,
+            photoURL: user.photoURL, ...userData
             ...userData
         };
 
@@ -90,6 +95,17 @@ firebase.auth().onAuthStateChanged(async (user) => {
         }
         
         await updateUserInfoUI(currentUser);
+        await loadAssignedRoutines(currentUser.uid); // ★★★ 중요: 표정 분석 전, 루틴 목록이 먼저 로드되어야 합니다.
+        
+        if (currentUser.familyId) {
+            dailyCatMood = await analyzeYesterdaysPerformance(currentUser.uid, currentUser.familyId);
+            await updateCatExpression(dailyCatMood);
+        } else {
+            dailyCatMood = 'default';
+        }
+        startBoredomChecker();
+
+
         await loadAssignedRoutines(currentUser.uid);
         
         // 2. 고양이 렌더링 함수를 호출합니다.
@@ -102,6 +118,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
     } else {
         currentUser = null;
+        if (boredomCheckInterval) clearInterval(boredomCheckInterval);
         updateUserInfoUI(null);
         renderMissions();
         if(bottomTabBar) bottomTabBar.style.display = 'none';
@@ -726,6 +743,68 @@ function getEstimatedCompletionDate(routine) {
 }
 // ▼▼▼ 2025-08-25(수정일) 자체적으로 최신 정보를 조회하는 logRoutineHistory 최종 버전 ▼▼▼
 // ▼▼▼ 2025-08-25(수정일) userDoc.exists()를 userDoc.exists 속성으로 최종 수정 ▼▼▼
+
+// ▼▼▼ 2025-08-25(수정일) 고양이 감성 시스템용 신규 함수 3개 추가 ▼▼▼
+
+// 1. 어제 루틴 성과 분석 함수
+async function analyzeYesterdaysPerformance(userId, familyId) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayString = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+    const dayOfWeek = yesterday.getDay(); // 0:일요일, 6:토요일
+
+    const activeRoutinesYesterday = assignedRoutines.filter(r => {
+        if (!r.active) return false;
+        const freq = r.frequency || 'daily';
+        return freq === 'daily' ||
+               (freq === 'weekday' && dayOfWeek >= 1 && dayOfWeek <= 5) ||
+               (freq === 'weekend' && (dayOfWeek === 0 || dayOfWeek === 6));
+    });
+
+    if (activeRoutinesYesterday.length === 0) {
+        console.log('[analyzeYesterdaysPerformance] 어제는 예정된 루틴이 없었습니다.');
+        return 'happy';
+    }
+
+    const historyQuery = db.collectionGroup('history')
+        .where('familyId', '==', familyId)
+        .where('loggedBy', '==', userId)
+        .where('date', '==', yesterdayString);
+
+    const snapshot = await historyQuery.get();
+    const completedCount = snapshot.size;
+
+    console.log(`[analyzeYesterdaysPerformance] 어제 루틴: ${completedCount} / ${activeRoutinesYesterday.length} 완료`);
+    return completedCount >= activeRoutinesYesterday.length ? 'happy' : 'sad';
+}
+
+// 2. 고양이 심심함 체크 함수
+function checkCatBoredom() {
+    if (!currentUser || !currentUser.companionCat || !currentUser.companionCat.lastActivityTimestamp) return;
+
+    const lastActivity = currentUser.companionCat.lastActivityTimestamp.toDate();
+    const now = new Date();
+    const hoursSinceLastActivity = (now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceLastActivity > 2 && currentUser.companionCat.expression !== 'bored' && Math.random() < 0.3) {
+        console.log('[checkCatBoredom] 활동이 없어 심심해합니다...');
+        updateCatExpression('bored');
+    }
+}
+
+// 3. 심심함 체크 타이머 시작 함수
+function startBoredomChecker() {
+    if (boredomCheckInterval) clearInterval(boredomCheckInterval);
+    boredomCheckInterval = setInterval(checkCatBoredom, 10 * 60 * 1000); // 10분마다 체크
+}
+// ▲▲▲ 여기까지 2025-08-25(수정일) 고양이 감성 시스템용 신규 함수 3개 추가 ▲▲▲
+
+
+
+
+
+
+
 async function logRoutineHistory(routineId, dataToLog) {
     console.log(`[logRoutineHistory] 미션(${routineId})에 대한 활동 보고서 작성을 시작합니다.`);
     
