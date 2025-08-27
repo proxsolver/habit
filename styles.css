@@ -1530,32 +1530,62 @@
         }
         
         .routine-item {
-            padding: 14px;
-            align-items: flex-start; /* 콘텐츠가 여러 줄이 될 수 있으므로 상단 정렬로 변경합니다. */
-
-        }
+            padding: 14px 10px; /* 좌우 패딩을 살짝 줄여 공간 확보 */
+            align-items: flex-start; 
         
 /* * 핵심 수정: .routine-content 내부의 자식 요소(.routine-name, .routine-details)들이
          * 항상 수직으로 쌓이도록 flex-direction: column을 명시합니다. 
          */
          .routine-content {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; /* 좌측 정렬 */
+            flex-direction: column; /* 이름을 위로, 상세 정보를 아래로 */
+            align-items: flex-start;
+            flex-grow: 1; /* 남은 공간을 최대한 활용하도록 합니다. */
+            margin-right: 5px; /* 우측 값과의 간격 확보 */
         }
         
         .routine-name {
-            font-size: 1rem; /* 모바일에서 글씨 크기를 약간 줄여 가독성을 확보합니다. */
-            font-weight: 700; /* 제목을 더 강조합니다. */
-            white-space: normal; /* 이름이 길 경우 자동으로 줄바꿈 되도록 합니다. */
-            margin-bottom: 6px; /* 아래 정보와의 간격을 명확하게 합니다. */
+            display: flex; /* 아이콘과 텍스트를 flex로 유지 */
+            align-items: center;
+            font-size: 1rem;
+            font-weight: 700;
+            white-space: normal; /* 텍스트가 길면 줄바꿈 허용 */
+            word-break: keep-all; /* 단어가 잘리지 않도록 합니다. */
+            margin-bottom: 4px; /* 아래 .routine-details와의 간격 */
+            line-height: 1.3; /* 줄 간격을 조절하여 가독성 높임 */
+        }
+        .type-icon {
+            font-size: 1.1rem; /* 아이콘 크기를 약간 키웁니다. */
+            margin-right: 6px; /* 아이콘과 텍스트 사이 간격 */
+            flex-shrink: 0; /* 아이콘이 줄어들지 않도록 합니다. */
         }
         
         .routine-details {
+            display: flex; /* 시간과 빈도를 가로로 배치 */
+            flex-wrap: wrap; /* 공간 부족 시 다음 줄로 넘어가도록 허용 */
             font-size: 0.75rem;
-            /* 이 부분은 이미 display: flex로 설정되어 있어 자식 요소들이 가로로 배열됩니다. */
-            /* 특별히 수정할 필요가 없습니다. */
+            color: var(--text-secondary); /* 보조 정보 색상 */
         }
+
+        .time-period {
+            margin-right: 8px; /* 시간과 빈도 사이 간격 */
+            white-space: nowrap; /* 시간 정보는 줄바꿈되지 않도록 */
+        }
+
+        /* 우측 상단에 배치되는 값 (달성률, 시간 등) */
+        .routine-value {
+            position: absolute;
+            top: 10px; /* 상단에서 조금 내려오게 */
+            right: 10px; /* 우측에서 조금 안쪽으로 */
+            font-size: 0.85rem; /* 크기를 살짝 줄여 공간 확보 */
+            font-weight: 600;
+            color: var(--primary-color); /* 색상을 강조하여 눈에 띄게 */
+            padding: 2px 6px;
+            background-color: var(--background-secondary);
+            border-radius: 4px;
+            white-space: nowrap; /* 값은 줄바꿈되지 않도록 합니다. */
+        }
+    }
+
         .manage-routine-item {
             padding: 14px;
         }
