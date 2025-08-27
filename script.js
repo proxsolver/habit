@@ -1058,6 +1058,8 @@ async function handleStepperConfirm(value) {
                 showCompletionEffect();
                 setTimeout(showCelebrationMessage, 300);
             }
+            renderRoutines();
+
         }
     } catch (error) {
         console.error('❌ [handleStepperConfirm]: 스테퍼 루틴 업데이트 실패:', error);
@@ -1121,6 +1123,8 @@ async function handleNumberConfirm(value, inputType) {
                 showCompletionEffect();
                 setTimeout(showCelebrationMessage, 300);
             }
+            renderRoutines();
+
         }
     } catch (error) {
         console.error('❌ [handleNumberConfirm]: 숫자 루틴 업데이트 실패:', error);
@@ -1217,6 +1221,8 @@ async function handleWheelConfirm() {
                         showCompletionEffect();
                         setTimeout(showCelebrationMessage, 300);
                     }
+                    renderRoutines();
+
                 }
             } catch (error) {
                 console.error('Failed to update time routine:', error);
@@ -1321,6 +1327,8 @@ async function handleReadingProgressConfirm() {
             if (updatedFields.pointsGivenToday) {
                 setTimeout(showCelebrationMessage, 300);
             }
+            renderRoutines();
+
         }
     } catch (error) {
         console.error('❌ [handleReadingProgressConfirm]: 독서 루틴 업데이트 실패:', error);
@@ -2407,6 +2415,8 @@ routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventLi
 
         await updateRoutineInFirebase(routine.id, updatedFields);
         showNotification('📖 독서 루틴 완료가 취소되었습니다.', 'warning');
+        renderRoutines(); // ★★★ 핵심 추가
+
         
     } else if (isCompleted && !isContinuous && !isReadingRoutine(routine)) {
         // Yes/No, Time, 일반 Number 루틴의 완료 취소 로직 (기존 로직)
@@ -2425,6 +2435,8 @@ routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventLi
         }
         await updateRoutineInFirebase(routine.id, updatedFields);
         showNotification('루틴 완료가 취소되었습니다.', 'warning');
+        renderRoutines(); // ★★★ 핵심 추가
+
     } else if (!isSkipped) {
         // 완료/진행 로직 (기존 로직)
         console.log('📌 [createImprovedRoutineElement]: 미완료/진행 중 루틴 클릭 감지. 완료/진행 로직 실행.');
@@ -2440,6 +2452,8 @@ routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventLi
             await updateRoutineInFirebase(routine.id, updatedFields);
             showCompletionEffect();
             setTimeout(showCelebrationMessage, 300);
+            renderRoutines(); // ★★★ 핵심 추가
+
         } else if (routine.type === 'number') {
             showNumberInputModal(routine);
         } else if (routine.type === 'time') {
