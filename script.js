@@ -2306,14 +2306,15 @@ function renderManagePage() {
         }
     });
 
-    // --- 리뷰어 검토: 각 버튼이 명확한 작전 모드('parent' 또는 'child')를 전달하는지 최종 확인 ---
+    // ★★★ 핵심 수정 ★★★
+    // 범용 함수(showRoutineForm) 대신, 상태를 초기화하는 전용 함수(showAddRoutineModal)를 호출하도록 변경합니다.
     addParentBtn.onclick = () => {
-        console.log("▶️ '내 루틴 추가' 명령 하달됨");
-        showRoutineForm(null, { mode: 'parent' });
+        console.log("▶️ '내 루틴 추가' 명령 하달됨. 편집 상태 초기화 실행.");
+        showAddRoutineModal({ mode: 'parent' });
     };
     addChildBtn.onclick = () => {
-        console.log("▶️ '자녀 루틴 추가' 명령 하달됨");
-        showRoutineForm(null, { mode: 'child' });
+        console.log("▶️ '자녀 루틴 추가' 명령 하달됨. 편집 상태 초기화 실행.");
+        showAddRoutineModal({ mode: 'child' });
     };
     
     saveOrderBtn.onclick = saveRoutineOrder;
