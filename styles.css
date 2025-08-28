@@ -1872,8 +1872,8 @@ gap: 0.75rem; /* 간격 조정 */
 
     /* === 전체 레이아웃 및 페이지 패딩 === */
     .container {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
 
     #home-page, #goal-page, #stats-page, #rewards-page, #manage-page {
@@ -1897,7 +1897,7 @@ gap: 0.75rem; /* 간격 조정 */
     }
 
     .routine-header {
-        font-size: 0.95rem;
+        font-size: 0.8rem;
         padding-left: 15px;
         padding-right: 15px;
     }
@@ -1907,11 +1907,11 @@ gap: 0.75rem; /* 간격 조정 */
     }
 
     .routine-details, .time-period, .frequency-badge {
-        font-size: 0.7rem;
+        font-size: 0.5rem;
     }
     
     .type-icon {
-        font-size: 1rem;
+        font-size: 0.8rem;
     }
     
     .routine-value {
