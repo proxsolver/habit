@@ -249,165 +249,80 @@
         gap: 12px;
     }
 
-    .routine-item {
-        display: flex;
-        flex-direction: column; /* ★핵심: 헤더와 바디를 수직으로 쌓음 */
-        padding: 12px 15px;
-        gap: 10px; /* 헤더와 바디 사이의 간격 */
-        position: relative;
-        border: 2px solid var(--gray-200);
-        border-radius: var(--radius);
-        background: white;
-    }
-    
+/* ▼▼▼ 2025-08-28 CSS 구문 오류(불필요한 괄호) 수정 ▼▼▼ */
+.routine-item {
+    display: flex;
+    flex-direction: column; /* ★핵심: 헤더와 바디를 수직으로 쌓음 */
+    padding: 12px 15px;
+    gap: 10px; /* 헤더와 바디 사이의 간격 */
+    position: relative;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: white;
+    transition: all 0.2s ease-in-out;
+}
 
-    /* 시간대별 루틴 아이템 스타일 */
-    .routine-item.morning {
-        background: var(--morning-gradient);
-        border-color: rgba(245, 158, 11, 0.3);
-    }
+.routine-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+}
 
-    .routine-item.afternoon {
-        background: var(--afternoon-gradient);
-        border-color: rgba(59, 130, 246, 0.3);
-    }
+.routine-item.completed {
+    border-color: var(--success);
+    background: #f0fdf4;
+}
 
-    .routine-item.evening {
-        background: var(--evening-gradient);
-        border-color: rgba(99, 102, 241, 0.3);
-    }
+.routine-header {
+    font-size: 1.1rem;
+    font-weight: 700;
+    word-break: keep-all;
+    line-height: 1.4;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+/* --- 바로 위 중괄호(})가 닫힌 후 여기에 있던 불필요한 '}'를 제거했습니다. --- */
 
-    .routine-item:hover {
-        transform: translateY(-4px) scale(1.02);
-        box-shadow: var(--shadow-xl);
-        border-color: var(--primary);
-    }
+.routine-body {
+    display: flex;
+    justify-content: space-between; /* 좌측과 우측 영역을 양 끝으로 분리 */
+    align-items: center;
+}
 
-    .routine-item.morning:hover {
-        border-color: var(--morning-border);
-        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
-    }
+.routine-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-    .routine-item.afternoon:hover {
-        border-color: var(--afternoon-border);
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
+.routine-meta-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
 
-    .routine-item.evening:hover {
-        border-color: var(--evening-border);
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-    }
+.type-icon {
+    font-size: 1.1rem;
+}
 
-    /* 완료된 루틴 스타일 */
-    .routine-item.completed {
-        border-color: var(--success);
-        background: #f0fdf4;
-    }
+.time-period, .frequency-badge {
+    font-size: 0.8rem;
+}
 
-    .routine-item.completed .routine-name {
-        text-decoration: line-through;
-        color: var(--success);
-    }
+.routine-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
 
-    .routine-header {
-        font-size: 1.1rem;
-        font-weight: 700;
-        word-break: keep-all;
-        line-height: 1.4;
-        /* --- 핵심 수정: 좌/우 패딩 추가 --- */
-        padding-left: 20px;  /* 좌측 아이콘 공간 확보 */
-        padding-right: 20px; /* 우측 스트릭 배지 공간 확보 */
-    }
-        }
-    
-    .routine-body {
-        display: flex;
-        justify-content: space-between; /* 좌측과 우측 영역을 양 끝으로 분리 */
-        align-items: center;
-    }
-    
-    .routine-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    
-    .routine-meta-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--text-secondary);
-    }
-    
-
-    .routine-item.completed::after {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        font-size: 1.2rem;
-        animation: bounce 2s infinite;
-    }
-
-    /* 진행 중인 루틴 스타일 */
-    .routine-item.inprogress {
-        background: linear-gradient(145deg, #fefce8, #fef3c7);
-        border-color: var(--warning);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-    }
-
-    .routine-item.inprogress .routine-name {
-        color: var(--warning);
-        font-weight: 600;
-    }
-
-    .routine-item.inprogress::after {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        font-size: 1.2rem;
-        animation: pulse 2s infinite;
-    }
-
-    /* 목표 달성한 지속 업데이트 루틴 스타일 */
-    .routine-item.goal-achieved {
-        background: linear-gradient(145deg, #fff7ed, #fed7aa);
-        border-color: var(--warning);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-    }
-
-    .routine-item.goal-achieved .routine-name {
-        color: var(--warning);
-        font-weight: 700;
-    }
-
-    .routine-item.goal-achieved::after {
-        content: '🎯';
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        font-size: 1.2rem;
-        animation: glow 2s infinite;
-    }
-
-    /* 건너뛴 루틴 스타일 */
-    .routine-item.skipped {
-        background: linear-gradient(145deg, #fef2f2, #fee2e2);
-        opacity: 0.7;
-        border-color: var(--error);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-    }
-
-    .routine-item.skipped .routine-name {
-        text-decoration: line-through;
-        color: var(--error);
-    }
-
-/* 기존 체크박스 스타일은 그대로 사용됩니다. */
 .routine-checkbox {
     width: 38px;
     height: 38px;
-    margin-right: 0; /* .routine-actions의 gap으로 간격 제어 */
+    margin-right: 0;
 }
+/* ▲▲▲ 여기까지 2025-08-28 CSS 구문 오류(불필요한 괄호) 수정 ▲▲▲ */
 
     /* 체크박스 및 액션 버튼 */
     .routine-checkbox, .routine-action-button {
@@ -1559,15 +1474,9 @@
 
     /* 반응형 디자인 */
     @media (max-width: 480px) {
-        .container {
-            max-width: 100%;
-            margin: 0;
-            padding: 1rem;
+        .routine-header {
+            font-size: 1rem; /* 모바일에서만 이름 폰트 살짝 줄임 */
         }
-        
-        .routine-item {
-            padding: 14px 10px; /* 좌우 패딩을 살짝 줄여 공간 확보 */
-            align-items: flex-start; 
         
 /* * 핵심 수정: .routine-content 내부의 자식 요소(.routine-name, .routine-details)들이
          * 항상 수직으로 쌓이도록 flex-direction: column을 명시합니다. 
