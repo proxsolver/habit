@@ -1476,6 +1476,10 @@
     @media (max-width: 480px) {
         .routine-header {
             font-size: 1rem; /* 모바일에서만 이름 폰트 살짝 줄임 */
+            .container {
+                /* 상하 여백은 유지하고, 좌우 여백만 0.75rem (12px)으로 줄입니다. */
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
         }
         
 /* * 핵심 수정: .routine-content 내부의 자식 요소(.routine-name, .routine-details)들이
