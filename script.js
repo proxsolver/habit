@@ -2364,20 +2364,23 @@ function createImprovedRoutineElement(routine) {
     const continuousBadge = isContinuous || isReadingRoutine(routine) ? `<div class="continuous-badge">🔄</div>` : '';
     
     routineDiv.innerHTML = `
-    ${actionButton}
-    <div class="routine-content">
-        <div class="routine-name">
-            <span class="type-icon">${getTypeIcon(routine.type)}</span>
+        <div class="routine-header">
             ${routine.name}
         </div>
-        <div class="routine-details">
-            <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
-            <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
+
+        <div class="routine-body">
+            <div class="routine-actions">
+                <div class="routine-checkbox">${isCompleted ? '✓' : ''}</div>
+                <div class="routine-meta-info">
+                    <span class="type-icon">${getTypeIcon(routine.type)}</span>
+                    <div class="time-period">${getTimeEmoji(routine.time)} ${getTimeLabel(routine.time)}</div>
+                    <div class="frequency-badge">${getFrequencyLabel(routine.frequency)}</div>
+                </div>
+            </div>
+            <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
         </div>
-    </div>
-    <div class="routine-value">${getRoutineValueDisplay(routine)}</div>
-    ${streakBadge}
-    ${continuousBadge}
+        ${streakBadge}
+        ${continuousBadge}
 `;
     
 routineDiv.querySelector('.routine-checkbox, .routine-action-button').addEventListener('click', async (e) => {

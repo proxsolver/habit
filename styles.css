@@ -251,17 +251,15 @@
 
     .routine-item {
         display: flex;
-        align-items: center;
-        padding: 18px;
-        background: linear-gradient(145deg, #ffffff, #fafbff);
+        flex-direction: column; /* ★핵심: 헤더와 바디를 수직으로 쌓음 */
+        padding: 12px 15px;
+        gap: 10px; /* 헤더와 바디 사이의 간격 */
+        position: relative;
         border: 2px solid var(--gray-200);
         border-radius: var(--radius);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        min-height: var(--touch-target-min);
-        position: relative;
-        box-shadow: var(--shadow-sm);
-        cursor: pointer;
+        background: white;
     }
+    
 
     /* 시간대별 루틴 아이템 스타일 */
     .routine-item.morning {
@@ -302,16 +300,41 @@
 
     /* 완료된 루틴 스타일 */
     .routine-item.completed {
-        background: linear-gradient(145deg, #f0fdf4, #dcfce7);
-        opacity: 0.8;
         border-color: var(--success);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        background: #f0fdf4;
     }
 
     .routine-item.completed .routine-name {
         text-decoration: line-through;
         color: var(--success);
     }
+
+    .routine-header {
+        font-size: 1.1rem;
+        font-weight: 700;
+        word-break: keep-all;
+        line-height: 1.4;
+    }
+    
+    .routine-body {
+        display: flex;
+        justify-content: space-between; /* 좌측과 우측 영역을 양 끝으로 분리 */
+        align-items: center;
+    }
+    
+    .routine-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .routine-meta-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-secondary);
+    }
+    
 
     .routine-item.completed::after {
         position: absolute;
@@ -374,6 +397,13 @@
         text-decoration: line-through;
         color: var(--error);
     }
+
+/* 기존 체크박스 스타일은 그대로 사용됩니다. */
+.routine-checkbox {
+    width: 38px;
+    height: 38px;
+    margin-right: 0; /* .routine-actions의 gap으로 간격 제어 */
+}
 
     /* 체크박스 및 액션 버튼 */
     .routine-checkbox, .routine-action-button {
@@ -567,11 +597,13 @@
 
 /* ▼▼▼ 08/19(수정일) 루틴 타입 아이콘 여백 수정 ▼▼▼ */
     .type-icon {
-        font-size: 1rem;
-        margin-right: 0.2rem;
-        opacity: 0.8;
-        transition: all 0.3s ease;
+        font-size: 1.1rem;
     }
+
+    .time-period, .frequency-badge {
+        font-size: 0.8rem;
+    }
+    
 /* ▲▲▲ 여기까지 08/19(수정일) 루틴 타입 아이콘 여백 수정 ▲▲▲ */
 
     .routine-item:hover .type-icon {
@@ -1573,18 +1605,12 @@
 
         /* 우측 상단에 배치되는 값 (달성률, 시간 등) */
         .routine-value {
-            position: absolute;
-            top: 10px; /* 상단에서 조금 내려오게 */
-            right: 10px; /* 우측에서 조금 안쪽으로 */
-            font-size: 0.85rem; /* 크기를 살짝 줄여 공간 확보 */
+            font-size: 0.9rem;
             font-weight: 600;
-            color: var(--primary-color); /* 색상을 강조하여 눈에 띄게 */
-            padding: 2px 6px;
-            background-color: var(--background-secondary);
-            border-radius: 4px;
-            white-space: nowrap; /* 값은 줄바꿈되지 않도록 합니다. */
+            color: var(--text-primary);
+            white-space: nowrap;
         }
-    }
+        
 
         .manage-routine-item {
             padding: 14px;
