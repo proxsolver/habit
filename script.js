@@ -29,7 +29,44 @@ const MAX_AREAS = 5; // <-- 영역의 최대 갯수 저장
 const today = new Date();
 const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-
+// ▼▼▼ 2025-08-29 신규 사용자용 초기 루틴 데이터 추가 ▼▼▼
+const INITIAL_SAMPLE_ROUTINES = [
+    {
+        name: "아침에 물 한잔 마시기",
+        type: "yesno",
+        time: "morning",
+        frequency: "daily",
+        areas: ["health"],
+        basePoints: 5,
+        order: 0,
+        active: true
+    },
+    {
+        name: "10분 스트레칭",
+        type: "number",
+        time: "morning",
+        frequency: "weekday",
+        areas: ["health"],
+        basePoints: 10,
+        unit: "분",
+        dailyGoal: 10,
+        continuous: true,
+        inputType: "simple",
+        order: 1,
+        active: true
+    },
+    {
+        name: "오늘 하루 감사한 일 3가지 쓰기",
+        type: "yesno",
+        time: "evening",
+        frequency: "daily",
+        areas: ["relationships"],
+        basePoints: 10,
+        order: 2,
+        active: true
+    }
+];
+// ▲▲▲ 여기까지 2025-08-29 신규 사용자용 초기 루틴 데이터 추가 ▲▲▲
 
 // ====================================================================
 // 3. 앱 시작점 (Application Entry Point)
